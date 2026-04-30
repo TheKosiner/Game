@@ -3,6 +3,7 @@ import './App.css';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
+import { isFirebaseConfigured } from './lib/firebase';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -71,7 +72,8 @@ export default function App() {
     );
   }
 
-  if (!user) return <AuthScreen />;
+  // Show auth screen only when Firebase is configured and user is not logged in
+  if (isFirebaseConfigured && !user) return <AuthScreen />;
 
   const hasSave = (() => {
     try { return !!localStorage.getItem('realm_of_valor_save'); } catch { return false; }
@@ -94,10 +96,12 @@ export default function App() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <span style={{ color: '#fbbf24', fontSize: 8 }}>🪙 {hero.gold}</span>
           <span style={{ color: '#94a3b8', fontSize: 7 }}>POZ.{hero.level}</span>
-          <span style={{ color: '#475569', fontSize: 6 }}>{user.username}</span>
-          <button onClick={() => logout()} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Press Start 2P', monospace" }}>
-            WYJDŹ
-          </button>
+          {user && <span style={{ color: '#475569', fontSize: 6 }}>{user.username}</span>}
+          {user && (
+            <button onClick={() => logout()} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Press Start 2P', monospace" }}>
+              WYJDŹ
+            </button>
+          )}
           <button onClick={handleReset} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer' }}>↩</button>
         </div>
       </header>

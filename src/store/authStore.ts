@@ -7,7 +7,7 @@ import {
   type User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 
 export interface AuthUser {
   uid: string;
@@ -27,6 +27,7 @@ interface AuthState {
 
 async function fetchUsername(uid: string): Promise<string> {
   try {
+    if (!db) return 'Gracz';
     const snap = await getDoc(doc(db, 'users', uid));
     return snap.exists() ? (snap.data().username ?? 'Gracz') : 'Gracz';
   } catch {
@@ -56,14 +57,19 @@ function getErrorMessage(e: unknown): string {
 }
 
 export const useAuthStore = create<AuthState>((set) => {
-  onAuthStateChanged(auth, async (user: User | null) => {
-    if (user) {
-      const username = await fetchUsername(user.uid);
-      set({ user: toAuthUser(user, username), authLoading: false });
-    } else {
-      set({ user: null, authLoading: false });
-    }
-  });
+  if (isFirebaseConfigured && auth) {
+    onAuthStateChanged(auth, async (user: User | null) => {
+      if (user) {
+        const username = await fetchUsername(user.uid);
+        set({ user: toAuthUser(user, username), authLoading: false });
+      } else {
+        set({ user: null, authLoading: false });
+      }
+    });
+  } else {
+    // Firebase not configured — skip auth, go straight to game
+    setTimeout(() => set({ authLoading: false }), 0);
+  }
 
   return {
     user: null,
@@ -71,6 +77,7 @@ export const useAuthStore = create<AuthState>((set) => {
     error: null,
 
     login: async (email, password) => {
+      if (!auth) return;
       set({ error: null });
       try {
         await signInWithEmailAndPassword(auth, email, password);
@@ -80,6 +87,7 @@ export const useAuthStore = create<AuthState>((set) => {
     },
 
     register: async (email, password, username) => {
+      if (!auth || !db) return;
       set({ error: null });
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -94,6 +102,7 @@ export const useAuthStore = create<AuthState>((set) => {
     },
 
     logout: async () => {
+      if (!auth) return;
       await signOut(auth);
     },
 

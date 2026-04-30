@@ -14,6 +14,7 @@ export interface LeaderboardEntry {
 }
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
+  if (!db) return;
   const { hero, activeQuest } = useGameStore.getState();
   await setDoc(doc(db, 'players', uid), {
     username,
@@ -28,6 +29,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
 }
 
 export async function loadFromCloud(uid: string): Promise<boolean> {
+  if (!db) return false;
   const snap = await getDoc(doc(db, 'players', uid));
   if (!snap.exists()) return false;
   const data = snap.data();
@@ -45,10 +47,12 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
 }
 
 export async function deleteCloudSave(uid: string): Promise<void> {
+  if (!db) return;
   await deleteDoc(doc(db, 'players', uid));
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  if (!db) return [];
   const q = query(
     collection(db, 'players'),
     orderBy('level', 'desc'),
