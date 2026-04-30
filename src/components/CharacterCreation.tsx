@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import type { HeroClass } from '../types';
 import { useGameStore } from '../store/gameStore';
+import PixelSprite from './PixelSprite';
+import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
 
-const CLASSES: { id: HeroClass; name: string; emoji: string; desc: string; pros: string }[] = [
-  { id: 'warrior', name: 'Wojownik', emoji: '⚔️', desc: 'Mistrz walki wręcz. Wysoka żywotność i atak siłowy.', pros: 'Wysoka Siła & Kondycja' },
-  { id: 'mage', name: 'Mag', emoji: '🔮', desc: 'Władca arkaniki. Ogromna moc magii i inteligencja.', pros: 'Wysoka Inteligencja' },
-  { id: 'rogue', name: 'Łotrzyk', emoji: '🗡️', desc: 'Skryty zabójca. Szybkość i krytyczne ciosy.', pros: 'Wysoka Zwinność & Krytyki' },
+const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
+
+const CLASSES: { id: HeroClass; name: string; desc: string; pros: string }[] = [
+  { id: 'warrior', name: 'Wojownik', desc: 'Mistrz walki wręcz. Wysoka żywotność i atak siłowy.', pros: 'Wysoka Siła & Kondycja' },
+  { id: 'mage', name: 'Mag', desc: 'Władca arkaniki. Ogromna moc magii i inteligencja.', pros: 'Wysoka Inteligencja' },
+  { id: 'rogue', name: 'Łotrzyk', desc: 'Skryty zabójca. Szybkość i krytyczne ciosy.', pros: 'Wysoka Zwinność & Krytyki' },
 ];
 
 export default function CharacterCreation() {
@@ -19,47 +23,58 @@ export default function CharacterCreation() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f0e17 0%, #1a1a2e 100%)' }}>
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <p className="text-6xl mb-3">🏰</p>
-          <h1 className="text-3xl font-bold text-amber-400">Realm of Valor</h1>
-          <p className="text-slate-400 mt-2">Stwórz swojego bohatera i zacznij przygodę</p>
-          <div className="mt-2 inline-block bg-green-900/30 border border-green-700 rounded-full px-3 py-0.5 text-green-400 text-xs">
-            ✅ 100% Fair Play — Brak Pay to Win
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: '#0f0e17' }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <p style={{ fontSize: 40, marginBottom: 8 }}>🏰</p>
+          <h1 style={{ color: '#fbbf24', fontSize: 14, marginBottom: 8 }}>REALM OF VALOR</h1>
+          <p style={{ color: '#64748b', fontSize: 7, marginBottom: 8 }}>Stwórz bohatera i zacznij przygodę</p>
+          <div style={{ display: 'inline-block', background: '#052e16', border: '2px solid #166534', padding: '4px 10px' }}>
+            <span style={{ color: '#4ade80', fontSize: 6 }}>✅ 100% FAIR PLAY — BRAK PAY TO WIN</span>
           </div>
         </div>
 
-        <div className="card p-5 space-y-4">
+        <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-1">Imię bohatera</label>
+            <p style={{ color: '#94a3b8', fontSize: 7, marginBottom: 6 }}>IMIĘ BOHATERA</p>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Wpisz imię..."
               maxLength={20}
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              style={{
+                width: '100%', background: '#0a0a1a', border: '2px solid #334155', padding: '8px 10px',
+                color: '#e2e8f0', fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+                outline: 'none', boxSizing: 'border-box',
+              }}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-300 mb-2">Wybierz klasę</label>
-            <div className="space-y-2">
+            <p style={{ color: '#94a3b8', fontSize: 7, marginBottom: 8 }}>WYBIERZ KLASĘ</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {CLASSES.map(cls => (
                 <button
                   key={cls.id}
                   onClick={() => setSelectedClass(cls.id)}
-                  className={`w-full text-left rounded-xl p-3 border transition-all ${selectedClass === cls.id ? 'border-amber-500 bg-amber-900/20' : 'border-slate-700 bg-slate-900/40 hover:border-slate-500'}`}
+                  style={{
+                    width: '100%', textAlign: 'left', background: selectedClass === cls.id ? '#1c1408' : '#0a0a1a',
+                    border: `2px solid ${selectedClass === cls.id ? '#d97706' : '#334155'}`,
+                    padding: 10, cursor: 'pointer', fontFamily: "'Press Start 2P', monospace",
+                    boxShadow: selectedClass === cls.id ? '3px 3px 0 #000' : 'none',
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{cls.emoji}</span>
-                    <div>
-                      <p className="font-bold text-sm">{cls.name}</p>
-                      <p className="text-xs text-slate-400">{cls.desc}</p>
-                      <p className="text-xs text-amber-400 mt-0.5">{cls.pros}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ background: '#0a0a1a', border: '2px solid #334155', padding: 4, flexShrink: 0 }}>
+                      <PixelSprite grid={CLASS_SPRITES[cls.id]} scale={3} />
                     </div>
-                    {selectedClass === cls.id && <span className="ml-auto text-amber-400">✓</span>}
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: '#e2e8f0', fontSize: 8, marginBottom: 4 }}>{cls.name}</p>
+                      <p style={{ color: '#64748b', fontSize: 6, marginBottom: 3 }}>{cls.desc}</p>
+                      <p style={{ color: '#fbbf24', fontSize: 6 }}>{cls.pros}</p>
+                    </div>
+                    {selectedClass === cls.id && <span style={{ color: '#fbbf24', fontSize: 10 }}>▶</span>}
                   </div>
                 </button>
               ))}
@@ -69,9 +84,10 @@ export default function CharacterCreation() {
           <button
             onClick={handleCreate}
             disabled={!name.trim() || !selectedClass}
-            className="btn btn-primary w-full py-3 text-base"
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '12px', fontSize: 8 }}
           >
-            🚀 Rozpocznij Przygodę!
+            ▶ Rozpocznij Przygodę!
           </button>
         </div>
       </div>

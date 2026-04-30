@@ -1,6 +1,9 @@
 import { useGameStore } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
+import PixelSprite from './PixelSprite';
+import { ENEMY_SPRITES } from '../data/sprites';
+import type { SpriteKey } from '../data/sprites';
 
 function EnemyBattleCard() {
   const hero = useGameStore(s => s.hero);
@@ -24,45 +27,46 @@ function EnemyBattleCard() {
       </div>
 
       {/* Enemy */}
-      <div className="bg-slate-900/60 rounded-xl p-3 border border-red-900/40">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-3xl">{enemy.emoji}</span>
-          <div className="flex-1">
-            <p className="font-bold text-red-400">{enemy.name}</p>
-            <p className="text-xs text-slate-400">Poziom {enemy.level}</p>
+      <div style={{ background: '#0f0a0a', border: '2px solid #7f1d1d', padding: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+          {ENEMY_SPRITES[enemy.id as SpriteKey] ? (
+            <div style={{ background: '#0a0a1a', border: '3px solid #334155', padding: 4, boxShadow: '3px 3px 0 #000', flexShrink: 0 }}>
+              <PixelSprite grid={ENEMY_SPRITES[enemy.id as SpriteKey]} scale={4} />
+            </div>
+          ) : (
+            <span style={{ fontSize: 32 }}>{enemy.emoji}</span>
+          )}
+          <div style={{ flex: 1 }}>
+            <p style={{ color: '#f87171', fontSize: 9, marginBottom: 2 }}>{enemy.name}</p>
+            <p style={{ color: '#64748b', fontSize: 7, marginBottom: 4 }}>POZ. {enemy.level}</p>
+            <p style={{ color: '#f87171', fontSize: 8 }}>{enemy.hp}/{enemy.maxHp} HP</p>
           </div>
-          <p className="text-red-400 font-bold text-sm">{enemy.hp}/{enemy.maxHp} HP</p>
         </div>
-        <div style={{ height: 8, background: '#1e293b', borderRadius: 4 }}>
-          <div style={{ width: `${enemyHpPct}%`, height: '100%', background: '#ef4444', borderRadius: 4, transition: 'width 0.2s' }} />
+        <div className="pixel-bar">
+          <div className="pixel-bar-fill" style={{ width: `${enemyHpPct}%`, background: '#dc2626' }} />
         </div>
       </div>
 
       {/* Hero HP */}
-      <div className="bg-slate-900/60 rounded-xl p-2">
-        <div className="flex justify-between text-xs text-slate-400 mb-1">
-          <span>❤️ {hero.name}</span>
+      <div style={{ background: '#0a1408', border: '2px solid #1e293b', padding: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 4 }}>
+          <span>HP — {hero.name}</span>
           <span>{hero.hp}/{hero.maxHp}</span>
         </div>
-        <div style={{ height: 6, background: '#1e293b', borderRadius: 4 }}>
-          <div style={{ width: `${heroHpPct}%`, height: '100%', background: heroHpPct > 50 ? '#22c55e' : heroHpPct > 25 ? '#f59e0b' : '#ef4444', borderRadius: 4, transition: 'width 0.3s' }} />
+        <div className="pixel-bar">
+          <div className="pixel-bar-fill" style={{ width: `${heroHpPct}%`, background: heroHpPct > 50 ? '#16a34a' : heroHpPct > 25 ? '#d97706' : '#dc2626' }} />
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <button onClick={attackEnemy} className="btn btn-primary flex-1">⚔️ Atakuj!</button>
-        <button onClick={exitDungeon} className="btn btn-danger px-3">🚪</button>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 8 }}>⚔️ Atakuj!</button>
+        <button onClick={exitDungeon} className="btn btn-danger" style={{ padding: '8px 12px', fontSize: 8 }}>🚪</button>
       </div>
 
       {/* Combat Log */}
-      <div className="bg-slate-950/60 rounded-lg p-2 max-h-40 overflow-y-auto text-xs space-y-0.5">
+      <div className="combat-log" style={{ padding: 8, maxHeight: 120, overflowY: 'auto' }}>
         {combatLog.slice(0, 15).map((log, i) => (
-          <p key={i} className={{
-            hero: 'text-green-400',
-            enemy: 'text-red-400',
-            loot: 'text-amber-400',
-            system: 'text-slate-300',
-          }[log.type]}>
+          <p key={i} style={{ color: { hero: '#4ade80', enemy: '#f87171', loot: '#fbbf24', system: '#cbd5e1' }[log.type], marginBottom: 2 }}>
             {log.message}
           </p>
         ))}
@@ -76,31 +80,32 @@ function DungeonList() {
   const enterDungeon = useGameStore(s => s.enterDungeon);
 
   return (
-    <div className="space-y-2">
-      <h3 className="font-bold text-slate-300">⚔️ Wybierz Loch</h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ color: '#fbbf24', fontSize: 9, marginBottom: 4 }}>⚔️ WYBIERZ LOCH</p>
       {ALL_DUNGEONS.map((dungeon: Dungeon) => {
         const locked = hero.level < dungeon.minLevel;
         return (
-          <div key={dungeon.id} className={`bg-slate-900/60 rounded-xl p-3 border ${locked ? 'border-slate-700 opacity-60' : 'border-slate-600 hover:border-amber-600'} transition-colors`}>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">{dungeon.emoji}</span>
-              <div className="flex-1">
-                <p className="font-bold text-sm">{dungeon.name}</p>
-                <p className="text-xs text-slate-400">{dungeon.description}</p>
+          <div key={dungeon.id} style={{ background: '#0a0a1a', border: `2px solid ${locked ? '#1e293b' : '#334155'}`, padding: 10, opacity: locked ? 0.6 : 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 20 }}>{dungeon.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 8, color: '#e2e8f0', marginBottom: 2 }}>{dungeon.name}</p>
+                <p style={{ fontSize: 6, color: '#64748b' }}>{dungeon.description}</p>
               </div>
-              <div className="text-right text-xs">
-                <p className="text-slate-400">Min. Poz.</p>
-                <p className="text-amber-400 font-bold">{dungeon.minLevel}</p>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 6, color: '#64748b' }}>MIN. POZ.</p>
+                <p style={{ fontSize: 9, color: '#fbbf24' }}>{dungeon.minLevel}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">{dungeon.floors} pięter</p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: 6, color: '#475569' }}>{dungeon.floors} pięter</p>
               <button
                 onClick={() => enterDungeon(dungeon)}
                 disabled={locked}
-                className="btn btn-primary text-xs py-1 px-3"
+                className="btn btn-primary"
+                style={{ fontSize: 7, padding: '4px 10px' }}
               >
-                {locked ? `🔒 Poz. ${dungeon.minLevel}` : 'Wejdź'}
+                {locked ? `🔒 POZ.${dungeon.minLevel}` : 'Wejdź ▶'}
               </button>
             </div>
           </div>
@@ -119,20 +124,19 @@ export default function DungeonPanel() {
   const combatLog = useGameStore(s => s.combatLog);
 
   if (currentDungeon && !inCombat) {
-    // Dungeon completed or between floors
     return (
-      <div className="card p-4 space-y-3">
-        <div className="text-center py-4">
-          <p className="text-3xl mb-2">🏆</p>
-          <p className="text-amber-400 font-bold">Loch ukończony!</p>
-          <p className="text-slate-400 text-sm">{currentDungeon.name} — {currentFloor - 1} pięter</p>
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+          <p style={{ fontSize: 28, marginBottom: 8 }}>🏆</p>
+          <p style={{ color: '#fbbf24', fontSize: 9, marginBottom: 4 }}>LOCH UKOŃCZONY!</p>
+          <p style={{ color: '#64748b', fontSize: 7 }}>{currentDungeon.name} — {currentFloor - 1} PIĘTER</p>
         </div>
-        <div className="bg-slate-950/60 rounded-lg p-2 max-h-40 overflow-y-auto text-xs space-y-0.5">
+        <div className="combat-log" style={{ padding: 8, maxHeight: 120, overflowY: 'auto' }}>
           {combatLog.slice(0, 10).map((log, i) => (
-            <p key={i} className={{ hero: 'text-green-400', enemy: 'text-red-400', loot: 'text-amber-400', system: 'text-slate-300' }[log.type]}>{log.message}</p>
+            <p key={i} style={{ color: { hero: '#4ade80', enemy: '#f87171', loot: '#fbbf24', system: '#cbd5e1' }[log.type], marginBottom: 2 }}>{log.message}</p>
           ))}
         </div>
-        <button onClick={exitDungeon} className="btn btn-primary w-full">🏠 Wróć do miasta</button>
+        <button onClick={exitDungeon} className="btn btn-primary" style={{ width: '100%', fontSize: 8 }}>🏠 Wróć do miasta</button>
       </div>
     );
   }

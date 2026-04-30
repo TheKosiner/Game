@@ -1,8 +1,10 @@
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
+import PixelSprite from './PixelSprite';
+import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
 
-const CLASS_EMOJI: Record<string, string> = { warrior: '⚔️', mage: '🔮', rogue: '🗡️' };
-const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Łotrzyk' };
+const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
+const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Lotrzyk' };
 
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
@@ -11,68 +13,69 @@ export default function HeroCard() {
   const hpPct = Math.min(100, (hero.hp / hero.maxHp) * 100);
   const attack = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
+  const sprite = CLASS_SPRITES[hero.class];
 
   return (
-    <div className="card p-4 space-y-3">
-      <div className="flex items-center gap-3">
-        <span className="text-4xl">{CLASS_EMOJI[hero.class]}</span>
-        <div>
-          <h2 className="font-bold text-xl text-amber-400">{hero.name}</h2>
-          <p className="text-slate-400 text-sm">{CLASS_NAME[hero.class]} — Poziom {hero.level}</p>
+    <div className="card p-3 space-y-3">
+      {/* Header with sprite */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ background: '#0a0a1a', border: '3px solid #334155', padding: 6, boxShadow: '3px 3px 0 #000', flexShrink: 0 }}>
+          <PixelSprite grid={sprite} scale={3} />
         </div>
-        <div className="ml-auto text-right">
-          <p className="text-amber-400 font-bold">🪙 {hero.gold}</p>
-          <p className="text-purple-400 text-sm">💎 {hero.gems}</p>
+        <div style={{ flex: 1 }}>
+          <p style={{ color: '#fbbf24', fontSize: 11, marginBottom: 2, wordBreak: 'break-all' }}>{hero.name}</p>
+          <p style={{ color: '#64748b', fontSize: 8, marginBottom: 4 }}>{CLASS_NAME[hero.class]} — POZ.{hero.level}</p>
+          <p style={{ color: '#fbbf24', fontSize: 9 }}>🪙 {hero.gold}</p>
         </div>
       </div>
 
       {/* HP Bar */}
       <div>
-        <div className="flex justify-between text-xs text-slate-400 mb-1">
-          <span>❤️ Życie</span>
-          <span>{hero.hp} / {hero.maxHp}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 3 }}>
+          <span>HP</span>
+          <span>{hero.hp}/{hero.maxHp}</span>
         </div>
-        <div style={{ height: 8, background: '#1e293b', borderRadius: 4 }}>
-          <div style={{ width: `${hpPct}%`, height: '100%', background: hpPct > 50 ? '#22c55e' : hpPct > 25 ? '#f59e0b' : '#ef4444', borderRadius: 4, transition: 'width 0.3s' }} />
+        <div className="pixel-bar">
+          <div className="pixel-bar-fill" style={{ width: `${hpPct}%`, background: hpPct > 50 ? '#16a34a' : hpPct > 25 ? '#d97706' : '#dc2626' }} />
         </div>
       </div>
 
       {/* XP Bar */}
       <div>
-        <div className="flex justify-between text-xs text-slate-400 mb-1">
-          <span>⭐ Doświadczenie</span>
-          <span>{hero.xp} / {hero.xpToNext}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 3 }}>
+          <span>XP</span>
+          <span>{hero.xp}/{hero.xpToNext}</span>
         </div>
-        <div style={{ height: 6, background: '#1e293b', borderRadius: 4 }}>
-          <div style={{ width: `${xpPct}%`, height: '100%', background: '#d97706', borderRadius: 4, transition: 'width 0.5s' }} />
+        <div className="pixel-bar">
+          <div className="pixel-bar-fill" style={{ width: `${xpPct}%`, background: '#d97706' }} />
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2 text-sm">
-        <div className="bg-slate-900/60 rounded-lg p-2">
-          <p className="text-slate-400 text-xs mb-1">Statystyki</p>
-          <p>💪 Siła: <span className="text-amber-400 font-bold">{hero.stats.strength}</span></p>
-          <p>🏃 Zwinność: <span className="text-amber-400 font-bold">{hero.stats.agility}</span></p>
-          <p>🧠 Inteligencja: <span className="text-amber-400 font-bold">{hero.stats.intelligence}</span></p>
-          <p>🛡️ Kondycja: <span className="text-amber-400 font-bold">{hero.stats.constitution}</span></p>
+      {/* Stats grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 7 }}>
+        <div style={{ background: '#0a0a1a', border: '2px solid #1e293b', padding: '6px 8px' }}>
+          <p style={{ color: '#64748b', marginBottom: 4 }}>STATYSTYKI</p>
+          <p>💪 Sila: <span style={{ color: '#fbbf24' }}>{hero.stats.strength}</span></p>
+          <p>🏃 Zwinnosc: <span style={{ color: '#fbbf24' }}>{hero.stats.agility}</span></p>
+          <p>🧠 Intel: <span style={{ color: '#fbbf24' }}>{hero.stats.intelligence}</span></p>
+          <p>🛡 Kondy: <span style={{ color: '#fbbf24' }}>{hero.stats.constitution}</span></p>
         </div>
-        <div className="bg-slate-900/60 rounded-lg p-2">
-          <p className="text-slate-400 text-xs mb-1">Walka</p>
-          <p>⚔️ Atak: <span className="text-red-400 font-bold">{attack}</span></p>
-          <p>🛡️ Obrona: <span className="text-blue-400 font-bold">{defense}</span></p>
-          <p>❤️ Max HP: <span className="text-green-400 font-bold">{hero.maxHp}</span></p>
+        <div style={{ background: '#0a0a1a', border: '2px solid #1e293b', padding: '6px 8px' }}>
+          <p style={{ color: '#64748b', marginBottom: 4 }}>WALKA</p>
+          <p>⚔️ Atk: <span style={{ color: '#f87171' }}>{attack}</span></p>
+          <p>🛡 Def: <span style={{ color: '#60a5fa' }}>{defense}</span></p>
+          <p>❤️ MaxHP: <span style={{ color: '#4ade80' }}>{hero.maxHp}</span></p>
         </div>
       </div>
 
       {/* Attribute points */}
       {hero.attributePoints > 0 && (
-        <div className="bg-amber-900/30 border border-amber-700 rounded-lg p-3">
-          <p className="text-amber-400 font-bold text-sm mb-2">✨ {hero.attributePoints} punkty cech do rozdysponowania!</p>
-          <div className="grid grid-cols-2 gap-1">
+        <div style={{ background: '#1c1408', border: '2px solid #d97706', padding: 8 }}>
+          <p style={{ color: '#fbbf24', fontSize: 8, marginBottom: 6 }}>✨ {hero.attributePoints} PKT CECH!</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
             {(['strength', 'agility', 'intelligence', 'constitution'] as const).map(attr => (
-              <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-secondary text-xs py-1">
-                + {{ strength: '💪 Siła', agility: '🏃 Zwinność', intelligence: '🧠 Intel.', constitution: '🛡️ Kondycja' }[attr]}
+              <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-secondary" style={{ fontSize: 7, padding: '4px 6px' }}>
+                +{({ strength: 'Sila', agility: 'Zwin', intelligence: 'Intel', constitution: 'Kond' }[attr])}
               </button>
             ))}
           </div>
