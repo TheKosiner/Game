@@ -40,6 +40,10 @@ export interface Hero {
   xpToNext: number;
   hp: number;
   maxHp: number;
+  energy: number;
+  maxEnergy: number;
+  lastEnergyUpdate: number;
+  restingUntil: number | null;
   stats: Stats;
   equipment: Equipment;
   inventory: Item[];
@@ -127,6 +131,7 @@ export interface GameState {
   upgradeAttribute: (attr: keyof Stats) => void;
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
+  tickEnergyRegen: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

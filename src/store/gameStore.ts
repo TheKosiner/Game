@@ -7,6 +7,11 @@ import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext } from '..
 const SAVE_KEY = 'realm_of_valor_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
+const MAX_ENERGY = 100;
+const ENERGY_REGEN_PER_SECOND = 1 / 60; // 1 energy per minute
+export const ENERGY_COST_PER_FLOOR = 10;
+const REST_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const REST_HP_RESTORE = 0.5;
 
 function createHero(name: string, heroClass: HeroClass): Hero {
   const baseStats: Record<HeroClass, Stats> = {
@@ -24,6 +29,10 @@ function createHero(name: string, heroClass: HeroClass): Hero {
     xpToNext: calcXpToNext(1),
     hp: maxHp,
     maxHp,
+    energy: MAX_ENERGY,
+    maxEnergy: MAX_ENERGY,
+    lastEnergyUpdate: Date.now(),
+    restingUntil: null,
     stats,
     equipment: {},
     inventory: [],
@@ -108,6 +117,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   enterDungeon: (dungeon: Dungeon) => {
     const { hero } = get();
     if (hero.level < dungeon.minLevel) return;
+    if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
+      get().addCombatLog('Odpoczywasz po walce! Poczekaj aż wróci siły.', 'system');
+      return;
+    }
+    if (hero.energy < ENERGY_COST_PER_FLOOR) {
+      get().addCombatLog('Za mało energii! Poczekaj aż się zregeneruje.', 'system');
+      return;
+    }
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
@@ -148,6 +165,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
+      // Deduct energy per floor cleared
+      const heroAfterLoot = get().hero;
+      const newEnergy = Math.max(0, heroAfterLoot.energy - ENERGY_COST_PER_FLOOR);
+      set({ hero: { ...heroAfterLoot, energy: newEnergy } });
+      get().addCombatLog(`-${ENERGY_COST_PER_FLOOR} ⚡ energii`, 'system');
+
       // Next floor or new enemy
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
@@ -168,11 +191,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
 
       if (newHeroHp <= 0) {
-        get().addCombatLog('Zostałeś pokonany! Wychodzisz z lochu...', 'system');
+        get().addCombatLog('Zostałeś pokonany! Odpoczywasz przez 5 minut, po czym odzyskasz 50% HP...', 'system');
         const updatedHero = get().hero;
-        const maxHp = updatedHero.maxHp;
         set({
-          hero: { ...updatedHero, hp: Math.floor(maxHp * 0.3) },
+          hero: { ...updatedHero, hp: 1, restingUntil: Date.now() + REST_DURATION_MS },
           currentDungeon: null,
           currentEnemy: null,
           inCombat: false,
@@ -212,6 +234,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  tickEnergyRegen: () => {
+    const { hero } = get();
+    const now = Date.now();
+    const elapsed = (now - hero.lastEnergyUpdate) / 1000;
+    const newEnergy = Math.min(hero.maxEnergy, hero.energy + elapsed * ENERGY_REGEN_PER_SECOND);
+
+    let newHp = hero.hp;
+    let newRestingUntil = hero.restingUntil;
+
+    if (hero.restingUntil !== null && now >= hero.restingUntil) {
+      newHp = Math.floor(hero.maxHp * REST_HP_RESTORE);
+      newRestingUntil = null;
+      get().addCombatLog('Odpocząłeś! Odzyskałeś 50% zdrowia.', 'system');
+    }
+
+    set({ hero: { ...hero, energy: newEnergy, lastEnergyUpdate: now, hp: newHp, restingUntil: newRestingUntil } });
+  },
+
   addCombatLog: (message: string, type: CombatLog['type']) => {
     set(state => ({
       combatLog: [{ message, type, timestamp: Date.now() }, ...state.combatLog].slice(0, MAX_LOG),
@@ -243,11 +283,19 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!raw) return;
       const save = JSON.parse(raw);
       if (save.hero) {
+        const loadedHero: Hero = {
+          ...save.hero,
+          energy: save.hero.energy ?? MAX_ENERGY,
+          maxEnergy: save.hero.maxEnergy ?? MAX_ENERGY,
+          lastEnergyUpdate: save.hero.lastEnergyUpdate ?? Date.now(),
+          restingUntil: save.hero.restingUntil ?? null,
+        };
         set({
-          hero: save.hero,
+          hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? Date.now(),
         });
+        get().tickEnergyRegen();
       }
     } catch {
       // corrupt save

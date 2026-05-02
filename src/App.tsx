@@ -20,6 +20,7 @@ export default function App() {
   const loadGame = useGameStore(s => s.loadGame);
   const saveGame = useGameStore(s => s.saveGame);
   const initHero = useGameStore(s => s.initHero);
+  const tickEnergyRegen = useGameStore(s => s.tickEnergyRegen);
 
   const user = useAuthStore(s => s.user);
   const authLoading = useAuthStore(s => s.authLoading);
@@ -47,10 +48,12 @@ export default function App() {
     load();
   }, [authLoading, user?.uid]);
 
-  // Auto-save + cloud sync every 30s
+  // Auto-save + cloud sync every 30s, tick energy regen every 30s
   useEffect(() => {
     if (!gameLoaded) return;
+    tickEnergyRegen();
     const id = setInterval(() => {
+      tickEnergyRegen();
       saveGame();
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
     }, 30_000);
