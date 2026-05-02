@@ -26,6 +26,8 @@ function RestTimer({ endsAt }: { endsAt: number }) {
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
+  const restHero = useGameStore(s => s.restHero);
+  const inCombat = useGameStore(s => s.inCombat);
   const xpPct = Math.min(100, (hero.xp / hero.xpToNext) * 100);
   const hpPct = Math.min(100, (hero.hp / hero.maxHp) * 100);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
@@ -60,6 +62,24 @@ export default function HeroCard() {
           <div className="pixel-bar-fill" style={{ width: `${hpPct}%`, background: hpPct > 50 ? '#16a34a' : hpPct > 25 ? '#d97706' : '#dc2626' }} />
         </div>
       </div>
+
+      {/* Rest button */}
+      {(() => {
+        const healAmount = Math.min(Math.ceil(hero.maxHp * 0.3), hero.maxHp - hero.hp);
+        const cost = Math.max(5, healAmount);
+        const canRest = !inCombat && !isResting && hero.hp < hero.maxHp && hero.gold >= cost;
+        const fullHp = hero.hp >= hero.maxHp;
+        return (
+          <button
+            onClick={restHero}
+            disabled={!canRest}
+            className="btn btn-secondary"
+            style={{ width: '100%', fontSize: 7, padding: '5px 8px', opacity: (isResting || fullHp || inCombat) ? 0.5 : 1 }}
+          >
+            {fullHp ? '💤 Odpoczynek (pełne HP)' : isResting ? '💤 Trwa odpoczynek...' : `💤 Odpoczynek +${healAmount} HP (${cost}🪙)`}
+          </button>
+        );
+      })()}
 
       {/* XP Bar */}
       <div>

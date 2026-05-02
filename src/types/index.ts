@@ -134,6 +134,7 @@ export interface GameState {
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
   checkDailyReset: () => void;
+  restHero: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

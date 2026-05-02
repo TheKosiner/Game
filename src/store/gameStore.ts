@@ -261,6 +261,22 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   refreshShop: () => {},
 
+  restHero: () => {
+    const { hero, inCombat } = get();
+    if (inCombat) return;
+    if (hero.restingUntil !== null && Date.now() < hero.restingUntil) return;
+    if (hero.hp >= hero.maxHp) return;
+    const healAmount = Math.min(Math.ceil(hero.maxHp * 0.3), hero.maxHp - hero.hp);
+    const cost = Math.max(5, healAmount);
+    if (hero.gold < cost) {
+      get().addCombatLog(`Za mało złota! Odpoczynek kosztuje ${cost}🪙.`, 'system');
+      return;
+    }
+    set({ hero: { ...hero, hp: hero.hp + healAmount, gold: hero.gold - cost } });
+    get().addCombatLog(`Odpocząłeś! +${healAmount} HP (-${cost}🪙)`, 'system');
+    get().saveGame();
+  },
+
   checkDailyReset: () => {
     const { hero } = get();
     if (!isSameDay(hero.lastDailyReset)) {
