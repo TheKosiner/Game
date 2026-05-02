@@ -56,7 +56,6 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const q = query(
     collection(db, 'players'),
     orderBy('level', 'desc'),
-    orderBy('xp', 'desc'),
     limit(50)
   );
   const snap = await getDocs(q);
