@@ -300,13 +300,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!raw) return;
       const save = JSON.parse(raw);
       if (save.hero) {
+        const isLegacySave = save.hero.dungeonRunsToday === undefined;
         const loadedHero: Hero = {
           ...save.hero,
-          restingUntil: save.hero.restingUntil ?? null,
+          restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
         };
+        if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
