@@ -48,7 +48,7 @@ export default function InventoryPanel() {
               key={`${item.id}-${item.name}`}
               item={item}
               onEquip={() => equipItem(item)}
-              onSell={() => sellItem(item.id)}
+              onSell={() => sellItem(item)}
             />
           ))}
         </div>

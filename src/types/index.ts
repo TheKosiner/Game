@@ -40,10 +40,10 @@ export interface Hero {
   xpToNext: number;
   hp: number;
   maxHp: number;
-  energy: number;
-  maxEnergy: number;
-  lastEnergyUpdate: number;
   restingUntil: number | null;
+  dungeonRunsToday: number;
+  questsCompletedToday: number;
+  lastDailyReset: number;
   stats: Stats;
   equipment: Equipment;
   inventory: Item[];
@@ -121,7 +121,7 @@ export interface GameState {
   addGold: (amount: number) => void;
   equipItem: (item: Item) => void;
   unequipItem: (slot: ItemSlot) => void;
-  sellItem: (itemId: string) => void;
+  sellItem: (item: Item) => void;
   buyItem: (item: Item, price: number) => boolean;
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
@@ -131,7 +131,7 @@ export interface GameState {
   upgradeAttribute: (attr: keyof Stats) => void;
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
-  tickEnergyRegen: () => void;
+  checkDailyReset: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

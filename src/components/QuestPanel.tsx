@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
 
@@ -28,11 +29,25 @@ export default function QuestPanel() {
   const available = ALL_QUESTS.filter(q => q.minLevel <= hero.level);
   const remaining = activeQuest ? activeQuest.endsAt - now : 0;
   const canCollect = activeQuest && now >= activeQuest.endsAt;
-  const progress = activeQuest ? Math.min(100, ((now - activeQuest.startedAt) / activeQuest.quest.durationMs) * 100) : 0;
+  const progress = activeQuest
+    ? Math.min(100, ((now - activeQuest.startedAt) / (activeQuest.endsAt - activeQuest.startedAt)) * 100)
+    : 0;
+  const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
 
   return (
     <div className="card p-4 space-y-3">
-      <h3 className="font-bold text-slate-300">📜 Zadania</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h3 className="font-bold text-slate-300">📜 Zadania</h3>
+        <p style={{ fontSize: 7, color: limitReached ? '#f87171' : '#94a3b8' }}>
+          {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} dziś
+        </p>
+      </div>
+
+      {limitReached && !activeQuest && (
+        <div style={{ background: '#12100a', border: '2px solid #7f1d1d', padding: 8, textAlign: 'center' }}>
+          <p style={{ color: '#f87171', fontSize: 7 }}>📜 Dzienny limit zadań wyczerpany — wróć jutro!</p>
+        </div>
+      )}
 
       {activeQuest && (
         <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl p-3">
@@ -63,30 +78,33 @@ export default function QuestPanel() {
         </div>
       )}
 
-      {!activeQuest && (
+      {!activeQuest && !limitReached && (
         <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
           {available.length === 0 ? (
             <p className="text-slate-500 text-sm text-center py-4">Brak dostępnych zadań dla twojego poziomu.</p>
           ) : (
-            available.map((quest: Quest) => (
-              <div key={quest.id} className="bg-slate-900/60 rounded-lg p-3 border border-slate-700">
-                <div className="flex items-start gap-2 mb-2">
-                  <span className="text-xl">{quest.emoji}</span>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{quest.name}</p>
-                    <p className="text-xs text-slate-400">{quest.description}</p>
+            available.map((quest: Quest) => {
+              const duration = scaledQuestDuration(quest.durationMs, hero.level);
+              return (
+                <div key={quest.id} className="bg-slate-900/60 rounded-lg p-3 border border-slate-700">
+                  <div className="flex items-start gap-2 mb-2">
+                    <span className="text-xl">{quest.emoji}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{quest.name}</p>
+                      <p className="text-xs text-slate-400">{quest.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-3 text-xs">
+                      <span className="text-amber-400">🪙 {quest.goldReward}</span>
+                      <span className="text-blue-400">⭐ {quest.xpReward} XP</span>
+                      <span className="text-slate-400">⏱ {formatTime(duration)}</span>
+                    </div>
+                    <button onClick={() => startQuest(quest)} className="btn btn-primary text-xs py-1 px-3">Start</button>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-3 text-xs">
-                    <span className="text-amber-400">🪙 {quest.goldReward}</span>
-                    <span className="text-blue-400">⭐ {quest.xpReward} XP</span>
-                    <span className="text-slate-400">⏱ {formatTime(quest.durationMs)}</span>
-                  </div>
-                  <button onClick={() => startQuest(quest)} className="btn btn-primary text-xs py-1 px-3">Start</button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}

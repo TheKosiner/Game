@@ -1,5 +1,5 @@
 import { useGameStore } from '../store/gameStore';
-import { ENERGY_COST_PER_FLOOR } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
 import PixelSprite from './PixelSprite';
@@ -80,13 +80,15 @@ function DungeonList() {
   const hero = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
   const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
-  const hasEnergy = hero.energy >= ENERGY_COST_PER_FLOOR;
+  const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <p style={{ color: '#fbbf24', fontSize: 9 }}>⚔️ WYBIERZ LOCH</p>
-        <p style={{ fontSize: 7, color: hasEnergy ? '#3b82f6' : '#475569' }}>⚡ {Math.floor(hero.energy)}/{hero.maxEnergy}</p>
+        <p style={{ fontSize: 7, color: limitReached ? '#f87171' : '#94a3b8' }}>
+          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dziś
+        </p>
       </div>
 
       {isResting && (
@@ -95,16 +97,15 @@ function DungeonList() {
         </div>
       )}
 
-      {!isResting && !hasEnergy && (
-        <div style={{ background: '#12100a', border: '2px solid #475569', padding: 8, textAlign: 'center' }}>
-          <p style={{ color: '#94a3b8', fontSize: 7 }}>⚡ Brak energii — regeneruje się automatycznie</p>
+      {!isResting && limitReached && (
+        <div style={{ background: '#12100a', border: '2px solid #7f1d1d', padding: 8, textAlign: 'center' }}>
+          <p style={{ color: '#f87171', fontSize: 7 }}>⚔️ Dzienny limit lochów wyczerpany — wróć jutro!</p>
         </div>
       )}
 
       {ALL_DUNGEONS.map((dungeon: Dungeon) => {
         const locked = hero.level < dungeon.minLevel;
-        const blocked = locked || isResting || !hasEnergy;
-        const totalCost = dungeon.floors * ENERGY_COST_PER_FLOOR;
+        const blocked = locked || isResting || limitReached;
         return (
           <div key={dungeon.id} style={{ background: '#0a0a1a', border: `2px solid ${locked ? '#1e293b' : '#334155'}`, padding: 10, opacity: blocked ? 0.6 : 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
@@ -119,17 +120,14 @@ function DungeonList() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: 6, color: '#475569' }}>{dungeon.floors} pięter</p>
-                <p style={{ fontSize: 6, color: '#3b82f6' }}>⚡ {ENERGY_COST_PER_FLOOR}/piętro ({totalCost} łącznie)</p>
-              </div>
+              <p style={{ fontSize: 6, color: '#475569' }}>{dungeon.floors} pięter</p>
               <button
                 onClick={() => enterDungeon(dungeon)}
                 disabled={blocked}
                 className="btn btn-primary"
                 style={{ fontSize: 7, padding: '4px 10px' }}
               >
-                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : !hasEnergy ? '⚡ Brak energii' : 'Wejdź ▶'}
+                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : limitReached ? '🚫 Limit' : 'Wejdź ▶'}
               </button>
             </div>
           </div>

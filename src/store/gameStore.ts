@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog } from '../types';
+import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item } from '../types';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { getItemById } from '../data/items';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext } from '../utils/combat';
@@ -7,11 +7,20 @@ import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext } from '..
 const SAVE_KEY = 'realm_of_valor_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
-const MAX_ENERGY = 100;
-const ENERGY_REGEN_PER_SECOND = 1 / 60; // 1 energy per minute
-export const ENERGY_COST_PER_FLOOR = 10;
-const REST_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+export const MAX_DAILY_DUNGEONS = 10;
+export const MAX_DAILY_QUESTS = 10;
+const REST_DURATION_MS = 5 * 60 * 1000;
 const REST_HP_RESTORE = 0.5;
+
+function isSameDay(ts: number): boolean {
+  const a = new Date(ts);
+  const b = new Date();
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function scaledQuestDuration(durationMs: number, level: number): number {
+  return Math.floor(durationMs * (1 + (level - 1) * 0.05));
+}
 
 function createHero(name: string, heroClass: HeroClass): Hero {
   const baseStats: Record<HeroClass, Stats> = {
@@ -29,10 +38,10 @@ function createHero(name: string, heroClass: HeroClass): Hero {
     xpToNext: calcXpToNext(1),
     hp: maxHp,
     maxHp,
-    energy: MAX_ENERGY,
-    maxEnergy: MAX_ENERGY,
-    lastEnergyUpdate: Date.now(),
     restingUntil: null,
+    dungeonRunsToday: 0,
+    questsCompletedToday: 0,
+    lastDailyReset: Date.now(),
     stats,
     equipment: {},
     inventory: [],
@@ -81,10 +90,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, gold: hero.gold + amount } });
   },
 
-  equipItem: (item) => {
+  equipItem: (item: Item) => {
     const { hero } = get();
     const oldEquipped = hero.equipment[item.slot];
-    const newInventory = hero.inventory.filter(i => i.id !== item.id);
+    const newInventory = [...hero.inventory];
+    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    if (idx !== -1) newInventory.splice(idx, 1);
     if (oldEquipped) newInventory.push(oldEquipped);
     set({ hero: { ...hero, equipment: { ...hero.equipment, [item.slot]: item }, inventory: newInventory } });
   },
@@ -99,11 +110,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item] } });
   },
 
-  sellItem: (itemId) => {
+  sellItem: (item: Item) => {
     const { hero } = get();
-    const item = hero.inventory.find(i => i.id === itemId);
-    if (!item) return;
-    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: hero.inventory.filter(i => i.id !== itemId) } });
+    const newInventory = [...hero.inventory];
+    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    if (idx === -1) return;
+    newInventory.splice(idx, 1);
+    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
   },
 
   buyItem: (item, price) => {
@@ -118,20 +131,28 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     if (hero.level < dungeon.minLevel) return;
     if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
-      get().addCombatLog('Odpoczywasz po walce! Poczekaj aż wróci siły.', 'system');
+      get().addCombatLog('Odpoczywasz po walce! Poczekaj aż wrócą siły.', 'system');
       return;
     }
-    if (hero.energy < ENERGY_COST_PER_FLOOR) {
-      get().addCombatLog('Za mało energii! Poczekaj aż się zregeneruje.', 'system');
+    if (hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS) {
+      get().addCombatLog(`Dzienny limit lochów (${MAX_DAILY_DUNGEONS}) wyczerpany! Wróć jutro.`, 'system');
       return;
     }
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
     const enemy = scaleEnemy(baseEnemy, 1);
-    set({ currentDungeon: dungeon, currentFloor: 1, currentEnemy: { ...enemy }, inCombat: true, combatLog: [] });
+    set({
+      currentDungeon: dungeon,
+      currentFloor: 1,
+      currentEnemy: { ...enemy },
+      inCombat: true,
+      combatLog: [],
+      hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
+    });
     get().addCombatLog(`Wchodzisz do "${dungeon.name}" — Piętro 1`, 'system');
     get().addCombatLog(`Napotykasz: ${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`, 'system');
+    get().addCombatLog(`Lochy dziś: ${hero.dungeonRunsToday + 1}/${MAX_DAILY_DUNGEONS}`, 'system');
   },
 
   exitDungeon: () => {
@@ -154,7 +175,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addGold(currentEnemy.goldReward);
       get().addCombatLog(`+${currentEnemy.xpReward} XP, +${currentEnemy.goldReward} złota`, 'loot');
 
-      // Loot drop
       if (Math.random() < 0.3 && currentEnemy.lootTable.length > 0) {
         const lootId = currentEnemy.lootTable[Math.floor(Math.random() * currentEnemy.lootTable.length)];
         const lootItem = getItemById(lootId);
@@ -165,13 +185,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
-      // Deduct energy per floor cleared
-      const heroAfterLoot = get().hero;
-      const newEnergy = Math.max(0, heroAfterLoot.energy - ENERGY_COST_PER_FLOOR);
-      set({ hero: { ...heroAfterLoot, energy: newEnergy } });
-      get().addCombatLog(`-${ENERGY_COST_PER_FLOOR} ⚡ energii`, 'system');
-
-      // Next floor or new enemy
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
@@ -191,7 +204,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
 
       if (newHeroHp <= 0) {
-        get().addCombatLog('Zostałeś pokonany! Odpoczywasz przez 5 minut, po czym odzyskasz 50% HP...', 'system');
+        get().addCombatLog('Zostałeś pokonany! Odpoczywasz 5 minut, po czym odzyskasz 50% HP...', 'system');
         const updatedHero = get().hero;
         set({
           hero: { ...updatedHero, hp: 1, restingUntil: Date.now() + REST_DURATION_MS },
@@ -210,18 +223,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero, activeQuest } = get();
     if (activeQuest) return;
     if (hero.level < quest.minLevel) return;
+    if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) {
+      return;
+    }
     const now = Date.now();
-    set({ activeQuest: { quest, startedAt: now, endsAt: now + quest.durationMs } });
+    const duration = scaledQuestDuration(quest.durationMs, hero.level);
+    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration } });
     get().saveGame();
   },
 
   collectQuest: () => {
-    const { activeQuest } = get();
+    const { activeQuest, hero } = get();
     if (!activeQuest) return;
     if (Date.now() < activeQuest.endsAt) return;
     get().addXp(activeQuest.quest.xpReward);
     get().addGold(activeQuest.quest.goldReward);
-    set({ activeQuest: null });
+    set({ activeQuest: null, hero: { ...get().hero, questsCompletedToday: hero.questsCompletedToday + 1 } });
     get().saveGame();
   },
 
@@ -234,32 +251,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
-  tickEnergyRegen: () => {
-    const { hero } = get();
-    const now = Date.now();
-    const elapsed = (now - hero.lastEnergyUpdate) / 1000;
-    const newEnergy = Math.min(hero.maxEnergy, hero.energy + elapsed * ENERGY_REGEN_PER_SECOND);
-
-    let newHp = hero.hp;
-    let newRestingUntil = hero.restingUntil;
-
-    if (hero.restingUntil !== null && now >= hero.restingUntil) {
-      newHp = Math.floor(hero.maxHp * REST_HP_RESTORE);
-      newRestingUntil = null;
-      get().addCombatLog('Odpocząłeś! Odzyskałeś 50% zdrowia.', 'system');
-    }
-
-    set({ hero: { ...hero, energy: newEnergy, lastEnergyUpdate: now, hp: newHp, restingUntil: newRestingUntil } });
-  },
-
   addCombatLog: (message: string, type: CombatLog['type']) => {
     set(state => ({
       combatLog: [{ message, type, timestamp: Date.now() }, ...state.combatLog].slice(0, MAX_LOG),
     }));
   },
 
-  refreshShop: () => {
-    // Shop items are generated on-the-fly based on hero level in the component
+  refreshShop: () => {},
+
+  checkDailyReset: () => {
+    const { hero } = get();
+    if (!isSameDay(hero.lastDailyReset)) {
+      set({
+        hero: {
+          ...hero,
+          dungeonRunsToday: 0,
+          questsCompletedToday: 0,
+          lastDailyReset: Date.now(),
+        },
+      });
+    }
+    // Apply rest recovery if time is up
+    if (hero.restingUntil !== null && Date.now() >= hero.restingUntil) {
+      const updated = get().hero;
+      set({ hero: { ...updated, hp: Math.floor(updated.maxHp * REST_HP_RESTORE), restingUntil: null } });
+      get().addCombatLog('Odpocząłeś! Odzyskałeś 50% zdrowia.', 'system');
+    }
   },
 
   saveGame: () => {
@@ -285,20 +302,22 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (save.hero) {
         const loadedHero: Hero = {
           ...save.hero,
-          energy: save.hero.energy ?? MAX_ENERGY,
-          maxEnergy: save.hero.maxEnergy ?? MAX_ENERGY,
-          lastEnergyUpdate: save.hero.lastEnergyUpdate ?? Date.now(),
           restingUntil: save.hero.restingUntil ?? null,
+          dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
+          questsCompletedToday: save.hero.questsCompletedToday ?? 0,
+          lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
         };
         set({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? Date.now(),
         });
-        get().tickEnergyRegen();
+        get().checkDailyReset();
       }
     } catch {
       // corrupt save
     }
   },
 }));
+
+export { scaledQuestDuration };

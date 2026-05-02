@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import PixelSprite from './PixelSprite';
 import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
@@ -27,7 +28,8 @@ export default function HeroCard() {
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const xpPct = Math.min(100, (hero.xp / hero.xpToNext) * 100);
   const hpPct = Math.min(100, (hero.hp / hero.maxHp) * 100);
-  const energyPct = Math.min(100, (hero.energy / hero.maxEnergy) * 100);
+  const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
+  const questPct = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
   const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
   const attack = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
@@ -69,14 +71,26 @@ export default function HeroCard() {
         </div>
       </div>
 
-      {/* Energy Bar */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 3 }}>
-          <span>⚡ ENERGIA</span>
-          <span>{Math.floor(hero.energy)}/{hero.maxEnergy}</span>
+      {/* Daily limits */}
+      <div style={{ background: '#0a0a1a', border: '2px solid #1e293b', padding: '6px 8px' }}>
+        <p style={{ color: '#64748b', fontSize: 6, marginBottom: 5 }}>DZIENNY LIMIT</p>
+        <div style={{ marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 2 }}>
+            <span>⚔️ Lochy</span>
+            <span style={{ color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#f87171' : '#e2e8f0' }}>{hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS}</span>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill" style={{ width: `${dungeonPct}%`, background: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#dc2626' : '#7c3aed' }} />
+          </div>
         </div>
-        <div className="pixel-bar">
-          <div className="pixel-bar-fill" style={{ width: `${energyPct}%`, background: energyPct > 50 ? '#3b82f6' : energyPct > 20 ? '#8b5cf6' : '#475569' }} />
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, color: '#64748b', marginBottom: 2 }}>
+            <span>📜 Zadania</span>
+            <span style={{ color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#f87171' : '#e2e8f0' }}>{hero.questsCompletedToday}/{MAX_DAILY_QUESTS}</span>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill" style={{ width: `${questPct}%`, background: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#dc2626' : '#0891b2' }} />
+          </div>
         </div>
       </div>
 
