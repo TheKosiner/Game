@@ -9,8 +9,6 @@ const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
-const REST_DURATION_MS = 5 * 60 * 1000;
-const REST_HP_RESTORE = 0.5;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 
 function isSameDay(ts: number): boolean {
