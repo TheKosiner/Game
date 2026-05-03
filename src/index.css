@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 /* =========================
-   ROOT / PALETA
+   ROOT / NOWA PALETA KLIMATYCZNA
 ========================= */
 :root {
-  --bg-main: #0f1411;
-  --bg-panel: #1a1f1b;
-  --bg-panel-2: #151915;
+  /* Bardziej ziemiste, mroczne kolory */
+  --bg-main: #0a0907; 
+  --bg-panel: #14120e;
+  --bg-panel-overlay: rgba(20, 18, 14, 0.85);
 
-  --text-main: #d6d2c4;
-  --text-dim: #8f8a7a;
+  --text-main: #b8b09a; /* Stary papier / kość */
+  --text-dim: #6e6755;
+  --accent-gold: #9c7a3c; /* Bardziej mosiężny niż żółty */
+  --accent-border: #3d3428; /* Ciemne drewno/metal */
 
-  --accent-gold: #c2a96a;
-  --accent-wood: #6b4f2a;
-
-  --hp: #8e2f2f;
-  --xp: #a8842c;
+  --hp: #a12d2d;
+  --xp: #b3851b;
 }
 
 /* =========================
@@ -24,179 +24,130 @@
 body {
   margin: 0;
   background-color: var(--bg-main);
+  /* DODAJ TŁO TEKSTUROWANE DLA CAŁEJ GRY */
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+    url('https://www.transparenttextures.com/patterns/dark-matter.png'); 
   color: var(--text-main);
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  line-height: 1.6;
-  min-height: 100dvh;
-}
-
-#root {
+  font-size: 13px;
+  line-height: 1.5;
   min-height: 100dvh;
 }
 
 /* =========================
-   TYPO
+   TYPOGRAFIA
 ========================= */
 h1, h2, h3 {
   font-family: 'Cinzel', serif;
   color: var(--accent-gold);
-  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 2px rgba(0,0,0,0.8);
 }
 
 /* =========================
-   CARD / PANEL
+   CARD / PANEL - KLUCZ DO ZMIANY
 ========================= */
 .card {
-  border: 2px solid var(--accent-wood);
-  background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-2));
-  image-rendering: pixelated;
-  box-shadow:
-    inset 0 0 20px rgba(0,0,0,0.7),
-    0 4px 20px rgba(0,0,0,0.5);
+  position: relative;
+  background: var(--bg-panel);
+  /* Tekstura wewnątrz panelu */
+  background-image: url('https://www.transparenttextures.com/patterns/leather.png');
+  border: 3px solid #2a241c;
+  
+  /* Efekt ozdobnej ramki (Border Image) */
+  /* Jeśli masz grafikę ramki, użyj border-image. Tutaj symulujemy to cieniem i podwójną linią */
+  outline: 1px solid var(--accent-border);
+  outline-offset: -4px;
+  
+  box-shadow: 
+    inset 0 0 30px rgba(0,0,0,1),
+    0 10px 25px rgba(0,0,0,0.8);
+  padding: 12px;
+}
+
+/* Dekoracyjne narożniki (opcjonalnie w HTML jako pseudo-elementy) */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; width: 10px; height: 10px;
+  border-top: 3px solid var(--accent-gold);
+  border-left: 3px solid var(--accent-gold);
 }
 
 /* =========================
-   BUTTONS
+   PRZYCISKI - STYLIzOWANE NA METAL/DREWNO
 ========================= */
 .btn {
-  padding: 0.5rem 0.75rem;
-  font-family: 'Inter', sans-serif;
-  font-size: 11px;
+  padding: 0.6rem 1rem;
+  font-family: 'Cinzel', serif;
+  font-weight: bold;
+  text-transform: uppercase;
   cursor: pointer;
-  border: 1px solid var(--accent-wood);
-  background: var(--bg-panel);
-  color: var(--text-main);
-  box-shadow: 2px 2px 0 #000;
-  transition: all 0.1s ease;
-}
-
-.btn:active:not(:disabled) {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 #000;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Primary */
-.btn-primary {
-  background: var(--xp);
-  color: #1a1a1a;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-gold);
-}
-
-/* Secondary */
-.btn-secondary {
-  background: var(--bg-panel);
-  color: var(--text-dim);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: #232823;
-}
-
-/* Danger */
-.btn-danger {
-  background: #5a1f1f;
-  color: #e0b4b4;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #7a2a2a;
-}
-
-/* =========================
-   RARITY
-========================= */
-.rarity-common { color: #8f8a7a; }
-.rarity-uncommon { color: #5f7a5f; }
-.rarity-rare { color: #4a6b8a; }
-.rarity-epic { color: #7a5f8f; }
-.rarity-legendary {
+  border: 2px solid #4a3e2e;
+  background: linear-gradient(180deg, #2a241c 0%, #1a1611 100%);
   color: var(--accent-gold);
-  text-shadow: 0 0 6px rgba(194,169,106,0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  transition: all 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.2);
+  border-color: var(--accent-gold);
 }
 
 /* =========================
-   BARS (HP / XP)
+   BARS (HP / XP) - MNIEJ JASKRAWE
 ========================= */
 .pixel-bar {
-  height: 10px;
-  background: #1a1a1a;
-  border: 1px solid var(--accent-wood);
-}
-
-.pixel-bar-fill {
-  height: 100%;
-  transition: width 0.3s steps(10);
+  height: 14px;
+  background: #0d0d0d;
+  border: 2px solid #2a241c;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+  position: relative;
 }
 
 .hp-fill {
-  background: linear-gradient(90deg, #5a1f1f, var(--hp));
+  background: linear-gradient(90deg, #4a1010, #a12d2d);
+  box-shadow: inset 0 0 8px rgba(255,0,0,0.3);
 }
 
 .xp-fill {
-  background: linear-gradient(90deg, #6e561f, var(--xp));
+  background: linear-gradient(90deg, #5c4510, #b3851b);
 }
 
 /* =========================
-   COMBAT LOG
+   EKWIPUNEK / SLOTY (GRID)
 ========================= */
-.combat-log {
-  font-family: 'Inter', sans-serif;
-  font-size: 10px;
-  line-height: 1.6;
-  background: #0b0b0b;
-  border: 1px solid var(--accent-wood);
+.inventory-slot {
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #3d3428;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.inventory-slot:hover {
+  border-color: var(--accent-gold);
+  background: rgba(156, 122, 60, 0.1);
 }
 
 /* =========================
-   SPRITES
-========================= */
-.sprite-container {
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-/* =========================
-   ANIMACJE
-========================= */
-@keyframes pixelBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-.pixel-hit { animation: pixelBlink 0.15s steps(1) 3; }
-
-@keyframes pixelBounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-.pixel-bounce { animation: pixelBounce 0.4s steps(4) 2; }
-
-/* =========================
-   SCROLLBAR
-========================= */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #111; }
-::-webkit-scrollbar-thumb { background: #3a3a3a; }
-
-/* =========================
-   ATMOSFERA (KLIMAT)
+   ATMOSFERA - WINIETA I MGŁA
 ========================= */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
+  /* Mocniejsza winieta dla skupienia na środku */
   background: radial-gradient(
-    circle at 50% 20%,
-    rgba(194,169,106,0.05),
-    transparent 60%
+    circle at 50% 50%,
+    transparent 20%,
+    rgba(0,0,0,0.4) 70%,
+    rgba(0,0,0,0.9) 100%
   );
 }
