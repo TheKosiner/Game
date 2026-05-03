@@ -1,16 +1,22 @@
 @import "tailwindcss";
 
-/* ── Zmienne (Mroczne Fantasy) ────────────────────────── */
+/* ── Zmienne kolorystyczne ─────────────────────────────── */
 :root {
-  --bg-main: #0a0907; 
-  --bg-panel: #14120e;
-  --text-main: #b8b09a; 
-  --text-dim: #6e6755;
-  --accent-gold: #9c7a3c; 
-  --accent-border: #3d3428; 
-  --hp: #a12d2d;
-  --xp: #b3851b;
-  --gold-glow: rgba(156, 122, 60, 0.3);
+  --bg:          #060912;
+  --card:        #0c1120;
+  --card2:       #0a0e1c;
+  --border:      rgba(90, 110, 190, 0.22);
+  --border-hi:   rgba(140, 160, 255, 0.14);
+  --gold:        #f59e0b;
+  --gold-dark:   #92400e;
+  --gold-glow:   rgba(245, 158, 11, 0.35);
+  --blue:        #3b82f6;
+  --purple:      #8b5cf6;
+  --red:         #ef4444;
+  --green:       #22c55e;
+  --text:        #e2e8f0;
+  --text-dim:    #64748b;
+  --text-muted:  #334155;
 }
 
 /* ── Base ──────────────────────────────────────────────── */
@@ -18,117 +24,15 @@
 
 body {
   margin: 0;
-  background-color: var(--bg-main) !important;
-  /* Tekstura tła */
-  background-image: 
-    linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
-    url('https://www.transparenttextures.com/patterns/dark-matter.png') !important;
-  color: var(--text-main);
-  font-family: 'Cinzel', serif; /* Zmieniamy na font fantasy */
-  font-size: 12px;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(59, 51, 140, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 85% 90%, rgba(100, 60, 180, 0.12) 0%, transparent 70%);
+  color: var(--text);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
   line-height: 1.6;
   min-height: 100dvh;
 }
 
-/* ── Klasa Card (Ozdobna Rama) ────────────────────────── */
-.card {
-  position: relative !important;
-  background-color: var(--bg-panel) !important;
-  background-image: url('https://www.transparenttextures.com/patterns/leather.png') !important;
-  border: 3px solid #2a241c !important;
-  
-  /* Podwójna rama */
-  outline: 1px solid var(--accent-border) !important;
-  outline-offset: -4px !important;
-  
-  box-shadow: 
-    inset 0 0 30px rgba(0,0,0,1),
-    0 10px 25px rgba(0,0,0,0.8) !important;
-  padding: 12px;
-  border-radius: 2px;
-}
-
-/* Narożniki ozdobne */
-.card::before {
-  content: "";
-  position: absolute;
-  top: -2px; left: -2px; width: 12px; height: 12px;
-  border-top: 3px solid var(--accent-gold);
-  border-left: 3px solid var(--accent-gold);
-  z-index: 10;
-}
-
-/* ── Przyciski (Stylizowane na mosiądz/drewno) ─────────── */
-.btn {
-  padding: 0.6rem 1rem !important;
-  font-family: 'Cinzel', serif !important;
-  font-weight: bold;
-  text-transform: uppercase;
-  cursor: pointer;
-  border: 2px solid #4a3e2e !important;
-  background: linear-gradient(180deg, #2a241c 0%, #1a1611 100%) !important;
-  color: var(--accent-gold) !important;
-  box-shadow: 0 4px 0 #000;
-  transition: all 0.1s ease;
-}
-
-.btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 2px 0 #000;
-}
-
-.btn-primary {
-  background: linear-gradient(180deg, #5c4510 0%, #3d2e0a 100%) !important;
-  border-color: var(--accent-gold) !important;
-}
-
-/* ── Bary (HP / XP) ────────────────────────────────────── */
-.pixel-bar {
-  height: 14px !important;
-  background: #0d0d0d !important;
-  border: 2px solid #2a241c !important;
-  border-radius: 0;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-}
-
-.hp-fill { 
-  background: linear-gradient(90deg, #4a1010, #a12d2d) !important; 
-  box-shadow: 0 0 10px rgba(161, 45, 45, 0.4);
-}
-
-.xp-fill { 
-  background: linear-gradient(90deg, #5c4510, #b3851b) !important; 
-  box-shadow: 0 0 10px rgba(179, 133, 27, 0.4);
-}
-
-/* ── Rarity ────────────────────────────────────────────── */
-.rarity-common    { color: #6e6755; }
-.rarity-uncommon  { color: #4a5d4a; }
-.rarity-rare      { color: #3a5a7a; }
-.rarity-epic      { color: #6a4a7a; }
-.rarity-legendary {
-  color: var(--accent-gold);
-  text-shadow: 0 0 8px rgba(156, 122, 60, 0.6);
-}
-
-/* ── Zachowane Animacje ────────────────────────────────── */
-@keyframes glowPulse {
-  0%, 100% { box-shadow: inset 0 0 10px var(--gold-glow); }
-  50% { box-shadow: inset 0 0 25px var(--gold-glow), 0 0 15px rgba(156, 122, 60, 0.2); }
-}
-.glow-gold { animation: glowPulse 2.5s ease-in-out infinite; }
-
-@keyframes floatUp {
-  0%   { transform: translateY(0); opacity: 1; }
-  100% { transform: translateY(-40px); opacity: 0; }
-}
-.pixel-bounce { animation: floatUp 0.8s ease-out forwards; }
-
-/* ── Winieta na ekranie ────────────────────────────────── */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%);
-}
+/* ... (tutaj reszta klas: .card, .btn, .pixel-bar, które miałeś wcześniej) ... */
