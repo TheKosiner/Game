@@ -1,34 +1,31 @@
 @import "tailwindcss";
 
 /* =========================
-   ROOT / NOWA PALETA KLIMATYCZNA
+   ROOT / PALETA
 ========================= */
 :root {
-  /* Bardziej ziemiste, mroczne kolory */
   --bg-main: #0a0907; 
   --bg-panel: #14120e;
   --bg-panel-overlay: rgba(20, 18, 14, 0.85);
-
-  --text-main: #b8b09a; /* Stary papier / kość */
+  --text-main: #b8b09a; 
   --text-dim: #6e6755;
-  --accent-gold: #9c7a3c; /* Bardziej mosiężny niż żółty */
-  --accent-border: #3d3428; /* Ciemne drewno/metal */
-
+  --accent-gold: #9c7a3c; 
+  --accent-border: #3d3428; 
   --hp: #a12d2d;
   --xp: #b3851b;
 }
 
 /* =========================
-   BASE
+   BASE - WYMUSZENIE TŁA
 ========================= */
 body {
   margin: 0;
-  background-color: var(--bg-main);
-  /* DODAJ TŁO TEKSTUROWANE DLA CAŁEJ GRY */
+  /* Dodajemy !important, żeby Tailwind nie nadpisał koloru tła */
+  background-color: var(--bg-main) !important;
   background-image: 
     linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-    url('https://www.transparenttextures.com/patterns/dark-matter.png'); 
-  color: var(--text-main);
+    url('https://www.transparenttextures.com/patterns/dark-matter.png') !important; 
+  color: var(--text-main) !important;
   font-family: 'Inter', sans-serif;
   font-size: 13px;
   line-height: 1.5;
@@ -36,118 +33,54 @@ body {
 }
 
 /* =========================
-   TYPOGRAFIA
-========================= */
-h1, h2, h3 {
-  font-family: 'Cinzel', serif;
-  color: var(--accent-gold);
-  text-transform: uppercase;
-  text-shadow: 2px 2px 2px rgba(0,0,0,0.8);
-}
-
-/* =========================
-   CARD / PANEL - KLUCZ DO ZMIANY
+   CARD / PANEL - POPRAWKA PRIORYTETU
 ========================= */
 .card {
-  position: relative;
-  background: var(--bg-panel);
-  /* Tekstura wewnątrz panelu */
-  background-image: url('https://www.transparenttextures.com/patterns/leather.png');
-  border: 3px solid #2a241c;
+  position: relative !important;
+  background-color: var(--bg-panel) !important;
+  background-image: url('https://www.transparenttextures.com/patterns/leather.png') !important;
+  border: 3px solid #2a241c !important;
   
-  /* Efekt ozdobnej ramki (Border Image) */
-  /* Jeśli masz grafikę ramki, użyj border-image. Tutaj symulujemy to cieniem i podwójną linią */
-  outline: 1px solid var(--accent-border);
-  outline-offset: -4px;
+  /* To tworzy tę "podwójną ramkę" z wizualizacji */
+  outline: 1px solid var(--accent-border) !important;
+  outline-offset: -4px !important;
   
   box-shadow: 
     inset 0 0 30px rgba(0,0,0,1),
-    0 10px 25px rgba(0,0,0,0.8);
+    0 10px 25px rgba(0,0,0,0.8) !important;
   padding: 12px;
 }
 
-/* Dekoracyjne narożniki (opcjonalnie w HTML jako pseudo-elementy) */
+/* Narożniki - upewnij się, że .card ma overflow: visible */
 .card::before {
   content: "";
   position: absolute;
   top: -2px; left: -2px; width: 10px; height: 10px;
   border-top: 3px solid var(--accent-gold);
   border-left: 3px solid var(--accent-gold);
+  z-index: 10;
 }
 
 /* =========================
-   PRZYCISKI - STYLIzOWANE NA METAL/DREWNO
+   PRZYCISKI
 ========================= */
 .btn {
-  padding: 0.6rem 1rem;
-  font-family: 'Cinzel', serif;
-  font-weight: bold;
+  padding: 0.6rem 1rem !important;
+  font-family: 'Cinzel', serif !important;
+  border: 2px solid #4a3e2e !important;
+  background: linear-gradient(180deg, #2a241c 0%, #1a1611 100%) !important;
+  color: var(--accent-gold) !important;
   text-transform: uppercase;
-  cursor: pointer;
-  border: 2px solid #4a3e2e;
-  background: linear-gradient(180deg, #2a241c 0%, #1a1611 100%);
-  color: var(--accent-gold);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  transition: all 0.2s ease;
-}
-
-.btn:hover:not(:disabled) {
-  filter: brightness(1.2);
-  border-color: var(--accent-gold);
 }
 
 /* =========================
-   BARS (HP / XP) - MNIEJ JASKRAWE
+   BARS
 ========================= */
 .pixel-bar {
-  height: 14px;
-  background: #0d0d0d;
-  border: 2px solid #2a241c;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
-  position: relative;
+  height: 14px !important;
+  background: #0d0d0d !important;
+  border: 2px solid #2a241c !important;
 }
 
-.hp-fill {
-  background: linear-gradient(90deg, #4a1010, #a12d2d);
-  box-shadow: inset 0 0 8px rgba(255,0,0,0.3);
-}
-
-.xp-fill {
-  background: linear-gradient(90deg, #5c4510, #b3851b);
-}
-
-/* =========================
-   EKWIPUNEK / SLOTY (GRID)
-========================= */
-.inventory-slot {
-  width: 50px;
-  height: 50px;
-  background: rgba(0,0,0,0.4);
-  border: 2px solid #3d3428;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s;
-}
-
-.inventory-slot:hover {
-  border-color: var(--accent-gold);
-  background: rgba(156, 122, 60, 0.1);
-}
-
-/* =========================
-   ATMOSFERA - WINIETA I MGŁA
-========================= */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  /* Mocniejsza winieta dla skupienia na środku */
-  background: radial-gradient(
-    circle at 50% 50%,
-    transparent 20%,
-    rgba(0,0,0,0.4) 70%,
-    rgba(0,0,0,0.9) 100%
-  );
-}
+.hp-fill { background: linear-gradient(90deg, #4a1010, #a12d2d) !important; }
+.xp-fill { background: linear-gradient(90deg, #5c4510, #b3851b) !important; }
