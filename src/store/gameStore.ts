@@ -39,6 +39,7 @@ function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor 
     hp: maxHp,
     maxHp,
     restingUntil: null,
+    voluntaryRestUntil: null,
     dungeonRunsToday: 0,
     questsCompletedToday: 0,
     lastDailyReset: Date.now(),
@@ -265,15 +266,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero, inCombat } = get();
     if (inCombat) return;
     if (hero.restingUntil !== null && Date.now() < hero.restingUntil) return;
+    if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (hero.hp >= hero.maxHp) return;
-    const healAmount = Math.min(Math.ceil(hero.maxHp * 0.3), hero.maxHp - hero.hp);
-    const cost = Math.max(5, healAmount);
-    if (hero.gold < cost) {
-      get().addCombatLog(`Za mało złota! Odpoczynek kosztuje ${cost}🪙.`, 'system');
-      return;
-    }
-    set({ hero: { ...hero, hp: hero.hp + healAmount, gold: hero.gold - cost } });
-    get().addCombatLog(`Odpocząłeś! +${healAmount} HP (-${cost}🪙)`, 'system');
+    const endsAt = Date.now() + 10 * 60 * 1000;
+    set({ hero: { ...hero, voluntaryRestUntil: endsAt } });
+    get().addCombatLog('Odpoczywasz... Za 10 minut odzyskasz 10 HP.', 'system');
     get().saveGame();
   },
 
@@ -289,11 +286,18 @@ export const useGameStore = create<GameState>((set, get) => ({
         },
       });
     }
-    // Apply rest recovery if time is up
+    // Apply forced rest recovery if time is up
     if (hero.restingUntil !== null && Date.now() >= hero.restingUntil) {
       const updated = get().hero;
       set({ hero: { ...updated, hp: Math.floor(updated.maxHp * REST_HP_RESTORE), restingUntil: null } });
       get().addCombatLog('Odpocząłeś! Odzyskałeś 50% zdrowia.', 'system');
+    }
+    // Apply voluntary rest recovery if time is up
+    if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
+      const updated = get().hero;
+      const healAmount = Math.min(10, updated.maxHp - updated.hp);
+      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null } });
+      if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
     }
   },
 
@@ -322,6 +326,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const loadedHero: Hero = {
           ...save.hero,
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
+          voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),

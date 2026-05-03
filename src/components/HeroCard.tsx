@@ -33,6 +33,7 @@ export default function HeroCard() {
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
   const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
+  const isVoluntaryResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
   const attack = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite = CLASS_SPRITES[hero.class];
@@ -63,23 +64,21 @@ export default function HeroCard() {
         </div>
       </div>
 
-      {/* Rest button */}
-      {(() => {
-        const healAmount = Math.min(Math.ceil(hero.maxHp * 0.3), hero.maxHp - hero.hp);
-        const cost = Math.max(5, healAmount);
-        const canRest = !inCombat && !isResting && hero.hp < hero.maxHp && hero.gold >= cost;
-        const fullHp = hero.hp >= hero.maxHp;
-        return (
-          <button
-            onClick={restHero}
-            disabled={!canRest}
-            className="btn btn-secondary"
-            style={{ width: '100%', fontSize: 7, padding: '5px 8px', opacity: (isResting || fullHp || inCombat) ? 0.5 : 1 }}
-          >
-            {fullHp ? '💤 Odpoczynek (pełne HP)' : isResting ? '💤 Trwa odpoczynek...' : `💤 Odpoczynek +${healAmount} HP (${cost}🪙)`}
-          </button>
-        );
-      })()}
+      {/* Voluntary rest */}
+      {isVoluntaryResting ? (
+        <div style={{ background: '#0a1220', border: '2px solid #334155', padding: '6px 10px', textAlign: 'center' }}>
+          <p style={{ color: '#94a3b8', fontSize: 7 }}>💤 Odpoczywasz — +10 HP za: <RestTimer endsAt={hero.voluntaryRestUntil!} /></p>
+        </div>
+      ) : (
+        <button
+          onClick={restHero}
+          disabled={inCombat || isResting || hero.hp >= hero.maxHp}
+          className="btn btn-secondary"
+          style={{ width: '100%', fontSize: 7, padding: '5px 8px' }}
+        >
+          {hero.hp >= hero.maxHp ? '💤 Odpoczynek (pełne HP)' : '💤 Odpoczynek — +10 HP za 10 min'}
+        </button>
+      )}
 
       {/* XP Bar */}
       <div>

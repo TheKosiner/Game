@@ -41,6 +41,7 @@ export interface Hero {
   hp: number;
   maxHp: number;
   restingUntil: number | null;
+  voluntaryRestUntil: number | null;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
