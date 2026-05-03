@@ -347,7 +347,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...save.hero,
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
-          voluntaryRestHp: save.hero.voluntaryRestHp ?? null,
+          // Migrate old saves: if resting but no HP amount stored, derive from time remaining
+          voluntaryRestHp: save.hero.voluntaryRestHp != null
+            ? save.hero.voluntaryRestHp
+            : (save.hero.voluntaryRestUntil && Date.now() < save.hero.voluntaryRestUntil
+              ? Math.ceil((save.hero.voluntaryRestUntil - Date.now()) / 60000)
+              : null),
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
