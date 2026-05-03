@@ -145,8 +145,8 @@ export default function ShopPanel() {
 
       {/* Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {shopItems.filter((_, i) => !shopPurchased.includes(i)).map(({ item, price, featured }) => {
-          const idx = shopItems.findIndex(s => s.item === item);
+        {shopItems.map(({ item, price, featured }, idx) => {
+          if (shopPurchased.includes(idx)) return null;
           const canAfford = hero.gold >= price;
           const rarityColor = RARITY_COLORS[item.rarity];
           const glowBg = RARITY_GLOW[item.rarity];

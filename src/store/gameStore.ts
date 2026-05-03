@@ -144,6 +144,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       hero: { ...hero, gold: hero.gold - price, inventory: [...hero.inventory, item] },
       shopPurchased: [...shopPurchased, slotIndex],
     });
+    get().saveGame();
     return true;
   },
 
