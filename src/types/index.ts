@@ -117,6 +117,8 @@ export interface GameState {
   combatLog: CombatLog[];
   inCombat: boolean;
   lastSaved: number;
+  shopSeed: number;
+  lastShopRefresh: number;
 
   // actions
   initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;

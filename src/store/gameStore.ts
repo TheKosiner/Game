@@ -11,6 +11,7 @@ export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
 const REST_DURATION_MS = 5 * 60 * 1000;
 const REST_HP_RESTORE = 0.5;
+export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 
 function isSameDay(ts: number): boolean {
   const a = new Date(ts);
@@ -63,10 +64,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   combatLog: [],
   inCombat: false,
   lastSaved: Date.now(),
+  shopSeed: Date.now(),
+  lastShopRefresh: 0,
 
   initHero: (name, heroClass, skinTone = 1, hairColor = 2) => {
     const hero = createHero(name, heroClass, skinTone, hairColor);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0 });
     get().saveGame();
   },
 
@@ -260,7 +263,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     }));
   },
 
-  refreshShop: () => {},
+  refreshShop: () => {
+    const { lastShopRefresh } = get();
+    const now = Date.now();
+    if (now - lastShopRefresh < SHOP_REFRESH_COOLDOWN) return;
+    set({ shopSeed: now, lastShopRefresh: now });
+    get().saveGame();
+  },
 
   restHero: () => {
     const { hero, inCombat } = get();
@@ -307,6 +316,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       hero: state.hero,
       activeQuest: state.activeQuest,
       lastSaved: Date.now(),
+      shopSeed: state.shopSeed,
+      lastShopRefresh: state.lastShopRefresh,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -338,6 +349,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? Date.now(),
+          shopSeed: save.shopSeed ?? Date.now(),
+          lastShopRefresh: save.lastShopRefresh ?? 0,
         });
         get().checkDailyReset();
       }

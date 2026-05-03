@@ -1,70 +1,244 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { getItemsForLevel } from '../data/items';
+import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
+import { generateShopItems } from '../data/items';
 import type { Item } from '../types';
+
+const RARITY_COLORS: Record<string, string> = {
+  common: '#94a3b8',
+  uncommon: '#4ade80',
+  rare: '#60a5fa',
+  epic: '#c084fc',
+  legendary: '#f59e0b',
+};
+
+const RARITY_GLOW: Record<string, string> = {
+  common: 'transparent',
+  uncommon: 'rgba(74,222,128,0.15)',
+  rare: 'rgba(96,165,250,0.15)',
+  epic: 'rgba(192,132,252,0.2)',
+  legendary: 'rgba(245,158,11,0.25)',
+};
+
+const RARITY_LABEL: Record<string, string> = {
+  common: 'ZWYKŁY',
+  uncommon: 'NIEZWYKŁY',
+  rare: 'RZADKI',
+  epic: 'EPICKI',
+  legendary: 'LEGENDARNY',
+};
+
+const SLOT_LABEL: Record<string, string> = {
+  weapon: 'Broń', armor: 'Zbroja', helmet: 'Hełm',
+  boots: 'Buty', ring: 'Pierścień', amulet: 'Amulet',
+};
+
+function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
+  const [remaining, setRemaining] = useState(Math.max(0, cooldownEnd - Date.now()));
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const r = Math.max(0, cooldownEnd - Date.now());
+      setRemaining(r);
+      if (r === 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [cooldownEnd]);
+
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  return (
+    <span style={{ color: '#60a5fa', textShadow: '0 0 8px rgba(96,165,250,0.6)' }}>
+      {mins}:{secs.toString().padStart(2, '0')}
+    </span>
+  );
+}
 
 export default function ShopPanel() {
   const hero = useGameStore(s => s.hero);
   const buyItem = useGameStore(s => s.buyItem);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [seed, setSeed] = useState(0);
+  const refreshShop = useGameStore(s => s.refreshShop);
+  const shopSeed = useGameStore(s => s.shopSeed);
+  const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
 
-  const shopItems = useMemo(() => {
-    const items = getItemsForLevel(hero.level, 6);
-    return items.map(item => ({ item, price: Math.round(item.goldValue * 1.5) }));
-  }, [hero.level, seed]);
+  const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
+
+  const shopItems = generateShopItems(hero.level, shopSeed);
+
+  const cooldownEnd = lastShopRefresh + SHOP_REFRESH_COOLDOWN;
+  const canRefresh = Date.now() >= cooldownEnd;
 
   function handleBuy(item: Item, price: number) {
     const success = buyItem(item, price);
     if (success) {
-      setNotification(`Kupiono: ${item.emoji} ${item.name}`);
+      setNotification({ text: `Kupiono: ${item.emoji} ${item.name}`, ok: true });
     } else if (hero.gold < price) {
-      setNotification('Za mało złota!');
+      setNotification({ text: 'Za mało złota!', ok: false });
     } else {
-      setNotification('Plecak pełny!');
+      setNotification({ text: 'Plecak pełny!', ok: false });
     }
-    setTimeout(() => setNotification(null), 2000);
+    setTimeout(() => setNotification(null), 2500);
   }
 
   return (
-    <div className="card p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="font-bold text-slate-300">🛒 Sklep</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-amber-400 font-bold text-sm">🪙 {hero.gold}</span>
-          <button onClick={() => setSeed(s => s + 1)} className="btn btn-secondary text-xs py-1 px-2">🔄 Odśwież</button>
+    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <p style={{ fontSize: 10, marginBottom: 2,
+            background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+          }}>🛒 SKLEP</p>
+          <p style={{ color: '#475569', fontSize: 6 }}>Ekwipunek dobierany do Twojego poziomu</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            color: '#fbbf24', fontSize: 8,
+            background: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.2)',
+            borderRadius: 3,
+            padding: '3px 8px',
+          }}>🪙 {hero.gold}</span>
+          <button
+            onClick={refreshShop}
+            disabled={!canRefresh}
+            className="btn btn-secondary"
+            style={{ fontSize: 6, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}
+          >
+            🔄 Odśwież
+          </button>
         </div>
       </div>
 
-      <p className="text-slate-500 text-xs">Tylko kosmetyki i wygoda w prawdziwym sklepie — tu jest sprzęt z lochu!</p>
-
-      {notification && (
-        <div className="bg-amber-900/30 border border-amber-600 rounded-lg p-2 text-amber-300 text-sm text-center">
-          {notification}
+      {/* Cooldown banner */}
+      {!canRefresh && (
+        <div style={{
+          background: 'rgba(10,20,40,0.7)',
+          border: '1px solid rgba(51,65,85,0.5)',
+          borderRadius: 4,
+          padding: '6px 10px',
+          textAlign: 'center',
+        }}>
+          <p style={{ color: '#64748b', fontSize: 6 }}>
+            ⏳ Następne odświeżenie za: <CooldownTimer cooldownEnd={cooldownEnd} />
+          </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2">
-        {shopItems.map(({ item, price }, idx) => {
+      {/* Notification */}
+      {notification && (
+        <div style={{
+          background: notification.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+          border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+          borderRadius: 4,
+          padding: '7px 12px',
+          textAlign: 'center',
+          color: notification.ok ? '#4ade80' : '#f87171',
+          fontSize: 7,
+        }}>
+          {notification.text}
+        </div>
+      )}
+
+      {/* Items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {shopItems.map(({ item, price, featured }, idx) => {
           const canAfford = hero.gold >= price;
-          const statEntries = Object.entries(item.stats).filter(([, v]) => v && v > 0);
+          const rarityColor = RARITY_COLORS[item.rarity];
+          const glowBg = RARITY_GLOW[item.rarity];
+          const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
+
           return (
-            <div key={`${item.id}-${idx}`} className={`bg-slate-900/60 rounded-lg p-3 border rarity-${item.rarity} border-current`}>
-              <div className="flex items-start gap-2">
-                <span className="text-2xl">{item.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm truncate rarity-${item.rarity}`}>{item.name}</p>
-                  <p className="text-slate-500 text-xs capitalize">{item.slot} · Poz. {item.level}</p>
-                  <p className="text-slate-400 text-xs">
-                    {statEntries.map(([k, v]) => `+${v} ${k.slice(0,3)}`).join(' ')}
-                    {item.attackBonus ? ` ⚔️+${item.attackBonus}` : ''}
-                    {item.defenseBonus ? ` 🛡️+${item.defenseBonus}` : ''}
+            <div
+              key={`${item.id}-${idx}`}
+              style={{
+                background: featured
+                  ? `linear-gradient(135deg, ${glowBg}, rgba(5,8,20,0.95))`
+                  : 'rgba(5,8,20,0.7)',
+                border: `1px solid ${featured ? rarityColor + '55' : 'rgba(30,41,59,0.7)'}`,
+                borderRadius: 4,
+                padding: 10,
+                boxShadow: featured ? `0 0 20px ${rarityColor}22` : 'none',
+                position: 'relative',
+              }}
+            >
+              {featured && (
+                <div style={{
+                  position: 'absolute', top: -1, right: 8,
+                  background: rarityColor,
+                  color: '#000',
+                  fontSize: 5,
+                  padding: '2px 5px',
+                  borderRadius: '0 0 3px 3px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  letterSpacing: '0.05em',
+                }}>
+                  ★ OFERTA
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Icon */}
+                <div style={{
+                  background: 'rgba(5,8,20,0.9)',
+                  border: `1px solid ${rarityColor}33`,
+                  borderRadius: 3,
+                  padding: '6px 8px',
+                  fontSize: 18,
+                  flexShrink: 0,
+                  boxShadow: featured ? `0 0 12px ${rarityColor}44` : 'none',
+                }}>
+                  {item.emoji}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                    <p style={{ color: rarityColor, fontSize: 7, textShadow: featured ? `0 0 8px ${rarityColor}88` : 'none' }}>
+                      {item.name}
+                    </p>
+                    <span style={{
+                      color: rarityColor, fontSize: 5,
+                      background: rarityColor + '18',
+                      border: `1px solid ${rarityColor}44`,
+                      borderRadius: 2,
+                      padding: '1px 3px',
+                    }}>
+                      {RARITY_LABEL[item.rarity]}
+                    </span>
+                  </div>
+                  <p style={{ color: '#475569', fontSize: 6, marginBottom: 3 }}>
+                    {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
+                  </p>
+                  <p style={{ color: '#64748b', fontSize: 6 }}>
+                    {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Siła', agility: 'Zwin', intelligence: 'Intel', constitution: 'Kond' } as Record<string, string>)[k] ?? k}`).join('  ')}
+                    {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
+                    {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
                   </p>
                 </div>
+
+                {/* Buy button */}
                 <button
                   onClick={() => handleBuy(item, price)}
                   disabled={!canAfford}
-                  className="btn btn-primary text-xs py-1 px-2 whitespace-nowrap"
+                  style={{
+                    background: canAfford
+                      ? `linear-gradient(135deg, ${rarityColor}22, rgba(5,8,20,0.9))`
+                      : 'rgba(15,23,42,0.6)',
+                    border: `1px solid ${canAfford ? rarityColor + '55' : 'rgba(51,65,85,0.4)'}`,
+                    borderRadius: 3,
+                    padding: '6px 8px',
+                    color: canAfford ? rarityColor : '#475569',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: 6,
+                    cursor: canAfford ? 'pointer' : 'not-allowed',
+                    flexShrink: 0,
+                    textAlign: 'center',
+                    minWidth: 54,
+                    transition: 'all 0.15s',
+                    boxShadow: canAfford && featured ? `0 0 10px ${rarityColor}33` : 'none',
+                  }}
                 >
                   🪙 {price}
                 </button>
