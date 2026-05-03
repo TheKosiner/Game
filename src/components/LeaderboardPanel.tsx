@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
+import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
 
 const CLASS_SPRITES = {
   warrior: SPRITE_WARRIOR,
@@ -93,6 +93,7 @@ export default function LeaderboardPanel() {
             const isMe = entry.uid === user?.uid;
             const sprite = CLASS_SPRITES[entry.heroClass as keyof typeof CLASS_SPRITES];
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : '#475569';
+            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2);
 
             return (
               <div
@@ -117,7 +118,7 @@ export default function LeaderboardPanel() {
                 {/* Sprite */}
                 {sprite ? (
                   <div style={{ background: '#0a0a1a', border: '2px solid #1e293b', padding: 2, flexShrink: 0 }}>
-                    <PixelSprite grid={sprite} scale={2} />
+                    <PixelSprite grid={sprite} scale={2} paletteOverrides={palette} />
                   </div>
                 ) : null}
 

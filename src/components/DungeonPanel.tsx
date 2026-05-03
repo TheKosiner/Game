@@ -127,7 +127,7 @@ function DungeonList() {
                 className="btn btn-primary"
                 style={{ fontSize: 7, padding: '4px 10px' }}
               >
-                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : limitReached ? '🚫 Limit' : 'Wejdź ▶'}
+                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : limitReached ? '⛔ Limit' : 'Wejdź ▶'}
               </button>
             </div>
           </div>

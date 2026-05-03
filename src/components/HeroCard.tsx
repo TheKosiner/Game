@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
+import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
 
 const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
 const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Lotrzyk' };
@@ -26,21 +26,25 @@ function RestTimer({ endsAt }: { endsAt: number }) {
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
+  const restHero = useGameStore(s => s.restHero);
+  const inCombat = useGameStore(s => s.inCombat);
   const xpPct = Math.min(100, (hero.xp / hero.xpToNext) * 100);
   const hpPct = Math.min(100, (hero.hp / hero.maxHp) * 100);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
   const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
+  const isVoluntaryResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
   const attack = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite = CLASS_SPRITES[hero.class];
+  const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
 
   return (
     <div className="card p-3 space-y-3">
       {/* Header with sprite */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ background: '#0a0a1a', border: '3px solid #334155', padding: 6, boxShadow: '3px 3px 0 #000', flexShrink: 0 }}>
-          <PixelSprite grid={sprite} scale={3} />
+          <PixelSprite grid={sprite} scale={3} paletteOverrides={palette} />
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ color: '#fbbf24', fontSize: 11, marginBottom: 2, wordBreak: 'break-all' }}>{hero.name}</p>
@@ -59,6 +63,22 @@ export default function HeroCard() {
           <div className="pixel-bar-fill" style={{ width: `${hpPct}%`, background: hpPct > 50 ? '#16a34a' : hpPct > 25 ? '#d97706' : '#dc2626' }} />
         </div>
       </div>
+
+      {/* Voluntary rest */}
+      {isVoluntaryResting ? (
+        <div style={{ background: '#0a1220', border: '2px solid #334155', padding: '6px 10px', textAlign: 'center' }}>
+          <p style={{ color: '#94a3b8', fontSize: 7 }}>💤 Odpoczywasz — +10 HP za: <RestTimer endsAt={hero.voluntaryRestUntil!} /></p>
+        </div>
+      ) : (
+        <button
+          onClick={restHero}
+          disabled={inCombat || isResting || hero.hp >= hero.maxHp}
+          className="btn btn-secondary"
+          style={{ width: '100%', fontSize: 7, padding: '5px 8px' }}
+        >
+          {hero.hp >= hero.maxHp ? '💤 Odpoczynek (pełne HP)' : '💤 Odpoczynek — +10 HP za 10 min'}
+        </button>
+      )}
 
       {/* XP Bar */}
       <div>

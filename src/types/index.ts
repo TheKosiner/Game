@@ -41,6 +41,7 @@ export interface Hero {
   hp: number;
   maxHp: number;
   restingUntil: number | null;
+  voluntaryRestUntil: number | null;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
@@ -50,6 +51,8 @@ export interface Hero {
   gold: number;
   gems: number;
   attributePoints: number;
+  skinTone: number;
+  hairColor: number;
 }
 
 export interface Enemy {
@@ -116,7 +119,7 @@ export interface GameState {
   lastSaved: number;
 
   // actions
-  initHero: (name: string, heroClass: HeroClass) => void;
+  initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
   equipItem: (item: Item) => void;
@@ -132,6 +135,7 @@ export interface GameState {
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
   checkDailyReset: () => void;
+  restHero: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

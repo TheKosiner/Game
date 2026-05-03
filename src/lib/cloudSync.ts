@@ -11,6 +11,8 @@ export interface LeaderboardEntry {
   xp: number;
   gold: number;
   updatedAt: number;
+  skinTone?: number;
+  hairColor?: number;
 }
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
@@ -23,6 +25,8 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     level: hero.level,
     xp: hero.xp,
     gold: hero.gold,
+    skinTone: hero.skinTone ?? 1,
+    hairColor: hero.hairColor ?? 2,
     updatedAt: Date.now(),
     saveData: { hero, activeQuest },
   });
