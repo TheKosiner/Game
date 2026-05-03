@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { generateShopItems } from '../data/items';
+import ItemIcon from './ItemIcon';
 import type { Item } from '../types';
 
 const RARITY_COLORS: Record<string, string> = {
@@ -185,11 +186,11 @@ export default function ShopPanel() {
                   border: `1px solid ${rarityColor}33`,
                   borderRadius: 3,
                   padding: '6px 8px',
-                  fontSize: 18,
                   flexShrink: 0,
                   boxShadow: featured ? `0 0 12px ${rarityColor}44` : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  {item.emoji}
+                  <ItemIcon item={item} scale={3} />
                 </div>
 
                 {/* Info */}
