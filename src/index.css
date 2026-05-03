@@ -1,22 +1,16 @@
 @import "tailwindcss";
 
-/* ── Zmienne kolorystyczne ─────────────────────────────── */
+/* ── Zmienne (Mroczne Fantasy) ────────────────────────── */
 :root {
-  --bg:          #060912;
-  --card:        #0c1120;
-  --card2:       #0a0e1c;
-  --border:      rgba(90, 110, 190, 0.22);
-  --border-hi:   rgba(140, 160, 255, 0.14);
-  --gold:        #f59e0b;
-  --gold-dark:   #92400e;
-  --gold-glow:   rgba(245, 158, 11, 0.35);
-  --blue:        #3b82f6;
-  --purple:      #8b5cf6;
-  --red:         #ef4444;
-  --green:       #22c55e;
-  --text:        #e2e8f0;
-  --text-dim:    #64748b;
-  --text-muted:  #334155;
+  --bg-main: #0a0907; 
+  --bg-panel: #14120e;
+  --text-main: #b8b09a; 
+  --text-dim: #6e6755;
+  --accent-gold: #9c7a3c; 
+  --accent-border: #3d3428; 
+  --hp: #a12d2d;
+  --xp: #b3851b;
+  --gold-glow: rgba(156, 122, 60, 0.3);
 }
 
 /* ── Base ──────────────────────────────────────────────── */
@@ -24,156 +18,117 @@
 
 body {
   margin: 0;
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(59, 51, 140, 0.18) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 50% at 85% 90%, rgba(100, 60, 180, 0.12) 0%, transparent 70%);
-  color: var(--text);
-  font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  background-color: var(--bg-main) !important;
+  /* Tekstura tła */
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)),
+    url('https://www.transparenttextures.com/patterns/dark-matter.png') !important;
+  color: var(--text-main);
+  font-family: 'Cinzel', serif; /* Zmieniamy na font fantasy */
+  font-size: 12px;
   line-height: 1.6;
   min-height: 100dvh;
 }
 
-#root { min-height: 100dvh; }
-
-/* ── Cards ─────────────────────────────────────────────── */
+/* ── Klasa Card (Ozdobna Rama) ────────────────────────── */
 .card {
-  background: linear-gradient(160deg, rgba(14,20,48,0.97) 0%, rgba(8,12,28,0.99) 100%);
-  border: 1px solid var(--border);
-  border-top: 1px solid var(--border-hi);
-  border-radius: 6px;
-  box-shadow:
-    0 12px 40px rgba(0,0,0,0.7),
-    0 2px 8px rgba(0,0,0,0.5),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+  position: relative !important;
+  background-color: var(--bg-panel) !important;
+  background-image: url('https://www.transparenttextures.com/patterns/leather.png') !important;
+  border: 3px solid #2a241c !important;
+  
+  /* Podwójna rama */
+  outline: 1px solid var(--accent-border) !important;
+  outline-offset: -4px !important;
+  
+  box-shadow: 
+    inset 0 0 30px rgba(0,0,0,1),
+    0 10px 25px rgba(0,0,0,0.8) !important;
+  padding: 12px;
+  border-radius: 2px;
 }
 
-/* Pixel-frame (sprite boxes, combat log) */
-.card-pixel {
-  border: 2px solid #1e293b;
-  background: rgba(5,8,20,0.98);
-  box-shadow: 4px 4px 0 #000, inset 0 0 0 1px rgba(255,255,255,0.03);
+/* Narożniki ozdobne */
+.card::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: -2px; width: 12px; height: 12px;
+  border-top: 3px solid var(--accent-gold);
+  border-left: 3px solid var(--accent-gold);
+  z-index: 10;
 }
 
-/* ── Buttons ───────────────────────────────────────────── */
+/* ── Przyciski (Stylizowane na mosiądz/drewno) ─────────── */
 .btn {
-  padding: 0.5rem 0.75rem;
-  font-family: 'Press Start 2P', monospace;
-  font-size: 8px;
-  font-weight: normal;
+  padding: 0.6rem 1rem !important;
+  font-family: 'Cinzel', serif !important;
+  font-weight: bold;
+  text-transform: uppercase;
   cursor: pointer;
-  border: none;
-  border-radius: 3px;
+  border: 2px solid #4a3e2e !important;
+  background: linear-gradient(180deg, #2a241c 0%, #1a1611 100%) !important;
+  color: var(--accent-gold) !important;
+  box-shadow: 0 4px 0 #000;
   transition: all 0.1s ease;
-  position: relative;
-  letter-spacing: 0.02em;
 }
-.btn:active:not(:disabled) { transform: translateY(1px); }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #000;
+}
 
 .btn-primary {
-  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-  color: #000;
-  border: 1px solid #92400e;
-  box-shadow: 0 2px 12px rgba(245,158,11,0.3), 0 1px 0 rgba(255,255,255,0.1) inset;
-}
-.btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  box-shadow: 0 4px 20px rgba(245,158,11,0.45), 0 1px 0 rgba(255,255,255,0.15) inset;
+  background: linear-gradient(180deg, #5c4510 0%, #3d2e0a 100%) !important;
+  border-color: var(--accent-gold) !important;
 }
 
-.btn-secondary {
-  background: linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%);
-  color: #94a3b8;
-  border: 1px solid rgba(51,65,85,0.8);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-.btn-secondary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(51,65,85,0.9) 0%, rgba(30,41,59,0.95) 100%);
-  color: #cbd5e1;
-  border-color: rgba(100,116,139,0.6);
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%);
-  color: #fca5a5;
-  border: 1px solid #450a0a;
-  box-shadow: 0 2px 8px rgba(239,68,68,0.2);
-}
-.btn-danger:hover:not(:disabled) {
-  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-  box-shadow: 0 4px 16px rgba(239,68,68,0.35);
-}
-
-/* ── Rarity colors ─────────────────────────────────────── */
-.rarity-common    { color: #94a3b8; }
-.rarity-uncommon  { color: #4ade80; }
-.rarity-rare      { color: #60a5fa; }
-.rarity-epic      { color: #c084fc; }
-.rarity-legendary { color: #fbbf24; text-shadow: 0 0 12px rgba(251,191,36,0.6); }
-
-/* ── HP/XP bars ────────────────────────────────────────── */
+/* ── Bary (HP / XP) ────────────────────────────────────── */
 .pixel-bar {
-  height: 10px;
-  background: rgba(10,15,30,0.9);
-  border: 1px solid rgba(51,65,85,0.6);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.pixel-bar-fill {
-  height: 100%;
-  transition: width 0.4s ease;
-  box-shadow: 0 0 6px currentColor;
+  height: 14px !important;
+  background: #0d0d0d !important;
+  border: 2px solid #2a241c !important;
+  border-radius: 0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* ── Combat log ────────────────────────────────────────── */
-.combat-log {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 7px;
-  line-height: 2;
-  background: rgba(3,5,14,0.95);
-  border: 1px solid rgba(30,41,59,0.8);
-  border-radius: 4px;
+.hp-fill { 
+  background: linear-gradient(90deg, #4a1010, #a12d2d) !important; 
+  box-shadow: 0 0 10px rgba(161, 45, 45, 0.4);
 }
 
-/* ── Scrollbars ────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: rgba(15,23,42,0.5); }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+.xp-fill { 
+  background: linear-gradient(90deg, #5c4510, #b3851b) !important; 
+  box-shadow: 0 0 10px rgba(179, 133, 27, 0.4);
+}
 
-/* ── Glow pulse animation ──────────────────────────────── */
+/* ── Rarity ────────────────────────────────────────────── */
+.rarity-common    { color: #6e6755; }
+.rarity-uncommon  { color: #4a5d4a; }
+.rarity-rare      { color: #3a5a7a; }
+.rarity-epic      { color: #6a4a7a; }
+.rarity-legendary {
+  color: var(--accent-gold);
+  text-shadow: 0 0 8px rgba(156, 122, 60, 0.6);
+}
+
+/* ── Zachowane Animacje ────────────────────────────────── */
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 6px var(--gold-glow); }
-  50%       { box-shadow: 0 0 18px var(--gold-glow), 0 0 40px rgba(245,158,11,0.15); }
+  0%, 100% { box-shadow: inset 0 0 10px var(--gold-glow); }
+  50% { box-shadow: inset 0 0 25px var(--gold-glow), 0 0 15px rgba(156, 122, 60, 0.2); }
 }
 .glow-gold { animation: glowPulse 2.5s ease-in-out infinite; }
 
-/* ── Hit flash ─────────────────────────────────────────── */
-@keyframes pixelBlink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.2; }
-}
-.pixel-hit { animation: pixelBlink 0.15s steps(1) 3; }
-
-/* ── Level-up bounce ───────────────────────────────────── */
 @keyframes floatUp {
-  0%   { transform: translateY(0) scale(1);    opacity: 1; }
-  100% { transform: translateY(-32px) scale(1.1); opacity: 0; }
+  0%   { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
 }
-.pixel-bounce { animation: floatUp 0.6s ease-out forwards; }
+.pixel-bounce { animation: floatUp 0.8s ease-out forwards; }
 
-/* ── Shine sweep on legendary items ────────────────────── */
-@keyframes shine {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-.rarity-legendary {
-  background: linear-gradient(90deg, #fbbf24 30%, #fff8 50%, #fbbf24 70%);
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shine 3s linear infinite;
+/* ── Winieta na ekranie ────────────────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.7) 100%);
 }
