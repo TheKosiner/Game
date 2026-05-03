@@ -40,12 +40,19 @@ export interface Hero {
   xpToNext: number;
   hp: number;
   maxHp: number;
+  restingUntil: number | null;
+  voluntaryRestUntil: number | null;
+  dungeonRunsToday: number;
+  questsCompletedToday: number;
+  lastDailyReset: number;
   stats: Stats;
   equipment: Equipment;
   inventory: Item[];
   gold: number;
   gems: number;
   attributePoints: number;
+  skinTone: number;
+  hairColor: number;
 }
 
 export interface Enemy {
@@ -101,6 +108,24 @@ export interface ShopItem {
   price: number;
 }
 
+export interface PvpResult {
+  won: boolean;
+  opponentName: string;
+  xpGained: number;
+  goldGained: number;
+  timestamp: number;
+}
+
+export interface PvpOpponent {
+  uid: string;
+  heroName: string;
+  username: string;
+  level: number;
+  attack?: number;
+  defense?: number;
+  maxHp?: number;
+}
+
 export interface GameState {
   hero: Hero;
   activeQuest: ActiveQuest | null;
@@ -110,14 +135,21 @@ export interface GameState {
   combatLog: CombatLog[];
   inCombat: boolean;
   lastSaved: number;
+  shopSeed: number;
+  lastShopRefresh: number;
+  shopPurchased: number[];
+  lastPvpFight: number;
+  pvpWins: number;
+  pvpLosses: number;
+  pvpLog: PvpResult[];
 
   // actions
-  initHero: (name: string, heroClass: HeroClass) => void;
+  initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
   equipItem: (item: Item) => void;
   unequipItem: (slot: ItemSlot) => void;
-  sellItem: (itemId: string) => void;
+  sellItem: (item: Item) => void;
   buyItem: (item: Item, price: number) => boolean;
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
@@ -127,6 +159,9 @@ export interface GameState {
   upgradeAttribute: (attr: keyof Stats) => void;
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
+  performPvp: (opponent: PvpOpponent) => PvpResult | null;
+  checkDailyReset: () => void;
+  restHero: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

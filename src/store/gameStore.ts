@@ -1,14 +1,40 @@
 import { create } from 'zustand';
-import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog } from '../types';
+import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { getItemById } from '../data/items';
-import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext } from '../utils/combat';
+import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const SAVE_KEY = 'realm_of_valor_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
+export const MAX_DAILY_DUNGEONS = 10;
+export const MAX_DAILY_QUESTS = 10;
+export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
+export const PVP_COOLDOWN = 15 * 60 * 1000;
 
-function createHero(name: string, heroClass: HeroClass): Hero {
+function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number): boolean {
+  let hHp = heroHp;
+  let oHp = oppHp;
+  for (let i = 0; i < 300; i++) {
+    oHp -= Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - oppDef);
+    if (oHp <= 0) return true;
+    hHp -= Math.max(1, Math.round(oppAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+    if (hHp <= 0) return false;
+  }
+  return hHp >= oHp;
+}
+
+function isSameDay(ts: number): boolean {
+  const a = new Date(ts);
+  const b = new Date();
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function scaledQuestDuration(durationMs: number, level: number): number {
+  return Math.floor(durationMs * (1 + (level - 1) * 0.05));
+}
+
+function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor = 2): Hero {
   const baseStats: Record<HeroClass, Stats> = {
     warrior: { strength: 8, agility: 4, intelligence: 2, constitution: 6 },
     mage: { strength: 2, agility: 4, intelligence: 10, constitution: 4 },
@@ -24,12 +50,20 @@ function createHero(name: string, heroClass: HeroClass): Hero {
     xpToNext: calcXpToNext(1),
     hp: maxHp,
     maxHp,
+    restingUntil: null,
+    voluntaryRestUntil: null,
+    voluntaryRestHp: null,
+    dungeonRunsToday: 0,
+    questsCompletedToday: 0,
+    lastDailyReset: Date.now(),
     stats,
     equipment: {},
     inventory: [],
     gold: 100,
     gems: 0,
     attributePoints: 0,
+    skinTone,
+    hairColor,
   };
 }
 
@@ -42,10 +76,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   combatLog: [],
   inCombat: false,
   lastSaved: Date.now(),
+  shopSeed: Date.now(),
+  lastShopRefresh: 0,
+  shopPurchased: [],
+  lastPvpFight: 0,
+  pvpWins: 0,
+  pvpLosses: 0,
+  pvpLog: [],
 
-  initHero: (name, heroClass) => {
-    const hero = createHero(name, heroClass);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false });
+  initHero: (name, heroClass, skinTone = 1, hairColor = 2) => {
+    const hero = createHero(name, heroClass, skinTone, hairColor);
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
     get().saveGame();
   },
 
@@ -72,10 +113,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, gold: hero.gold + amount } });
   },
 
-  equipItem: (item) => {
+  equipItem: (item: Item) => {
     const { hero } = get();
     const oldEquipped = hero.equipment[item.slot];
-    const newInventory = hero.inventory.filter(i => i.id !== item.id);
+    const newInventory = [...hero.inventory];
+    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    if (idx !== -1) newInventory.splice(idx, 1);
     if (oldEquipped) newInventory.push(oldEquipped);
     set({ hero: { ...hero, equipment: { ...hero.equipment, [item.slot]: item }, inventory: newInventory } });
   },
@@ -90,11 +133,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item] } });
   },
 
-  sellItem: (itemId) => {
+  sellItem: (item: Item) => {
     const { hero } = get();
-    const item = hero.inventory.find(i => i.id === itemId);
-    if (!item) return;
-    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: hero.inventory.filter(i => i.id !== itemId) } });
+    const newInventory = [...hero.inventory];
+    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    if (idx === -1) return;
+    newInventory.splice(idx, 1);
+    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
   },
 
   buyItem: (item, price) => {
@@ -105,16 +150,41 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
+  buyShopItem: (item: Item, price: number, slotIndex: number) => {
+    const { hero, shopPurchased } = get();
+    if (hero.gold < price) return false;
+    if (hero.inventory.length >= MAX_INVENTORY) return false;
+    set({ hero: { ...hero, gold: hero.gold - price, inventory: [...hero.inventory, item] }, shopPurchased: [...shopPurchased, slotIndex] });
+    get().saveGame();
+    return true;
+  },
+
   enterDungeon: (dungeon: Dungeon) => {
     const { hero } = get();
     if (hero.level < dungeon.minLevel) return;
+    if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
+      get().addCombatLog('Odpoczywasz po walce! Poczekaj aż wrócą siły.', 'system');
+      return;
+    }
+    if (hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS) {
+      get().addCombatLog(`Dzienny limit lochów (${MAX_DAILY_DUNGEONS}) wyczerpany! Wróć jutro.`, 'system');
+      return;
+    }
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
     const enemy = scaleEnemy(baseEnemy, 1);
-    set({ currentDungeon: dungeon, currentFloor: 1, currentEnemy: { ...enemy }, inCombat: true, combatLog: [] });
+    set({
+      currentDungeon: dungeon,
+      currentFloor: 1,
+      currentEnemy: { ...enemy },
+      inCombat: true,
+      combatLog: [],
+      hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
+    });
     get().addCombatLog(`Wchodzisz do "${dungeon.name}" — Piętro 1`, 'system');
     get().addCombatLog(`Napotykasz: ${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`, 'system');
+    get().addCombatLog(`Lochy dziś: ${hero.dungeonRunsToday + 1}/${MAX_DAILY_DUNGEONS}`, 'system');
   },
 
   exitDungeon: () => {
@@ -137,7 +207,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addGold(currentEnemy.goldReward);
       get().addCombatLog(`+${currentEnemy.xpReward} XP, +${currentEnemy.goldReward} złota`, 'loot');
 
-      // Loot drop
       if (Math.random() < 0.3 && currentEnemy.lootTable.length > 0) {
         const lootId = currentEnemy.lootTable[Math.floor(Math.random() * currentEnemy.lootTable.length)];
         const lootItem = getItemById(lootId);
@@ -148,7 +217,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
-      // Next floor or new enemy
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
@@ -168,11 +236,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
 
       if (newHeroHp <= 0) {
-        get().addCombatLog('Zostałeś pokonany! Wychodzisz z lochu...', 'system');
+        get().addCombatLog('Zostałeś pokonany! Użyj odpoczynku aby odzyskać HP.', 'system');
         const updatedHero = get().hero;
-        const maxHp = updatedHero.maxHp;
         set({
-          hero: { ...updatedHero, hp: Math.floor(maxHp * 0.3) },
+          hero: { ...updatedHero, hp: 1 },
           currentDungeon: null,
           currentEnemy: null,
           inCombat: false,
@@ -188,18 +255,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero, activeQuest } = get();
     if (activeQuest) return;
     if (hero.level < quest.minLevel) return;
+    if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) {
+      return;
+    }
     const now = Date.now();
-    set({ activeQuest: { quest, startedAt: now, endsAt: now + quest.durationMs } });
+    const duration = scaledQuestDuration(quest.durationMs, hero.level);
+    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration } });
     get().saveGame();
   },
 
   collectQuest: () => {
-    const { activeQuest } = get();
+    const { activeQuest, hero } = get();
     if (!activeQuest) return;
     if (Date.now() < activeQuest.endsAt) return;
     get().addXp(activeQuest.quest.xpReward);
     get().addGold(activeQuest.quest.goldReward);
-    set({ activeQuest: null });
+    set({ activeQuest: null, hero: { ...get().hero, questsCompletedToday: hero.questsCompletedToday + 1 } });
     get().saveGame();
   },
 
@@ -219,7 +290,63 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   refreshShop: () => {
-    // Shop items are generated on-the-fly based on hero level in the component
+    const { lastShopRefresh } = get();
+    if (Date.now() - lastShopRefresh < SHOP_REFRESH_COOLDOWN) return;
+    set({ shopSeed: Date.now(), lastShopRefresh: Date.now(), shopPurchased: [] });
+    get().saveGame();
+  },
+
+  performPvp: (opponent: PvpOpponent): PvpResult | null => {
+    const { hero, lastPvpFight, pvpWins, pvpLosses, pvpLog, inCombat } = get();
+    if (inCombat) return null;
+    const now = Date.now();
+    if (now - lastPvpFight < PVP_COOLDOWN) return null;
+    const heroAtk = getHeroAttack(hero);
+    const heroDef = getHeroDefense(hero);
+    const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100);
+    const xpGained = won ? Math.max(20, opponent.level * 20) : 8;
+    const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
+    const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
+    set({
+      lastPvpFight: now,
+      pvpWins: won ? pvpWins + 1 : pvpWins,
+      pvpLosses: won ? pvpLosses : pvpLosses + 1,
+      pvpLog: [result, ...pvpLog].slice(0, 10),
+    });
+    get().addXp(xpGained);
+    if (goldGained > 0) get().addGold(goldGained);
+    get().saveGame();
+    return result;
+  },
+
+  restHero: (minutes: number) => {
+    const { hero, inCombat } = get();
+    if (inCombat) return;
+    if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
+    if (hero.hp >= hero.maxHp) return;
+    const endsAt = Date.now() + minutes * 60000;
+    set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: minutes } });
+    get().saveGame();
+  },
+
+  checkDailyReset: () => {
+    const { hero } = get();
+    if (!isSameDay(hero.lastDailyReset)) {
+      set({
+        hero: {
+          ...hero,
+          dungeonRunsToday: 0,
+          questsCompletedToday: 0,
+          lastDailyReset: Date.now(),
+        },
+      });
+    }
+    if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
+      const updated = get().hero;
+      const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
+      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null } });
+      if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
+    }
   },
 
   saveGame: () => {
@@ -228,6 +355,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       hero: state.hero,
       activeQuest: state.activeQuest,
       lastSaved: Date.now(),
+      shopSeed: state.shopSeed,
+      lastShopRefresh: state.lastShopRefresh,
+      shopPurchased: state.shopPurchased,
+      lastPvpFight: state.lastPvpFight,
+      pvpWins: state.pvpWins,
+      pvpLosses: state.pvpLosses,
+      pvpLog: state.pvpLog,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -243,14 +377,41 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!raw) return;
       const save = JSON.parse(raw);
       if (save.hero) {
+        const isLegacySave = save.hero.dungeonRunsToday === undefined;
+        const loadedHero: Hero = {
+          ...save.hero,
+          restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
+          voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
+          voluntaryRestHp: save.hero.voluntaryRestHp != null
+            ? save.hero.voluntaryRestHp
+            : (save.hero.voluntaryRestUntil && Date.now() < save.hero.voluntaryRestUntil
+              ? Math.ceil((save.hero.voluntaryRestUntil - Date.now()) / 60000)
+              : null),
+          dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
+          questsCompletedToday: save.hero.questsCompletedToday ?? 0,
+          lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
+          skinTone: save.hero.skinTone ?? 1,
+          hairColor: save.hero.hairColor ?? 2,
+        };
+        if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
-          hero: save.hero,
+          hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? Date.now(),
+          shopSeed: save.shopSeed ?? Date.now(),
+          lastShopRefresh: save.lastShopRefresh ?? 0,
+          shopPurchased: save.shopPurchased ?? [],
+          lastPvpFight: save.lastPvpFight ?? 0,
+          pvpWins: save.pvpWins ?? 0,
+          pvpLosses: save.pvpLosses ?? 0,
+          pvpLog: save.pvpLog ?? [],
         });
+        get().checkDailyReset();
       }
     } catch {
       // corrupt save
     }
   },
 }));
+
+export { scaledQuestDuration };

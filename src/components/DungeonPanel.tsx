@@ -1,4 +1,5 @@
 import { useGameStore } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
 import PixelSprite from './PixelSprite';
@@ -78,14 +79,35 @@ function EnemyBattleCard() {
 function DungeonList() {
   const hero = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
+  const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
+  const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ color: '#fbbf24', fontSize: 9, marginBottom: 4 }}>⚔️ WYBIERZ LOCH</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+        <p style={{ color: '#fbbf24', fontSize: 9 }}>⚔️ WYBIERZ LOCH</p>
+        <p style={{ fontSize: 7, color: limitReached ? '#f87171' : '#94a3b8' }}>
+          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dziś
+        </p>
+      </div>
+
+      {isResting && (
+        <div style={{ background: '#0c1220', border: '2px solid #1d4ed8', padding: 8, textAlign: 'center' }}>
+          <p style={{ color: '#93c5fd', fontSize: 7 }}>💤 Odpoczywasz po walce — wróć gdy odzyskasz siły</p>
+        </div>
+      )}
+
+      {!isResting && limitReached && (
+        <div style={{ background: '#12100a', border: '2px solid #7f1d1d', padding: 8, textAlign: 'center' }}>
+          <p style={{ color: '#f87171', fontSize: 7 }}>⚔️ Dzienny limit lochów wyczerpany — wróć jutro!</p>
+        </div>
+      )}
+
       {ALL_DUNGEONS.map((dungeon: Dungeon) => {
         const locked = hero.level < dungeon.minLevel;
+        const blocked = locked || isResting || limitReached;
         return (
-          <div key={dungeon.id} style={{ background: '#0a0a1a', border: `2px solid ${locked ? '#1e293b' : '#334155'}`, padding: 10, opacity: locked ? 0.6 : 1 }}>
+          <div key={dungeon.id} style={{ background: '#0a0a1a', border: `2px solid ${locked ? '#1e293b' : '#334155'}`, padding: 10, opacity: blocked ? 0.6 : 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 20 }}>{dungeon.emoji}</span>
               <div style={{ flex: 1 }}>
@@ -101,11 +123,11 @@ function DungeonList() {
               <p style={{ fontSize: 6, color: '#475569' }}>{dungeon.floors} pięter</p>
               <button
                 onClick={() => enterDungeon(dungeon)}
-                disabled={locked}
+                disabled={blocked}
                 className="btn btn-primary"
                 style={{ fontSize: 7, padding: '4px 10px' }}
               >
-                {locked ? `🔒 POZ.${dungeon.minLevel}` : 'Wejdź ▶'}
+                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : limitReached ? '⛔ Limit' : 'Wejdź ▶'}
               </button>
             </div>
           </div>

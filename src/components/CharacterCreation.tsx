@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { HeroClass } from '../types';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE } from '../data/sprites';
+import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
 
 const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
 
@@ -15,11 +15,15 @@ const CLASSES: { id: HeroClass; name: string; desc: string; pros: string }[] = [
 export default function CharacterCreation() {
   const [name, setName] = useState('');
   const [selectedClass, setSelectedClass] = useState<HeroClass | null>(null);
+  const [skinTone, setSkinTone] = useState(1);
+  const [hairColor, setHairColor] = useState(2);
   const initHero = useGameStore(s => s.initHero);
+
+  const palette = getHeroPalette(skinTone, hairColor);
 
   function handleCreate() {
     if (!name.trim() || !selectedClass) return;
-    initHero(name.trim(), selectedClass);
+    initHero(name.trim(), selectedClass, skinTone, hairColor);
   }
 
   return (
@@ -67,7 +71,7 @@ export default function CharacterCreation() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ background: '#0a0a1a', border: '2px solid #334155', padding: 4, flexShrink: 0 }}>
-                      <PixelSprite grid={CLASS_SPRITES[cls.id]} scale={3} />
+                      <PixelSprite grid={CLASS_SPRITES[cls.id]} scale={3} paletteOverrides={palette} />
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ color: '#e2e8f0', fontSize: 8, marginBottom: 4 }}>{cls.name}</p>
@@ -78,6 +82,66 @@ export default function CharacterCreation() {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Appearance section */}
+          <div style={{ background: '#0a0a1a', border: '2px solid #1e293b', padding: 10 }}>
+            <p style={{ color: '#94a3b8', fontSize: 7, marginBottom: 10 }}>WYGLĄD POSTACI</p>
+
+            {/* Live preview */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+              <div style={{ background: '#111827', border: '2px solid #334155', padding: 8 }}>
+                <PixelSprite
+                  grid={CLASS_SPRITES[selectedClass ?? 'warrior']}
+                  scale={5}
+                  paletteOverrides={palette}
+                />
+              </div>
+            </div>
+
+            {/* Skin tone */}
+            <div style={{ marginBottom: 8 }}>
+              <p style={{ color: '#64748b', fontSize: 6, marginBottom: 5 }}>KARNACJA</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {SKIN_TONES.map((tone, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSkinTone(i)}
+                    title={tone.name}
+                    style={{
+                      width: 28, height: 28,
+                      background: tone.light,
+                      border: `3px solid ${skinTone === i ? '#fbbf24' : '#334155'}`,
+                      cursor: 'pointer',
+                      boxShadow: skinTone === i ? '0 0 0 1px #fbbf24' : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+              <p style={{ color: '#475569', fontSize: 6, marginTop: 4 }}>{SKIN_TONES[skinTone].name}</p>
+            </div>
+
+            {/* Hair color */}
+            <div>
+              <p style={{ color: '#64748b', fontSize: 6, marginBottom: 5 }}>KOLOR WŁOSÓW</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {HAIR_COLORS.map((hair, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setHairColor(i)}
+                    title={hair.name}
+                    style={{
+                      width: 28, height: 28,
+                      background: hair.light,
+                      border: `3px solid ${hairColor === i ? '#fbbf24' : '#334155'}`,
+                      cursor: 'pointer',
+                      boxShadow: hairColor === i ? '0 0 0 1px #fbbf24' : 'none',
+                    }}
+                  />
+                ))}
+              </div>
+              <p style={{ color: '#475569', fontSize: 6, marginTop: 4 }}>{HAIR_COLORS[hairColor].name}</p>
             </div>
           </div>
 
