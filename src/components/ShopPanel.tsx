@@ -57,10 +57,11 @@ function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
 
 export default function ShopPanel() {
   const hero = useGameStore(s => s.hero);
-  const buyItem = useGameStore(s => s.buyItem);
+  const buyShopItem = useGameStore(s => s.buyShopItem);
   const refreshShop = useGameStore(s => s.refreshShop);
   const shopSeed = useGameStore(s => s.shopSeed);
   const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
+  const shopPurchased = useGameStore(s => s.shopPurchased);
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -69,10 +70,10 @@ export default function ShopPanel() {
   const cooldownEnd = lastShopRefresh + SHOP_REFRESH_COOLDOWN;
   const canRefresh = Date.now() >= cooldownEnd;
 
-  function handleBuy(item: Item, price: number) {
-    const success = buyItem(item, price);
+  function handleBuy(item: Item, price: number, slotIndex: number) {
+    const success = buyShopItem(item, price, slotIndex);
     if (success) {
-      setNotification({ text: `Kupiono: ${item.emoji} ${item.name}`, ok: true });
+      setNotification({ text: `Kupiono: ${item.name}`, ok: true });
     } else if (hero.gold < price) {
       setNotification({ text: 'Za mało złota!', ok: false });
     } else {
@@ -144,7 +145,8 @@ export default function ShopPanel() {
 
       {/* Items */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {shopItems.map(({ item, price, featured }, idx) => {
+        {shopItems.filter((_, i) => !shopPurchased.includes(i)).map(({ item, price, featured }) => {
+          const idx = shopItems.findIndex(s => s.item === item);
           const canAfford = hero.gold >= price;
           const rarityColor = RARITY_COLORS[item.rarity];
           const glowBg = RARITY_GLOW[item.rarity];
@@ -221,7 +223,7 @@ export default function ShopPanel() {
 
                 {/* Buy button */}
                 <button
-                  onClick={() => handleBuy(item, price)}
+                  onClick={() => handleBuy(item, price, idx)}
                   disabled={!canAfford}
                   style={{
                     background: canAfford

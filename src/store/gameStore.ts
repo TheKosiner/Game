@@ -41,6 +41,7 @@ function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor 
     maxHp,
     restingUntil: null,
     voluntaryRestUntil: null,
+    voluntaryRestHp: null,
     dungeonRunsToday: 0,
     questsCompletedToday: 0,
     lastDailyReset: Date.now(),
@@ -66,10 +67,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastSaved: Date.now(),
   shopSeed: Date.now(),
   lastShopRefresh: 0,
+  shopPurchased: [],
 
   initHero: (name, heroClass, skinTone = 1, hairColor = 2) => {
     const hero = createHero(name, heroClass, skinTone, hairColor);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0 });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [] });
     get().saveGame();
   },
 
@@ -130,6 +132,18 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.gold < price) return false;
     if (hero.inventory.length >= MAX_INVENTORY) return false;
     set({ hero: { ...hero, gold: hero.gold - price, inventory: [...hero.inventory, item] } });
+    return true;
+  },
+
+  buyShopItem: (item, price, slotIndex) => {
+    const { hero, shopPurchased } = get();
+    if (hero.gold < price) return false;
+    if (hero.inventory.length >= MAX_INVENTORY) return false;
+    if (shopPurchased.includes(slotIndex)) return false;
+    set({
+      hero: { ...hero, gold: hero.gold - price, inventory: [...hero.inventory, item] },
+      shopPurchased: [...shopPurchased, slotIndex],
+    });
     return true;
   },
 
@@ -210,10 +224,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
 
       if (newHeroHp <= 0) {
-        get().addCombatLog('Zostałeś pokonany! Odpoczywasz 5 minut, po czym odzyskasz 50% HP...', 'system');
+        get().addCombatLog('Zostałeś pokonany! Skorzystaj z odpoczynku by odzyskać HP.', 'system');
         const updatedHero = get().hero;
         set({
-          hero: { ...updatedHero, hp: 1, restingUntil: Date.now() + REST_DURATION_MS },
+          hero: { ...updatedHero, hp: 1 },
           currentDungeon: null,
           currentEnemy: null,
           inCombat: false,
@@ -267,19 +281,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { lastShopRefresh } = get();
     const now = Date.now();
     if (now - lastShopRefresh < SHOP_REFRESH_COOLDOWN) return;
-    set({ shopSeed: now, lastShopRefresh: now });
+    set({ shopSeed: now, lastShopRefresh: now, shopPurchased: [] });
     get().saveGame();
   },
 
-  restHero: () => {
+  restHero: (minutes: number) => {
     const { hero, inCombat } = get();
     if (inCombat) return;
-    if (hero.restingUntil !== null && Date.now() < hero.restingUntil) return;
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (hero.hp >= hero.maxHp) return;
-    const endsAt = Date.now() + 10 * 60 * 1000;
-    set({ hero: { ...hero, voluntaryRestUntil: endsAt } });
-    get().addCombatLog('Odpoczywasz... Za 10 minut odzyskasz 10 HP.', 'system');
+    const hp = Math.min(minutes, hero.maxHp - hero.hp);
+    if (hp <= 0) return;
+    const endsAt = Date.now() + minutes * 60 * 1000;
+    set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp } });
+    get().addCombatLog(`Odpoczywasz ${minutes} min... Odzyskasz ${hp} HP.`, 'system');
     get().saveGame();
   },
 
@@ -295,17 +310,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         },
       });
     }
-    // Apply forced rest recovery if time is up
-    if (hero.restingUntil !== null && Date.now() >= hero.restingUntil) {
-      const updated = get().hero;
-      set({ hero: { ...updated, hp: Math.floor(updated.maxHp * REST_HP_RESTORE), restingUntil: null } });
-      get().addCombatLog('Odpocząłeś! Odzyskałeś 50% zdrowia.', 'system');
-    }
     // Apply voluntary rest recovery if time is up
     if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
       const updated = get().hero;
-      const healAmount = Math.min(10, updated.maxHp - updated.hp);
-      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null } });
+      const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
+      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null } });
       if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
     }
   },
@@ -318,6 +327,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       lastSaved: Date.now(),
       shopSeed: state.shopSeed,
       lastShopRefresh: state.lastShopRefresh,
+      shopPurchased: state.shopPurchased,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -338,6 +348,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...save.hero,
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
+          voluntaryRestHp: save.hero.voluntaryRestHp ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
@@ -351,6 +362,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           lastSaved: save.lastSaved ?? Date.now(),
           shopSeed: save.shopSeed ?? Date.now(),
           lastShopRefresh: save.lastShopRefresh ?? 0,
+          shopPurchased: save.shopPurchased ?? [],
         });
         get().checkDailyReset();
       }

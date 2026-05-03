@@ -42,6 +42,7 @@ export interface Hero {
   maxHp: number;
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
+  voluntaryRestHp: number | null;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
@@ -119,6 +120,7 @@ export interface GameState {
   lastSaved: number;
   shopSeed: number;
   lastShopRefresh: number;
+  shopPurchased: number[];
 
   // actions
   initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;
@@ -128,6 +130,7 @@ export interface GameState {
   unequipItem: (slot: ItemSlot) => void;
   sellItem: (item: Item) => void;
   buyItem: (item: Item, price: number) => boolean;
+  buyShopItem: (item: Item, price: number, slotIndex: number) => boolean;
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
   attackEnemy: () => void;
@@ -137,7 +140,7 @@ export interface GameState {
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
   checkDailyReset: () => void;
-  restHero: () => void;
+  restHero: (minutes: number) => void;
   loadGame: () => void;
   saveGame: () => void;
 }
