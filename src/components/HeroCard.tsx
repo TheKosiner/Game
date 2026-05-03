@@ -7,6 +7,7 @@ import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../da
 
 const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
 const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Łotrzyk' };
+const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
@@ -22,14 +23,19 @@ function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
   const secs = Math.floor((remaining % 60000) / 1000);
   return (
     <div style={{
-      background: 'rgba(10,20,40,0.7)',
-      border: '1px solid rgba(96,165,250,0.3)',
-      borderRadius: 4, padding: '8px 12px', textAlign: 'center',
+      background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
+      border: '1px solid rgba(50,80,30,0.5)',
+      padding: '10px 12px',
+      display: 'flex', alignItems: 'center', gap: 10,
+      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <p style={{ color: '#93c5fd', fontSize: 7 }}>
-        💤 Odpoczywasz — <span style={{ color: '#60a5fa', textShadow: '0 0 8px rgba(96,165,250,0.6)' }}>{mins}:{secs.toString().padStart(2, '0')}</span>
-      </p>
-      <p style={{ color: '#475569', fontSize: 6, marginTop: 3 }}>Odzyskasz +{restHp} HP</p>
+      <div className="df-flicker" style={{ fontSize: 22, lineHeight: 1 }}>🔥</div>
+      <div>
+        <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 4 }}>
+          ✦ ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
+        </p>
+        <p style={{ ...PX(5), color: '#5a8840' }}>Odzyskasz +{restHp} HP</p>
+      </div>
     </div>
   );
 }
@@ -41,62 +47,31 @@ function RestSlider({ hero, onRest, inCombat }: {
 }) {
   const maxMinutes = hero.maxHp - hero.hp;
   const [minutes, setMinutes] = useState(Math.min(10, maxMinutes));
-
-  if (maxMinutes <= 0) {
-    return (
-      <div style={{
-        background: 'rgba(5,8,20,0.5)', border: '1px solid rgba(30,41,59,0.5)',
-        borderRadius: 4, padding: '8px 12px', textAlign: 'center',
-      }}>
-        <p style={{ color: '#334155', fontSize: 7 }}>💤 HP pełne — odpoczynek zbędny</p>
-      </div>
-    );
-  }
-
-  const clamped = Math.min(Math.max(1, minutes), maxMinutes);
-
-  return (
-    <div style={{
-      background: 'rgba(5,8,20,0.7)', border: '1px solid rgba(51,65,85,0.5)',
-      borderRadius: 4, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ color: '#64748b', fontSize: 6 }}>💤 ODPOCZYNEK</p>
-        <p style={{ color: '#22c55e', fontSize: 7 }}>+{clamped} HP za {clamped} min</p>
-      </div>
-      <input
-        type="range" min={1} max={maxMinutes} value={clamped}
-        onChange={e => setMinutes(Number(e.target.value))}
-        disabled={inCombat}
-        style={{ width: '100%', accentColor: '#22c55e', cursor: inCombat ? 'not-allowed' : 'pointer' }}
-      />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 5, color: '#334155' }}>
-        <span>1 min / 1 HP</span>
-        <span>max {maxMinutes} min</span>
-      </div>
-      <button
-        onClick={() => onRest(clamped)}
-        disabled={inCombat}
-        className="btn btn-secondary"
-        style={{ width: '100%', fontSize: 7, padding: '7px 8px' }}
-      >
-        ▶ Rozpocznij odpoczynek
-      </button>
+  if (maxMinutes <= 0) return (
+    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>HP PEŁNE — odpoczynek zbędny</p>
     </div>
   );
-}
-
-function StatBar({ label, value, max, color, glow }: { label: string; value: number; max: number; color: string; glow: string }) {
-  const pct = Math.min(100, (value / max) * 100);
+  const clamped = Math.min(Math.max(1, minutes), maxMinutes);
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 6, color: '#64748b', marginBottom: 3 }}>
-        <span>{label}</span>
-        <span style={{ color: '#94a3b8' }}>{value}/{max}</span>
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
+      border: '1px solid rgba(45,65,25,0.5)',
+      padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK</p>
+        <p style={{ ...PX(6), color: '#6aaa40' }}>+{clamped} HP / {clamped} min</p>
       </div>
-      <div className="pixel-bar">
-        <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 8px ${glow}` }} />
+      <input type="range" min={1} max={maxMinutes} value={clamped}
+        onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1 min = 1 HP</span>
+        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>max {maxMinutes} min</span>
       </div>
+      <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
+        ▶ Rozpocznij odpoczynek
+      </button>
     </div>
   );
 }
@@ -108,153 +83,156 @@ export default function HeroCard() {
   const inCombat = useGameStore(s => s.inCombat);
 
   const isResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
-
-  const hpPct = (hero.hp / hero.maxHp) * 100;
-  const hpColor = hpPct > 50 ? '#22c55e' : hpPct > 25 ? '#f59e0b' : '#ef4444';
-  const hpGlow  = hpPct > 50 ? 'rgba(34,197,94,0.5)' : hpPct > 25 ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)';
-
+  const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite  = CLASS_SPRITES[hero.class];
   const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
-
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Hero header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(20,30,60,0.95), rgba(10,15,35,0.98))',
-          border: '1px solid rgba(90,110,190,0.3)', borderRadius: 4, padding: 8,
-          boxShadow: '0 0 20px rgba(59,51,140,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
-          flexShrink: 0,
+      {/* ── PORTRAIT + INFO ── */}
+      <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+
+        {/* Portrait scene */}
+        <div className="df-portrait-bg" style={{
+          width: 108, flexShrink: 0, minHeight: 152,
+          border: '1px solid var(--border-main)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
+          <div className="df-fire-glow" />
+          <div className="df-portrait-vignette" />
+          <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.95))' }}>
+            <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
+          </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {/* Info column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center' }}>
           <div>
-            <p style={{
-              fontSize: 11, marginBottom: 2, wordBreak: 'break-all',
-              background: 'linear-gradient(90deg, #fbbf24, #f59e0b)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            }}>{hero.name}</p>
-            <p style={{ color: '#64748b', fontSize: 7 }}>{CLASS_NAME[hero.class]} · POZ.{hero.level}</p>
+            <p style={{ ...PX(11), color: 'var(--gold-bright)', textShadow: '0 0 14px var(--gold-glow)', marginBottom: 4, wordBreak: 'break-all' }}>
+              {hero.name}
+            </p>
+            <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{CLASS_NAME[hero.class]} · POZ. {hero.level}</p>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+
+          {/* ATK / DEF / HP boxes */}
+          <div style={{ display: 'flex', gap: 4 }}>
             {[
-              { icon: '⚔️', val: attack,    col: '#f87171' },
-              { icon: '🛡',  val: defense,   col: '#60a5fa' },
-              { icon: '❤️', val: hero.maxHp, col: '#4ade80' },
-            ].map(({ icon, val, col }) => (
-              <div key={icon} style={{
-                background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(51,65,85,0.6)',
-                borderRadius: 3, padding: '3px 6px', display: 'flex', alignItems: 'center', gap: 3,
+              { icon: '⚔', val: attack,    col: '#c05050', label: 'ATAK' },
+              { icon: '🛡', val: defense,   col: '#5070c0', label: 'OBRON' },
+              { icon: '♥', val: hero.maxHp, col: '#c04040', label: 'MAX HP' },
+            ].map(({ icon, val, col, label }) => (
+              <div key={label} style={{
+                background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+                padding: '5px 4px', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', flex: 1,
+                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
               }}>
                 <span style={{ fontSize: 9 }}>{icon}</span>
-                <span style={{ color: col, fontSize: 8 }}>{val}</span>
+                <span style={{ ...PX(8), color: col, marginTop: 2 }}>{val}</span>
+                <span style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 1 }}>{label}</span>
               </div>
             ))}
           </div>
-          <p style={{
-            color: '#fbbf24', fontSize: 9,
-            background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
-            borderRadius: 3, padding: '2px 7px', display: 'inline-block', alignSelf: 'flex-start',
-          }}>🪙 {hero.gold}</p>
+
+          {/* Gold */}
+          <div style={{
+            background: 'rgba(50,36,14,0.4)', border: '1px solid var(--gold-darker)',
+            padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
+          }}>
+            <span style={{ fontSize: 12 }}>🪙</span>
+            <span style={{ ...PX(9), color: 'var(--gold-bright)', textShadow: '0 0 8px var(--gold-glow)' }}>{hero.gold}</span>
+          </div>
         </div>
       </div>
 
-      {/* HP & XP bars */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <StatBar label="❤️ HP" value={hero.hp} max={hero.maxHp} color={hpColor} glow={hpGlow} />
-        <StatBar label="⭐ XP" value={hero.xp} max={hero.xpToNext} color="#f59e0b" glow="rgba(245,158,11,0.5)" />
+      {/* ── HP / XP BARS ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+            <span style={{ ...PX(5), color: '#904040' }}>♥ ŻYWOTNOŚĆ</span>
+            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.hp} / {hero.maxHp}</span>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill hp-fill" style={{ width: `${hpPct}%` }} />
+          </div>
+        </div>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+            <span style={{ ...PX(5), color: '#906830' }}>✦ DOŚWIADCZENIE</span>
+            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.xp} / {hero.xpToNext}</span>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill xp-fill" style={{ width: `${(hero.xp / hero.xpToNext) * 100}%` }} />
+          </div>
+        </div>
       </div>
 
-      {/* Rest section */}
+      {/* ── REST ── */}
       {isResting
         ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} />
       }
 
-      {/* Daily limits */}
-      <div style={{
-        background: 'rgba(5,8,20,0.7)', border: '1px solid rgba(30,41,59,0.7)',
-        borderRadius: 4, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6,
-      }}>
-        <p style={{ color: '#475569', fontSize: 6, marginBottom: 2 }}>DZIENNY LIMIT</p>
-        {[
-          { label: '⚔️ Lochy', cur: hero.dungeonRunsToday, max: MAX_DAILY_DUNGEONS, pct: dungeonPct,
-            color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ef4444' : '#8b5cf6',
-            glow: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? 'rgba(239,68,68,0.4)' : 'rgba(139,92,246,0.4)' },
-          { label: '📜 Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS, pct: questPct,
-            color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ef4444' : '#0ea5e9',
-            glow: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? 'rgba(239,68,68,0.4)' : 'rgba(14,165,233,0.4)' },
-        ].map(({ label, cur, max, pct, color, glow }) => (
-          <div key={label}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 6, color: '#64748b', marginBottom: 3 }}>
-              <span>{label}</span>
-              <span style={{ color: cur >= max ? '#f87171' : '#94a3b8' }}>{cur}/{max}</span>
+      {/* ── DZIENNY LIMIT + STATYSTYKI ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+
+        <div className="df-section">
+          <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>DZIENNY LIMIT</p>
+          {[
+            { label: 'Lochy',   cur: hero.dungeonRunsToday,    max: MAX_DAILY_DUNGEONS, pct: dungeonPct, col: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? 'var(--hp-color)' : '#7060b8' },
+            { label: 'Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   col: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? 'var(--hp-color)' : '#306880' },
+          ].map(({ label, cur, max, pct, col }) => (
+            <div key={label} style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{label}</span>
+                <span style={{ ...PX(5), color: cur >= max ? 'var(--hp-bright)' : 'var(--text-dim)' }}>{cur}/{max}</span>
+              </div>
+              <div className="pixel-bar">
+                <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: col }} />
+              </div>
             </div>
-            <div className="pixel-bar">
-              <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: color, boxShadow: `0 0 6px ${glow}` }} />
+          ))}
+        </div>
+
+        <div className="df-section">
+          <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
+          {[
+            { icon: '💪', name: 'Moc ciała', val: hero.stats.strength },
+            { icon: '🏃', name: 'Zręczność', val: hero.stats.agility },
+            { icon: '🧠', name: 'Wiedza',     val: hero.stats.intelligence },
+            { icon: '♥',  name: 'Żywotność', val: hero.stats.constitution },
+          ].map(({ icon, name, val }) => (
+            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{icon} {name}</span>
+              <span style={{ ...PX(6), color: 'var(--gold-bright)' }}>{val}</span>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Attribute points */}
+      {/* ── ATTRIBUTE POINTS ── */}
       {hero.attributePoints > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(28,20,8,0.9), rgba(20,14,4,0.95))',
-          border: '1px solid rgba(217,119,6,0.5)', borderRadius: 4, padding: 10,
-          boxShadow: '0 0 20px rgba(245,158,11,0.1)',
+        <div className="df-glow-pulse" style={{
+          background: 'linear-gradient(135deg, rgba(40,28,8,0.97), rgba(28,20,6,0.99))',
+          border: '1px solid var(--gold-dim)', padding: 12,
         }}>
-          <p style={{ color: '#fbbf24', fontSize: 8, marginBottom: 8, textShadow: '0 0 10px rgba(251,191,36,0.4)' }}>
+          <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 10 }}>
             ✨ {hero.attributePoints} PKT CECH!
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             {(['strength', 'agility', 'intelligence', 'constitution'] as const).map(attr => (
-              <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 6px' }}>
-                +{({ strength: 'Siła', agility: 'Zwin', intelligence: 'Intel', constitution: 'Kond' }[attr])}
+              <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-primary" style={{ fontSize: 5, padding: '7px 4px' }}>
+                + {({ strength: 'Moc ciała', agility: 'Zręczność', intelligence: 'Wiedza', constitution: 'Żywotność' }[attr])}
               </button>
             ))}
           </div>
         </div>
       )}
-
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        <div style={{ background: 'rgba(5,8,20,0.7)', border: '1px solid rgba(30,41,59,0.6)', borderRadius: 4, padding: '8px 10px' }}>
-          <p style={{ color: '#475569', fontSize: 6, marginBottom: 6 }}>STATYSTYKI</p>
-          {[
-            { icon: '💪', name: 'Siła',     val: hero.stats.strength },
-            { icon: '🏃', name: 'Zwinność', val: hero.stats.agility },
-            { icon: '🧠', name: 'Intel',    val: hero.stats.intelligence },
-            { icon: '🛡', name: 'Kondycja', val: hero.stats.constitution },
-          ].map(({ icon, name, val }) => (
-            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#64748b' }}>
-              <span>{icon} {name}</span>
-              <span style={{ color: '#fbbf24' }}>{val}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ background: 'rgba(5,8,20,0.7)', border: '1px solid rgba(30,41,59,0.6)', borderRadius: 4, padding: '8px 10px' }}>
-          <p style={{ color: '#475569', fontSize: 6, marginBottom: 6 }}>WALKA</p>
-          {[
-            { icon: '⚔️', name: 'Atk',   val: attack,     col: '#f87171' },
-            { icon: '🛡',  name: 'Def',   val: defense,    col: '#60a5fa' },
-            { icon: '❤️', name: 'MaxHP', val: hero.maxHp,  col: '#4ade80' },
-          ].map(({ icon, name, val, col }) => (
-            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 7, marginBottom: 3, color: '#64748b' }}>
-              <span>{icon} {name}</span>
-              <span style={{ color: col }}>{val}</span>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

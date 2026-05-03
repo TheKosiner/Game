@@ -29,7 +29,6 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('hero');
   const [gameLoaded, setGameLoaded] = useState(false);
 
-  // Load from cloud or localStorage once auth resolves
   useEffect(() => {
     if (authLoading) return;
     async function load() {
@@ -37,9 +36,7 @@ export default function App() {
         try {
           const loaded = await loadFromCloud(user.uid);
           if (!loaded) loadGame();
-        } catch {
-          loadGame();
-        }
+        } catch { loadGame(); }
       } else {
         loadGame();
       }
@@ -48,7 +45,6 @@ export default function App() {
     load();
   }, [authLoading, user?.uid]);
 
-  // Auto-save + cloud sync every 30s, tick energy regen every 30s
   useEffect(() => {
     if (!gameLoaded) return;
     checkDailyReset();
@@ -60,29 +56,23 @@ export default function App() {
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
 
-  // Sync to cloud on level-up or character creation
   useEffect(() => {
-    if (user && gameLoaded && hero.name !== 'Hero') {
+    if (user && gameLoaded && hero.name !== 'Hero')
       syncToCloud(user.uid, user.username).catch(() => {});
-    }
   }, [hero.level, hero.name]);
 
   if (authLoading || !gameLoaded) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#d97706', fontSize: 9 }}>⏳ Ładowanie...</p>
+        <p style={{ color: 'var(--gold-main)', fontFamily: "'Press Start 2P', monospace", fontSize: 7 }}>⏳ Ładowanie...</p>
       </div>
     );
   }
 
-  // Show auth screen only when Firebase is configured and user is not logged in
   if (isFirebaseConfigured && !user) return <AuthScreen />;
 
-  const hasSave = (() => {
-    try { return !!localStorage.getItem('realm_of_valor_save'); } catch { return false; }
-  })();
+  const hasSave = (() => { try { return !!localStorage.getItem('realm_of_valor_save'); } catch { return false; } })();
   const isNewGame = hero.name === 'Hero' && !hasSave;
-
   if (isNewGame) return <CharacterCreation />;
 
   async function handleReset() {
@@ -94,55 +84,64 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 80 }}>
+
+      {/* HEADER */}
       <header style={{
-        background: 'rgba(6,9,18,0.9)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(90,110,190,0.25)',
+        background: 'linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
+        borderBottom: '2px solid var(--border-main)',
         position: 'sticky', top: 0, zIndex: 40,
-        padding: '8px 14px',
+        padding: '9px 14px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
+        backgroundImage: `
+          linear-gradient(var(--gold-darker), var(--gold-darker)),
+          linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)
+        `,
+        backgroundSize: '100% 1px, 100% 100%',
+        backgroundPosition: 'bottom, top',
+        backgroundRepeat: 'no-repeat',
       }}>
         <h1 style={{
-          margin: 0, fontSize: 9,
-          background: 'linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b)',
-          backgroundSize: '200% auto',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.4))',
-        }}>🏰 REALM OF VALOR</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          margin: 0,
+          fontFamily: "'Press Start 2P', monospace",
+          fontSize: 8,
+          color: 'var(--gold-main)',
+          textShadow: '0 0 12px var(--gold-glow), 0 1px 0 rgba(0,0,0,0.9)',
+          letterSpacing: '0.06em',
+        }}>✦ REALM OF VALOR</h1>
+
+        <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
           <span style={{
-            color: '#fbbf24', fontSize: 8,
-            background: 'rgba(245,158,11,0.1)',
-            border: '1px solid rgba(245,158,11,0.25)',
-            borderRadius: 3,
-            padding: '2px 6px',
+            fontFamily: "'Press Start 2P', monospace",
+            color: 'var(--gold-bright)', fontSize: 7,
+            background: 'rgba(60,44,20,0.4)',
+            border: '1px solid var(--gold-darker)',
+            padding: '2px 7px',
           }}>🪙 {hero.gold}</span>
           <span style={{
-            color: '#94a3b8', fontSize: 7,
-            background: 'rgba(51,65,85,0.4)',
-            border: '1px solid rgba(51,65,85,0.6)',
-            borderRadius: 3,
+            fontFamily: "'Press Start 2P', monospace",
+            color: 'var(--text-dim)', fontSize: 6,
+            background: 'rgba(20,18,14,0.8)',
+            border: '1px solid var(--border-main)',
             padding: '2px 6px',
           }}>POZ.{hero.level}</span>
-          {user && <span style={{ color: '#475569', fontSize: 6 }}>{user.username}</span>}
+          {user && <span style={{ fontFamily: "'Press Start 2P', monospace", color: 'var(--text-muted)', fontSize: 5 }}>{user.username}</span>}
           {user && (
-            <button onClick={() => logout()} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Press Start 2P', monospace" }}>
-              WYJDŹ
-            </button>
+            <button onClick={() => logout()} style={{
+              fontFamily: "'Press Start 2P', monospace",
+              color: 'var(--text-muted)', fontSize: 5,
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}>WYJDŹ</button>
           )}
-          <button onClick={handleReset} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer' }}>↩</button>
+          <button onClick={handleReset} style={{ color: 'var(--text-muted)', fontSize: 11, background: 'none', border: 'none', cursor: 'pointer' }}>↩</button>
         </div>
       </header>
 
-      <main style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {tab === 'hero' && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
+      <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {tab === 'hero'    && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
         {tab === 'dungeon' && <DungeonPanel />}
-        {tab === 'quests' && <QuestPanel />}
-        {tab === 'shop' && <ShopPanel />}
+        {tab === 'quests'  && <QuestPanel />}
+        {tab === 'shop'    && <ShopPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
       </main>
 

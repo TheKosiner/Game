@@ -5,23 +5,26 @@ interface Props {
   onChange: (tab: Tab) => void;
 }
 
-const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'hero',    label: 'Bohater', emoji: '👤' },
-  { id: 'dungeon', label: 'Loch',    emoji: '⚔️' },
-  { id: 'quests',  label: 'Zadania', emoji: '📜' },
-  { id: 'shop',    label: 'Sklep',   emoji: '🛒' },
-  { id: 'ranking', label: 'Ranking', emoji: '🏆' },
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'hero',    label: 'BOHATER', icon: '☠' },
+  { id: 'dungeon', label: 'LOCH',    icon: '⚔' },
+  { id: 'quests',  label: 'ZADANIA', icon: '📜' },
+  { id: 'shop',    label: 'SKLEP',   icon: '⚖' },
+  { id: 'ranking', label: 'RANKING', icon: '👑' },
 ];
 
 export default function BottomNav({ active, onChange }: Props) {
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
-      background: 'rgba(6,9,18,0.92)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      borderTop: '1px solid rgba(90,110,190,0.25)',
-      boxShadow: '0 -8px 32px rgba(0,0,0,0.6)',
+      background: 'linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
+      borderTop: '2px solid var(--border-main)',
+      boxShadow: '0 -6px 24px rgba(0,0,0,0.8)',
+      /* top gold line */
+      backgroundImage: 'linear-gradient(var(--gold-darker), var(--gold-darker)), linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
+      backgroundSize: '100% 1px, 100% 100%',
+      backgroundPosition: 'top, top',
+      backgroundRepeat: 'no-repeat',
     }}>
       <div style={{ display: 'flex', maxWidth: 480, margin: '0 auto' }}>
         {TABS.map(tab => {
@@ -32,42 +35,53 @@ export default function BottomNav({ active, onChange }: Props) {
               onClick={() => onChange(tab.id)}
               style={{
                 flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                padding: '8px 2px 10px',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                padding: '10px 2px 12px',
                 background: isActive
-                  ? 'linear-gradient(180deg, rgba(245,158,11,0.08) 0%, transparent 100%)'
-                  : 'none',
+                  ? 'linear-gradient(180deg, rgba(92,72,32,0.25) 0%, transparent 100%)'
+                  : 'transparent',
                 border: 'none',
-                borderTop: isActive
-                  ? '2px solid #f59e0b'
-                  : '2px solid transparent',
-                color: isActive ? '#f59e0b' : '#475569',
+                borderTop: `2px solid ${isActive ? 'var(--gold-main)' : 'transparent'}`,
                 cursor: 'pointer',
                 fontFamily: "'Press Start 2P', monospace",
                 transition: 'all 0.15s ease',
                 position: 'relative',
               }}
             >
+              {/* Active glow line */}
               {isActive && (
                 <div style={{
-                  position: 'absolute', top: 0, left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: 32, height: 2,
-                  background: 'linear-gradient(90deg, transparent, #f59e0b, transparent)',
-                  filter: 'blur(2px)',
+                  position: 'absolute', top: 0, left: '15%', right: '15%',
+                  height: 2,
+                  background: 'linear-gradient(90deg, transparent, var(--gold-main), transparent)',
+                  filter: 'blur(3px)',
                 }} />
               )}
+
+              {/* Icon */}
               <span style={{
-                fontSize: 18,
-                marginBottom: 3,
-                filter: isActive ? 'drop-shadow(0 0 6px rgba(245,158,11,0.6))' : 'none',
-                transition: 'filter 0.15s ease',
+                fontSize: isActive ? 20 : 17,
+                lineHeight: 1,
+                marginBottom: 4,
+                color: isActive ? 'var(--gold-bright)' : 'var(--text-muted)',
+                textShadow: isActive ? '0 0 10px var(--gold-glow)' : 'none',
+                filter: isActive ? 'drop-shadow(0 0 4px rgba(180,130,40,0.5))' : 'none',
+                transition: 'all 0.15s ease',
+                display: 'block',
               }}>
-                {tab.emoji}
+                {tab.icon}
               </span>
-              <span style={{ fontSize: 5, letterSpacing: '0.05em' }}>{tab.label}</span>
+
+              {/* Label */}
+              <span style={{
+                fontSize: 4,
+                letterSpacing: '0.08em',
+                color: isActive ? 'var(--gold-main)' : 'var(--text-muted)',
+                textShadow: isActive ? '0 0 6px var(--gold-glow)' : 'none',
+              }}>
+                {tab.label}
+              </span>
             </button>
           );
         })}

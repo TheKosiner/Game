@@ -4,6 +4,8 @@ import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
 
+const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+
 function formatTime(ms: number): string {
   if (ms <= 0) return 'Gotowe!';
   const s = Math.floor(ms / 1000);
@@ -35,43 +37,58 @@ export default function QuestPanel() {
   const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
 
   return (
-    <div className="card p-4 space-y-3">
+    <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 className="font-bold text-slate-300">📜 Zadania</h3>
-        <p style={{ fontSize: 7, color: limitReached ? '#f87171' : '#94a3b8' }}>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>📜 ZADANIA</p>
+        <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
           {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} dziś
         </p>
       </div>
 
       {limitReached && !activeQuest && (
-        <div style={{ background: '#12100a', border: '2px solid #7f1d1d', padding: 8, textAlign: 'center' }}>
-          <p style={{ color: '#f87171', fontSize: 7 }}>📜 Dzienny limit zadań wyczerpany — wróć jutro!</p>
+        <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit zadań wyczerpany!</p>
         </div>
       )}
 
       {activeQuest && (
-        <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">{activeQuest.quest.emoji}</span>
-            <div className="flex-1">
-              <p className="font-bold text-sm">{activeQuest.quest.name}</p>
-              <p className="text-xs text-slate-400">{activeQuest.quest.description}</p>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(24,18,6,0.97), rgba(18,14,4,0.99))',
+          border: '1px solid var(--gold-darker)',
+          padding: 12,
+          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 22 }}>{activeQuest.quest.emoji}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...PX(7), color: 'var(--gold-bright)', marginBottom: 4 }}>{activeQuest.quest.name}</p>
+              <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
             </div>
           </div>
-          <div style={{ height: 6, background: '#1e293b', borderRadius: 4, marginBottom: 8 }}>
-            <div style={{ width: `${progress}%`, height: '100%', background: canCollect ? '#22c55e' : '#d97706', borderRadius: 4, transition: 'width 1s linear' }} />
+
+          <div style={{ height: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', marginBottom: 8, overflow: 'hidden' }}>
+            <div style={{
+              width: `${progress}%`, height: '100%',
+              background: canCollect
+                ? 'linear-gradient(90deg, #3a7a1a, #6aaa30)'
+                : 'linear-gradient(90deg, var(--xp-dark), var(--xp-bright))',
+              transition: 'width 1s linear',
+            }} />
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-slate-400">
-              {canCollect ? '✅ Gotowe do odbioru!' : `⏳ ${formatTime(remaining)}`}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canCollect ? 10 : 0 }}>
+            <p style={{ ...PX(5), color: canCollect ? '#6aaa30' : 'var(--text-dim)' }}>
+              {canCollect ? '✓ Gotowe do odbioru!' : `⏳ ${formatTime(remaining)}`}
             </p>
-            <div className="flex gap-2 text-xs">
-              <span className="text-amber-400">+{activeQuest.quest.goldReward}🪙</span>
-              <span className="text-blue-400">+{activeQuest.quest.xpReward}XP</span>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <span style={{ ...PX(5), color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
+              <span style={{ ...PX(5), color: '#5070a0' }}>+{activeQuest.quest.xpReward}XP</span>
             </div>
           </div>
+
           {canCollect && (
-            <button onClick={collectQuest} className="btn btn-primary w-full mt-2 text-sm">
+            <button onClick={collectQuest} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
               🎁 Odbierz nagrodę!
             </button>
           )}
@@ -79,28 +96,36 @@ export default function QuestPanel() {
       )}
 
       {!activeQuest && !limitReached && (
-        <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
           {available.length === 0 ? (
-            <p className="text-slate-500 text-sm text-center py-4">Brak dostępnych zadań dla twojego poziomu.</p>
+            <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
+              Brak zadań dla twojego poziomu.
+            </p>
           ) : (
             available.map((quest: Quest) => {
               const duration = scaledQuestDuration(quest.durationMs, hero.level);
               return (
-                <div key={quest.id} className="bg-slate-900/60 rounded-lg p-3 border border-slate-700">
-                  <div className="flex items-start gap-2 mb-2">
-                    <span className="text-xl">{quest.emoji}</span>
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm">{quest.name}</p>
-                      <p className="text-xs text-slate-400">{quest.description}</p>
+                <div key={quest.id} style={{
+                  background: 'var(--bg-inset)',
+                  border: '1px solid var(--border-dark)',
+                  padding: 10,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontSize: 18 }}>{quest.emoji}</span>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 4 }}>{quest.name}</p>
+                      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{quest.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex gap-3 text-xs">
-                      <span className="text-amber-400">🪙 {quest.goldReward}</span>
-                      <span className="text-blue-400">⭐ {quest.xpReward} XP</span>
-                      <span className="text-slate-400">⏱ {formatTime(duration)}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <span style={{ ...PX(5), color: 'var(--gold-bright)' }}>🪙 {quest.goldReward}</span>
+                      <span style={{ ...PX(5), color: '#5070a0' }}>✦ {quest.xpReward} XP</span>
+                      <span style={{ ...PX(5), color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
                     </div>
-                    <button onClick={() => startQuest(quest)} className="btn btn-primary text-xs py-1 px-3">Start</button>
+                    <button onClick={() => startQuest(quest)} className="btn btn-primary" style={{ fontSize: 5, padding: '6px 10px' }}>
+                      Start ▶
+                    </button>
                   </div>
                 </div>
               );
