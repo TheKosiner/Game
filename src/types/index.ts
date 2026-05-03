@@ -109,6 +109,24 @@ export interface ShopItem {
   price: number;
 }
 
+export interface PvpResult {
+  won: boolean;
+  opponentName: string;
+  xpGained: number;
+  goldGained: number;
+  timestamp: number;
+}
+
+export interface PvpOpponent {
+  uid: string;
+  heroName: string;
+  username: string;
+  level: number;
+  attack?: number;
+  defense?: number;
+  maxHp?: number;
+}
+
 export interface GameState {
   hero: Hero;
   activeQuest: ActiveQuest | null;
@@ -121,6 +139,10 @@ export interface GameState {
   shopSeed: number;
   lastShopRefresh: number;
   shopPurchased: number[];
+  lastPvpFight: number;
+  pvpWins: number;
+  pvpLosses: number;
+  pvpLog: PvpResult[];
 
   // actions
   initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;
@@ -139,6 +161,7 @@ export interface GameState {
   upgradeAttribute: (attr: keyof Stats) => void;
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
+  performPvp: (opponent: PvpOpponent) => PvpResult | null;
   checkDailyReset: () => void;
   restHero: (minutes: number) => void;
   loadGame: () => void;

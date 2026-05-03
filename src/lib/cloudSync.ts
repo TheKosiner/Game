@@ -1,6 +1,7 @@
 import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
+import { getHeroAttack, getHeroDefense } from '../utils/combat';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -13,11 +14,16 @@ export interface LeaderboardEntry {
   updatedAt: number;
   skinTone?: number;
   hairColor?: number;
+  attack?: number;
+  defense?: number;
+  maxHp?: number;
+  pvpWins?: number;
+  pvpLosses?: number;
 }
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
-  const { hero, activeQuest } = useGameStore.getState();
+  const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
@@ -27,6 +33,11 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     gold: hero.gold,
     skinTone: hero.skinTone ?? 1,
     hairColor: hero.hairColor ?? 2,
+    attack: getHeroAttack(hero),
+    defense: getHeroDefense(hero),
+    maxHp: hero.maxHp,
+    pvpWins: pvpWins ?? 0,
+    pvpLosses: pvpLosses ?? 0,
     updatedAt: Date.now(),
     saveData: { hero, activeQuest },
   });

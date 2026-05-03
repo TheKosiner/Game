@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item } from '../types';
+import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { getItemById } from '../data/items';
-import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext } from '../utils/combat';
+import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const SAVE_KEY = 'realm_of_valor_save';
 const MAX_INVENTORY = 20;
@@ -10,6 +10,19 @@ const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
+export const PVP_COOLDOWN = 15 * 60 * 1000;
+
+function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number): boolean {
+  let hHp = heroHp;
+  let oHp = oppHp;
+  for (let i = 0; i < 300; i++) {
+    oHp -= Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - oppDef);
+    if (oHp <= 0) return true;
+    hHp -= Math.max(1, Math.round(oppAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+    if (hHp <= 0) return false;
+  }
+  return hHp >= oHp;
+}
 
 function isSameDay(ts: number): boolean {
   const a = new Date(ts);
@@ -66,10 +79,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   shopSeed: Date.now(),
   lastShopRefresh: 0,
   shopPurchased: [],
+  lastPvpFight: 0,
+  pvpWins: 0,
+  pvpLosses: 0,
+  pvpLog: [],
 
   initHero: (name, heroClass, skinTone = 1, hairColor = 2) => {
     const hero = createHero(name, heroClass, skinTone, hairColor);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [] });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
     get().saveGame();
   },
 
@@ -284,6 +301,29 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  performPvp: (opponent: PvpOpponent): PvpResult | null => {
+    const { hero, lastPvpFight, pvpWins, pvpLosses, pvpLog, inCombat } = get();
+    if (inCombat) return null;
+    const now = Date.now();
+    if (now - lastPvpFight < PVP_COOLDOWN) return null;
+    const heroAtk = getHeroAttack(hero);
+    const heroDef = getHeroDefense(hero);
+    const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100);
+    const xpGained = won ? Math.max(20, opponent.level * 20) : 8;
+    const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
+    const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
+    set({
+      lastPvpFight: now,
+      pvpWins: won ? pvpWins + 1 : pvpWins,
+      pvpLosses: won ? pvpLosses : pvpLosses + 1,
+      pvpLog: [result, ...pvpLog].slice(0, 10),
+    });
+    get().addXp(xpGained);
+    if (goldGained > 0) get().addGold(goldGained);
+    get().saveGame();
+    return result;
+  },
+
   restHero: (minutes: number) => {
     const { hero, inCombat } = get();
     if (inCombat) return;
@@ -327,6 +367,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       shopSeed: state.shopSeed,
       lastShopRefresh: state.lastShopRefresh,
       shopPurchased: state.shopPurchased,
+      lastPvpFight: state.lastPvpFight,
+      pvpWins: state.pvpWins,
+      pvpLosses: state.pvpLosses,
+      pvpLog: state.pvpLog,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -367,6 +411,10 @@ export const useGameStore = create<GameState>((set, get) => ({
           shopSeed: save.shopSeed ?? Date.now(),
           lastShopRefresh: save.lastShopRefresh ?? 0,
           shopPurchased: save.shopPurchased ?? [],
+          lastPvpFight: save.lastPvpFight ?? 0,
+          pvpWins: save.pvpWins ?? 0,
+          pvpLosses: save.pvpLosses ?? 0,
+          pvpLog: save.pvpLog ?? [],
         });
         get().checkDailyReset();
       }
