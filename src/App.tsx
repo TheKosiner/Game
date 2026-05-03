@@ -93,12 +93,41 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 72 }}>
-      <header style={{ background: '#0f0e17', borderBottom: '2px solid #334155', position: 'sticky', top: 0, zIndex: 40, padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 style={{ color: '#d97706', fontSize: 9, margin: 0 }}>🏰 REALM OF VALOR</h1>
+    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 80 }}>
+      <header style={{
+        background: 'rgba(6,9,18,0.9)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(90,110,190,0.25)',
+        position: 'sticky', top: 0, zIndex: 40,
+        padding: '8px 14px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+      }}>
+        <h1 style={{
+          margin: 0, fontSize: 9,
+          background: 'linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b)',
+          backgroundSize: '200% auto',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          filter: 'drop-shadow(0 0 8px rgba(245,158,11,0.4))',
+        }}>🏰 REALM OF VALOR</h1>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <span style={{ color: '#fbbf24', fontSize: 8 }}>🪙 {hero.gold}</span>
-          <span style={{ color: '#94a3b8', fontSize: 7 }}>POZ.{hero.level}</span>
+          <span style={{
+            color: '#fbbf24', fontSize: 8,
+            background: 'rgba(245,158,11,0.1)',
+            border: '1px solid rgba(245,158,11,0.25)',
+            borderRadius: 3,
+            padding: '2px 6px',
+          }}>🪙 {hero.gold}</span>
+          <span style={{
+            color: '#94a3b8', fontSize: 7,
+            background: 'rgba(51,65,85,0.4)',
+            border: '1px solid rgba(51,65,85,0.6)',
+            borderRadius: 3,
+            padding: '2px 6px',
+          }}>POZ.{hero.level}</span>
           {user && <span style={{ color: '#475569', fontSize: 6 }}>{user.username}</span>}
           {user && (
             <button onClick={() => logout()} style={{ color: '#475569', fontSize: 6, background: 'none', border: 'none', cursor: 'pointer', fontFamily: "'Press Start 2P', monospace" }}>
@@ -109,7 +138,7 @@ export default function App() {
         </div>
       </header>
 
-      <main style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <main style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 10 }}>
         {tab === 'hero' && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
         {tab === 'dungeon' && <DungeonPanel />}
         {tab === 'quests' && <QuestPanel />}

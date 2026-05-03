@@ -7,11 +7,14 @@ const P: Record<string, string> = {
   R: '#CC2211', // red armor
   r: '#FF5533', // red armor highlight
   d: '#990000', // red armor shadow
-  M: '#909090', // metal
+  M: '#909090', // metal mid
   m: '#505050', // metal shadow
   L: '#D8D8D8', // metal light
+  A: '#F0F0F0', // metal bright highlight
   D: '#111111', // dark outline
+  v: '#252525', // very dark (visor, deep shadow)
   G: '#FFD700', // gold
+  z: '#AA8800', // gold shadow
   g: '#228822', // dark green (enemies)
   B: '#3A1C00', // boot dark
   b: '#7A5535', // boot light
@@ -33,95 +36,140 @@ const P: Record<string, string> = {
   E: '#4488FF', // eye blue
   H: '#1166AA', // helmet blue (enemies)
   h: '#884400', // hair (overridable)
+  x: '#C0D0E0', // weapon silver
+  X: '#E8F4FF', // weapon shine
+  n: '#1A0800', // very dark brown outline
 };
 
 function decode(rows: string[]): string[][] {
   return rows.map(row => row.split('').map(ch => P[ch] ?? 'transparent'));
 }
 
-// Hero sprites — 16×24 with shading
+// ── Hero sprites 20×32 ────────────────────────────────────────────────────
+
 export const SPRITE_WARRIOR = decode([
-  '____mMMMMMMMm___',
-  '___mMLLLLLLMm___',
-  '___MLSSSSSSsM___',
-  '___MLSEDDEsM____',
-  '___MLSSSSSSsM___',
-  '____SSSSSSSs____',
-  '__RRRRRRRRRRRr__',
-  '_MRRRrRRRRRrRRM_',
-  '_MRRdRRRRRRdRRM_',
-  '_MRRRRRGRRRRrRM_',
-  '_MRRRdRRRRRdRRM_',
-  '__MGGGGGGGGGMM__',
-  '__LLmLLLLLLmLL__',
-  '___LmLL___LmLL__',
-  '___LmLL___LmLL__',
-  '___LmLL___LmLL__',
-  '___mMmm___mMmm__',
-  '___LLLm___LLLm__',
-  '___LLLm___LLLm__',
-  '___LLmm___LLmm__',
-  '___BBbb___BBbb__',
-  '___BBbb___BBbb__',
-  '___bBBB___bBBB__',
-  '___BBBB___BBBB__',
+  // helmet
+  '______DDDDDDD_______',
+  '_____DmMMMMMmD______',
+  '_____DmMLLALMmD_____',
+  '_____DMLSSSSsLMD____',
+  '_____DMLSEDDsLMD____',
+  '_____DMLSSSSsLMD____',
+  '______DSSSSsssD_____',
+  // shoulders + chest
+  '_____DRRRRRRRRRd____',
+  '___DRRRrRRRRrRRRd___',
+  '___DRRdRRRRRRdRRd___',
+  '___DRRRRGRRRGRRRd___',
+  '___DRRrRRRRRRrRRd___',
+  '___DRRdRRRRRRdRRd___',
+  '____DGGGGGGGGGGd____',
+  '___DRRRRRRRRRRRRd___',
+  // legs transition
+  '____mLLLmDDDmLLLm___',
+  '____mLLLmD_DmLLLm___',
+  '____mLLLmD_DmLLLm___',
+  '____mLmmmd_dmLmmm___',
+  '____mmmmmd_dmmmmm___',
+  // shins
+  '____mLLmmd_dmLLmm___',
+  '____mLLmmd_dmLLmm___',
+  '____mLmmmd_dmLmmm___',
+  '_____LLLmd__dLLLm___',
+  '____mLLLmd__dmLLLm__',
+  '____mLLLmd__dmLLLm__',
+  // boots
+  '____BBBBmd__dBBBBm__',
+  '____BBbBBd__dBBbBB__',
+  '____BBbBBd__dBBbBB__',
+  '____bBBBBd__dbBBBB__',
+  '___DBBBBBd__dBBBBBD_',
+  '___DBBBBBd__dBBBBBD_',
 ]);
 
 export const SPRITE_MAGE = decode([
-  '_____PPPPPP_____',
-  '____PppppppP____',
-  '___PPpSSSSsPP___',
-  '___PPpSEDDsP____',
-  '___PPpSSSSsPP___',
-  '____pSSSSSsp____',
-  '____UUUUUUUU____',
-  '__PUUuuUUUuUP___',
-  '__pUUuuuuuuUp___',
-  '__pUUuUUUUuUp___',
-  '__pUUUuuuUUUp___',
-  '__pUUUUuUUUUp___',
-  '___pUUUUUUUUp___',
-  '___pUUUU_UUUp___',
-  '___pUUUU_UUUp___',
-  '___pUUUU_UUUp___',
-  '___pUUUU_UUUp___',
-  '___BBBb__BBBb___',
-  '___BBBb__BBBb___',
-  '___bBBB__bBBB___',
-  '___bBBB__bBBB___',
-  '___BBBB__BBBB___',
-  '________________',
-  '________________',
+  // tall pointy hat
+  '__________P_________',
+  '_________PPP________',
+  '________PPpPP_______',
+  '_______PPPpPPP______',
+  '______PPPPpPPPP_____',
+  '_____DPPPpppPPPD____',
+  '____DPPPPpSSSpPPPD__',
+  // face
+  '____DPPPpSSSSSspPD__',
+  '____DPPPpSEDDEspPD__',
+  '____DPPPpSSSSsspPD__',
+  '_____DPPSSSSSSsPPD__',
+  // robe shoulders
+  '_____DPUUUUUUUUpD___',
+  '___DPPUUuuUUuuUUPPD_',
+  '___DpUUUuuUUuuUUUpD_',
+  '___DpUUuuUUUUuuUUpD_',
+  '___DpUUuUUUUUuUUUpD_',
+  // robe body
+  '___DpUUUUUUUUUUUpD__',
+  '___DpUUUGUUUUUUUpD__',
+  '___DpUUUUUUUUUUUpD__',
+  '___DpUUUUUUUUUUUpD__',
+  '____DpUUUU_UUUUpD___',
+  '____DpUUUU_UUUUpD___',
+  '____DpUUUU_UUUUpD___',
+  '____DpUUUU_UUUUpD___',
+  // legs/boots
+  '_____DBBBb_bBBBD____',
+  '_____DBBBb_bBBBD____',
+  '_____DBBBb_bBBBD____',
+  '_____bBBBB_BBBBb____',
+  '_____bBBBB_BBBBb____',
+  '____DBBBBBD_DBBBBBd_',
+  '____DBBBBBd_dBBBBBD_',
+  '____DBBBBBd_dBBBBBD_',
 ]);
 
 export const SPRITE_ROGUE = decode([
-  '____FFFFFFFF____',
-  '___FFffffffFF___',
-  '__FFfSSSSSSsFf__',
-  '__FFfSEDDsEsFf__',
-  '__FFfSSSSSsSFf__',
-  '__hhfSSSSSshff__',
-  '__fFFFFFFFFFf___',
-  '_fFFeFFFFFFeFFf_',
-  '_fFFFeFFFFFeFff_',
-  '_fFFFFFfFFFFFff_',
-  '_fFFFFFFFFFFFff_',
-  '__fFFFFFFFFFf___',
-  '__fFFFFF_FFff___',
-  '__fFFFFF_FFff___',
-  '__fFFFFF_FFff___',
-  '__fFFFFF_FFff___',
-  '__fFFFFF_FFff___',
-  '___BBBb__BBBb___',
-  '___BBBb__BBBb___',
-  '___bBBB__bBBB___',
-  '___bBBB__bBBB___',
-  '___BBBB__BBBB___',
-  '________________',
-  '________________',
+  // dark hood with hair peeking
+  '____DDDDDDDDDDDv____',
+  '___DFFFFFFFFFFFFDv__',
+  '__DFFfFFFFFFFfFFDv__',
+  '__DFFfSSSSSSfFFDv___',
+  '__DFFfSEDDEsFFFDv___',
+  '__DFFfSSSSSSfFFDv___',
+  '__DhhfSSSSSShhFFv___',
+  // leather armor
+  '__DFFFFFFFFFFFFDv___',
+  '_DFFeFFFFFFFeFFDDv__',
+  '_DFFFFeFFFFeFFFFDv__',
+  '_DFFFFFeFFeFFFFEDv__',
+  '_DFFFFFFFFFFFFFDv___',
+  '__DFFFFFFFFFFFFDv___',
+  '__DFFffFFFFFffFDv___',
+  // belt
+  '__DFNNNNNNNNNNNFDv__',
+  // legs
+  '___DFFFFmDDmFFFFDv__',
+  '___DFFFFmD_DmFFFFv__',
+  '___DFFFFmD_DmFFFFv__',
+  '___DFFFmmd_dmmFFFv__',
+  '___DFFmmmd_dmmFFFv__',
+  // lower legs
+  '___DFFFmmd_dmmFFFv__',
+  '___DFFFmmd_dmmFFFv__',
+  '___DFFFmmd_dmmFFFv__',
+  '____DFFmmd__dmmFFv__',
+  '____DFFmmd__dmmFFv__',
+  '____DFFmmd__dmmFFv__',
+  // boots
+  '____DBBBmd__dmBBBD__',
+  '____DBBbBd__dBbBBD__',
+  '____DBBbBd__dBbBBD__',
+  '____dbBBBd__dBBBbd__',
+  '___DBBBBBd__dBBBBBD_',
+  '___DBBBBBd__dBBBBBD_',
 ]);
 
-// Enemy sprites — 16×16 (unchanged)
+// ── Enemy sprites (16×16) ────────────────────────────────────────────────
+
 export const SPRITE_GOBLIN = decode([
   '___kkkkkkkk_____',
   '__kDkDkkkkkk____',
@@ -338,12 +386,13 @@ export const ENEMY_SPRITES: Record<SpriteKey, string[][]> = {
   dragon: SPRITE_DRAGON,
 };
 
-// Appearance customisation
+// ── Appearance customisation ─────────────────────────────────────────────
+
 export const SKIN_TONES = [
-  { name: 'Blada',        light: '#FFE4D0', shadow: '#F5C0A0' },
-  { name: 'Jasna',        light: '#FFCC99', shadow: '#D4956A' },
-  { name: 'Śniada',       light: '#C8874E', shadow: '#A06030' },
-  { name: 'Ciemna',       light: '#8B5A2B', shadow: '#6B3C18' },
+  { name: 'Blada',         light: '#FFE4D0', shadow: '#F5C0A0' },
+  { name: 'Jasna',         light: '#FFCC99', shadow: '#D4956A' },
+  { name: 'Śniada',        light: '#C8874E', shadow: '#A06030' },
+  { name: 'Ciemna',        light: '#8B5A2B', shadow: '#6B3C18' },
   { name: 'Bardzo ciemna', light: '#5C3317', shadow: '#3D1F0A' },
 ];
 
