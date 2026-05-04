@@ -76,13 +76,96 @@ function RestSlider({ hero, onRest, inCombat }: {
   );
 }
 
+function BeggingTimer({ endsAt, reward }: { endsAt: number; reward: number }) {
+  const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
+  useEffect(() => {
+    const id = setInterval(() => {
+      const r = Math.max(0, endsAt - Date.now());
+      setRemaining(r);
+      if (r === 0) clearInterval(id);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [endsAt]);
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  const timeStr = h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`;
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
+      border: '1px solid rgba(30,50,80,0.5)',
+      padding: '10px 12px',
+      display: 'flex', alignItems: 'center', gap: 10,
+      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
+    }}>
+      <div style={{ fontSize: 22 }}>🙏</div>
+      <div>
+        <p style={{ ...PX(7), color: '#5070a0', marginBottom: 4 }}>✦ ŻEBRANIE — {timeStr}</p>
+        <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>Zarobisz +{reward}🪙</p>
+      </div>
+    </div>
+  );
+}
+
+function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () => void }) {
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(28,20,4,0.97), rgba(20,15,3,0.99))',
+      border: '1px solid var(--gold-darker)',
+      padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <p style={{ ...PX(6), color: 'var(--gold-bright)', textShadow: '0 0 8px var(--gold-glow)' }}>
+        🙏 Żebranie zakończone! +{reward}🪙
+      </p>
+      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
+        🪙 Odbierz jałmużnę
+      </button>
+    </div>
+  );
+}
+
+function BeggingSlider({ onBeg, inCombat }: { onBeg: (hours: number) => void; inCombat: boolean }) {
+  const [hours, setHours] = useState(2);
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
+      border: '1px solid rgba(25,40,65,0.5)',
+      padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>🙏 ŻEBRANIE</p>
+        <p style={{ ...PX(6), color: '#5070a0' }}>{hours}h</p>
+      </div>
+      <input type="range" min={1} max={10} value={hours}
+        onChange={e => setHours(Number(e.target.value))} disabled={inCombat} />
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1h min</span>
+        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>10h max</span>
+      </div>
+      <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
+        ▶ Zacznij żebrać
+      </button>
+    </div>
+  );
+}
+
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero = useGameStore(s => s.restHero);
+  const startBegging = useGameStore(s => s.startBegging);
+  const collectBegging = useGameStore(s => s.collectBegging);
   const inCombat = useGameStore(s => s.inCombat);
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => forceUpdate(n => n + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const isResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
+  const isBegging = hero.beggingUntil !== null && Date.now() < hero.beggingUntil;
+  const beggingDone = hero.beggingUntil !== null && Date.now() >= hero.beggingUntil;
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
@@ -176,6 +259,14 @@ export default function HeroCard() {
       {isResting
         ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} />
+      }
+
+      {/* ── ŻEBRANIE ── */}
+      {isBegging
+        ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} />
+        : beggingDone
+          ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={collectBegging} />
+          : <BeggingSlider onBeg={startBegging} inCombat={inCombat} />
       }
 
       {/* ── DZIENNY LIMIT + STATYSTYKI ── */}

@@ -53,6 +53,8 @@ function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor 
     restingUntil: null,
     voluntaryRestUntil: null,
     voluntaryRestHp: null,
+    beggingUntil: null,
+    beggingReward: null,
     dungeonRunsToday: 0,
     questsCompletedToday: 0,
     lastDailyReset: Date.now(),
@@ -324,6 +326,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     return result;
   },
 
+  recordPvpResult: (won: boolean, opponent: PvpOpponent): PvpResult => {
+    const { pvpWins, pvpLosses, pvpLog } = get();
+    const now = Date.now();
+    const xpGained = won ? Math.max(20, opponent.level * 20) : 8;
+    const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
+    const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
+    set({
+      lastPvpFight: now,
+      pvpWins: won ? pvpWins + 1 : pvpWins,
+      pvpLosses: won ? pvpLosses : pvpLosses + 1,
+      pvpLog: [result, ...pvpLog].slice(0, 10),
+    });
+    get().addXp(xpGained);
+    if (goldGained > 0) get().addGold(goldGained);
+    get().saveGame();
+    return result;
+  },
+
   restHero: (minutes: number) => {
     const { hero, inCombat } = get();
     if (inCombat) return;
@@ -334,6 +354,27 @@ export const useGameStore = create<GameState>((set, get) => ({
     const endsAt = Date.now() + minutes * 60 * 1000;
     set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp } });
     get().addCombatLog(`Odpoczywasz ${minutes} min... Odzyskasz ${hp} HP.`, 'system');
+    get().saveGame();
+  },
+
+  startBegging: (hours: number) => {
+    const { hero, inCombat } = get();
+    if (inCombat) return;
+    if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
+    const clampedHours = Math.max(1, Math.min(10, Math.round(hours)));
+    const goldReward = Math.floor(clampedHours * (5 + hero.level * 2) * (0.8 + Math.random() * 0.4));
+    const endsAt = Date.now() + clampedHours * 60 * 60 * 1000;
+    set({ hero: { ...hero, beggingUntil: endsAt, beggingReward: goldReward } });
+    get().addCombatLog(`Zacząłeś żebrać na ${clampedHours}h. Zarobisz ~${goldReward}🪙.`, 'system');
+    get().saveGame();
+  },
+
+  collectBegging: () => {
+    const { hero } = get();
+    if (!hero.beggingUntil || Date.now() < hero.beggingUntil) return;
+    const reward = hero.beggingReward ?? 0;
+    set({ hero: { ...hero, gold: hero.gold + reward, beggingUntil: null, beggingReward: null } });
+    get().addCombatLog(`Zebrałeś jałmużnę! +${reward}🪙`, 'loot');
     get().saveGame();
   },
 
@@ -391,12 +432,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...save.hero,
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
-          // Migrate old saves: if resting but no HP amount stored, derive from time remaining
           voluntaryRestHp: save.hero.voluntaryRestHp != null
             ? save.hero.voluntaryRestHp
             : (save.hero.voluntaryRestUntil && Date.now() < save.hero.voluntaryRestUntil
               ? Math.ceil((save.hero.voluntaryRestUntil - Date.now()) / 60000)
               : null),
+          beggingUntil: save.hero.beggingUntil ?? null,
+          beggingReward: save.hero.beggingReward ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),

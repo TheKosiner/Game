@@ -43,6 +43,8 @@ export interface Hero {
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
   voluntaryRestHp: number | null;
+  beggingUntil: number | null;
+  beggingReward: number | null;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
@@ -162,8 +164,11 @@ export interface GameState {
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
   performPvp: (opponent: PvpOpponent) => PvpResult | null;
+  recordPvpResult: (won: boolean, opponent: PvpOpponent) => PvpResult;
   checkDailyReset: () => void;
   restHero: (minutes: number) => void;
+  startBegging: (hours: number) => void;
+  collectBegging: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

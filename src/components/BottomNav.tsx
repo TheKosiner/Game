@@ -1,4 +1,4 @@
-export type Tab = 'hero' | 'dungeon' | 'quests' | 'shop' | 'ranking';
+export type Tab = 'hero' | 'dungeon' | 'quests' | 'shop' | 'pvp' | 'ranking';
 
 interface Props {
   active: Tab;
@@ -7,9 +7,10 @@ interface Props {
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'hero',    label: 'BOHATER', icon: '☠' },
-  { id: 'dungeon', label: 'LOCH',    icon: '⚔' },
+  { id: 'dungeon', label: 'LOCH',    icon: '🗡' },
   { id: 'quests',  label: 'ZADANIA', icon: '📜' },
   { id: 'shop',    label: 'SKLEP',   icon: '⚖' },
+  { id: 'pvp',     label: 'ARENA',   icon: '⚔' },
   { id: 'ranking', label: 'RANKING', icon: '👑' },
 ];
 
@@ -20,7 +21,6 @@ export default function BottomNav({ active, onChange }: Props) {
       background: 'linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
       borderTop: '2px solid var(--border-main)',
       boxShadow: '0 -6px 24px rgba(0,0,0,0.8)',
-      /* top gold line */
       backgroundImage: 'linear-gradient(var(--gold-darker), var(--gold-darker)), linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
       backgroundSize: '100% 1px, 100% 100%',
       backgroundPosition: 'top, top',
@@ -37,7 +37,7 @@ export default function BottomNav({ active, onChange }: Props) {
                 flex: 1,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '10px 2px 12px',
+                padding: '8px 1px 10px',
                 background: isActive
                   ? 'linear-gradient(180deg, rgba(92,72,32,0.25) 0%, transparent 100%)'
                   : 'transparent',
@@ -49,7 +49,6 @@ export default function BottomNav({ active, onChange }: Props) {
                 position: 'relative',
               }}
             >
-              {/* Active glow line */}
               {isActive && (
                 <div style={{
                   position: 'absolute', top: 0, left: '15%', right: '15%',
@@ -59,11 +58,10 @@ export default function BottomNav({ active, onChange }: Props) {
                 }} />
               )}
 
-              {/* Icon */}
               <span style={{
-                fontSize: isActive ? 20 : 17,
+                fontSize: isActive ? 17 : 15,
                 lineHeight: 1,
-                marginBottom: 4,
+                marginBottom: 3,
                 color: isActive ? 'var(--gold-bright)' : 'var(--text-muted)',
                 textShadow: isActive ? '0 0 10px var(--gold-glow)' : 'none',
                 filter: isActive ? 'drop-shadow(0 0 4px rgba(180,130,40,0.5))' : 'none',
@@ -73,10 +71,9 @@ export default function BottomNav({ active, onChange }: Props) {
                 {tab.icon}
               </span>
 
-              {/* Label */}
               <span style={{
-                fontSize: 4,
-                letterSpacing: '0.08em',
+                fontSize: 3,
+                letterSpacing: '0.06em',
                 color: isActive ? 'var(--gold-main)' : 'var(--text-muted)',
                 textShadow: isActive ? '0 0 6px var(--gold-glow)' : 'none',
               }}>

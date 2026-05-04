@@ -13,6 +13,7 @@ import DungeonPanel from './components/DungeonPanel';
 import QuestPanel from './components/QuestPanel';
 import ShopPanel from './components/ShopPanel';
 import LeaderboardPanel from './components/LeaderboardPanel';
+import PvpPanel from './components/PvpPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 
 export default function App() {
@@ -142,6 +143,7 @@ export default function App() {
         {tab === 'dungeon' && <DungeonPanel />}
         {tab === 'quests'  && <QuestPanel />}
         {tab === 'shop'    && <ShopPanel />}
+        {tab === 'pvp'     && <PvpPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
       </main>
 
