@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
+import { getLeaderboard, getPvpHistory, addPvpFight, type LeaderboardEntry, type PvpFightRecord } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
@@ -13,6 +13,17 @@ const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', r
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
+
+function formatTimeAgo(ts: number): string {
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (d > 0) return `${d}d temu`;
+  if (h > 0) return `${h}h temu`;
+  if (m > 0) return `${m}m temu`;
+  return 'teraz';
+}
 
 interface CombatState {
   opponent: PvpOpponent;
@@ -145,12 +156,13 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
   const pvpWins = useGameStore(s => s.pvpWins);
   const pvpLosses = useGameStore(s => s.pvpLosses);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
-  const pvpLog = useGameStore(s => s.pvpLog);
 
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [globalHistory, setGlobalHistory] = useState<PvpFightRecord[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -164,7 +176,14 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
     finally { setLoading(false); }
   }
 
-  useEffect(() => { fetchLeaderboard(); }, []);
+  async function fetchHistory() {
+    setHistoryLoading(true);
+    try { setGlobalHistory(await getPvpHistory()); }
+    catch { /* silent */ }
+    finally { setHistoryLoading(false); }
+  }
+
+  useEffect(() => { fetchLeaderboard(); fetchHistory(); }, []);
 
   const myRank = entries.findIndex(e => e.uid === user?.uid) + 1;
   const cooldownEnd = lastPvpFight + PVP_COOLDOWN;
@@ -174,7 +193,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>⚔ ARENA PvP</p>
-        <button onClick={fetchLeaderboard} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
+        <button onClick={() => { fetchLeaderboard(); fetchHistory(); }} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
       </div>
 
       {/* Stats + cooldown */}
@@ -270,22 +289,49 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
         </div>
       )}
 
-      {pvpLog.length > 0 && (
-        <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>OSTATNIE WALKI</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {pvpLog.slice(0, 8).map((r, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...PX(5), color: r.won ? '#6aaa30' : 'var(--hp-bright)' }}>{r.won ? '✓' : '✗'}</span>
-                <span style={{ ...PX(4), color: 'var(--text-dim)', flex: 1 }}>vs {r.opponentName}</span>
-                <span style={{ ...PX(4), color: r.won ? 'var(--gold-bright)' : 'var(--text-muted)' }}>
-                  {r.won ? `+${r.xpGained}XP +${r.goldGained}🪙` : `+${r.xpGained}XP`}
-                </span>
-              </div>
-            ))}
+      <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
+        <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 8 }}>📜 HISTORIA WALK</p>
+        {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>⏳ Ładowanie...</p>}
+        {!historyLoading && globalHistory.length === 0 && (
+          <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>Brak walk. Zacznij pierwszy!</p>
+        )}
+        {!historyLoading && globalHistory.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {globalHistory.map((r, i) => {
+              const isMe = r.attackerUid === user?.uid || r.defenderUid === user?.uid;
+              const meWon = (r.attackerUid === user?.uid && r.attackerWon) || (r.defenderUid === user?.uid && !r.attackerWon);
+              const timeAgo = formatTimeAgo(r.timestamp);
+              return (
+                <div key={i} style={{
+                  background: isMe ? 'rgba(28,20,8,0.5)' : 'var(--bg-inset)',
+                  border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
+                  padding: '6px 8px',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span style={{ ...PX(6), color: r.attackerWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>
+                    {r.attackerWon ? '⚔' : '💀'}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ ...PX(5), color: isMe && meWon ? '#6aaa30' : isMe ? 'var(--hp-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ color: r.attackerWon ? '#6aaa30' : 'var(--hp-bright)' }}>{r.attackerHeroName}</span>
+                      <span style={{ color: 'var(--text-muted)' }}> vs </span>
+                      <span style={{ color: r.attackerWon ? 'var(--hp-bright)' : '#6aaa30' }}>{r.defenderHeroName}</span>
+                    </p>
+                    <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                      {r.attackerUsername} vs {r.defenderUsername} · {timeAgo}
+                    </p>
+                  </div>
+                  {isMe && (
+                    <span style={{ ...PX(4), color: meWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>
+                      {meWon ? 'WYGRANA' : 'PORAŻKA'}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -294,6 +340,7 @@ export default function PvpPanel() {
   const hero = useGameStore(s => s.hero);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
   const recordPvpResult = useGameStore(s => s.recordPvpResult);
+  const user = useAuthStore(s => s.user);
 
   const [combat, setCombat] = useState<CombatState | null>(null);
   const [resultRecorded, setResultRecorded] = useState(false);
@@ -351,6 +398,11 @@ export default function PvpPanel() {
         const result = recordPvpResult(true, combat.opponent);
         newLog.unshift({ message: `🏆 Pokonałeś ${combat.opponent.heroName}! +${result.xpGained}XP +${result.goldGained}🪙`, type: 'loot', timestamp: Date.now() });
         setCombat({ ...combat, oppHp: 0, heroHp, log: newLog, done: true, won: true, xpGained: result.xpGained, goldGained: result.goldGained });
+        if (user) addPvpFight({
+          attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+          defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+          attackerWon: true, timestamp: Date.now(),
+        }).catch(() => {});
       }
       return;
     }
@@ -365,6 +417,11 @@ export default function PvpPanel() {
         const result = recordPvpResult(false, combat.opponent);
         newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
         setCombat({ ...combat, oppHp, heroHp: 0, log: newLog, done: true, won: false, xpGained: result.xpGained, goldGained: 0 });
+        if (user) addPvpFight({
+          attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+          defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+          attackerWon: false, timestamp: Date.now(),
+        }).catch(() => {});
       }
       return;
     }

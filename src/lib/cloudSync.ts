@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -75,4 +75,33 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   );
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() } as LeaderboardEntry));
+}
+
+export interface PvpFightRecord {
+  attackerUid: string;
+  attackerUsername: string;
+  attackerHeroName: string;
+  attackerLevel: number;
+  defenderUid: string;
+  defenderUsername: string;
+  defenderHeroName: string;
+  defenderLevel: number;
+  attackerWon: boolean;
+  timestamp: number;
+}
+
+export async function addPvpFight(fight: PvpFightRecord): Promise<void> {
+  if (!db) return;
+  await addDoc(collection(db, 'pvpHistory'), fight);
+}
+
+export async function getPvpHistory(): Promise<PvpFightRecord[]> {
+  if (!db) return [];
+  const q = query(
+    collection(db, 'pvpHistory'),
+    orderBy('timestamp', 'desc'),
+    limit(30)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => d.data() as PvpFightRecord);
 }
