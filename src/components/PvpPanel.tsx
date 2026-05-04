@@ -4,12 +4,9 @@ import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
+import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
-
-const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
-const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Łotrzyk' };
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
@@ -66,7 +63,7 @@ function PvpCombat({ combat, onAttack, onExit }: {
 }) {
   const hero = useGameStore(s => s.hero);
   const heroPalette = getHeroPalette(hero.skinTone, hero.hairColor);
-  const heroSprite = CLASS_SPRITES[hero.class as keyof typeof CLASS_SPRITES];
+  const heroSprite = SPRITE_WARRIOR;
 
   const heroHpPct = Math.max(0, (combat.heroHp / combat.heroMaxHp) * 100);
   const oppHpPct = Math.max(0, (combat.oppHp / combat.oppMaxHp) * 100);
@@ -237,7 +234,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
           {entries.map((entry, i) => {
             const rank = i + 1;
             const isMe = entry.uid === user?.uid;
-            const sprite = CLASS_SPRITES[entry.heroClass as keyof typeof CLASS_SPRITES];
+            const sprite = SPRITE_WARRIOR;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
             const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2);
 
@@ -266,7 +263,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
                     {entry.username}{isMe ? ' ◀' : ''}
                   </p>
                   <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                    {CLASS_NAME[entry.heroClass] ?? entry.heroClass} · {entry.heroName}
+                    {entry.heroName}
                   </p>
                 </div>
 
@@ -349,9 +346,9 @@ export default function PvpPanel() {
     if (Date.now() - lastPvpFight < PVP_COOLDOWN) return;
     const oppAtk = entry.attack ?? (10 + entry.level * 3);
     const oppDef = entry.defense ?? (5 + entry.level * 2);
-    const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, agility: 5, intelligence: 5, constitution: 5 }, entry.level);
+    const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5 }, entry.level);
 
-    const sprite = CLASS_SPRITES[entry.heroClass as keyof typeof CLASS_SPRITES];
+    const sprite = SPRITE_WARRIOR;
 
     const state: CombatState = {
       opponent: {

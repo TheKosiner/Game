@@ -45,7 +45,7 @@ function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; 
           {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
         </p>
         <p style={{ ...PX(5), color: 'var(--text-dim)' }}>
-          {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Moc', agility: 'Zwin', intelligence: 'Wied', constitution: 'Żyw' } as Record<string, string>)[k] ?? k}`).join('  ')}
+          {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Moc', dexterity: 'Zwin', intelligence: 'Wied', vitality: 'Żyw' } as Record<string, string>)[k] ?? k}`).join('  ')}
           {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
           {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
         </p>

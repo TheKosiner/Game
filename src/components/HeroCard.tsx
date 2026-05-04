@@ -3,10 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
-
-const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
-const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Łotrzyk' };
+import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
@@ -172,6 +169,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
+  const respecStats = useGameStore(s => s.respecStats);
   const restHero = useGameStore(s => s.restHero);
   const startBegging = useGameStore(s => s.startBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
@@ -194,7 +192,7 @@ export default function HeroCard() {
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
-  const sprite  = CLASS_SPRITES[hero.class];
+  const sprite  = SPRITE_WARRIOR;
   const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
@@ -224,7 +222,7 @@ export default function HeroCard() {
             <p style={{ ...PX(11), color: 'var(--gold-bright)', textShadow: '0 0 14px var(--gold-glow)', marginBottom: 4, wordBreak: 'break-all' }}>
               {hero.name}
             </p>
-            <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{CLASS_NAME[hero.class]} · POZ. {hero.level}</p>
+            <p style={{ ...PX(5), color: 'var(--text-dim)' }}>POZ. {hero.level}</p>
           </div>
 
           {/* ATK / DEF / HP boxes */}
@@ -318,10 +316,10 @@ export default function HeroCard() {
         <div className="df-section">
           <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
           {[
-            { icon: '💪', name: 'Moc ciała', val: hero.stats.strength },
-            { icon: '🏃', name: 'Zręczność', val: hero.stats.agility },
+            { icon: '💪', name: 'Siła',       val: hero.stats.strength },
+            { icon: '🏃', name: 'Zręczność', val: hero.stats.dexterity },
             { icon: '🧠', name: 'Wiedza',     val: hero.stats.intelligence },
-            { icon: '♥',  name: 'Żywotność', val: hero.stats.constitution },
+            { icon: '♥',  name: 'Żywotność', val: hero.stats.vitality },
           ].map(({ icon, name, val }) => (
             <div key={name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{icon} {name}</span>
@@ -341,14 +339,36 @@ export default function HeroCard() {
             ✨ {hero.attributePoints} PKT CECH!
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {(['strength', 'agility', 'intelligence', 'constitution'] as const).map(attr => (
+            {(['strength', 'dexterity', 'intelligence', 'vitality'] as const).map(attr => (
               <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-primary" style={{ fontSize: 5, padding: '7px 4px' }}>
-                + {({ strength: 'Moc ciała', agility: 'Zręczność', intelligence: 'Wiedza', constitution: 'Żywotność' }[attr])}
+                + {({ strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Wiedza', vitality: 'Żywotność' }[attr])}
               </button>
             ))}
           </div>
         </div>
       )}
+
+      {/* ── RESPEC ── */}
+      {(() => {
+        const now = Date.now();
+        const DAY = 24 * 60 * 60 * 1000;
+        const canRespec = hero.lastRespecAt === null || now - hero.lastRespecAt >= DAY;
+        const nextRespecIn = !canRespec && hero.lastRespecAt ? DAY - (now - hero.lastRespecAt) : 0;
+        const hh = Math.floor(nextRespecIn / 3600000);
+        const mm = Math.floor((nextRespecIn % 3600000) / 60000);
+        return (
+          <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 10 }}>
+            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>🔄 RESET STATYSTYK</p>
+            {canRespec ? (
+              <button onClick={() => { if (confirm('Zresetować wszystkie statystyki? Dostępne raz na 24h.')) respecStats(); }} className="btn btn-secondary" style={{ width: '100%', fontSize: 5, padding: '7px' }}>
+                Resetuj statystyki (raz na 24h)
+              </button>
+            ) : (
+              <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>Dostępny za {hh}h {mm}m</p>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

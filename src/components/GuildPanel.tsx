@@ -10,10 +10,7 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
-
-const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
-const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Łotrzyk' };
+import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function formatDate(ts: number) {
@@ -39,7 +36,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
     if (trimTag.length < 2 || trimTag.length > 4) { setError('Tag musi mieć 2–4 znaki (A-Z, 0-9)'); return; }
     setLoading(true); setError('');
     try {
-      await createGuild(user.uid, user.username, hero.name, hero.class, hero.level, trimName, trimTag, desc.trim());
+      await createGuild(user.uid, user.username, hero.name, '', hero.level, trimName, trimTag, desc.trim());
       onCreated();
     } catch { setError('Błąd tworzenia gildii'); }
     finally { setLoading(false); }
@@ -103,7 +100,7 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
     if (!user) return;
     setActing(inv.id);
     try {
-      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, hero.class, hero.level);
+      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, '', hero.level);
       onRefresh();
     } finally { setActing(null); }
   }
@@ -175,19 +172,16 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
         {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>Brak graczy do zaproszenia</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {players.map(p => {
-            const sprite = CLASS_SPRITES[p.heroClass as keyof typeof CLASS_SPRITES];
             const palette = getHeroPalette(p.skinTone ?? 1, p.hairColor ?? 2);
             const alreadySent = sent.has(p.uid);
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
-                {sprite && (
-                  <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                    <PixelSprite grid={sprite} scale={2} paletteOverrides={palette} />
-                  </div>
-                )}
+                <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
+                  <PixelSprite grid={SPRITE_WARRIOR} scale={2} paletteOverrides={palette} />
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
-                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{CLASS_NAME[p.heroClass] ?? p.heroClass} · POZ.{p.level}</p>
+                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>POZ.{p.level}</p>
                 </div>
                 <button
                   onClick={() => handleInvite(p)}
@@ -276,7 +270,6 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
         </div>
 
         {members.map(m => {
-          const sprite = CLASS_SPRITES[m.heroClass as keyof typeof CLASS_SPRITES];
           const isMe = m.uid === myUid;
           return (
             <div key={m.uid} style={{
@@ -285,11 +278,9 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
               padding: '7px 8px',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              {sprite && (
-                <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                  <PixelSprite grid={sprite} scale={2} />
-                </div>
-              )}
+              <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
+                <PixelSprite grid={SPRITE_WARRIOR} scale={2} />
+              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                   <p style={{ ...PX(6), color: m.role === 'leader' ? 'var(--gold-bright)' : 'var(--text-bright)' }}>
@@ -297,7 +288,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
                   </p>
                 </div>
                 <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                  {CLASS_NAME[m.heroClass] ?? m.heroClass} · {m.heroName} · POZ.{m.level}
+                  {m.heroName} · POZ.{m.level}
                 </p>
               </div>
               {isLeader && !isMe && (

@@ -21,8 +21,8 @@ const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
 ];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const STAT_NAMES: Record<string, string> = {
-  strength: 'Moc ciała', agility: 'Zręczność',
-  intelligence: 'Wiedza', constitution: 'Żywotność',
+  strength: 'Siła', dexterity: 'Zręczność',
+  intelligence: 'Wiedza', vitality: 'Żywotność',
 };
 
 function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {

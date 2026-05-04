@@ -1,13 +1,12 @@
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 export type ItemSlot = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet';
-export type HeroClass = 'warrior' | 'mage' | 'rogue';
 export type QuestStatus = 'idle' | 'active' | 'complete';
 
 export interface Stats {
   strength: number;
-  agility: number;
+  dexterity: number;
   intelligence: number;
-  constitution: number;
+  vitality: number;
 }
 
 export interface Item {
@@ -34,7 +33,6 @@ export interface Equipment {
 
 export interface Hero {
   name: string;
-  class: HeroClass;
   level: number;
   xp: number;
   xpToNext: number;
@@ -56,6 +54,7 @@ export interface Hero {
   attributePoints: number;
   skinTone: number;
   hairColor: number;
+  lastRespecAt: number | null;
 }
 
 export interface Enemy {
@@ -147,7 +146,8 @@ export interface GameState {
   pvpLog: PvpResult[];
 
   // actions
-  initHero: (name: string, heroClass: HeroClass, skinTone?: number, hairColor?: number) => void;
+  initHero: (name: string, skinTone?: number, hairColor?: number) => void;
+  respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
   equipItem: (item: Item) => void;

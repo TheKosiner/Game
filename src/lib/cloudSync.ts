@@ -7,7 +7,7 @@ export interface LeaderboardEntry {
   uid: string;
   username: string;
   heroName: string;
-  heroClass: string;
+  heroClass?: string;
   level: number;
   xp: number;
   gold: number;
@@ -29,7 +29,6 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
-    heroClass: hero.class,
     level: hero.level,
     xp: hero.xp,
     gold: hero.gold,
@@ -113,7 +112,7 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
 export interface GuildMemberData {
   username: string;
   heroName: string;
-  heroClass: string;
+  heroClass?: string;
   level: number;
   role: 'leader' | 'member';
   joinedAt: number;

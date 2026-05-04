@@ -81,7 +81,7 @@ export default function App() {
     if (!confirm('Zresetować postać? Stracisz cały postęp!')) return;
     localStorage.removeItem('realm_of_valor_save');
     try { if (user) await deleteCloudSave(user.uid); } catch {}
-    initHero('Hero', 'warrior');
+    initHero('Hero');
   }
 
   return (
