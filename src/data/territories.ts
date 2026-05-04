@@ -8,9 +8,10 @@ export interface TerritoryDef {
   dailyXp: number;
   guardianName: string;
   guardianEmoji: string;
-  baseAtk: number;
-  baseDef: number;
-  baseHp: number;
+  // Siege stats (require ~3 players at minLevel to defeat)
+  siegeAtk: number;
+  siegeDef: number;
+  siegeHp: number;
 }
 
 export const TERRITORY_LIST: TerritoryDef[] = [
@@ -21,7 +22,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Pradawny las zamieszkały przez duchy i błędne ogniki.',
     minLevel: 1, dailyGold: 50, dailyXp: 30,
     guardianName: 'Duch Lasu', guardianEmoji: '👻',
-    baseAtk: 8, baseDef: 4, baseHp: 80,
+    siegeAtk: 16, siegeDef: 22, siegeHp: 350,
   },
   {
     id: 'ruined_keep',
@@ -30,7 +31,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Zrujnowana warownia strzeżona przez nieumarłe zastępy.',
     minLevel: 5, dailyGold: 130, dailyXp: 80,
     guardianName: 'Szkieletowy Rycerz', guardianEmoji: '💀',
-    baseAtk: 20, baseDef: 12, baseHp: 200,
+    siegeAtk: 22, siegeDef: 28, siegeHp: 500,
   },
   {
     id: 'dark_mountain',
@@ -39,7 +40,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Szczyt skrywający w swym wnętrzu pradawne i okrutne zło.',
     minLevel: 10, dailyGold: 280, dailyXp: 170,
     guardianName: 'Kamienny Golem', guardianEmoji: '🗿',
-    baseAtk: 40, baseDef: 25, baseHp: 450,
+    siegeAtk: 30, siegeDef: 36, siegeHp: 700,
   },
   {
     id: 'cursed_tomb',
@@ -48,7 +49,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Miejsce wiecznego spoczynku królów przeklętych przez ciemną magię.',
     minLevel: 15, dailyGold: 450, dailyXp: 280,
     guardianName: 'Lich Królewski', guardianEmoji: '🧟',
-    baseAtk: 70, baseDef: 45, baseHp: 800,
+    siegeAtk: 38, siegeDef: 48, siegeHp: 900,
   },
   {
     id: 'dragon_peak',
@@ -57,6 +58,6 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Pradawne gniazdo smoków, nietkniętych przez tysiące lat.',
     minLevel: 25, dailyGold: 800, dailyXp: 500,
     guardianName: 'Pradawny Smok', guardianEmoji: '🐲',
-    baseAtk: 120, baseDef: 80, baseHp: 1500,
+    siegeAtk: 55, siegeDef: 60, siegeHp: 1500,
   },
 ];

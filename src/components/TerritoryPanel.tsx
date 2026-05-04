@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import { TERRITORY_LIST, type TerritoryDef } from '../data/territories';
 import {
   getTerritories, captureTerritory, claimTerritoryReward,
+  initOrJoinSiege, commitSiegeDamage,
   type TerritoryState, type Guild,
 } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
-import { useAuthStore } from '../store/authStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// ── Combat types ─────────────────────────────────────────────────────────────
+// ── Combat types ──────────────────────────────────────────────────────────────
 
 interface SiegeCombatState {
   territory: TerritoryDef;
@@ -19,8 +19,10 @@ interface SiegeCombatState {
   heroMaxHp: number;
   heroAtk: number;
   heroDef: number;
+  // Local enemy HP (starts at current siege HP from Firestore)
   enemyHp: number;
-  enemyMaxHp: number;
+  enemyStartHp: number; // HP at start of THIS session (to compute damage dealt)
+  enemyMaxHp: number;   // Full siege max HP (for progress bar)
   enemyAtk: number;
   enemyDef: number;
   enemyName: string;
@@ -28,9 +30,10 @@ interface SiegeCombatState {
   log: string[];
   done: boolean;
   won: boolean;
+  damageDealt: number;
 }
 
-// ── HP Bar ───────────────────────────────────────────────────────────────────
+// ── HP Bar ────────────────────────────────────────────────────────────────────
 
 function HpBar({ current, max, color }: { current: number; max: number; color: string }) {
   const pct = Math.max(0, Math.min(1, current / max));
@@ -41,16 +44,16 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
   );
 }
 
-// ── Siege Combat ─────────────────────────────────────────────────────────────
+// ── Siege Combat ──────────────────────────────────────────────────────────────
 
 function SiegeCombat({
   state,
   onAttack,
-  onFinish,
+  onRetreat,
 }: {
   state: SiegeCombatState;
   onAttack: () => void;
-  onFinish: () => void;
+  onRetreat: () => void;
 }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -58,13 +61,23 @@ function SiegeCombat({
         ⚔ OBLĘŻENIE — {state.territory.emoji} {state.territory.name.toUpperCase()}
       </p>
 
-      {/* Enemy */}
+      {/* Siege overall progress */}
+      <div style={{ background: 'var(--bg-inset)', border: '1px solid rgba(100,60,180,0.4)', padding: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <p style={{ ...PX(4), color: '#a080e0' }}>🏰 Oblężenie (łącznie)</p>
+          <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyMaxHp} HP</p>
+        </div>
+        <HpBar current={state.enemyHp} max={state.enemyMaxHp} color="#7040c0" />
+        <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>⚔ Zadałeś już: {state.damageDealt} obrażeń (sesja)</p>
+      </div>
+
+      {/* Enemy this session */}
       <div style={{ background: 'var(--bg-inset)', border: '1px solid rgba(180,40,40,0.4)', padding: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
           <p style={{ ...PX(6), color: '#e06060' }}>{state.enemyEmoji} {state.enemyName}</p>
-          <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyMaxHp} HP</p>
+          <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
         </div>
-        <HpBar current={state.enemyHp} max={state.enemyMaxHp} color="#c03030" />
+        <HpBar current={state.enemyHp} max={state.enemyStartHp} color="#c03030" />
       </div>
 
       {/* Hero */}
@@ -84,22 +97,29 @@ function SiegeCombat({
           padding: 12, textAlign: 'center',
         }}>
           <p style={{ ...PX(9), color: state.won ? '#60e060' : '#e06060', marginBottom: 6 }}>
-            {state.won ? '⚔ ZWYCIĘSTWO!' : '💀 PORAŻKA'}
+            {state.won ? '⚔ PODBITO!' : '💀 ODWRÓT'}
           </p>
           <p style={{ ...PX(5), color: 'var(--text-dim)' }}>
-            {state.won ? 'Terytorium zostało przejęte przez twoją gildię!' : 'Wróg odparł atak. Spróbuj ponownie.'}
+            {state.won
+              ? 'Terytorium zostało przejęte przez twoją gildię!'
+              : `Zadałeś ${state.damageDealt} obrażeń. Wróć z resztą gildii!`}
           </p>
-          <button onClick={onFinish} className="btn btn-primary" style={{ marginTop: 10, fontSize: 6, padding: '8px 16px' }}>
-            Powrót
+          <button onClick={onRetreat} className="btn btn-primary" style={{ marginTop: 10, fontSize: 6, padding: '8px 16px' }}>
+            Powrót do mapy
           </button>
         </div>
       )}
 
-      {/* Attack button */}
+      {/* Buttons */}
       {!state.done && (
-        <button onClick={onAttack} className="btn btn-danger" style={{ width: '100%', fontSize: 7, padding: '10px' }}>
-          ⚔ ATAKUJ
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onAttack} className="btn btn-danger" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
+            ⚔ ATAKUJ
+          </button>
+          <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 6, padding: '10px 14px' }}>
+            Odwrót
+          </button>
+        </div>
       )}
 
       {/* Log */}
@@ -118,136 +138,152 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
   const hero = useGameStore(s => s.hero);
   const addGold = useGameStore(s => s.addGold);
   const addXp = useGameStore(s => s.addXp);
-  const user = useAuthStore(s => s.user);
-
   const [territories, setTerritories] = useState<Record<string, TerritoryState>>({});
   const [loading, setLoading] = useState(true);
   const [combat, setCombat] = useState<SiegeCombatState | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
   const [, forceUpdate] = useState(0);
 
+  async function reloadTerritories() {
+    const t = await getTerritories();
+    setTerritories(t);
+  }
+
   useEffect(() => {
-    getTerritories().then(t => { setTerritories(t); setLoading(false); });
+    reloadTerritories().then(() => setLoading(false));
     const id = setInterval(() => forceUpdate(n => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
 
-  function buildSiegeState(def: TerritoryDef, state: TerritoryState | undefined): SiegeCombatState {
-    const heroHp = hero.maxHp;
-    const heroAtk = getHeroAttack(hero);
-    const heroDef = getHeroDefense(hero);
+  // How many territories does my guild own?
+  const myOwnedCount = guild
+    ? Object.values(territories).filter(t => t.guildId === guild.id).length
+    : 0;
 
-    let enemyAtk: number;
-    let enemyDef: number;
-    let enemyHp: number;
-    let enemyName: string;
-    let enemyEmoji: string;
+  async function handleAttack(def: TerritoryDef, state: TerritoryState | undefined) {
+    if (!guild) return;
 
-    if (state?.guildId && state.guildId !== guild?.id) {
-      // enemy-owned: scale by member stats
-      const memberCount = state.defenderMemberCount || 1;
-      const avgLvl = state.defenderAvgLevel || 1;
-      const mult = Math.min(3, 1 + Math.sqrt(memberCount) * avgLvl / 20);
-      enemyAtk = Math.round(def.baseAtk * mult);
-      enemyDef = Math.round(def.baseDef * mult);
-      enemyHp = Math.round(def.baseHp * mult);
-      enemyName = `[${state.guildTag}] ${state.guildName}`;
-      enemyEmoji = '🏰';
-    } else {
-      // unowned: fight static guardian
-      enemyAtk = def.baseAtk;
-      enemyDef = def.baseDef;
-      enemyHp = def.baseHp;
-      enemyName = def.guardianName;
-      enemyEmoji = def.guardianEmoji;
+    // 1-territory cap
+    if (myOwnedCount >= 1 && state?.guildId !== guild.id) {
+      alert('Twoja gildia może posiadać tylko jedno terytorium na raz. Najpierw stracisz obecne lub zostanie odbite.');
+      return;
     }
 
-    return {
+    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, def.siegeHp);
+    if ('blocked' in result) {
+      alert(`Inne oblężenie trwa: [${result.byTag}]. Poczekaj aż wygaśnie (2h bez aktywności).`);
+      return;
+    }
+
+    // Build enemy stats — if enemy-owned, scale by their member stats
+    let enemyAtk = def.siegeAtk;
+    let enemyDef = def.siegeDef;
+    let enemyName = def.guardianName;
+    let enemyEmoji = def.guardianEmoji;
+
+    if (state?.guildId && state.guildId !== guild.id) {
+      const mult = Math.min(2.5, 1 + Math.sqrt(state.defenderMemberCount || 1) * (state.defenderAvgLevel || 1) / 30);
+      enemyAtk = Math.round(def.siegeAtk * mult);
+      enemyDef = Math.round(def.siegeDef * mult);
+      enemyName = `[${state.guildTag}] ${state.guildName}`;
+      enemyEmoji = '🏰';
+    }
+
+    const heroHp = hero.maxHp;
+    const currentHp = result.currentHp;
+
+    setCombat({
       territory: def,
       heroHp, heroMaxHp: heroHp,
-      heroAtk, heroDef,
-      enemyHp, enemyMaxHp: enemyHp,
+      heroAtk: getHeroAttack(hero), heroDef: getHeroDefense(hero),
+      enemyHp: currentHp, enemyStartHp: currentHp, enemyMaxHp: def.siegeHp,
       enemyAtk, enemyDef,
       enemyName, enemyEmoji,
-      log: [`Oblężenie ${def.name} rozpoczęte!`],
-      done: false,
-      won: false,
-    };
+      log: [`Dołączyłeś do oblężenia ${def.name}! HP wroga: ${currentHp}/${def.siegeHp}`],
+      done: false, won: false, damageDealt: 0,
+    });
   }
 
-  function handleAttack() {
-    if (!combat || combat.done) return;
+  function handleCombatAttack() {
     setCombat(prev => {
-      if (!prev) return prev;
-      let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef } = prev;
+      if (!prev || prev.done) return prev;
+      let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = prev;
       const log = [...prev.log];
 
-      // hero attacks
       const heroDmg = Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - enemyDef);
       enemyHp = Math.max(0, enemyHp - heroDmg);
-      log.push(`Zadajesz ${heroDmg} obrażeń wrogowi.`);
+      damageDealt += heroDmg;
+      log.push(`Zadajesz ${heroDmg} obrażeń. (Razem: ${damageDealt})`);
 
       if (enemyHp <= 0) {
-        log.push('Wróg pokonany!');
-        return { ...prev, heroHp, enemyHp: 0, log, done: true, won: true };
+        log.push('HP oblężenia zredukowane do 0!');
+        return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
       }
 
-      // enemy attacks
       const enemyDmg = Math.max(1, Math.round(enemyAtk * (0.85 + Math.random() * 0.3)) - heroDef);
       heroHp = Math.max(0, heroHp - enemyDmg);
       log.push(`Wróg zadaje ci ${enemyDmg} obrażeń.`);
 
       if (heroHp <= 0) {
-        log.push('Zostałeś pokonany!');
-        return { ...prev, heroHp: 0, enemyHp, log, done: true, won: false };
+        log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
+        return { ...prev, heroHp: 0, enemyHp, damageDealt, log, done: true, won: false };
       }
 
-      return { ...prev, heroHp, enemyHp, log };
+      return { ...prev, heroHp, enemyHp, damageDealt, log };
     });
   }
 
-  async function handleCombatFinish() {
-    if (!combat || !guild || !user) { setCombat(null); return; }
-    if (combat.won) {
-      const members = Object.values(guild.members);
-      const avgLevel = members.length > 0
-        ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
-        : hero.level;
-      await captureTerritory(
-        combat.territory.id,
-        guild.id,
-        guild.name,
-        guild.tag,
-        members.length,
-        avgLevel,
-      );
-      const updated = await getTerritories();
-      setTerritories(updated);
+  async function handleRetreat() {
+    if (!combat || !guild) { setCombat(null); return; }
+    setCommitting(true);
+    try {
+      const newHp = await commitSiegeDamage(combat.territory.id, guild.id, combat.damageDealt);
+      if (newHp <= 0 || combat.won) {
+        // Capture!
+        const members = Object.values(guild.members);
+        const avgLevel = members.length > 0
+          ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
+          : hero.level;
+        await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel);
+      }
+      await reloadTerritories();
+    } finally {
+      setCommitting(false);
+      setCombat(null);
     }
-    setCombat(null);
   }
 
   async function handleClaim(def: TerritoryDef) {
-    if (!guild || !user) return;
+    if (!guild) return;
     setClaimingId(def.id);
     try {
       const result = await claimTerritoryReward(def.id, guild.id);
       if (result !== null) {
         addGold(def.dailyGold);
         addXp(def.dailyXp);
-        const updated = await getTerritories();
-        setTerritories(updated);
+        await reloadTerritories();
       }
     } finally { setClaimingId(null); }
   }
 
-  if (combat) {
+  if (committing) {
     return (
-      <div className="card p-3">
-        <SiegeCombat state={combat} onAttack={handleAttack} onFinish={handleCombatFinish} />
+      <div style={{ textAlign: 'center', padding: 30 }}>
+        <p style={{ ...PX(6), color: 'var(--gold-main)' }}>⏳ Zapisywanie obrażeń...</p>
       </div>
     );
   }
+
+  if (combat) {
+    return <SiegeCombat state={combat} onAttack={handleCombatAttack} onRetreat={handleRetreat} />;
+  }
+
+  const formatCountdown = (ms: number) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -255,6 +291,14 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>←</button>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>🗺 MAPA TERYTORIÓW</p>
       </div>
+
+      {guild && myOwnedCount >= 1 && (
+        <div style={{ background: 'rgba(20,40,10,0.7)', border: '1px solid rgba(40,120,40,0.4)', padding: 8 }}>
+          <p style={{ ...PX(4), color: '#60c060' }}>
+            ✦ Twoja gildia posiada terytorium. Możesz mieć tylko 1 — najpierw musi zostać odbite.
+          </p>
+        </div>
+      )}
 
       {loading && (
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
@@ -267,17 +311,17 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
         const unowned = !state?.guildId;
         const locked = hero.level < def.minLevel;
 
+        const mySiegeActive = state?.siegeGuildId === guild?.id && (state?.siegeCurrentHp ?? 0) > 0;
+        const enemySiegeActive = state?.siegeGuildId && state.siegeGuildId !== guild?.id && (state?.siegeCurrentHp ?? 0) > 0;
+
         const now = Date.now();
-        const canClaim = ownedByMyGuild && guild && (state.lastRewardAt === null || now - (state.lastRewardAt ?? 0) >= DAY_MS);
+        const canClaim = ownedByMyGuild && guild &&
+          (state.lastRewardAt === null || now - (state.lastRewardAt ?? 0) >= DAY_MS);
         const nextClaimIn = ownedByMyGuild && !canClaim && state?.lastRewardAt
           ? DAY_MS - (now - state.lastRewardAt)
           : null;
 
-        const formatCountdown = (ms: number) => {
-          const h = Math.floor(ms / 3600000);
-          const m = Math.floor((ms % 3600000) / 60000);
-          return `${h}h ${m}m`;
-        };
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1;
 
         return (
           <div key={def.id} style={{
@@ -308,59 +352,79 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
               </div>
             </div>
 
-            {/* Min level */}
             <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>
-              Min. POZ.{def.minLevel} · Strażnik: {def.guardianEmoji} {def.guardianName}
+              Min. POZ.{def.minLevel} · {def.guardianEmoji} {def.guardianName} · Oblężenie wymaga ~3 graczy
             </p>
 
-            {/* Owner info */}
-            {unowned && (
-              <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>Niczyje terytorium</p>
+            {/* Siege progress bar */}
+            {(mySiegeActive || enemySiegeActive) && state.siegeMaxHp && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                  <p style={{ ...PX(4), color: mySiegeActive ? '#a080e0' : '#e09040' }}>
+                    {mySiegeActive ? '⚔ Wasze oblężenie' : `⚔ Oblężenie [${state.siegeGuildTag}]`}
+                  </p>
+                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                    {state.siegeCurrentHp}/{state.siegeMaxHp} HP
+                  </p>
+                </div>
+                <HpBar
+                  current={state.siegeCurrentHp ?? 0}
+                  max={state.siegeMaxHp}
+                  color={mySiegeActive ? '#7040c0' : '#c07020'}
+                />
+              </div>
             )}
-            {ownedByMyGuild && (
-              <p style={{ ...PX(5), color: '#60c060', marginBottom: 6 }}>🏴 Wasza gildia [{guild?.tag}]</p>
-            )}
-            {ownedByEnemy && (
-              <p style={{ ...PX(5), color: '#e06060', marginBottom: 6 }}>🏴 [{state.guildTag}] {state.guildName}</p>
-            )}
+
+            {/* Owner */}
+            {unowned && <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>Niczyje terytorium</p>}
+            {ownedByMyGuild && <p style={{ ...PX(5), color: '#60c060', marginBottom: 6 }}>🏴 Wasza gildia [{guild?.tag}]</p>}
+            {ownedByEnemy && <p style={{ ...PX(5), color: '#e06060', marginBottom: 6 }}>🏴 [{state.guildTag}] {state.guildName}</p>}
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              {locked && (
-                <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 Wymagany poziom {def.minLevel}</p>
-              )}
+            {locked && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 Wymagany poziom {def.minLevel}</p>
+            )}
 
-              {!locked && !ownedByMyGuild && guild && (
-                <button
-                  onClick={() => setCombat(buildSiegeState(def, state))}
-                  className="btn btn-danger"
-                  style={{ flex: 1, fontSize: 5, padding: '7px' }}
-                >
-                  {unowned ? `⚔ Podbij (vs ${def.guardianEmoji})` : `⚔ Oblęż (vs [${state.guildTag}])`}
-                </button>
-              )}
+            {!locked && !ownedByMyGuild && !guild && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>Dołącz do gildii, by atakować terytoria</p>
+            )}
 
-              {!locked && !guild && !ownedByMyGuild && (
-                <p style={{ ...PX(4), color: 'var(--text-muted)' }}>Dołącz do gildii, by podbijać terytoria</p>
-              )}
+            {!locked && !ownedByMyGuild && guild && myOwnedCount >= 1 && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                🔒 Twoja gildia już posiada terytorium
+              </p>
+            )}
 
-              {ownedByMyGuild && canClaim && (
-                <button
-                  onClick={() => handleClaim(def)}
-                  disabled={claimingId === def.id}
-                  className="btn btn-primary"
-                  style={{ flex: 1, fontSize: 5, padding: '7px' }}
-                >
-                  {claimingId === def.id ? '⏳ Odbieram...' : `🪙 Odbierz nagrodę (+${def.dailyGold}🪙, +${def.dailyXp}XP)`}
-                </button>
-              )}
+            {canAttack && (
+              <button
+                onClick={() => handleAttack(def, state)}
+                className={mySiegeActive ? 'btn btn-primary' : 'btn btn-danger'}
+                style={{ width: '100%', fontSize: 5, padding: '7px' }}
+              >
+                {mySiegeActive
+                  ? `⚔ Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`
+                  : unowned
+                  ? `⚔ Podbij (vs ${def.guardianEmoji} — ~3 graczy)`
+                  : `⚔ Oblęż (vs [${state.guildTag}] — ~3 graczy)`}
+              </button>
+            )}
 
-              {ownedByMyGuild && !canClaim && nextClaimIn !== null && (
-                <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                  ⏳ Następna nagroda za {formatCountdown(nextClaimIn)}
-                </p>
-              )}
-            </div>
+            {ownedByMyGuild && canClaim && (
+              <button
+                onClick={() => handleClaim(def)}
+                disabled={claimingId === def.id}
+                className="btn btn-primary"
+                style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
+              >
+                {claimingId === def.id ? '⏳ Odbieram...' : `🪙 Odbierz nagrodę (+${def.dailyGold}🪙, +${def.dailyXp}XP)`}
+              </button>
+            )}
+
+            {ownedByMyGuild && !canClaim && nextClaimIn !== null && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>
+                ⏳ Następna nagroda za {formatCountdown(nextClaimIn)}
+              </p>
+            )}
           </div>
         );
       })}

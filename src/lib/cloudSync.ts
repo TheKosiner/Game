@@ -296,7 +296,15 @@ export interface TerritoryState {
   lastRewardAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
+  // Cooperative siege fields
+  siegeGuildId: string | null;
+  siegeGuildTag: string | null;
+  siegeCurrentHp: number | null;
+  siegeMaxHp: number | null;
+  siegeLastHitAt: number | null;
 }
+
+const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2h stale siege can be overwritten
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
   if (!db) return {};
@@ -304,6 +312,64 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
   const result: Record<string, TerritoryState> = {};
   snap.docs.forEach(d => { result[d.id] = { id: d.id, ...d.data() } as TerritoryState; });
   return result;
+}
+
+/** Start or rejoin a siege. Returns current siege HP, or null if blocked by another guild. */
+export async function initOrJoinSiege(
+  territoryId: string,
+  attackingGuildId: string,
+  attackingGuildTag: string,
+  siegeMaxHp: number,
+): Promise<{ currentHp: number } | { blocked: true; byTag: string }> {
+  if (!db) return { currentHp: siegeMaxHp };
+  const ref = doc(db, 'territories', territoryId);
+  return runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    const data = snap.exists() ? snap.data() as TerritoryState : {} as TerritoryState;
+    const now = Date.now();
+    // Active siege by same guild — rejoin
+    if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0) {
+      return { currentHp: data.siegeCurrentHp! };
+    }
+    // Active siege by different guild that hasn't gone stale — blocked
+    if (
+      data.siegeGuildId && data.siegeGuildId !== attackingGuildId &&
+      (data.siegeCurrentHp ?? 0) > 0 &&
+      data.siegeLastHitAt !== null &&
+      now - data.siegeLastHitAt < SIEGE_TIMEOUT
+    ) {
+      return { blocked: true as const, byTag: data.siegeGuildTag ?? '?' };
+    }
+    // Start fresh siege
+    tx.set(ref, {
+      ...(snap.exists() ? data : {}),
+      siegeGuildId: attackingGuildId,
+      siegeGuildTag: attackingGuildTag,
+      siegeCurrentHp: siegeMaxHp,
+      siegeMaxHp,
+      siegeLastHitAt: now,
+    }, { merge: true });
+    return { currentHp: siegeMaxHp };
+  });
+}
+
+/** Apply damage dealt in one player session. Returns remaining siege HP. */
+export async function commitSiegeDamage(
+  territoryId: string,
+  attackingGuildId: string,
+  damage: number,
+): Promise<number> {
+  if (!db || damage <= 0) return 0;
+  const ref = doc(db, 'territories', territoryId);
+  return runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return 0;
+    const data = snap.data() as TerritoryState;
+    if (data.siegeGuildId !== attackingGuildId) return data.siegeCurrentHp ?? 0;
+    const newHp = Math.max(0, (data.siegeCurrentHp ?? 0) - damage);
+    tx.update(ref, { siegeCurrentHp: newHp, siegeLastHitAt: Date.now() });
+    return newHp;
+  });
 }
 
 export async function captureTerritory(
@@ -323,6 +389,11 @@ export async function captureTerritory(
     lastRewardAt: null,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
+    siegeGuildId: null,
+    siegeGuildTag: null,
+    siegeCurrentHp: null,
+    siegeMaxHp: null,
+    siegeLastHitAt: null,
   });
 }
 
