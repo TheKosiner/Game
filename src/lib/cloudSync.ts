@@ -27,6 +27,9 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
+  const now = Date.now();
+
+  // Public leaderboard data — no saveData, no email, no private fields
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
@@ -41,29 +44,18 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     maxHp: hero.maxHp,
     pvpWins: pvpWins ?? 0,
     pvpLosses: pvpLosses ?? 0,
-    updatedAt: Date.now(),
-    saveData: { hero: heroClean, activeQuest },
+    updatedAt: now,
   }, { merge: true });
+
+  // Private save data — only owner can read
+  await setDoc(doc(db, 'saves', uid), {
+    hero: heroClean,
+    activeQuest,
+    updatedAt: now,
+  });
 }
 
-export async function loadFromCloud(uid: string): Promise<boolean> {
-  if (!db) return false;
-  const snap = await getDoc(doc(db, 'players', uid));
-  if (!snap.exists()) return false;
-  const data = snap.data();
-  if (!data.saveData?.hero) return false;
-
-  // Prefer localStorage if it has newer data
-  const cloudTs: number = data.updatedAt ?? 0;
-  try {
-    const localRaw = localStorage.getItem('realm_of_valor_save');
-    if (localRaw) {
-      const localSave = JSON.parse(localRaw);
-      if ((localSave.lastSaved ?? 0) > cloudTs) return false;
-    }
-  } catch { /* ignore */ }
-
-  const raw = data.saveData.hero as any;
+function migrateHeroFromRaw(raw: any) {
   const { class: _cls, ...heroWithoutClass } = raw;
   const migrateStats = (s: any) => ({
     strength: s.strength ?? 0,
@@ -78,16 +70,46 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
     for (const [k, v] of Object.entries(eq)) result[k] = migrateItem(v);
     return result;
   };
-  const hero = {
+  return {
     ...heroWithoutClass,
     stats: migrateStats(raw.stats ?? {}),
     equipment: migrateEquipment(raw.equipment),
     inventory: (raw.inventory ?? []).map(migrateItem),
     lastRespecAt: raw.lastRespecAt ?? null,
   };
+}
+
+export async function loadFromCloud(uid: string): Promise<boolean> {
+  if (!db) return false;
+
+  // Read from private saves collection
+  const saveSnap = await getDoc(doc(db, 'saves', uid));
+
+  // Fall back to legacy saveData in players doc if no saves doc yet
+  const legacySnap = !saveSnap.exists() ? await getDoc(doc(db, 'players', uid)) : null;
+  const raw = saveSnap.exists()
+    ? saveSnap.data()
+    : legacySnap?.data()?.saveData;
+
+  if (!raw?.hero) return false;
+
+  const cloudTs: number = saveSnap.exists()
+    ? (saveSnap.data().updatedAt ?? 0)
+    : (legacySnap?.data()?.updatedAt ?? 0);
+
+  // Prefer localStorage if it has newer data
+  try {
+    const localRaw = localStorage.getItem('realm_of_valor_save');
+    if (localRaw) {
+      const localSave = JSON.parse(localRaw);
+      if ((localSave.lastSaved ?? 0) > cloudTs) return false;
+    }
+  } catch { /* ignore */ }
+
+  const hero = migrateHeroFromRaw(raw.hero);
   useGameStore.setState({
     hero,
-    activeQuest: data.saveData.activeQuest ?? null,
+    activeQuest: raw.activeQuest ?? null,
     currentDungeon: null,
     currentEnemy: null,
     inCombat: false,
@@ -97,7 +119,10 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
 
 export async function deleteCloudSave(uid: string): Promise<void> {
   if (!db) return;
-  await deleteDoc(doc(db, 'players', uid));
+  await Promise.all([
+    deleteDoc(doc(db, 'players', uid)),
+    deleteDoc(doc(db, 'saves', uid)),
+  ]);
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
