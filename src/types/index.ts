@@ -146,7 +146,7 @@ export interface GameState {
   pvpLog: PvpResult[];
 
   // actions
-  initHero: (name: string, skinTone?: number, hairColor?: number) => void;
+  initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean) => void;
   respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;

@@ -40,7 +40,7 @@ export default function App() {
           if (loaded === null) {
             // New account — wipe any localStorage from a previous account
             try { localStorage.removeItem('realm_of_valor_save'); } catch {}
-            initHero('Hero');
+            initHero('Hero', 1, 2, true); // skipSave=true so hasSave stays false → CharacterCreation shows
           } else if (!loaded) {
             loadGame();
           }

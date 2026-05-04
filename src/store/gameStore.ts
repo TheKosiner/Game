@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
+import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { getItemById } from '../data/items';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -81,10 +82,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   pvpLog: [],
 
-  initHero: (name, skinTone = 1, hairColor = 2) => {
+  initHero: (name, skinTone = 1, hairColor = 2, skipSave = false) => {
     const hero = createHero(name, skinTone, hairColor);
     set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
-    get().saveGame();
+    if (!skipSave) get().saveGame();
   },
 
   respecStats: () => {
@@ -415,6 +416,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   saveGame: () => {
     const state = get();
     const save = {
+      uid: useAuthStore.getState().user?.uid ?? null,
       hero: state.hero,
       activeQuest: state.activeQuest,
       lastSaved: Date.now(),
