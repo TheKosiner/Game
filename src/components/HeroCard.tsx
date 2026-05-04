@@ -47,19 +47,22 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   blocked?: boolean;
   blockedReason?: string;
 }) {
-  const maxMinutes = hero.maxHp - hero.hp;
+  const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.02));
+  const missing = hero.maxHp - hero.hp;
+  const maxMinutes = Math.ceil(missing / hpPerMin);
   const [minutes, setMinutes] = useState(Math.min(10, maxMinutes));
   if (blocked && blockedReason) return (
     <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
       <p style={{ ...PX(5), color: 'var(--text-muted)' }}>🏕 Odpoczynek — {blockedReason}</p>
     </div>
   );
-  if (maxMinutes <= 0) return (
+  if (missing <= 0) return (
     <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
       <p style={{ ...PX(5), color: 'var(--text-muted)' }}>HP PEŁNE — odpoczynek zbędny</p>
     </div>
   );
   const clamped = Math.min(Math.max(1, minutes), maxMinutes);
+  const healPreview = Math.min(clamped * hpPerMin, missing);
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
@@ -68,12 +71,12 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ ...PX(5), color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK</p>
-        <p style={{ ...PX(6), color: '#6aaa40' }}>+{clamped} HP / {clamped} min</p>
+        <p style={{ ...PX(6), color: '#6aaa40' }}>+{healPreview} HP / {clamped} min</p>
       </div>
       <input type="range" min={1} max={maxMinutes} value={clamped}
         onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1 min = 1 HP</span>
+        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1 min = 2% HP (~{hpPerMin} HP)</span>
         <span style={{ ...PX(4), color: 'var(--text-muted)' }}>max {maxMinutes} min</span>
       </div>
       <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>

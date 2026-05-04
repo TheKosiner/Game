@@ -351,7 +351,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
     if (activeQuest) return;
     if (hero.hp >= hero.maxHp) return;
-    const hp = Math.min(minutes, hero.maxHp - hero.hp);
+    const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.02));
+    const hp = Math.min(minutes * hpPerMin, hero.maxHp - hero.hp);
     if (hp <= 0) return;
     const endsAt = Date.now() + minutes * 60 * 1000;
     set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp } });
