@@ -282,6 +282,17 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   // Remove pending invites
   const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
   for (const d of invites.docs) await deleteDoc(d.ref);
+  // Release any territories owned by this guild
+  const ownedTerritories = await getDocs(query(collection(db, 'territories'), where('guildId', '==', guildId)));
+  for (const d of ownedTerritories.docs) {
+    await setDoc(d.ref, {
+      guildId: null, guildName: null, guildTag: null,
+      capturedAt: null, lastRewardAt: null,
+      defenderMemberCount: 0, defenderAvgLevel: 0,
+      siegeGuildId: null, siegeGuildTag: null,
+      siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+    });
+  }
   await deleteDoc(doc(db, 'guilds', guildId));
 }
 
