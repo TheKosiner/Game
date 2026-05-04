@@ -150,19 +150,20 @@ export default function ShopPanel() {
           const canAfford = hero.gold >= price;
           const rarityColor = RARITY_COLORS[item.rarity];
           const glowBg = RARITY_GLOW[item.rarity];
+          const isRare = item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary';
           const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
 
           return (
             <div
               key={`${item.id}-${idx}`}
               style={{
-                background: featured
+                background: isRare
                   ? `linear-gradient(135deg, ${glowBg}, rgba(5,8,20,0.95))`
                   : 'rgba(5,8,20,0.7)',
-                border: `1px solid ${featured ? rarityColor + '55' : 'rgba(30,41,59,0.7)'}`,
+                border: `1px solid ${isRare ? rarityColor + '55' : 'rgba(30,41,59,0.7)'}`,
                 borderRadius: 4,
                 padding: 10,
-                boxShadow: featured ? `0 0 20px ${rarityColor}22` : 'none',
+                boxShadow: isRare ? `0 0 20px ${rarityColor}22` : 'none',
                 position: 'relative',
               }}
             >
@@ -189,7 +190,7 @@ export default function ShopPanel() {
                   borderRadius: 3,
                   padding: '6px 8px',
                   flexShrink: 0,
-                  boxShadow: featured ? `0 0 12px ${rarityColor}44` : 'none',
+                  boxShadow: isRare ? `0 0 12px ${rarityColor}44` : 'none',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
                   <ItemIcon item={item} scale={3} />
@@ -198,7 +199,7 @@ export default function ShopPanel() {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <p style={{ color: rarityColor, fontSize: 7, textShadow: featured ? `0 0 8px ${rarityColor}88` : 'none' }}>
+                    <p style={{ color: rarityColor, fontSize: 7, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
                       {item.name}
                     </p>
                     <span style={{
@@ -240,7 +241,7 @@ export default function ShopPanel() {
                     textAlign: 'center',
                     minWidth: 54,
                     transition: 'all 0.15s',
-                    boxShadow: canAfford && featured ? `0 0 10px ${rarityColor}33` : 'none',
+                    boxShadow: canAfford && isRare ? `0 0 10px ${rarityColor}33` : 'none',
                   }}
                 >
                   🪙 {price}
