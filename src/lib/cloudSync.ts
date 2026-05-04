@@ -315,13 +315,57 @@ export interface TerritoryState {
   siegeLastHitAt: number | null;
 }
 
+const EMPTY_TERRITORY = {
+  guildId: null, guildName: null, guildTag: null,
+  capturedAt: null, lastRewardAt: null,
+  defenderMemberCount: 0, defenderAvgLevel: 0,
+  siegeGuildId: null, siegeGuildTag: null,
+  siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+};
+
 const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2h stale siege can be overwritten
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
   if (!db) return {};
   const snap = await getDocs(collection(db, 'territories'));
   const result: Record<string, TerritoryState> = {};
-  snap.docs.forEach(d => { result[d.id] = { id: d.id, ...d.data() } as TerritoryState; });
+
+  // Collect unique guild IDs referenced by territories
+  const guildIds = new Set<string>();
+  snap.docs.forEach(d => {
+    const data = d.data() as TerritoryState;
+    if (data.guildId) guildIds.add(data.guildId);
+    if (data.siegeGuildId) guildIds.add(data.siegeGuildId);
+  });
+
+  // Check which guilds still exist
+  const existingGuilds = new Set<string>();
+  await Promise.all([...guildIds].map(async id => {
+    const g = await getDoc(doc(db!, 'guilds', id));
+    if (g.exists()) existingGuilds.add(id);
+  }));
+
+  // Build result, auto-cleaning orphaned ownership/siege data
+  await Promise.all(snap.docs.map(async d => {
+    const data = { id: d.id, ...d.data() } as TerritoryState;
+    let dirty = false;
+
+    if (data.guildId && !existingGuilds.has(data.guildId)) {
+      Object.assign(data, EMPTY_TERRITORY, { id: d.id });
+      dirty = true;
+    } else if (data.siegeGuildId && !existingGuilds.has(data.siegeGuildId)) {
+      data.siegeGuildId = null;
+      data.siegeGuildTag = null;
+      data.siegeCurrentHp = null;
+      data.siegeMaxHp = null;
+      data.siegeLastHitAt = null;
+      dirty = true;
+    }
+
+    if (dirty) await setDoc(d.ref, data);
+    result[d.id] = data;
+  }));
+
   return result;
 }
 
