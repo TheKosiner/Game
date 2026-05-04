@@ -147,6 +147,7 @@ export interface GameState {
 
   // actions
   initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean) => void;
+  changeAppearance: (skinTone: number, hairColor: number) => void;
   respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;

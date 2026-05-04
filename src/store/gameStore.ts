@@ -88,6 +88,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!skipSave) get().saveGame();
   },
 
+  changeAppearance: (skinTone, hairColor) => {
+    set(s => ({ hero: { ...s.hero, skinTone, hairColor } }));
+    get().saveGame();
+  },
+
   respecStats: () => {
     const { hero } = get();
     const now = Date.now();
