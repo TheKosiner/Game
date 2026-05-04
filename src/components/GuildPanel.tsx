@@ -5,6 +5,7 @@ import {
   getLeaderboard,
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
+import TerritoryPanel from './TerritoryPanel';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
@@ -87,13 +88,6 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
         </button>
       </div>
 
-      {/* Future teaser */}
-      <div style={{ background: 'rgba(6,10,18,0.8)', border: '1px solid rgba(30,50,80,0.4)', padding: 10 }}>
-        <p style={{ ...PX(5), color: '#5070a0', marginBottom: 6 }}>🗺 WKRÓTCE — TERYTORIA</p>
-        <p style={{ ...PX(4), color: 'var(--text-muted)', lineHeight: 1.6 }}>
-          Gildie będą mogły przejmować lokacje na mapie, bronić je przed innymi i otrzymywać złoto każdego dnia.
-        </p>
-      </div>
     </div>
   );
 }
@@ -212,7 +206,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   );
 }
 
-function GuildView({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; onRefresh: () => void }) {
+function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void }) {
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const isLeader = guild.leaderUid === myUid;
@@ -317,20 +311,10 @@ function GuildView({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; o
         })}
       </div>
 
-      {/* Future features */}
-      <div style={{ background: 'rgba(6,10,18,0.8)', border: '1px solid rgba(30,50,80,0.4)', padding: 10 }}>
-        <p style={{ ...PX(5), color: '#5070a0', marginBottom: 6 }}>🗺 WKRÓTCE — TERYTORIA</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {[
-            '⚔ Wspólne szturmy na lochy',
-            '🏰 Przejmowanie lokacji na mapie',
-            '🪙 Codzienna renta za utrzymane terytorium',
-            '🛡 Obrona przed wrogimi gildiami',
-          ].map((text, i) => (
-            <p key={i} style={{ ...PX(4), color: 'var(--text-muted)' }}>• {text}</p>
-          ))}
-        </div>
-      </div>
+      {/* Territory map */}
+      <button onClick={onOpenMap} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '10px' }}>
+        🗺 MAPA TERYTORIÓW
+      </button>
 
       {/* Leave / disband */}
       <button
@@ -353,6 +337,7 @@ export default function GuildPanel() {
   const [guild, setGuild] = useState<Guild | null>(null);
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<'guild' | 'territory'>('guild');
 
   async function load() {
     if (!user || !isFirebaseConfigured) { setLoading(false); return; }
@@ -393,14 +378,25 @@ export default function GuildPanel() {
     );
   }
 
+  if (view === 'territory') {
+    return (
+      <div className="card p-3">
+        <TerritoryPanel guild={guild} onBack={() => setView('guild')} />
+      </div>
+    );
+  }
+
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} onOpenMap={() => setView('territory')} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
           <CreateGuildForm onCreated={load} />
+          <button onClick={() => setView('territory')} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '9px' }}>
+            🗺 Mapa terytoriów
+          </button>
         </div>
       )}
     </div>

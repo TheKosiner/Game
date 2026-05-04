@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -283,4 +283,64 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
   for (const d of invites.docs) await deleteDoc(d.ref);
   await deleteDoc(doc(db, 'guilds', guildId));
+}
+
+// ── TERRITORIES ───────────────────────────────────────────────────────────────
+
+export interface TerritoryState {
+  id: string;
+  guildId: string | null;
+  guildName: string | null;
+  guildTag: string | null;
+  capturedAt: number | null;
+  lastRewardAt: number | null;
+  defenderMemberCount: number;
+  defenderAvgLevel: number;
+}
+
+export async function getTerritories(): Promise<Record<string, TerritoryState>> {
+  if (!db) return {};
+  const snap = await getDocs(collection(db, 'territories'));
+  const result: Record<string, TerritoryState> = {};
+  snap.docs.forEach(d => { result[d.id] = { id: d.id, ...d.data() } as TerritoryState; });
+  return result;
+}
+
+export async function captureTerritory(
+  territoryId: string,
+  guildId: string,
+  guildName: string,
+  guildTag: string,
+  memberCount: number,
+  avgLevel: number,
+): Promise<void> {
+  if (!db) return;
+  await setDoc(doc(db, 'territories', territoryId), {
+    guildId,
+    guildName,
+    guildTag,
+    capturedAt: Date.now(),
+    lastRewardAt: null,
+    defenderMemberCount: memberCount,
+    defenderAvgLevel: avgLevel,
+  });
+}
+
+export async function claimTerritoryReward(
+  territoryId: string,
+  guildId: string,
+): Promise<{ gold: number; xp: number } | null> {
+  if (!db) return null;
+  const ref = doc(db, 'territories', territoryId);
+  return runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data() as TerritoryState;
+    if (data.guildId !== guildId) return null;
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    if (data.lastRewardAt !== null && now - data.lastRewardAt < DAY) return null;
+    tx.update(ref, { lastRewardAt: now });
+    return { gold: 0, xp: 0 };
+  });
 }
