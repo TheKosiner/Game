@@ -3,7 +3,8 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, getHeroPalette, SKIN_TONES, HAIR_COLORS } from '../data/sprites';
+import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
+import AppearanceEditor from './AppearanceEditor';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
@@ -173,13 +174,10 @@ export default function HeroCard() {
   const restHero = useGameStore(s => s.restHero);
   const startBegging = useGameStore(s => s.startBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
-  const changeAppearance = useGameStore(s => s.changeAppearance);
   const inCombat = useGameStore(s => s.inCombat);
   const activeQuest = useGameStore(s => s.activeQuest);
   const [, forceUpdate] = useState(0);
-  const [showAppearance, setShowAppearance] = useState(false);
-  const [previewSkin, setPreviewSkin] = useState(hero.skinTone ?? 1);
-  const [previewHair, setPreviewHair] = useState(hero.hairColor ?? 2);
+  const [editingAppearance, setEditingAppearance] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => forceUpdate(n => n + 1), 1000);
@@ -197,10 +195,7 @@ export default function HeroCard() {
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite  = SPRITE_WARRIOR;
-  const palette = getHeroPalette(
-    showAppearance ? previewSkin : (hero.skinTone ?? 1),
-    showAppearance ? previewHair : (hero.hairColor ?? 2),
-  );
+  const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
@@ -210,17 +205,31 @@ export default function HeroCard() {
       {/* ── PORTRAIT + INFO ── */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
 
-        {/* Portrait scene */}
-        <div className="df-portrait-bg" style={{
-          width: 108, flexShrink: 0, minHeight: 152,
-          border: '1px solid var(--border-main)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div className="df-fire-glow" />
-          <div className="df-portrait-vignette" />
-          <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.95))' }}>
-            <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
+        {/* Portrait scene + appearance button */}
+        <div style={{ width: 108, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div className="df-portrait-bg" style={{
+            flex: 1, minHeight: 152,
+            border: '1px solid var(--border-main)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div className="df-fire-glow" />
+            <div className="df-portrait-vignette" />
+            <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.95))' }}>
+              <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
+            </div>
           </div>
+          <button
+            onClick={() => setEditingAppearance(true)}
+            style={{
+              background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+              color: 'var(--text-muted)', cursor: 'pointer', width: '100%',
+              padding: '5px 0', ...PX(4),
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+            }}
+          >
+            <span>🎨</span>
+            <span>ZMIEŃ WYGLĄD</span>
+          </button>
         </div>
 
         {/* Info column */}
@@ -263,104 +272,7 @@ export default function HeroCard() {
         </div>
       </div>
 
-      {/* ── APPEARANCE PICKER ── */}
-      <div>
-        <button
-          onClick={() => {
-            if (!showAppearance) {
-              setPreviewSkin(hero.skinTone ?? 1);
-              setPreviewHair(hero.hairColor ?? 2);
-            }
-            setShowAppearance(v => !v);
-          }}
-          style={{
-            background: 'none', border: '1px solid var(--border-dark)',
-            color: 'var(--text-muted)', cursor: 'pointer', width: '100%',
-            padding: '5px 0', ...PX(5),
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-          }}
-        >
-          <span>🎨</span>
-          <span>WYGLĄD POSTACI {showAppearance ? '▲' : '▼'}</span>
-        </button>
-
-        {showAppearance && (
-          <div style={{
-            background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-            borderTop: 'none', padding: '10px 10px 12px',
-            display: 'flex', flexDirection: 'column', gap: 10,
-          }}>
-            {/* Skin tone */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>KARNACJA</span>
-                <span style={{ ...PX(5), color: 'var(--text-muted)' }}>{SKIN_TONES[previewSkin].name}</span>
-              </div>
-              <div style={{ display: 'flex', gap: 5 }}>
-                {SKIN_TONES.map((tone, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPreviewSkin(i)}
-                    title={tone.name}
-                    style={{
-                      width: 30, height: 30, background: tone.light, cursor: 'pointer',
-                      border: previewSkin === i ? '2px solid var(--gold-bright)' : '2px solid var(--border-dark)',
-                      borderRadius: 3, boxShadow: previewSkin === i ? '0 0 6px var(--gold-glow)' : 'none',
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Hair color */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>WŁOSY</span>
-                <span style={{ ...PX(5), color: 'var(--text-muted)' }}>{HAIR_COLORS[previewHair].name}</span>
-              </div>
-              <div style={{ display: 'flex', gap: 5 }}>
-                {HAIR_COLORS.map((hair, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPreviewHair(i)}
-                    title={hair.name}
-                    style={{
-                      width: 30, height: 30, background: hair.light, cursor: 'pointer',
-                      border: previewHair === i ? '2px solid var(--gold-bright)' : '2px solid var(--border-dark)',
-                      borderRadius: 3, boxShadow: previewHair === i ? '0 0 6px var(--gold-glow)' : 'none',
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Save button */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button
-                className="btn btn-primary"
-                style={{ flex: 1, padding: '7px 0', fontSize: 6 }}
-                onClick={() => {
-                  changeAppearance(previewSkin, previewHair);
-                  setShowAppearance(false);
-                }}
-              >
-                ✓ ZAPISZ WYGLĄD
-              </button>
-              <button
-                className="btn btn-secondary"
-                style={{ padding: '7px 10px', fontSize: 6 }}
-                onClick={() => {
-                  setPreviewSkin(hero.skinTone ?? 1);
-                  setPreviewHair(hero.hairColor ?? 2);
-                  setShowAppearance(false);
-                }}
-              >
-                ✗
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {editingAppearance && <AppearanceEditor onClose={() => setEditingAppearance(false)} />}
 
       {/* ── HP / XP BARS ── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
