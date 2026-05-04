@@ -317,7 +317,7 @@ export default function PvpPanel() {
         maxHp: oppMaxHp,
       },
       oppSprite: sprite,
-      heroHp: hero.hp,
+      heroHp: hero.maxHp,
       heroMaxHp: hero.maxHp,
       oppHp: oppMaxHp,
       oppMaxHp,

@@ -40,13 +40,20 @@ function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
   );
 }
 
-function RestSlider({ hero, onRest, inCombat }: {
+function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   hero: { hp: number; maxHp: number };
   onRest: (minutes: number) => void;
   inCombat: boolean;
+  blocked?: boolean;
+  blockedReason?: string;
 }) {
   const maxMinutes = hero.maxHp - hero.hp;
   const [minutes, setMinutes] = useState(Math.min(10, maxMinutes));
+  if (blocked && blockedReason) return (
+    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>🏕 Odpoczynek — {blockedReason}</p>
+    </div>
+  );
   if (maxMinutes <= 0) return (
     <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
       <p style={{ ...PX(5), color: 'var(--text-muted)' }}>HP PEŁNE — odpoczynek zbędny</p>
@@ -124,8 +131,18 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
   );
 }
 
-function BeggingSlider({ onBeg, inCombat }: { onBeg: (hours: number) => void; inCombat: boolean }) {
+function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
+  onBeg: (hours: number) => void;
+  inCombat: boolean;
+  blocked?: boolean;
+  blockedReason?: string;
+}) {
   const [hours, setHours] = useState(2);
+  if (blocked && blockedReason) return (
+    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>🙏 Żebranie — {blockedReason}</p>
+    </div>
+  );
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
@@ -156,6 +173,7 @@ export default function HeroCard() {
   const startBegging = useGameStore(s => s.startBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
   const inCombat = useGameStore(s => s.inCombat);
+  const activeQuest = useGameStore(s => s.activeQuest);
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
@@ -166,6 +184,10 @@ export default function HeroCard() {
   const isResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
   const isBegging = hero.beggingUntil !== null && Date.now() < hero.beggingUntil;
   const beggingDone = hero.beggingUntil !== null && Date.now() >= hero.beggingUntil;
+  const hasQuest = activeQuest !== null;
+
+  const restBlockReason = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : undefined;
+  const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : undefined;
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
@@ -258,7 +280,7 @@ export default function HeroCard() {
       {/* ── REST ── */}
       {isResting
         ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} />
-        : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} />
+        : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} blocked={!!restBlockReason} blockedReason={restBlockReason} />
       }
 
       {/* ── ŻEBRANIE ── */}
@@ -266,7 +288,7 @@ export default function HeroCard() {
         ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} />
         : beggingDone
           ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={collectBegging} />
-          : <BeggingSlider onBeg={startBegging} inCombat={inCombat} />
+          : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
       }
 
       {/* ── DZIENNY LIMIT + STATYSTYKI ── */}

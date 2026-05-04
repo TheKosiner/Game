@@ -345,9 +345,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   restHero: (minutes: number) => {
-    const { hero, inCombat } = get();
+    const { hero, inCombat, activeQuest } = get();
     if (inCombat) return;
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
+    if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
+    if (activeQuest) return;
     if (hero.hp >= hero.maxHp) return;
     const hp = Math.min(minutes, hero.maxHp - hero.hp);
     if (hp <= 0) return;
@@ -358,9 +360,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   startBegging: (hours: number) => {
-    const { hero, inCombat } = get();
+    const { hero, inCombat, activeQuest } = get();
     if (inCombat) return;
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
+    if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
+    if (activeQuest) return;
     const clampedHours = Math.max(1, Math.min(10, Math.round(hours)));
     const goldReward = Math.floor(clampedHours * (5 + hero.level * 2) * (0.8 + Math.random() * 0.4));
     const endsAt = Date.now() + clampedHours * 60 * 60 * 1000;
