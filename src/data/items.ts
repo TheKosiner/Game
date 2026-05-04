@@ -66,7 +66,7 @@ export const ALL_ITEMS: Item[] = [
 
   // ── Armor: Robes & Light ──────────────────────────────────────────────────
   { id: 'robe_apprentice',name: 'Szata Ucznia',      slot: 'armor',  rarity: 'common',    stats: { intelligence: 2 },                     defenseBonus: 2,  level: 1,  goldValue: 22,   emoji: '👘' },
-  { id: 'robe_mage',      name: 'Szata Maga',        slot: 'armor',  rarity: 'common',    stats: { intelligence: 3 },                     defenseBonus: 3,  level: 3,  goldValue: 45,   emoji: '👘' },
+  { id: 'robe_mage',      name: 'Szata Arkanisty',   slot: 'armor',  rarity: 'common',    stats: { intelligence: 3 },                     defenseBonus: 3,  level: 3,  goldValue: 45,   emoji: '👘' },
   { id: 'robe_arcane',    name: 'Arkanistyczna Szata', slot: 'armor', rarity: 'uncommon', stats: { intelligence: 7 },                     defenseBonus: 7,  level: 6,  goldValue: 120,  emoji: '👘' },
   { id: 'robe_elder',     name: 'Szata Starszyzny',  slot: 'armor',  rarity: 'uncommon',  stats: { intelligence: 11, vitality: 3 },   defenseBonus: 10, level: 10, goldValue: 250,  emoji: '👘' },
   { id: 'robe_lich',      name: 'Szata Lisza',       slot: 'armor',  rarity: 'epic',      stats: { intelligence: 22, vitality: 6 },   defenseBonus: 20, level: 20, goldValue: 1800, emoji: '👘' },
@@ -85,7 +85,7 @@ export const ALL_ITEMS: Item[] = [
   { id: 'hood_shadow',    name: 'Kaptur Cieni',       slot: 'helmet', rarity: 'rare',      stats: { dexterity: 8 },                          defenseBonus: 6,  level: 8,  goldValue: 310,  emoji: '🎭' },
   { id: 'hood_assassin',  name: 'Kaptur Zabójcy',    slot: 'helmet', rarity: 'rare',      stats: { dexterity: 13, strength: 3 },            defenseBonus: 8,  level: 13, goldValue: 540,  emoji: '🎭' },
   { id: 'circlet_silver', name: 'Srebrny Diadem',    slot: 'helmet', rarity: 'uncommon',  stats: { intelligence: 6 },                     defenseBonus: 4,  level: 5,  goldValue: 110,  emoji: '👑' },
-  { id: 'crown_mage',     name: 'Korona Maga',       slot: 'helmet', rarity: 'rare',      stats: { intelligence: 14, vitality: 3 },   defenseBonus: 8,  level: 15, goldValue: 620,  emoji: '👑' },
+  { id: 'crown_mage',     name: 'Arkanistyczna Korona', slot: 'helmet', rarity: 'rare',   stats: { intelligence: 14, vitality: 3 },   defenseBonus: 8,  level: 15, goldValue: 620,  emoji: '👑' },
   { id: 'helmet_dragon',  name: 'Smocza Korona',     slot: 'helmet', rarity: 'legendary', stats: { vitality: 22, strength: 10 },      defenseBonus: 28, level: 28, goldValue: 4200, emoji: '👑' },
 
   // ── Boots ─────────────────────────────────────────────────────────────────

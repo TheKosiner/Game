@@ -36,7 +36,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
     if (trimTag.length < 2 || trimTag.length > 4) { setError('Tag musi mieć 2–4 znaki (A-Z, 0-9)'); return; }
     setLoading(true); setError('');
     try {
-      await createGuild(user.uid, user.username, hero.name, '', hero.level, trimName, trimTag, desc.trim());
+      await createGuild(user.uid, user.username, hero.name, hero.level, trimName, trimTag, desc.trim());
       onCreated();
     } catch { setError('Błąd tworzenia gildii'); }
     finally { setLoading(false); }
@@ -100,7 +100,7 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
     if (!user) return;
     setActing(inv.id);
     try {
-      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, '', hero.level);
+      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, hero.level);
       onRefresh();
     } finally { setActing(null); }
   }

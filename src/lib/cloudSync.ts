@@ -7,7 +7,6 @@ export interface LeaderboardEntry {
   uid: string;
   username: string;
   heroName: string;
-  heroClass?: string;
   level: number;
   xp: number;
   gold: number;
@@ -112,7 +111,6 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
 export interface GuildMemberData {
   username: string;
   heroName: string;
-  heroClass?: string;
   level: number;
   role: 'leader' | 'member';
   joinedAt: number;
@@ -145,7 +143,6 @@ export async function createGuild(
   leaderUid: string,
   leaderUsername: string,
   leaderHeroName: string,
-  leaderHeroClass: string,
   leaderLevel: number,
   name: string,
   tag: string,
@@ -164,7 +161,6 @@ export async function createGuild(
       [leaderUid]: {
         username: leaderUsername,
         heroName: leaderHeroName,
-        heroClass: leaderHeroClass,
         level: leaderLevel,
         role: 'leader',
         joinedAt: now,
@@ -232,7 +228,6 @@ export async function acceptInvite(
   uid: string,
   username: string,
   heroName: string,
-  heroClass: string,
   level: number,
 ): Promise<void> {
   if (!db) return;
@@ -240,7 +235,7 @@ export async function acceptInvite(
   const guildSnap = await getDoc(doc(db, 'guilds', guildId));
   if (!guildSnap.exists()) return;
   await updateDoc(doc(db, 'guilds', guildId), {
-    [`members.${uid}`]: { username, heroName, heroClass, level, role: 'member', joinedAt: now },
+    [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now },
   });
   await updateDoc(doc(db, 'players', uid), {
     guildId,
