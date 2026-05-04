@@ -14,6 +14,7 @@ import QuestPanel from './components/QuestPanel';
 import ShopPanel from './components/ShopPanel';
 import LeaderboardPanel from './components/LeaderboardPanel';
 import PvpPanel from './components/PvpPanel';
+import GuildPanel from './components/GuildPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 
 export default function App() {
@@ -144,6 +145,7 @@ export default function App() {
         {tab === 'quests'  && <QuestPanel />}
         {tab === 'shop'    && <ShopPanel />}
         {tab === 'pvp'     && <PvpPanel />}
+        {tab === 'guild'   && <GuildPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
       </main>
 
