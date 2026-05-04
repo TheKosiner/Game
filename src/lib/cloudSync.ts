@@ -79,8 +79,9 @@ function migrateHeroFromRaw(raw: any) {
   };
 }
 
-export async function loadFromCloud(uid: string): Promise<boolean> {
-  if (!db) return false;
+/** true = loaded from cloud, false = local is newer (use loadGame), null = no save exists (new account) */
+export async function loadFromCloud(uid: string): Promise<boolean | null> {
+  if (!db) return null;
 
   // Read from private saves collection
   const saveSnap = await getDoc(doc(db, 'saves', uid));
@@ -91,7 +92,7 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
     ? saveSnap.data()
     : legacySnap?.data()?.saveData;
 
-  if (!raw?.hero) return false;
+  if (!raw?.hero) return null;
 
   const cloudTs: number = saveSnap.exists()
     ? (saveSnap.data().updatedAt ?? 0)

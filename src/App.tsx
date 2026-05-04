@@ -37,7 +37,13 @@ export default function App() {
       if (user) {
         try {
           const loaded = await loadFromCloud(user.uid);
-          if (!loaded) loadGame();
+          if (loaded === null) {
+            // New account — wipe any localStorage from a previous account
+            try { localStorage.removeItem('realm_of_valor_save'); } catch {}
+            initHero('Hero');
+          } else if (!loaded) {
+            loadGame();
+          }
         } catch { loadGame(); }
       } else {
         loadGame();
