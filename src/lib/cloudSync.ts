@@ -25,9 +25,11 @@ export interface LeaderboardEntry {
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
   const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
+  const { class: _cls, ...heroClean } = hero as any;
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
+    heroClass: deleteField(),
     level: hero.level,
     xp: hero.xp,
     gold: hero.gold,
@@ -39,7 +41,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     pvpWins: pvpWins ?? 0,
     pvpLosses: pvpLosses ?? 0,
     updatedAt: Date.now(),
-    saveData: { hero, activeQuest },
+    saveData: { hero: heroClean, activeQuest },
   }, { merge: true });
 }
 
@@ -49,8 +51,31 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
   if (!snap.exists()) return false;
   const data = snap.data();
   if (data.saveData?.hero) {
+    const raw = data.saveData.hero as any;
+    // Strip stale class field and migrate old stat names
+    const { class: _cls, ...heroWithoutClass } = raw;
+    const migrateStats = (s: any) => ({
+      strength: s.strength ?? 0,
+      dexterity: s.dexterity ?? s.agility ?? 0,
+      intelligence: s.intelligence ?? 0,
+      vitality: s.vitality ?? s.constitution ?? 0,
+    });
+    const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
+    const migrateEquipment = (eq: any) => {
+      if (!eq) return {};
+      const result: any = {};
+      for (const [k, v] of Object.entries(eq)) result[k] = migrateItem(v);
+      return result;
+    };
+    const hero = {
+      ...heroWithoutClass,
+      stats: migrateStats(raw.stats ?? {}),
+      equipment: migrateEquipment(raw.equipment),
+      inventory: (raw.inventory ?? []).map(migrateItem),
+      lastRespecAt: raw.lastRespecAt ?? null,
+    };
     useGameStore.setState({
-      hero: data.saveData.hero,
+      hero,
       activeQuest: data.saveData.activeQuest ?? null,
       currentDungeon: null,
       currentEnemy: null,
