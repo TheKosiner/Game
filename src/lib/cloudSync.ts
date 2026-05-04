@@ -24,6 +24,7 @@ export interface LeaderboardEntry {
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
+  useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
   await setDoc(doc(db, 'players', uid), {
@@ -50,40 +51,48 @@ export async function loadFromCloud(uid: string): Promise<boolean> {
   const snap = await getDoc(doc(db, 'players', uid));
   if (!snap.exists()) return false;
   const data = snap.data();
-  if (data.saveData?.hero) {
-    const raw = data.saveData.hero as any;
-    // Strip stale class field and migrate old stat names
-    const { class: _cls, ...heroWithoutClass } = raw;
-    const migrateStats = (s: any) => ({
-      strength: s.strength ?? 0,
-      dexterity: s.dexterity ?? s.agility ?? 0,
-      intelligence: s.intelligence ?? 0,
-      vitality: s.vitality ?? s.constitution ?? 0,
-    });
-    const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
-    const migrateEquipment = (eq: any) => {
-      if (!eq) return {};
-      const result: any = {};
-      for (const [k, v] of Object.entries(eq)) result[k] = migrateItem(v);
-      return result;
-    };
-    const hero = {
-      ...heroWithoutClass,
-      stats: migrateStats(raw.stats ?? {}),
-      equipment: migrateEquipment(raw.equipment),
-      inventory: (raw.inventory ?? []).map(migrateItem),
-      lastRespecAt: raw.lastRespecAt ?? null,
-    };
-    useGameStore.setState({
-      hero,
-      activeQuest: data.saveData.activeQuest ?? null,
-      currentDungeon: null,
-      currentEnemy: null,
-      inCombat: false,
-    });
-    return true;
-  }
-  return false;
+  if (!data.saveData?.hero) return false;
+
+  // Prefer localStorage if it has newer data
+  const cloudTs: number = data.updatedAt ?? 0;
+  try {
+    const localRaw = localStorage.getItem('realm_of_valor_save');
+    if (localRaw) {
+      const localSave = JSON.parse(localRaw);
+      if ((localSave.lastSaved ?? 0) > cloudTs) return false;
+    }
+  } catch { /* ignore */ }
+
+  const raw = data.saveData.hero as any;
+  const { class: _cls, ...heroWithoutClass } = raw;
+  const migrateStats = (s: any) => ({
+    strength: s.strength ?? 0,
+    dexterity: s.dexterity ?? s.agility ?? 0,
+    intelligence: s.intelligence ?? 0,
+    vitality: s.vitality ?? s.constitution ?? 0,
+  });
+  const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
+  const migrateEquipment = (eq: any) => {
+    if (!eq) return {};
+    const result: any = {};
+    for (const [k, v] of Object.entries(eq)) result[k] = migrateItem(v);
+    return result;
+  };
+  const hero = {
+    ...heroWithoutClass,
+    stats: migrateStats(raw.stats ?? {}),
+    equipment: migrateEquipment(raw.equipment),
+    inventory: (raw.inventory ?? []).map(migrateItem),
+    lastRespecAt: raw.lastRespecAt ?? null,
+  };
+  useGameStore.setState({
+    hero,
+    activeQuest: data.saveData.activeQuest ?? null,
+    currentDungeon: null,
+    currentEnemy: null,
+    inCombat: false,
+  });
+  return true;
 }
 
 export async function deleteCloudSave(uid: string): Promise<void> {
@@ -192,10 +201,10 @@ export async function createGuild(
       },
     },
   });
-  await updateDoc(doc(db, 'players', leaderUid), {
+  await setDoc(doc(db, 'players', leaderUid), {
     guildId: guildRef.id,
     guildTag: tag.toUpperCase().slice(0, 4),
-  });
+  }, { merge: true });
   return guildRef.id;
 }
 
@@ -262,10 +271,10 @@ export async function acceptInvite(
   await updateDoc(doc(db, 'guilds', guildId), {
     [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now },
   });
-  await updateDoc(doc(db, 'players', uid), {
+  await setDoc(doc(db, 'players', uid), {
     guildId,
     guildTag: guildSnap.data().tag,
-  });
+  }, { merge: true });
   // Remove all invites for this user
   const allInvites = await getDocs(query(collection(db, 'guildInvites'), where('toUid', '==', uid)));
   for (const d of allInvites.docs) await deleteDoc(d.ref);
