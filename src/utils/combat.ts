@@ -5,31 +5,44 @@ function softCap(stat: number): number {
   return 100 + (stat - 100) * 0.5;
 }
 
+export function getEquipmentStats(equipment: Hero['equipment']): Stats {
+  const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
+  for (const item of Object.values(equipment)) {
+    if (!item?.stats) continue;
+    for (const [k, v] of Object.entries(item.stats)) {
+      if (v !== undefined) (r as Record<string, number>)[k] = ((r as Record<string, number>)[k] ?? 0) + v;
+    }
+  }
+  return r;
+}
+
 export function getHeroAttack(hero: Hero): number {
+  const eq = getEquipmentStats(hero.equipment);
   const weapon = hero.equipment.weapon;
   if (!weapon) {
     const base = 5 + hero.level * 2;
-    return Math.round(base * (1 + softCap(hero.stats.strength) / 100));
+    return Math.round(base * (1 + softCap(hero.stats.strength + eq.strength) / 100));
   }
-  // Find weapon's primary scaling stat (highest-value stat that isn't vitality)
-  const scaleStat = (Object.entries(weapon.stats)
+  const scaleStat = (Object.entries(weapon.stats ?? {})
     .filter(([k]) => k !== 'vitality')
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
-  const heroStatVal = hero.stats[scaleStat] ?? hero.stats.strength;
+  const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
   return Math.round((weapon.attackBonus ?? 0) * (1 + softCap(heroStatVal) / 100));
 }
 
 export function getHeroDefense(hero: Hero): number {
+  const eq = getEquipmentStats(hero.equipment);
   const armor = hero.equipment.armor;
   const helmet = hero.equipment.helmet;
   const boots = hero.equipment.boots;
-  const base = 2 + hero.stats.vitality + hero.level;
+  const base = 2 + (hero.stats.vitality + eq.vitality) + hero.level;
   const bonus = (armor?.defenseBonus ?? 0) + (helmet?.defenseBonus ?? 0) + (boots?.defenseBonus ?? 0);
   return base + bonus;
 }
 
-export function getHeroMaxHp(stats: Stats, level: number): number {
-  return 80 + stats.vitality * 10 + level * 8;
+export function getHeroMaxHp(stats: Stats, level: number, equipment?: Hero['equipment']): number {
+  const eqVit = equipment ? getEquipmentStats(equipment).vitality : 0;
+  return 80 + (stats.vitality + eqVit) * 10 + level * 8;
 }
 
 export function calcXpToNext(level: number): number {
@@ -47,9 +60,10 @@ export function rollDamage(base: number, variance = 0.2): number {
 }
 
 export function heroAttackEnemy(hero: Hero, enemy: Enemy): { damage: number; isCrit: boolean } {
+  const eq = getEquipmentStats(hero.equipment);
   const attack = getHeroAttack(hero);
   const netDamage = Math.max(1, attack - enemy.defense);
-  const isCrit = Math.random() < 0.1 + hero.stats.dexterity * 0.005;
+  const isCrit = Math.random() < 0.1 + (hero.stats.dexterity + eq.dexterity) * 0.005;
   const damage = rollDamage(netDamage) * (isCrit ? 2 : 1);
   return { damage: Math.max(1, damage), isCrit };
 }

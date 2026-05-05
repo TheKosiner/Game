@@ -101,7 +101,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.lastRespecAt !== null && now - hero.lastRespecAt < DAY) return;
     const totalPoints = hero.stats.strength + hero.stats.dexterity + hero.stats.intelligence + hero.stats.vitality;
     const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
-    const newMaxHp = getHeroMaxHp(resetStats, hero.level);
+    const newMaxHp = getHeroMaxHp(resetStats, hero.level, hero.equipment);
     set({ hero: { ...hero, stats: resetStats, attributePoints: hero.attributePoints + totalPoints, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp), lastRespecAt: now } });
     get().addCombatLog('Statystyki zresetowane! Rozdziel punkty cech.', 'system');
     get().saveGame();
@@ -119,7 +119,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       attributePoints++;
       leveled = true;
     }
-    const newMaxHp = getHeroMaxHp(stats, level);
+    const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = leveled ? newMaxHp - maxHp : 0;
     set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints } });
     if (leveled) get().addCombatLog(`Awansowałeś na poziom ${level}!`, 'system');
@@ -137,7 +137,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx !== -1) newInventory.splice(idx, 1);
     if (oldEquipped) newInventory.push(oldEquipped);
-    set({ hero: { ...hero, equipment: { ...hero.equipment, [item.slot]: item }, inventory: newInventory } });
+    const newEquipment = { ...hero.equipment, [item.slot]: item };
+    const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
+    set({ hero: { ...hero, equipment: newEquipment, inventory: newInventory, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
   },
 
   unequipItem: (slot: ItemSlot) => {
@@ -147,7 +149,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.inventory.length >= MAX_INVENTORY) return;
     const newEquipment = { ...hero.equipment };
     delete newEquipment[slot];
-    set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item] } });
+    const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
+    set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item], maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
   },
 
   sellItem: (item: Item) => {
@@ -299,7 +302,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     if (hero.attributePoints <= 0) return;
     const newStats = { ...hero.stats, [attr]: hero.stats[attr] + 1 };
-    const newMaxHp = getHeroMaxHp(newStats, hero.level);
+    const newMaxHp = getHeroMaxHp(newStats, hero.level, hero.equipment);
     set({ hero: { ...hero, stats: newStats, maxHp: newMaxHp, attributePoints: hero.attributePoints - 1 } });
     get().saveGame();
   },
