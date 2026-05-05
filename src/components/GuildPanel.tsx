@@ -10,7 +10,7 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function formatDate(ts: number) {
@@ -172,12 +172,12 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
         {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>Brak graczy do zaproszenia</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {players.map(p => {
-            const palette = getHeroPalette(p.skinTone ?? 1, p.hairColor ?? 2);
+            const palette = getHeroPalette(p.skinTone ?? 1, p.hairColor ?? 2, p.clothingColor ?? 0);
             const alreadySent = sent.has(p.uid);
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
                 <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                  <PixelSprite grid={SPRITE_WARRIOR} scale={2} paletteOverrides={palette} />
+                  <PixelSprite grid={SPRITE_PORTRAIT} scale={2} paletteOverrides={palette} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
@@ -279,7 +279,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                <PixelSprite grid={SPRITE_WARRIOR} scale={2} />
+                <PixelSprite grid={SPRITE_PORTRAIT} scale={2} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
