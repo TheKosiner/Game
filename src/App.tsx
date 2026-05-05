@@ -37,7 +37,13 @@ export default function App() {
       if (user) {
         try {
           const loaded = await loadFromCloud(user.uid);
-          if (!loaded) loadGame();
+          if (loaded === null) {
+            // New account — wipe any localStorage from a previous account
+            try { localStorage.removeItem('realm_of_valor_save'); } catch {}
+            initHero('Hero', 1, 2, true); // skipSave=true so hasSave stays false → CharacterCreation shows
+          } else if (!loaded) {
+            loadGame();
+          }
         } catch { loadGame(); }
       } else {
         loadGame();
@@ -81,7 +87,7 @@ export default function App() {
     if (!confirm('Zresetować postać? Stracisz cały postęp!')) return;
     localStorage.removeItem('realm_of_valor_save');
     try { if (user) await deleteCloudSave(user.uid); } catch {}
-    initHero('Hero', 'warrior');
+    initHero('Hero');
   }
 
   return (

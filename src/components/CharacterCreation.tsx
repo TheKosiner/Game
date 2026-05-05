@@ -1,30 +1,19 @@
 import { useState } from 'react';
-import type { HeroClass } from '../types';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
-
-const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRITE_ROGUE };
-
-const CLASSES: { id: HeroClass; name: string; desc: string; pros: string; color: string }[] = [
-  { id: 'warrior', name: 'Wojownik', desc: 'Mistrz walki wręcz. Wysoka żywotność i atak siłowy.', pros: '💪 Siła & Kondycja', color: '#ef4444' },
-  { id: 'mage',    name: 'Mag',      desc: 'Władca arkaniki. Ogromna moc magii i inteligencja.',  pros: '🧠 Inteligencja',    color: '#8b5cf6' },
-  { id: 'rogue',   name: 'Łotrzyk',  desc: 'Skryty zabójca. Szybkość i krytyczne ciosy.',         pros: '🏃 Zwinność & Krytyki', color: '#22c55e' },
-];
+import { SPRITE_WARRIOR, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');
-  const [selectedClass, setSelectedClass] = useState<HeroClass | null>(null);
   const [skinTone, setSkinTone] = useState(1);
   const [hairColor, setHairColor] = useState(2);
   const initHero = useGameStore(s => s.initHero);
 
   const palette = getHeroPalette(skinTone, hairColor);
-  const activeClass = selectedClass ?? 'warrior';
 
   function handleCreate() {
-    if (!name.trim() || !selectedClass) return;
-    initHero(name.trim(), selectedClass, skinTone, hairColor);
+    if (!name.trim()) return;
+    initHero(name.trim(), skinTone, hairColor);
   }
 
   return (
@@ -74,54 +63,6 @@ export default function CharacterCreation() {
             />
           </div>
 
-          {/* Class selection */}
-          <div>
-            <p style={{ color: '#64748b', fontSize: 6, marginBottom: 10, letterSpacing: '0.1em' }}>WYBIERZ KLASĘ</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {CLASSES.map(cls => {
-                const isSelected = selectedClass === cls.id;
-                return (
-                  <button
-                    key={cls.id}
-                    onClick={() => setSelectedClass(cls.id)}
-                    style={{
-                      width: '100%', textAlign: 'left',
-                      background: isSelected
-                        ? `linear-gradient(135deg, rgba(${cls.id === 'warrior' ? '239,68,68' : cls.id === 'mage' ? '139,92,246' : '34,197,94'},0.08) 0%, rgba(5,8,20,0.95) 100%)`
-                        : 'rgba(5,8,20,0.7)',
-                      border: `1px solid ${isSelected ? (cls.id === 'warrior' ? 'rgba(239,68,68,0.4)' : cls.id === 'mage' ? 'rgba(139,92,246,0.4)' : 'rgba(34,197,94,0.4)') : 'rgba(51,65,85,0.5)'}`,
-                      borderRadius: 4,
-                      padding: 10,
-                      cursor: 'pointer',
-                      fontFamily: "'Press Start 2P', monospace",
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? `0 0 16px ${cls.color}22` : 'none',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        background: 'rgba(5,8,20,0.9)',
-                        border: `1px solid ${isSelected ? cls.color + '44' : 'rgba(51,65,85,0.4)'}`,
-                        borderRadius: 3,
-                        padding: 5,
-                        flexShrink: 0,
-                        boxShadow: isSelected ? `0 0 12px ${cls.color}33` : 'none',
-                      }}>
-                        <PixelSprite grid={CLASS_SPRITES[cls.id]} scale={3} paletteOverrides={palette} />
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ color: isSelected ? '#e2e8f0' : '#94a3b8', fontSize: 8, marginBottom: 4 }}>{cls.name}</p>
-                        <p style={{ color: '#475569', fontSize: 6, marginBottom: 3, lineHeight: 1.6 }}>{cls.desc}</p>
-                        <p style={{ color: cls.color, fontSize: 6 }}>{cls.pros}</p>
-                      </div>
-                      {isSelected && <span style={{ color: cls.color, fontSize: 10 }}>▶</span>}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* Appearance */}
           <div style={{
             background: 'rgba(5,8,20,0.7)',
@@ -140,7 +81,7 @@ export default function CharacterCreation() {
                 padding: 12,
                 boxShadow: '0 0 24px rgba(59,51,140,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
               }}>
-                <PixelSprite grid={CLASS_SPRITES[activeClass]} scale={5} paletteOverrides={palette} />
+                <PixelSprite grid={SPRITE_WARRIOR} scale={5} paletteOverrides={palette} />
               </div>
             </div>
 
@@ -200,7 +141,7 @@ export default function CharacterCreation() {
           {/* Create button */}
           <button
             onClick={handleCreate}
-            disabled={!name.trim() || !selectedClass}
+            disabled={!name.trim()}
             className="btn btn-primary"
             style={{ width: '100%', padding: '13px', fontSize: 8 }}
           >

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { GameState, Hero, HeroClass, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
+import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
+import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { getItemById } from '../data/items';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -34,17 +35,11 @@ function scaledQuestDuration(durationMs: number, level: number): number {
   return Math.floor(durationMs * (1 + (level - 1) * 0.05));
 }
 
-function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor = 2): Hero {
-  const baseStats: Record<HeroClass, Stats> = {
-    warrior: { strength: 8, agility: 4, intelligence: 2, constitution: 6 },
-    mage: { strength: 2, agility: 4, intelligence: 10, constitution: 4 },
-    rogue: { strength: 5, agility: 9, intelligence: 3, constitution: 3 },
-  };
-  const stats = baseStats[heroClass];
+function createHero(name: string, skinTone = 1, hairColor = 2): Hero {
+  const stats: Stats = { strength: 4, dexterity: 4, intelligence: 4, vitality: 4 };
   const maxHp = getHeroMaxHp(stats, 1);
   return {
     name,
-    class: heroClass,
     level: 1,
     xp: 0,
     xpToNext: calcXpToNext(1),
@@ -63,14 +58,15 @@ function createHero(name: string, heroClass: HeroClass, skinTone = 1, hairColor 
     inventory: [],
     gold: 100,
     gems: 0,
-    attributePoints: 0,
+    attributePoints: 5,
     skinTone,
     hairColor,
+    lastRespecAt: null,
   };
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
-  hero: createHero('Hero', 'warrior'),
+  hero: createHero('Hero'),
   activeQuest: null,
   currentDungeon: null,
   currentFloor: 1,
@@ -86,9 +82,27 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   pvpLog: [],
 
-  initHero: (name, heroClass, skinTone = 1, hairColor = 2) => {
-    const hero = createHero(name, heroClass, skinTone, hairColor);
+  initHero: (name, skinTone = 1, hairColor = 2, skipSave = false) => {
+    const hero = createHero(name, skinTone, hairColor);
     set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
+    if (!skipSave) get().saveGame();
+  },
+
+  changeAppearance: (skinTone, hairColor) => {
+    set(s => ({ hero: { ...s.hero, skinTone, hairColor } }));
+    get().saveGame();
+  },
+
+  respecStats: () => {
+    const { hero } = get();
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    if (hero.lastRespecAt !== null && now - hero.lastRespecAt < DAY) return;
+    const totalPoints = hero.stats.strength + hero.stats.dexterity + hero.stats.intelligence + hero.stats.vitality;
+    const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
+    const newMaxHp = getHeroMaxHp(resetStats, hero.level);
+    set({ hero: { ...hero, stats: resetStats, attributePoints: hero.attributePoints + totalPoints, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp), lastRespecAt: now } });
+    get().addCombatLog('Statystyki zresetowane! Rozdziel punkty cech.', 'system');
     get().saveGame();
   },
 
@@ -407,6 +421,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   saveGame: () => {
     const state = get();
     const save = {
+      uid: useAuthStore.getState().user?.uid ?? null,
       hero: state.hero,
       activeQuest: state.activeQuest,
       lastSaved: Date.now(),
@@ -432,9 +447,29 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!raw) return;
       const save = JSON.parse(raw);
       if (save.hero) {
+        // migrate old stat names
+        const migrateStats = (s: any): Stats => ({
+          strength: s.strength ?? 0,
+          dexterity: s.dexterity ?? s.agility ?? 0,
+          intelligence: s.intelligence ?? 0,
+          vitality: s.vitality ?? s.constitution ?? 0,
+        });
+        const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
+        const migrateEquipment = (eq: any) => {
+          if (!eq) return {};
+          const result: any = {};
+          for (const [k, v] of Object.entries(eq)) result[k] = migrateItem(v);
+          return result;
+        };
+
         const isLegacySave = save.hero.dungeonRunsToday === undefined;
         const loadedHero: Hero = {
-          ...save.hero,
+          name: save.hero.name,
+          level: save.hero.level,
+          xp: save.hero.xp,
+          xpToNext: save.hero.xpToNext,
+          hp: save.hero.hp,
+          maxHp: save.hero.maxHp,
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
           voluntaryRestHp: save.hero.voluntaryRestHp != null
@@ -447,8 +482,15 @@ export const useGameStore = create<GameState>((set, get) => ({
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
+          stats: migrateStats(save.hero.stats ?? {}),
+          equipment: migrateEquipment(save.hero.equipment),
+          inventory: (save.hero.inventory ?? []).map(migrateItem),
+          gold: save.hero.gold ?? 100,
+          gems: save.hero.gems ?? 0,
+          attributePoints: save.hero.attributePoints ?? 0,
           skinTone: save.hero.skinTone ?? 1,
           hairColor: save.hero.hairColor ?? 2,
+          lastRespecAt: save.hero.lastRespecAt ?? null,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
