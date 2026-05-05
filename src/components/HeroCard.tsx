@@ -176,6 +176,7 @@ export default function HeroCard() {
   const collectBegging = useGameStore(s => s.collectBegging);
   const inCombat = useGameStore(s => s.inCombat);
   const activeQuest = useGameStore(s => s.activeQuest);
+  const currentDungeon = useGameStore(s => s.currentDungeon);
   const [, forceUpdate] = useState(0);
   const [editingAppearance, setEditingAppearance] = useState(false);
 
@@ -189,8 +190,9 @@ export default function HeroCard() {
   const beggingDone = hero.beggingUntil !== null && Date.now() >= hero.beggingUntil;
   const hasQuest = activeQuest !== null;
 
-  const restBlockReason = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : undefined;
-  const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : undefined;
+  const inDungeon = currentDungeon !== null || inCombat;
+  const restBlockReason = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
+  const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);

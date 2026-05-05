@@ -23,6 +23,9 @@ export default function QuestPanel() {
   const collectQuest = useGameStore(s => s.collectQuest);
   const [now, setNow] = useState(Date.now());
 
+  const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
+                    (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
+
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
@@ -95,7 +98,13 @@ export default function QuestPanel() {
         </div>
       )}
 
-      {!activeQuest && !limitReached && (
+      {isResting && !activeQuest && (
+        <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
+          <p style={{ ...PX(6), color: '#5070a0' }}>💤 Odpoczywasz — wróć gdy odzyskasz siły</p>
+        </div>
+      )}
+
+      {!activeQuest && !limitReached && !isResting && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
           {available.length === 0 ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>

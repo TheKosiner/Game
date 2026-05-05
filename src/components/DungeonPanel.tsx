@@ -92,7 +92,8 @@ function EnemyBattleCard() {
 function DungeonList() {
   const hero = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
-  const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
+  const isResting = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
+                    (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
   return (
