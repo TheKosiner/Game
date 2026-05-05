@@ -188,6 +188,7 @@ export interface Guild {
   members: Record<string, GuildMemberData>;
   createdAt: number;
   guildXp: number;
+  lastSiegeAt: number | null;
 }
 
 export interface GuildInvite {
@@ -362,6 +363,7 @@ export interface TerritoryState {
   guildTag: string | null;
   capturedAt: number | null;
   lastRewardAt: number | null;
+  expiresAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
   // Cooperative siege fields
@@ -374,13 +376,14 @@ export interface TerritoryState {
 
 const EMPTY_TERRITORY = {
   guildId: null, guildName: null, guildTag: null,
-  capturedAt: null, lastRewardAt: null,
+  capturedAt: null, lastRewardAt: null, expiresAt: null,
   defenderMemberCount: 0, defenderAvgLevel: 0,
   siegeGuildId: null, siegeGuildTag: null,
   siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
 };
 
 const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2h stale siege can be overwritten
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
   if (!db) return {};
@@ -402,10 +405,21 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
     if (g.exists()) existingGuilds.add(id);
   }));
 
-  // Build result, auto-cleaning orphaned ownership/siege data
+  // Build result, auto-cleaning orphaned ownership/siege data and expired territories
+  const now = Date.now();
+  const expiryWrites: Promise<void>[] = [];
+
   await Promise.all(snap.docs.map(async d => {
     const data = { id: d.id, ...d.data() } as TerritoryState;
     let dirty = false;
+
+    // Lazy expiry: reset territory to neutral if expiresAt has passed
+    if (data.guildId && data.expiresAt !== null && data.expiresAt < now) {
+      Object.assign(data, EMPTY_TERRITORY, { id: d.id });
+      expiryWrites.push(setDoc(d.ref, { ...EMPTY_TERRITORY }));
+      result[d.id] = data;
+      return;
+    }
 
     if (data.guildId && !existingGuilds.has(data.guildId)) {
       Object.assign(data, EMPTY_TERRITORY, { id: d.id });
@@ -422,6 +436,8 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
     if (dirty) await setDoc(d.ref, data);
     result[d.id] = data;
   }));
+
+  Promise.all(expiryWrites).catch(() => {});
 
   return result;
 }
@@ -499,6 +515,7 @@ export async function captureTerritory(
     guildTag,
     capturedAt: Date.now(),
     lastRewardAt: null,
+    expiresAt: Date.now() + WEEK_MS,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
     siegeGuildId: null,
@@ -507,6 +524,23 @@ export async function captureTerritory(
     siegeMaxHp: null,
     siegeLastHitAt: null,
   });
+}
+
+export async function abandonTerritory(territoryId: string, guildId: string): Promise<void> {
+  if (!db) return;
+  await setDoc(doc(db, 'territories', territoryId), {
+    guildId: null, guildName: null, guildTag: null,
+    capturedAt: null, lastRewardAt: null, expiresAt: null,
+    defenderMemberCount: 0, defenderAvgLevel: 0,
+    siegeGuildId: null, siegeGuildTag: null,
+    siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+  });
+  await updateDoc(doc(db, 'guilds', guildId), { lastSiegeAt: Date.now() });
+}
+
+export async function recordGuildSiegeAttempt(guildId: string): Promise<void> {
+  if (!db) return;
+  await updateDoc(doc(db, 'guilds', guildId), { lastSiegeAt: Date.now() });
 }
 
 export async function claimTerritoryReward(

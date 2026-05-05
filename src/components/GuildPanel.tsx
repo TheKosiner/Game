@@ -372,7 +372,7 @@ export default function GuildPanel() {
   if (view === 'territory') {
     return (
       <div className="card p-3">
-        <TerritoryPanel guild={guild} onBack={() => setView('guild')} />
+        <TerritoryPanel guild={guild} onBack={() => setView('guild')} onRefresh={load} />
       </div>
     );
   }

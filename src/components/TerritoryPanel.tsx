@@ -3,8 +3,10 @@ import { TERRITORY_LIST, type TerritoryDef } from '../data/territories';
 import {
   getTerritories, captureTerritory, claimTerritoryReward,
   initOrJoinSiege, commitSiegeDamage,
+  abandonTerritory, recordGuildSiegeAttempt,
   type TerritoryState, type Guild,
 } from '../lib/cloudSync';
+import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 
@@ -134,15 +136,17 @@ function SiegeCombat({
 
 // ── Territory Map ─────────────────────────────────────────────────────────────
 
-export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null; onBack: () => void }) {
+export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Guild | null; onBack: () => void; onRefresh?: () => void }) {
   const hero = useGameStore(s => s.hero);
   const addGold = useGameStore(s => s.addGold);
   const addXp = useGameStore(s => s.addXp);
+  const myUid = useAuthStore(s => s.user?.uid);
   const [territories, setTerritories] = useState<Record<string, TerritoryState>>({});
   const [loading, setLoading] = useState(true);
   const [combat, setCombat] = useState<SiegeCombatState | null>(null);
   const [claimingId, setClaimingId] = useState<string | null>(null);
   const [committing, setCommitting] = useState(false);
+  const [abandoning, setAbandoning] = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
 
   async function reloadTerritories() {
@@ -155,6 +159,12 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
     const id = setInterval(() => forceUpdate(n => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
+  const formatCountdown = (ms: number) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  };
 
   // How many territories does my guild own?
   const myOwnedCount = guild
@@ -170,10 +180,26 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
       return;
     }
 
+    const isMyActiveSiege = state?.siegeGuildId === guild.id && (state?.siegeCurrentHp ?? 0) > 0;
+
+    if (!isMyActiveSiege) {
+      const lastSiege = (guild as any).lastSiegeAt ?? 0;
+      if (Date.now() - lastSiege < DAY_MS) {
+        const remaining = (lastSiege + DAY_MS) - Date.now();
+        alert(`Dzienna próba oblężenia zużyta. Następna za ${formatCountdown(remaining)}.`);
+        return;
+      }
+    }
+
     const result = await initOrJoinSiege(def.id, guild.id, guild.tag, def.siegeHp);
     if ('blocked' in result) {
       alert(`Inne oblężenie trwa: [${result.byTag}]. Poczekaj aż wygaśnie (2h bez aktywności).`);
       return;
+    }
+
+    if (!isMyActiveSiege && 'currentHp' in result) {
+      await recordGuildSiegeAttempt(guild.id);
+      onRefresh?.();
     }
 
     // Build enemy stats — if enemy-owned, scale by their member stats
@@ -267,6 +293,19 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
     } finally { setClaimingId(null); }
   }
 
+  async function handleAbandon(territoryId: string) {
+    if (!guild) return;
+    if (!confirm('Czy na pewno chcesz porzucić to terytorium? Gildia nie będzie mogła oblężyć żadnego przez 24h.')) return;
+    setAbandoning(territoryId);
+    try {
+      await abandonTerritory(territoryId, guild.id);
+      await reloadTerritories();
+      onRefresh?.();
+    } finally {
+      setAbandoning(null);
+    }
+  }
+
   if (committing) {
     return (
       <div style={{ textAlign: 'center', padding: 30 }}>
@@ -278,12 +317,6 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
   if (combat) {
     return <SiegeCombat state={combat} onAttack={handleCombatAttack} onRetreat={handleRetreat} />;
   }
-
-  const formatCountdown = (ms: number) => {
-    const h = Math.floor(ms / 3600000);
-    const m = Math.floor((ms % 3600000) / 60000);
-    return `${h}h ${m}m`;
-  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -304,6 +337,14 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
       )}
 
+      {guild && (guild as any).lastSiegeAt && Date.now() - (guild as any).lastSiegeAt < DAY_MS && (
+        <div style={{ background: 'rgba(40,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: 8 }}>
+          <p style={{ ...PX(4), color: 'var(--gold-main)' }}>
+            ⚔ Dzienna próba oblężenia zużyta — następna za {formatCountdown((guild as any).lastSiegeAt + DAY_MS - Date.now())}
+          </p>
+        </div>
+      )}
+
       {!loading && TERRITORY_LIST.map(def => {
         const state = territories[def.id];
         const ownedByMyGuild = state?.guildId === guild?.id;
@@ -321,7 +362,8 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
           ? DAY_MS - (now - state.lastRewardAt)
           : null;
 
-        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1;
+        const siegeLimitReached = !!guild?.lastSiegeAt && Date.now() - (guild as any).lastSiegeAt < DAY_MS;
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && (!siegeLimitReached || mySiegeActive);
 
         return (
           <div key={def.id} style={{
@@ -377,7 +419,17 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
 
             {/* Owner */}
             {unowned && <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>Niczyje terytorium</p>}
-            {ownedByMyGuild && <p style={{ ...PX(5), color: '#60c060', marginBottom: 6 }}>🏴 Wasza gildia [{guild?.tag}]</p>}
+            {ownedByMyGuild && (
+              <div style={{ marginBottom: 6 }}>
+                <p style={{ ...PX(5), color: '#60c060', marginBottom: 3 }}>🏴 Wasza gildia [{guild?.tag}]</p>
+                {(() => {
+                  const timeToExpiry = state?.expiresAt ? state.expiresAt - Date.now() : null;
+                  return timeToExpiry !== null && timeToExpiry > 0 ? (
+                    <p style={{ ...PX(4), color: 'var(--text-muted)' }}>⏳ Wygasa za {formatCountdown(timeToExpiry)}</p>
+                  ) : null;
+                })()}
+              </div>
+            )}
             {ownedByEnemy && <p style={{ ...PX(5), color: '#e06060', marginBottom: 6 }}>🏴 [{state.guildTag}] {state.guildName}</p>}
 
             {/* Actions */}
@@ -424,6 +476,17 @@ export default function TerritoryPanel({ guild, onBack }: { guild: Guild | null;
               <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>
                 ⏳ Następna nagroda za {formatCountdown(nextClaimIn)}
               </p>
+            )}
+
+            {ownedByMyGuild && (
+              <button
+                onClick={() => handleAbandon(def.id)}
+                disabled={abandoning === def.id}
+                className="btn btn-secondary"
+                style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
+              >
+                🏳 Porzuć terytorium
+              </button>
             )}
           </div>
         );
