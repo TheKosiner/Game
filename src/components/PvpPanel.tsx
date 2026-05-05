@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
@@ -62,8 +62,8 @@ function PvpCombat({ combat, onAttack, onExit }: {
   onExit: () => void;
 }) {
   const hero = useGameStore(s => s.hero);
-  const heroPalette = getHeroPalette(hero.skinTone, hero.hairColor);
-  const heroSprite = SPRITE_WARRIOR;
+  const heroPalette = getHeroPalette(hero.skinTone, hero.hairColor, hero.clothingColor ?? 0);
+  const heroSprite = SPRITE_PORTRAIT;
 
   const heroHpPct = Math.max(0, (combat.heroHp / combat.heroMaxHp) * 100);
   const oppHpPct = Math.max(0, (combat.oppHp / combat.oppMaxHp) * 100);
@@ -234,9 +234,9 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
           {entries.map((entry, i) => {
             const rank = i + 1;
             const isMe = entry.uid === user?.uid;
-            const sprite = SPRITE_WARRIOR;
+            const sprite = SPRITE_PORTRAIT;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2);
+            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
 
             return (
               <div key={entry.uid} style={{
@@ -348,7 +348,7 @@ export default function PvpPanel() {
     const oppDef = entry.defense ?? (5 + entry.level * 2);
     const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5 }, entry.level);
 
-    const sprite = SPRITE_WARRIOR;
+    const sprite = SPRITE_PORTRAIT;
 
     const state: CombatState = {
       opponent: {

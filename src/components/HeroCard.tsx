@@ -195,7 +195,7 @@ export default function HeroCard() {
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite  = SPRITE_PORTRAIT;
-  const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
+  const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2, hero.clothingColor ?? 0);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 

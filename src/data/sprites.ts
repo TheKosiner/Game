@@ -5,6 +5,8 @@ const P: Record<string, string> = {
   S: '#FFCC99', s: '#D4956A', q: '#C07840',
   // Hair (palette-overridable)
   h: '#884400', H: '#BB6600',
+  // Clothing (palette-overridable)
+  a: '#2244AA', l: '#112266',
   // Eye
   E: '#1A4AFF', e: '#0D2ABB',
   // Warrior armor — red plate
@@ -457,9 +459,9 @@ export const ENEMY_SPRITES: Record<SpriteKey, string[][]> = {
 
 // ── Appearance customisation ─────────────────────────────────────────────────
 
-// Portrait sprite used in appearance editor — shows face + hair so palette overrides are visible
+// Portrait sprite — face + hair + clothing so all palette overrides are visible
 export const SPRITE_PORTRAIT = decode([
-  // Hair top
+  // Hair
   '________DDDDDDD_____',
   '______DhhhhhhhhD____',
   '_____DhhHHHHHHhhD___',
@@ -476,10 +478,14 @@ export const SPRITE_PORTRAIT = decode([
   // Mouth / chin
   '_____DhSSSSSSSShhD__',
   '______DhSSSSSShD____',
-  '_______DhhhhhhD_____',
   // Neck
   '_______DsSSSSsD_____',
   '________DssssD______',
+  // Clothing / torso
+  '______DaaaaaaaaaaD__',
+  '_____DaallaaaallaD__',
+  '_____DaaaaaaaaaaaD__',
+  '_____DaaaalaaaalaD__',
 ]);
 
 export const SKIN_TONES = [
@@ -498,14 +504,26 @@ export const HAIR_COLORS = [
   { name: 'Siwy',    light: '#C8C8C8', shadow: '#909090' },
 ];
 
-export function getHeroPalette(skinTone: number, hairColor: number): Record<string, string> {
+export const CLOTHING_COLORS = [
+  { name: 'Brąz',     light: '#7A4422', shadow: '#4A2810' },
+  { name: 'Czerwień', light: '#CC2211', shadow: '#881100' },
+  { name: 'Granat',   light: '#1144AA', shadow: '#0A2266' },
+  { name: 'Zieleń',   light: '#225511', shadow: '#113300' },
+  { name: 'Fiolet',   light: '#7722AA', shadow: '#440066' },
+  { name: 'Szary',    light: '#606870', shadow: '#3A4048' },
+];
+
+export function getHeroPalette(skinTone: number, hairColor: number, clothingColor = 0): Record<string, string> {
   const skin = SKIN_TONES[skinTone] ?? SKIN_TONES[1];
   const hair = HAIR_COLORS[hairColor] ?? HAIR_COLORS[2];
+  const clothing = CLOTHING_COLORS[clothingColor] ?? CLOTHING_COLORS[0];
   return {
     '#FFCC99': skin.light,
     '#D4956A': skin.shadow,
     '#C07840': skin.shadow,
     '#884400': hair.light,
     '#BB6600': hair.shadow,
+    '#2244AA': clothing.light,
+    '#112266': clothing.shadow,
   };
 }

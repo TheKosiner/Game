@@ -13,6 +13,7 @@ export interface LeaderboardEntry {
   updatedAt: number;
   skinTone?: number;
   hairColor?: number;
+  clothingColor?: number;
   attack?: number;
   defense?: number;
   maxHp?: number;
@@ -39,6 +40,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     gold: hero.gold,
     skinTone: hero.skinTone ?? 1,
     hairColor: hero.hairColor ?? 2,
+    clothingColor: hero.clothingColor ?? 0,
     attack: getHeroAttack(hero),
     defense: getHeroDefense(hero),
     maxHp: hero.maxHp,
@@ -75,6 +77,7 @@ function migrateHeroFromRaw(raw: any) {
     stats: migrateStats(raw.stats ?? {}),
     equipment: migrateEquipment(raw.equipment),
     inventory: (raw.inventory ?? []).map(migrateItem),
+    clothingColor: raw.clothingColor ?? 0,
     lastRespecAt: raw.lastRespecAt ?? null,
   };
 }

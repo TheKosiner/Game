@@ -54,6 +54,7 @@ export interface Hero {
   attributePoints: number;
   skinTone: number;
   hairColor: number;
+  clothingColor: number;
   lastRespecAt: number | null;
 }
 
@@ -146,8 +147,8 @@ export interface GameState {
   pvpLog: PvpResult[];
 
   // actions
-  initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean) => void;
-  changeAppearance: (skinTone: number, hairColor: number) => void;
+  initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean, clothingColor?: number) => void;
+  changeAppearance: (skinTone: number, hairColor: number, clothingColor: number) => void;
   respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;

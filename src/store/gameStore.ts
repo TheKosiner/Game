@@ -35,7 +35,7 @@ function scaledQuestDuration(durationMs: number, level: number): number {
   return Math.floor(durationMs * (1 + (level - 1) * 0.05));
 }
 
-function createHero(name: string, skinTone = 1, hairColor = 2): Hero {
+function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0): Hero {
   const stats: Stats = { strength: 4, dexterity: 4, intelligence: 4, vitality: 4 };
   const maxHp = getHeroMaxHp(stats, 1);
   return {
@@ -61,6 +61,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2): Hero {
     attributePoints: 5,
     skinTone,
     hairColor,
+    clothingColor,
     lastRespecAt: null,
   };
 }
@@ -82,14 +83,14 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   pvpLog: [],
 
-  initHero: (name, skinTone = 1, hairColor = 2, skipSave = false) => {
-    const hero = createHero(name, skinTone, hairColor);
+  initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
+    const hero = createHero(name, skinTone, hairColor, clothingColor);
     set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
     if (!skipSave) get().saveGame();
   },
 
-  changeAppearance: (skinTone, hairColor) => {
-    set(s => ({ hero: { ...s.hero, skinTone, hairColor } }));
+  changeAppearance: (skinTone, hairColor, clothingColor) => {
+    set(s => ({ hero: { ...s.hero, skinTone, hairColor, clothingColor } }));
     get().saveGame();
   },
 
@@ -490,6 +491,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           attributePoints: save.hero.attributePoints ?? 0,
           skinTone: save.hero.skinTone ?? 1,
           hairColor: save.hero.hairColor ?? 2,
+          clothingColor: save.hero.clothingColor ?? 0,
           lastRespecAt: save.hero.lastRespecAt ?? null,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;

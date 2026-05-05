@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
@@ -48,9 +48,9 @@ export default function LeaderboardPanel() {
           {entries.map((entry, i) => {
             const rank = i + 1;
             const isMe = entry.uid === user?.uid;
-            const sprite = SPRITE_WARRIOR;
+            const sprite = SPRITE_PORTRAIT;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2);
+            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
 
             return (
               <div key={entry.uid} style={{
