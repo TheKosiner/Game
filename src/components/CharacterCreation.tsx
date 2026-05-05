@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');
@@ -81,7 +81,7 @@ export default function CharacterCreation() {
                 padding: 12,
                 boxShadow: '0 0 24px rgba(59,51,140,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
               }}>
-                <PixelSprite grid={SPRITE_WARRIOR} scale={5} paletteOverrides={palette} />
+                <PixelSprite grid={SPRITE_PORTRAIT} scale={5} paletteOverrides={palette} />
               </div>
             </div>
 

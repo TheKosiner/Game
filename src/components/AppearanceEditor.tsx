@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, SKIN_TONES, HAIR_COLORS, getHeroPalette } from '../data/sprites';
 
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
@@ -52,7 +52,7 @@ export default function AppearanceEditor({ onClose }: Props) {
               <div className="df-fire-glow" />
               <div className="df-portrait-vignette" />
               <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.95))' }}>
-                <PixelSprite grid={SPRITE_WARRIOR} scale={5} paletteOverrides={palette} />
+                <PixelSprite grid={SPRITE_PORTRAIT} scale={5} paletteOverrides={palette} />
               </div>
             </div>
           </div>

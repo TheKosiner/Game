@@ -457,6 +457,31 @@ export const ENEMY_SPRITES: Record<SpriteKey, string[][]> = {
 
 // ── Appearance customisation ─────────────────────────────────────────────────
 
+// Portrait sprite used in appearance editor — shows face + hair so palette overrides are visible
+export const SPRITE_PORTRAIT = decode([
+  // Hair top
+  '________DDDDDDD_____',
+  '______DhhhhhhhhD____',
+  '_____DhhHHHHHHhhD___',
+  '_____DhhHHHHHHhhD___',
+  // Forehead
+  '_____DhSSSSSSSShhD__',
+  '_____DhSSSSSSSShhD__',
+  // Eyes
+  '_____DhSEeSSEeShD___',
+  '_____DhSSSSSSSShhD__',
+  // Nose
+  '_____DhSSSqSSSShhD__',
+  '_____DhSSSSSSSShhD__',
+  // Mouth / chin
+  '_____DhSSSSSSSShhD__',
+  '______DhSSSSSShD____',
+  '_______DhhhhhhD_____',
+  // Neck
+  '_______DsSSSSsD_____',
+  '________DssssD______',
+]);
+
 export const SKIN_TONES = [
   { name: 'Blada',         light: '#FFE4D0', shadow: '#F5C0A0' },
   { name: 'Jasna',         light: '#FFCC99', shadow: '#D4956A' },
