@@ -3,7 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import PixelSprite from './PixelSprite';
-import { SPRITE_WARRIOR, getHeroPalette } from '../data/sprites';
+import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import AppearanceEditor from './AppearanceEditor';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
@@ -194,7 +194,7 @@ export default function HeroCard() {
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
-  const sprite  = SPRITE_WARRIOR;
+  const sprite  = SPRITE_PORTRAIT;
   const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
