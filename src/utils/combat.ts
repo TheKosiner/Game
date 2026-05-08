@@ -34,16 +34,16 @@ export function rollDamage(base: number, variance = 0.2): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function heroAttackEnemy(hero: Hero, enemy: Enemy): { damage: number; isCrit: boolean } {
-  const attack = getHeroAttack(hero);
+export function heroAttackEnemy(hero: Hero, enemy: Enemy, attackOverride?: number): { damage: number; isCrit: boolean } {
+  const attack = attackOverride ?? getHeroAttack(hero);
   const netDamage = Math.max(1, attack - enemy.defense);
   const isCrit = Math.random() < 0.1 + hero.stats.agility * 0.005;
   const damage = rollDamage(netDamage) * (isCrit ? 2 : 1);
   return { damage: Math.max(1, damage), isCrit };
 }
 
-export function enemyAttackHero(enemy: Enemy, hero: Hero): { damage: number } {
-  const defense = getHeroDefense(hero);
+export function enemyAttackHero(enemy: Enemy, hero: Hero, defenseOverride?: number): { damage: number } {
+  const defense = defenseOverride ?? getHeroDefense(hero);
   const netDamage = Math.max(1, enemy.attack - defense);
   const damage = rollDamage(netDamage);
   return { damage: Math.max(1, damage) };

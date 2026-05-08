@@ -76,3 +76,224 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ uid: d.id, ...d.data() } as LeaderboardEntry));
 }
+
+// Territory system types and functions
+export interface TerritoryState {
+  guildId: string | null;
+  guildName: string | null;
+  guildTag: string | null;
+  defenderMemberCount: number;
+  defenderAvgLevel: number;
+  lastRewardAt: number | null;
+  expiresAt: number | null;
+  siegeGuildId: string | null;
+  siegeGuildTag: string | null;
+  siegeCurrentHp: number | null;
+  siegeMaxHp: number | null;
+  siegeLastActivity: number | null;
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  tag: string;
+  leaderId: string;
+  createdAt: number;
+  members: Record<string, any>;
+  lastSiegeAt?: number;
+}
+
+export async function getTerritories(): Promise<Record<string, TerritoryState>> {
+  if (!db) return {};
+  const snap = await getDocs(collection(db, 'territories'));
+  const result: Record<string, TerritoryState> = {};
+  snap.docs.forEach(doc => {
+    result[doc.id] = doc.data() as TerritoryState;
+  });
+  return result;
+}
+
+export async function captureTerritory(
+  territoryId: string,
+  guildId: string,
+  guildName: string,
+  guildTag: string,
+  memberCount: number,
+  avgLevel: number
+): Promise<void> {
+  if (!db) return;
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  await setDoc(doc(db, 'territories', territoryId), {
+    guildId,
+    guildName,
+    guildTag,
+    defenderMemberCount: memberCount,
+    defenderAvgLevel: avgLevel,
+    lastRewardAt: null,
+    expiresAt: Date.now() + WEEK_MS,
+    siegeGuildId: null,
+    siegeGuildTag: null,
+    siegeCurrentHp: null,
+    siegeMaxHp: null,
+    siegeLastActivity: null,
+  });
+}
+
+export async function claimTerritoryReward(
+  territoryId: string,
+  guildId: string
+): Promise<number | null> {
+  if (!db) return null;
+  const territoryRef = doc(db, 'territories', territoryId);
+  const snap = await getDoc(territoryRef);
+
+  if (!snap.exists()) return null;
+  const data = snap.data() as TerritoryState;
+
+  if (data.guildId !== guildId) return null;
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  if (data.lastRewardAt && now - data.lastRewardAt < DAY_MS) {
+    return null;
+  }
+
+  await setDoc(territoryRef, { ...data, lastRewardAt: now });
+  return now;
+}
+
+export async function initOrJoinSiege(
+  territoryId: string,
+  guildId: string,
+  guildTag: string,
+  maxHp: number
+): Promise<{ currentHp: number } | { blocked: true; byTag: string }> {
+  if (!db) return { currentHp: maxHp };
+
+  const territoryRef = doc(db, 'territories', territoryId);
+  const snap = await getDoc(territoryRef);
+
+  if (!snap.exists()) {
+    await setDoc(territoryRef, {
+      guildId: null,
+      guildName: null,
+      guildTag: null,
+      defenderMemberCount: 0,
+      defenderAvgLevel: 0,
+      lastRewardAt: null,
+      expiresAt: null,
+      siegeGuildId: guildId,
+      siegeGuildTag: guildTag,
+      siegeCurrentHp: maxHp,
+      siegeMaxHp: maxHp,
+      siegeLastActivity: Date.now(),
+    });
+    return { currentHp: maxHp };
+  }
+
+  const data = snap.data() as TerritoryState;
+  const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2 hours
+
+  if (data.siegeGuildId && data.siegeGuildId !== guildId) {
+    if (data.siegeLastActivity && Date.now() - data.siegeLastActivity < SIEGE_TIMEOUT) {
+      return { blocked: true, byTag: data.siegeGuildTag || 'Unknown' };
+    }
+  }
+
+  if (!data.siegeGuildId || data.siegeGuildId !== guildId) {
+    await setDoc(territoryRef, {
+      ...data,
+      siegeGuildId: guildId,
+      siegeGuildTag: guildTag,
+      siegeCurrentHp: maxHp,
+      siegeMaxHp: maxHp,
+      siegeLastActivity: Date.now(),
+    });
+    return { currentHp: maxHp };
+  }
+
+  return { currentHp: data.siegeCurrentHp || maxHp };
+}
+
+export async function commitSiegeDamage(
+  territoryId: string,
+  guildId: string,
+  damage: number
+): Promise<number> {
+  if (!db) return 0;
+
+  const territoryRef = doc(db, 'territories', territoryId);
+  const snap = await getDoc(territoryRef);
+
+  if (!snap.exists()) return 0;
+
+  const data = snap.data() as TerritoryState;
+
+  if (data.siegeGuildId !== guildId) return data.siegeCurrentHp || 0;
+
+  const newHp = Math.max(0, (data.siegeCurrentHp || 0) - damage);
+
+  await setDoc(territoryRef, {
+    ...data,
+    siegeCurrentHp: newHp,
+    siegeLastActivity: Date.now(),
+  });
+
+  return newHp;
+}
+
+export async function abandonTerritory(
+  territoryId: string,
+  guildId: string
+): Promise<void> {
+  if (!db) return;
+
+  const territoryRef = doc(db, 'territories', territoryId);
+  const snap = await getDoc(territoryRef);
+
+  if (!snap.exists()) return;
+
+  const data = snap.data() as TerritoryState;
+
+  if (data.guildId !== guildId) return;
+
+  await setDoc(territoryRef, {
+    guildId: null,
+    guildName: null,
+    guildTag: null,
+    defenderMemberCount: 0,
+    defenderAvgLevel: 0,
+    lastRewardAt: null,
+    expiresAt: null,
+    siegeGuildId: null,
+    siegeGuildTag: null,
+    siegeCurrentHp: null,
+    siegeMaxHp: null,
+    siegeLastActivity: null,
+  });
+
+  // Record that guild abandoned - they can't siege for 24h
+  const guildRef = doc(db, 'guilds', guildId);
+  const guildSnap = await getDoc(guildRef);
+  if (guildSnap.exists()) {
+    await setDoc(guildRef, {
+      ...guildSnap.data(),
+      lastSiegeAt: Date.now(),
+    });
+  }
+}
+
+export async function recordGuildSiegeAttempt(guildId: string): Promise<void> {
+  if (!db) return;
+
+  const guildRef = doc(db, 'guilds', guildId);
+  const snap = await getDoc(guildRef);
+
+  if (snap.exists()) {
+    await setDoc(guildRef, {
+      ...snap.data(),
+      lastSiegeAt: Date.now(),
+    });
+  }
+}

@@ -14,7 +14,7 @@ interface CombatState {
 
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
-  attackEnemy: (heroStats: { attack: number; defense: number; hp: number }) => {
+  attackEnemy: (heroStats: { attack: number; defense: number; hp: number; agility?: number; equipment?: any }) => {
     heroHp: number;
     enemyDefeated: boolean;
     heroDied: boolean;
@@ -66,8 +66,14 @@ export const useCombatStore = create<CombatState>((set, get) => ({
     const { currentEnemy, currentDungeon, currentFloor } = get();
     if (!currentEnemy || !currentDungeon) return null;
 
+    // Create a minimal hero object with equipment stats applied
+    const mockHero = {
+      stats: { agility: heroStats.agility ?? 5 },
+      equipment: heroStats.equipment ?? {},
+    } as any;
+
     const { damage: heroDmg, isCrit } = heroAttackEnemy(
-      { stats: { agility: 0 } } as any,
+      mockHero,
       currentEnemy,
       heroStats.attack
     );
@@ -125,7 +131,11 @@ export const useCombatStore = create<CombatState>((set, get) => ({
         };
       }
     } else {
-      const { damage: enemyDmg } = enemyAttackHero(currentEnemy, { stats: {} } as any, heroStats.defense);
+      const mockHero = {
+        stats: {},
+        equipment: heroStats.equipment ?? {},
+      } as any;
+      const { damage: enemyDmg } = enemyAttackHero(currentEnemy, mockHero, heroStats.defense);
       const newHeroHp = Math.max(0, heroStats.hp - enemyDmg);
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
 
