@@ -478,7 +478,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
               </p>
             )}
 
-            {ownedByMyGuild && (
+            {ownedByMyGuild && myUid === guild?.leaderUid && (
               <button
                 onClick={() => handleAbandon(def.id)}
                 disabled={abandoning === def.id}

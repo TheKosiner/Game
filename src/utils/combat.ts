@@ -9,9 +9,10 @@ export function getEquipmentStats(equipment: Hero['equipment']): Stats {
   const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
   for (const item of Object.values(equipment)) {
     if (!item?.stats) continue;
-    for (const [k, v] of Object.entries(item.stats)) {
-      if (v !== undefined) (r as Record<string, number>)[k] = ((r as Record<string, number>)[k] ?? 0) + v;
-    }
+    r.strength     += item.stats.strength     ?? 0;
+    r.dexterity    += item.stats.dexterity    ?? 0;
+    r.intelligence += item.stats.intelligence ?? 0;
+    r.vitality     += item.stats.vitality     ?? 0;
   }
   return r;
 }
