@@ -67,17 +67,17 @@ function quadDmg(atk: number, def: number, critMult = 1): number {
   return Math.max(1, Math.round(base * variance * critMult));
 }
 
-export function heroAttackEnemy(hero: Hero, enemy: Enemy): { damage: number; isCrit: boolean } {
+export function heroAttackEnemy(hero: Hero, enemy: Enemy, attackOverride?: number): { damage: number; isCrit: boolean } {
   const eq = getEquipmentStats(hero.equipment);
-  const attack = getHeroAttack(hero);
+  const attack = attackOverride ?? getHeroAttack(hero);
   const critChance = 0.10 + (hero.stats.dexterity + eq.dexterity) * 0.005;
   const isCrit = Math.random() < critChance;
   const damage = quadDmg(attack, enemy.defense, isCrit ? 2 : 1);
   return { damage, isCrit };
 }
 
-export function enemyAttackHero(enemy: Enemy, hero: Hero): { damage: number; isCrit: boolean } {
-  const defense = getHeroDefense(hero);
+export function enemyAttackHero(enemy: Enemy, hero: Hero, defenseOverride?: number): { damage: number; isCrit: boolean } {
+  const defense = defenseOverride ?? getHeroDefense(hero);
   const isCrit = Math.random() < 0.05;
   const damage = quadDmg(enemy.attack, defense, isCrit ? 2 : 1);
   return { damage, isCrit };

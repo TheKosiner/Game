@@ -501,10 +501,10 @@ export const useGameStore = create<GameState>((set, get) => ({
         },
       });
     }
-    // Apply voluntary rest recovery if time is up
     if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
       const updated = get().hero;
       const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
+      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
       set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
       if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
     }

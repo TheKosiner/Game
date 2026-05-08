@@ -59,6 +59,25 @@ export interface Hero {
   lastRespecAt: number | null;
 }
 
+export interface Guild {
+  id: string;
+  name: string;
+  tag: string;
+  leaderId: string;
+  createdAt: number;
+  members: Record<string, GuildMember>;
+  lastSiegeAt?: number;
+}
+
+export interface GuildMember {
+  uid: string;
+  username: string;
+  heroName: string;
+  level: number;
+  joinedAt: number;
+  role: 'leader' | 'officer' | 'member';
+}
+
 export interface Enemy {
   id: string;
   name: string;
