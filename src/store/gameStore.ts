@@ -15,7 +15,9 @@ export const PVP_COOLDOWN = 15 * 60 * 1000;
 
 function simDmg(atk: number, def: number): number {
   const base = atk * atk / (atk + Math.max(1, def));
-  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+  const isCrit = Math.random() < 0.10;
+  const variance = 0.7 + Math.random() * 0.6;
+  return Math.max(1, Math.round(base * variance * (isCrit ? 2 : 1)));
 }
 
 function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number): boolean {
@@ -264,9 +266,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
     } else {
-      const { damage: enemyDmg } = enemyAttackHero(currentEnemy, hero);
+      const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
       const newHeroHp = Math.max(0, hero.hp - enemyDmg);
-      get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń`, 'enemy');
+      get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń${enemyCrit ? ' 💥 KRYT!' : ''}`, 'enemy');
 
       if (newHeroHp <= 0) {
         get().addCombatLog('Zostałeś pokonany! Skorzystaj z odpoczynku by odzyskać HP.', 'system');

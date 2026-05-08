@@ -61,21 +61,24 @@ export function rollDamage(base: number, variance = 0.2): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function quadDmg(atk: number, def: number): number {
+function quadDmg(atk: number, def: number, critMult = 1): number {
   const base = atk * atk / (atk + Math.max(1, def));
-  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+  const variance = 0.7 + Math.random() * 0.6;
+  return Math.max(1, Math.round(base * variance * critMult));
 }
 
 export function heroAttackEnemy(hero: Hero, enemy: Enemy): { damage: number; isCrit: boolean } {
   const eq = getEquipmentStats(hero.equipment);
   const attack = getHeroAttack(hero);
-  const isCrit = Math.random() < 0.1 + (hero.stats.dexterity + eq.dexterity) * 0.005;
-  const damage = quadDmg(attack, enemy.defense) * (isCrit ? 2 : 1);
-  return { damage: Math.max(1, damage), isCrit };
+  const critChance = 0.10 + (hero.stats.dexterity + eq.dexterity) * 0.005;
+  const isCrit = Math.random() < critChance;
+  const damage = quadDmg(attack, enemy.defense, isCrit ? 2 : 1);
+  return { damage, isCrit };
 }
 
-export function enemyAttackHero(enemy: Enemy, hero: Hero): { damage: number } {
+export function enemyAttackHero(enemy: Enemy, hero: Hero): { damage: number; isCrit: boolean } {
   const defense = getHeroDefense(hero);
-  const damage = quadDmg(enemy.attack, defense);
-  return { damage };
+  const isCrit = Math.random() < 0.05;
+  const damage = quadDmg(enemy.attack, defense, isCrit ? 2 : 1);
+  return { damage, isCrit };
 }
