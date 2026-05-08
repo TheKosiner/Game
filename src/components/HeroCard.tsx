@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../utils/constants';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
+import { isHeroResting, isHeroVoluntarilyResting } from '../utils/helpers';
+import { useTimer } from '../hooks';
 import PixelSprite from './PixelSprite';
 import { SPRITE_WARRIOR, SPRITE_MAGE, SPRITE_ROGUE, getHeroPalette } from '../data/sprites';
 
@@ -9,18 +10,8 @@ const CLASS_SPRITES = { warrior: SPRITE_WARRIOR, mage: SPRITE_MAGE, rogue: SPRIT
 const CLASS_NAME: Record<string, string> = { warrior: 'Wojownik', mage: 'Mag', rogue: 'Lotrzyk' };
 
 function RestTimer({ endsAt }: { endsAt: number }) {
-  const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
-  useEffect(() => {
-    const id = setInterval(() => {
-      const r = Math.max(0, endsAt - Date.now());
-      setRemaining(r);
-      if (r === 0) clearInterval(id);
-    }, 1000);
-    return () => clearInterval(id);
-  }, [endsAt]);
-  const mins = Math.floor(remaining / 60000);
-  const secs = Math.floor((remaining % 60000) / 1000);
-  return <span style={{ color: '#60a5fa' }}>{mins}:{secs.toString().padStart(2, '0')}</span>;
+  const { formatted } = useTimer(endsAt);
+  return <span className="text-blue-400">{formatted}</span>;
 }
 
 export default function HeroCard() {
@@ -32,8 +23,8 @@ export default function HeroCard() {
   const hpPct = Math.min(100, (hero.hp / hero.maxHp) * 100);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
-  const isResting = hero.restingUntil !== null && Date.now() < hero.restingUntil;
-  const isVoluntaryResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
+  const isRest = isHeroResting(hero);
+  const isVoluntaryRest = isHeroVoluntarilyResting(hero);
   const attack = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const sprite = CLASS_SPRITES[hero.class];
@@ -65,14 +56,14 @@ export default function HeroCard() {
       </div>
 
       {/* Voluntary rest */}
-      {isVoluntaryResting ? (
+      {isVoluntaryRest ? (
         <div style={{ background: '#0a1220', border: '2px solid #334155', padding: '6px 10px', textAlign: 'center' }}>
           <p style={{ color: '#94a3b8', fontSize: 7 }}>💤 Odpoczywasz — +10 HP za: <RestTimer endsAt={hero.voluntaryRestUntil!} /></p>
         </div>
       ) : (
         <button
           onClick={restHero}
-          disabled={inCombat || isResting || hero.hp >= hero.maxHp}
+          disabled={inCombat || isRest || hero.hp >= hero.maxHp}
           className="btn btn-secondary"
           style={{ width: '100%', fontSize: 7, padding: '5px 8px' }}
         >
@@ -115,7 +106,7 @@ export default function HeroCard() {
       </div>
 
       {/* Forced rest banner */}
-      {isResting && (
+      {isRest && (
         <div style={{ background: '#0c1220', border: '2px solid #1d4ed8', padding: '6px 10px', textAlign: 'center' }}>
           <p style={{ color: '#93c5fd', fontSize: 7 }}>💤 ODPOCZYWASZ — powrót za: <RestTimer endsAt={hero.restingUntil!} /></p>
           <p style={{ color: '#475569', fontSize: 6, marginTop: 2 }}>Po odpoczynku odzyskasz 50% HP</p>

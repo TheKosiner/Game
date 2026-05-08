@@ -1,0 +1,15 @@
+export const MAX_INVENTORY = 20;
+export const MAX_COMBAT_LOG = 50;
+export const MAX_DAILY_DUNGEONS = 10;
+export const MAX_DAILY_QUESTS = 10;
+export const SHOP_REFRESH_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
+export const PVP_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
+export const AUTO_SAVE_INTERVAL_MS = 30 * 1000; // 30 seconds
+export const MAX_PVP_ROUNDS = 300;
+export const LOOT_DROP_CHANCE = 0.3; // 30%
+export const BASE_CRIT_CHANCE = 0.1; // 10%
+export const AGILITY_CRIT_BONUS = 0.005; // 0.5% per agility point
+export const DAMAGE_VARIANCE = 0.2; // ±20%
+export const QUEST_DURATION_SCALE_PER_LEVEL = 0.05; // 5% per level
+export const SHOP_PRICE_MULTIPLIER = 1.5; // 150% of item value
+export const SAVE_KEY = 'realm_of_valor_save';

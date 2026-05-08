@@ -42,6 +42,7 @@ export interface Hero {
   maxHp: number;
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
+  voluntaryRestHpGain?: number;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
@@ -53,6 +54,25 @@ export interface Hero {
   attributePoints: number;
   skinTone: number;
   hairColor: number;
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  tag: string;
+  leaderId: string;
+  createdAt: number;
+  members: Record<string, GuildMember>;
+  lastSiegeAt?: number;
+}
+
+export interface GuildMember {
+  uid: string;
+  username: string;
+  heroName: string;
+  level: number;
+  joinedAt: number;
+  role: 'leader' | 'officer' | 'member';
 }
 
 export interface Enemy {
