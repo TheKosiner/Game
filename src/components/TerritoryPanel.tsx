@@ -51,10 +51,12 @@ function HpBar({ current, max, color }: { current: number; max: number; color: s
 function SiegeCombat({
   state,
   onAttack,
+  onAutoFight,
   onRetreat,
 }: {
   state: SiegeCombatState;
   onAttack: () => void;
+  onAutoFight: () => void;
   onRetreat: () => void;
 }) {
   return (
@@ -117,6 +119,9 @@ function SiegeCombat({
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onAttack} className="btn btn-danger" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
             ⚔ ATAKUJ
+          </button>
+          <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
+            ⚡ Szybka walka
           </button>
           <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 6, padding: '10px 14px' }}>
             Odwrót
@@ -260,6 +265,33 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     });
   }
 
+  function handleAutoFight() {
+    setCombat(prev => {
+      if (!prev || prev.done) return prev;
+      let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = prev;
+      const log = [...prev.log, '⚡ Szybka walka...'];
+
+      for (let i = 0; i < 500; i++) {
+        const heroDmg = Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - enemyDef);
+        enemyHp = Math.max(0, enemyHp - heroDmg);
+        damageDealt += heroDmg;
+        if (enemyHp <= 0) {
+          log.push('HP oblężenia zredukowane do 0!');
+          return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
+        }
+        const enemyDmg = Math.max(1, Math.round(enemyAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+        heroHp = Math.max(0, heroHp - enemyDmg);
+        if (heroHp <= 0) {
+          log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
+          return { ...prev, heroHp: 0, enemyHp, damageDealt, log, done: true, won: false };
+        }
+      }
+
+      log.push(`Walka wstrzymana po 500 rundach. Zadałeś ${damageDealt} obrażeń.`);
+      return { ...prev, heroHp, enemyHp, damageDealt, log };
+    });
+  }
+
   async function handleRetreat() {
     if (!combat || !guild) { setCombat(null); return; }
     setCommitting(true);
@@ -315,7 +347,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   }
 
   if (combat) {
-    return <SiegeCombat state={combat} onAttack={handleCombatAttack} onRetreat={handleRetreat} />;
+    return <SiegeCombat state={combat} onAttack={handleCombatAttack} onAutoFight={handleAutoFight} onRetreat={handleRetreat} />;
   }
 
   return (

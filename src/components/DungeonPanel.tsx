@@ -16,6 +16,7 @@ function EnemyBattleCard() {
   const dungeon = useGameStore(s => s.currentDungeon);
   const combatLog = useGameStore(s => s.combatLog);
   const attackEnemy = useGameStore(s => s.attackEnemy);
+  const autoFightEnemy = useGameStore(s => s.autoFightEnemy);
   const exitDungeon = useGameStore(s => s.exitDungeon);
 
   if (!enemy || !dungeon) return null;
@@ -77,6 +78,7 @@ function EnemyBattleCard() {
 
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>⚔ Atakuj!</button>
+        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>⚡ Szybka walka</button>
         <button onClick={exitDungeon} className="btn btn-danger" style={{ padding: '8px 14px', fontSize: 8 }}>🚪</button>
       </div>
 

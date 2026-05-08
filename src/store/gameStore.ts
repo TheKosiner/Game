@@ -275,6 +275,62 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  autoFightEnemy: () => {
+    const { hero, currentEnemy, currentDungeon, currentFloor } = get();
+    if (!currentEnemy || !currentDungeon) return;
+
+    let heroHp = hero.hp;
+    let enemyHp = currentEnemy.hp;
+
+    for (let i = 0; i < 500; i++) {
+      const { damage: hDmg } = heroAttackEnemy(hero, currentEnemy);
+      enemyHp = Math.max(0, enemyHp - hDmg);
+      if (enemyHp <= 0) break;
+      const { damage: eDmg } = enemyAttackHero(currentEnemy, hero);
+      heroHp = Math.max(0, heroHp - eDmg);
+      if (heroHp <= 0) break;
+    }
+
+    if (heroHp <= 0) {
+      get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} cię pokonał!`, 'enemy');
+      get().addCombatLog('Skorzystaj z odpoczynku by odzyskać HP.', 'system');
+      set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false });
+    } else {
+      get().addCombatLog(`Pokonałeś ${currentEnemy.emoji} ${currentEnemy.name}! (szybka walka)`, 'system');
+      get().addXp(currentEnemy.xpReward);
+      get().addGold(currentEnemy.goldReward);
+      get().addCombatLog(`+${currentEnemy.xpReward} XP, +${currentEnemy.goldReward} złota`, 'loot');
+
+      if (Math.random() < 0.3 && currentEnemy.lootTable.length > 0) {
+        const lootId = currentEnemy.lootTable[Math.floor(Math.random() * currentEnemy.lootTable.length)];
+        const lootItem = getItemById(lootId);
+        if (lootItem && get().hero.inventory.length < MAX_INVENTORY) {
+          const h2 = get().hero;
+          set({ hero: { ...h2, inventory: [...h2.inventory, lootItem] } });
+          get().addCombatLog(`Zdobywasz: ${lootItem.emoji} ${lootItem.name}!`, 'loot');
+        }
+      }
+
+      const fresh = get().hero;
+      set({ hero: { ...fresh, hp: Math.min(heroHp, fresh.maxHp) } });
+
+      const nextFloor = currentFloor + 1;
+      if (nextFloor > currentDungeon.floors) {
+        get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
+        set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
+      } else {
+        const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
+        const baseEnemy = getEnemyById(enemyId);
+        if (baseEnemy) {
+          const nextEnemy = scaleEnemy(baseEnemy, nextFloor);
+          set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
+          get().addCombatLog(`Piętro ${nextFloor}: ${nextEnemy.emoji} ${nextEnemy.name} atakuje!`, 'system');
+        }
+      }
+    }
+    get().saveGame();
+  },
+
   startQuest: (quest: Quest) => {
     const { hero, activeQuest } = get();
     if (activeQuest) return;

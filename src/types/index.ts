@@ -160,6 +160,7 @@ export interface GameState {
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
   attackEnemy: () => void;
+  autoFightEnemy: () => void;
   startQuest: (quest: Quest) => void;
   collectQuest: () => void;
   upgradeAttribute: (attr: keyof Stats) => void;
