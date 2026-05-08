@@ -116,7 +116,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       xp -= xpToNext;
       level++;
       xpToNext = calcXpToNext(level);
-      attributePoints++;
       leveled = true;
     }
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
@@ -356,10 +355,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   upgradeAttribute: (attr: keyof Stats) => {
     const { hero } = get();
-    if (hero.attributePoints <= 0) return;
+    const cost = Math.round(hero.stats[attr] * 75);
+    if (hero.gold < cost) return;
     const newStats = { ...hero.stats, [attr]: hero.stats[attr] + 1 };
     const newMaxHp = getHeroMaxHp(newStats, hero.level, hero.equipment);
-    set({ hero: { ...hero, stats: newStats, maxHp: newMaxHp, attributePoints: hero.attributePoints - 1 } });
+    set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp } });
     get().saveGame();
   },
 

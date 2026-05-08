@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
-import { getHeroAttack, getHeroDefense } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getEquipmentStats } from '../utils/combat';
 import PixelSprite from './PixelSprite';
 import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import AppearanceEditor from './AppearanceEditor';
@@ -170,7 +170,6 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
 export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
-  const respecStats = useGameStore(s => s.respecStats);
   const restHero = useGameStore(s => s.restHero);
   const startBegging = useGameStore(s => s.startBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
@@ -196,6 +195,7 @@ export default function HeroCard() {
   const hpPct  = (hero.hp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
+  const eqStats = getEquipmentStats(hero.equipment);
   const sprite  = SPRITE_PORTRAIT;
   const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2, hero.clothingColor ?? 0);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
@@ -312,83 +312,60 @@ export default function HeroCard() {
           : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
       }
 
-      {/* ── DZIENNY LIMIT + STATYSTYKI ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-
-        <div className="df-section">
-          <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>DZIENNY LIMIT</p>
-          {[
-            { label: 'Lochy',   cur: hero.dungeonRunsToday,    max: MAX_DAILY_DUNGEONS, pct: dungeonPct, col: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? 'var(--hp-color)' : '#7060b8' },
-            { label: 'Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   col: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? 'var(--hp-color)' : '#306880' },
-          ].map(({ label, cur, max, pct, col }) => (
-            <div key={label} style={{ marginBottom: 8 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{label}</span>
-                <span style={{ ...PX(5), color: cur >= max ? 'var(--hp-bright)' : 'var(--text-dim)' }}>{cur}/{max}</span>
-              </div>
-              <div className="pixel-bar">
-                <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: col }} />
-              </div>
+      {/* ── DZIENNY LIMIT ── */}
+      <div className="df-section">
+        <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>DZIENNY LIMIT</p>
+        {[
+          { label: 'Lochy',   cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, col: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? 'var(--hp-color)' : '#7060b8' },
+          { label: 'Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   col: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? 'var(--hp-color)' : '#306880' },
+        ].map(({ label, cur, max, pct, col }) => (
+          <div key={label} style={{ marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{label}</span>
+              <span style={{ ...PX(5), color: cur >= max ? 'var(--hp-bright)' : 'var(--text-dim)' }}>{cur}/{max}</span>
             </div>
-          ))}
-        </div>
-
-        <div className="df-section">
-          <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
-          {[
-            { icon: '💪', name: 'Siła',       val: hero.stats.strength },
-            { icon: '🏃', name: 'Zręczność', val: hero.stats.dexterity },
-            { icon: '🧠', name: 'Wiedza',     val: hero.stats.intelligence },
-            { icon: '♥',  name: 'Żywotność', val: hero.stats.vitality },
-          ].map(({ icon, name, val }) => (
-            <div key={name} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{icon} {name}</span>
-              <span style={{ ...PX(6), color: 'var(--gold-bright)' }}>{val}</span>
+            <div className="pixel-bar">
+              <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: col }} />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
-      {/* ── ATTRIBUTE POINTS ── */}
-      {hero.attributePoints > 0 && (
-        <div className="df-glow-pulse" style={{
-          background: 'linear-gradient(135deg, rgba(40,28,8,0.97), rgba(28,20,6,0.99))',
-          border: '1px solid var(--gold-dim)', padding: 12,
-        }}>
-          <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 10 }}>
-            ✨ {hero.attributePoints} PKT CECH!
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-            {(['strength', 'dexterity', 'intelligence', 'vitality'] as const).map(attr => (
-              <button key={attr} onClick={() => upgradeAttribute(attr)} className="btn btn-primary" style={{ fontSize: 5, padding: '7px 4px' }}>
-                + {({ strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Wiedza', vitality: 'Żywotność' }[attr])}
+      {/* ── STATYSTYKI Z ULEPSZANIEM ── */}
+      <div className="df-section">
+        <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
+        {([
+          { attr: 'strength',     icon: '💪', name: 'Siła' },
+          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność' },
+          { attr: 'intelligence', icon: '🧠', name: 'Wiedza' },
+          { attr: 'vitality',     icon: '♥',  name: 'Żywotność' },
+        ] as const).map(({ attr, icon, name }) => {
+          const base = hero.stats[attr];
+          const eq   = eqStats[attr];
+          const cost = Math.round(base * 75);
+          const canAfford = hero.gold >= cost;
+          return (
+            <div key={attr} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
+              <span style={{ ...PX(5), color: 'var(--text-dim)', flex: 1 }}>{icon} {name}</span>
+              <span style={{ ...PX(7), color: 'var(--gold-bright)', minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
+              {eq > 0 && (
+                <span style={{ ...PX(4), color: '#6aaa30', minWidth: 26 }}>+{eq}♦</span>
+              )}
+              <button
+                onClick={() => upgradeAttribute(attr)}
+                disabled={!canAfford}
+                className="btn btn-secondary"
+                style={{ fontSize: 4, padding: '4px 5px', opacity: canAfford ? 1 : 0.45, minWidth: 48 }}
+              >
+                🪙{cost}
               </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── RESPEC ── */}
-      {(() => {
-        const now = Date.now();
-        const DAY = 24 * 60 * 60 * 1000;
-        const canRespec = hero.lastRespecAt === null || now - hero.lastRespecAt >= DAY;
-        const nextRespecIn = !canRespec && hero.lastRespecAt ? DAY - (now - hero.lastRespecAt) : 0;
-        const hh = Math.floor(nextRespecIn / 3600000);
-        const mm = Math.floor((nextRespecIn % 3600000) / 60000);
-        return (
-          <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 10 }}>
-            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>🔄 RESET STATYSTYK</p>
-            {canRespec ? (
-              <button onClick={() => { if (confirm('Zresetować wszystkie statystyki? Dostępne raz na 24h.')) respecStats(); }} className="btn btn-secondary" style={{ width: '100%', fontSize: 5, padding: '7px' }}>
-                Resetuj statystyki (raz na 24h)
-              </button>
-            ) : (
-              <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>Dostępny za {hh}h {mm}m</p>
-            )}
-          </div>
-        );
-      })()}
+            </div>
+          );
+        })}
+        <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 2 }}>
+          ♦ = bonus z ekwipunku
+        </p>
+      </div>
     </div>
   );
 }
