@@ -352,18 +352,21 @@ export default function HeroCard() {
       <div className="df-section">
         <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
         {([
-          { attr: 'strength',     icon: '💪', name: 'Siła' },
-          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność' },
-          { attr: 'intelligence', icon: '🧠', name: 'Wiedza' },
-          { attr: 'vitality',     icon: '♥',  name: 'Żywotność' },
-        ] as const).map(({ attr, icon, name }) => {
+          { attr: 'strength',     icon: '💪', name: 'Siła',       desc: '↑ obrażenia' },
+          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ szansa na kryt' },
+          { attr: 'intelligence', icon: '🧠', name: 'Wiedza',     desc: '↑ obrażenia mag.' },
+          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona' },
+        ] as const).map(({ attr, icon, name, desc }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
           const cost = Math.round(base * 75);
           const canAfford = hero.gold >= cost;
           return (
             <div key={attr} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
-              <span style={{ ...PX(5), color: 'var(--text-dim)', flex: 1 }}>{icon} {name}</span>
+              <div style={{ flex: 1 }}>
+                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{icon} {name}</span>
+                <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 2 }}>{desc}</p>
+              </div>
               <span style={{ ...PX(7), color: 'var(--gold-bright)', minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
               {eq > 0 && (
                 <span style={{ ...PX(4), color: '#6aaa30', minWidth: 26 }}>+{eq}♦</span>
