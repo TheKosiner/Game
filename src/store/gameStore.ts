@@ -55,6 +55,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     restingUntil: null,
     voluntaryRestUntil: null,
     voluntaryRestHp: null,
+    voluntaryRestStartAt: null,
     beggingUntil: null,
     beggingReward: null,
     dungeonRunsToday: 0,
@@ -442,8 +443,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     const hp = Math.min(minutes * hpPerMin, hero.maxHp - hero.hp);
     if (hp <= 0) return;
     const endsAt = Date.now() + minutes * 60 * 1000;
-    set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp } });
+    set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp, voluntaryRestStartAt: Date.now() } });
     get().addCombatLog(`Odpoczywasz ${minutes} min... Odzyskasz ${hp} HP.`, 'system');
+    get().saveGame();
+  },
+
+  cancelRest: () => {
+    const { hero } = get();
+    if (!hero.voluntaryRestUntil || !hero.voluntaryRestHp) return;
+    const now = Date.now();
+    if (now >= hero.voluntaryRestUntil) return;
+    let earned = 0;
+    if (hero.voluntaryRestStartAt) {
+      const elapsed = now - hero.voluntaryRestStartAt;
+      const total = hero.voluntaryRestUntil - hero.voluntaryRestStartAt;
+      earned = Math.floor(hero.voluntaryRestHp * elapsed / Math.max(1, total));
+    }
+    const healAmount = Math.min(earned, hero.maxHp - hero.hp);
+    set({ hero: { ...hero, hp: hero.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
+    if (healAmount > 0) get().addCombatLog(`Przerwałeś odpoczynek. Odzyskałeś +${healAmount} HP.`, 'system');
+    else get().addCombatLog('Przerwałeś odpoczynek.', 'system');
     get().saveGame();
   },
 
@@ -486,7 +505,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
       const updated = get().hero;
       const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
-      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null } });
+      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
       if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
     }
   },
@@ -550,6 +569,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             : (save.hero.voluntaryRestUntil && Date.now() < save.hero.voluntaryRestUntil
               ? Math.ceil((save.hero.voluntaryRestUntil - Date.now()) / 60000)
               : null),
+          voluntaryRestStartAt: save.hero.voluntaryRestStartAt ?? null,
           beggingUntil: save.hero.beggingUntil ?? null,
           beggingReward: save.hero.beggingReward ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,

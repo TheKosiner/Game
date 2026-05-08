@@ -7,7 +7,7 @@ import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import AppearanceEditor from './AppearanceEditor';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
-function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
+function RestTimer({ endsAt, restHp, startAt, cancelRest }: { endsAt: number; restHp: number; startAt: number; cancelRest: () => void }) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -19,20 +19,32 @@ function RestTimer({ endsAt, restHp }: { endsAt: number; restHp: number }) {
   }, [endsAt]);
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
+  const totalDuration = Math.max(1, endsAt - startAt);
+  const elapsed = totalDuration - remaining;
+  const earnedNow = Math.floor(restHp * Math.min(elapsed, totalDuration) / totalDuration);
+  const progressPct = Math.min(100, (elapsed / totalDuration) * 100);
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
       border: '1px solid rgba(50,80,30,0.5)',
       padding: '10px 12px',
-      display: 'flex', alignItems: 'center', gap: 10,
+      display: 'flex', flexDirection: 'column', gap: 8,
       boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <div className="df-flicker" style={{ fontSize: 22, lineHeight: 1 }}>🔥</div>
-      <div>
-        <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 4 }}>
-          ✦ ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
-        </p>
-        <p style={{ ...PX(5), color: '#5a8840' }}>Odzyskasz +{restHp} HP</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="df-flicker" style={{ fontSize: 22, lineHeight: 1 }}>🔥</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 4 }}>
+            ✦ ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
+          </p>
+          <p style={{ ...PX(5), color: '#5a8840' }}>+{earnedNow}/{restHp} HP</p>
+        </div>
+        <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 5, padding: '5px 8px', flexShrink: 0 }}>
+          ✕ Przerwij
+        </button>
+      </div>
+      <div className="pixel-bar">
+        <div className="pixel-bar-fill" style={{ width: `${progressPct}%`, background: '#3a7a20' }} />
       </div>
     </div>
   );
@@ -171,6 +183,7 @@ export default function HeroCard() {
   const hero = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero = useGameStore(s => s.restHero);
+  const cancelRest = useGameStore(s => s.cancelRest);
   const startBegging = useGameStore(s => s.startBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
   const inCombat = useGameStore(s => s.inCombat);
@@ -185,6 +198,9 @@ export default function HeroCard() {
   }, []);
 
   const isResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
+  const earnedRestHp = isResting && hero.voluntaryRestStartAt && hero.voluntaryRestHp && hero.voluntaryRestUntil
+    ? Math.floor(hero.voluntaryRestHp * Math.min(Date.now() - hero.voluntaryRestStartAt, hero.voluntaryRestUntil - hero.voluntaryRestStartAt) / Math.max(1, hero.voluntaryRestUntil - hero.voluntaryRestStartAt))
+    : 0;
   const isBegging = hero.beggingUntil !== null && Date.now() < hero.beggingUntil;
   const beggingDone = hero.beggingUntil !== null && Date.now() >= hero.beggingUntil;
   const hasQuest = activeQuest !== null;
@@ -192,7 +208,8 @@ export default function HeroCard() {
   const inDungeon = currentDungeon !== null || inCombat;
   const restBlockReason = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
   const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
-  const hpPct  = (hero.hp / hero.maxHp) * 100;
+  const displayHp = hero.hp + earnedRestHp;
+  const hpPct  = (displayHp / hero.maxHp) * 100;
   const attack  = getHeroAttack(hero);
   const defense = getHeroDefense(hero);
   const eqStats = getEquipmentStats(hero.equipment);
@@ -281,7 +298,7 @@ export default function HeroCard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
             <span style={{ ...PX(5), color: '#904040' }}>♥ ŻYWOTNOŚĆ</span>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.hp} / {hero.maxHp}</span>
+            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{displayHp} / {hero.maxHp}</span>
           </div>
           <div className="pixel-bar">
             <div className="pixel-bar-fill hp-fill" style={{ width: `${hpPct}%` }} />
@@ -300,7 +317,7 @@ export default function HeroCard() {
 
       {/* ── REST ── */}
       {isResting
-        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} />
+        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} blocked={!!restBlockReason} blockedReason={restBlockReason} />
       }
 
