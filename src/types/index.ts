@@ -152,9 +152,9 @@ export interface GameState {
   respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
-  equipItem: (item: Item) => void;
+  equipItem: (item: Item, invIdx?: number) => void;
   unequipItem: (slot: ItemSlot) => void;
-  sellItem: (item: Item) => void;
+  sellItem: (item: Item, invIdx?: number) => void;
   buyItem: (item: Item, price: number) => boolean;
   buyShopItem: (item: Item, price: number, slotIndex: number) => boolean;
   enterDungeon: (dungeon: Dungeon) => void;

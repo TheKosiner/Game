@@ -83,9 +83,9 @@ export default function InventoryPanel() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 400, overflowY: 'auto', paddingRight: 2 }}>
-          {inventory.map((item: Item) => (
-            <ItemCard key={`${item.id}-${item.name}`} item={item}
-              onEquip={() => equipItem(item)} onSell={() => sellItem(item)} />
+          {inventory.map((item: Item, idx: number) => (
+            <ItemCard key={idx} item={item}
+              onEquip={() => equipItem(item, idx)} onSell={() => sellItem(item, idx)} />
           ))}
         </div>
       )}

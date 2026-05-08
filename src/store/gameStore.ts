@@ -130,11 +130,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, gold: hero.gold + amount } });
   },
 
-  equipItem: (item: Item) => {
+  equipItem: (item: Item, invIdx?: number) => {
     const { hero } = get();
     const oldEquipped = hero.equipment[item.slot];
     const newInventory = [...hero.inventory];
-    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx !== -1) newInventory.splice(idx, 1);
     if (oldEquipped) newInventory.push(oldEquipped);
     const newEquipment = { ...hero.equipment, [item.slot]: item };
@@ -153,10 +153,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item], maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
   },
 
-  sellItem: (item: Item) => {
+  sellItem: (item: Item, invIdx?: number) => {
     const { hero } = get();
     const newInventory = [...hero.inventory];
-    const idx = newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx === -1) return;
     newInventory.splice(idx, 1);
     set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
