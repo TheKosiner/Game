@@ -451,7 +451,7 @@ export default function PvpPanel() {
       if (heroHp <= 0) break;
     }
 
-    const won = oppHp <= 0;
+    const won = oppHp <= 0 || (heroHp > 0 && heroHp / combat.heroMaxHp >= oppHp / combat.oppMaxHp);
     setResultRecorded(true);
     const result = recordPvpResult(won, combat.opponent);
 
