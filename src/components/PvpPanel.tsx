@@ -11,10 +11,11 @@ const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
-// atk²/(atk+def) — always deals meaningful damage regardless of defense
-function pvpDmg(atk: number, def: number): number {
+function pvpHit(atk: number, def: number, critChance: number): { damage: number; isCrit: boolean } {
   const base = atk * atk / (atk + Math.max(1, def));
-  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+  const isCrit = Math.random() < critChance;
+  const variance = 0.7 + Math.random() * 0.6;
+  return { damage: Math.max(1, Math.round(base * variance * (isCrit ? 2 : 1))), isCrit };
 }
 
 function formatTimeAgo(ts: number): string {
@@ -39,6 +40,8 @@ interface CombatState {
   heroDef: number;
   oppAtk: number;
   oppDef: number;
+  heroCritChance: number;
+  oppCritChance: number;
   log: CombatLog[];
   done: boolean;
   won: boolean | null;
@@ -379,6 +382,8 @@ export default function PvpPanel() {
       heroDef: getHeroDefense(hero),
       oppAtk,
       oppDef,
+      heroCritChance: 0.10 + hero.stats.dexterity * 0.005,
+      oppCritChance: 0.10 + entry.level * 0.003,
       log: [{ message: `⚔ Walka z ${entry.heroName} (POZ.${entry.level}) rozpoczęta!`, type: 'system', timestamp: Date.now() }],
       done: false,
       won: null,
@@ -395,9 +400,9 @@ export default function PvpPanel() {
     const newLog = [...combat.log];
     let { heroHp, oppHp } = combat;
 
-    const heroDmg = pvpDmg(combat.heroAtk, combat.oppDef);
+    const { damage: heroDmg, isCrit: heroCrit } = pvpHit(combat.heroAtk, combat.oppDef, combat.heroCritChance);
     oppHp = Math.max(0, oppHp - heroDmg);
-    newLog.unshift({ message: `Atakujesz ${combat.opponent.heroName} za ${heroDmg}! (${oppHp}/${combat.oppMaxHp} HP)`, type: 'hero', timestamp: Date.now() });
+    newLog.unshift({ message: `Atakujesz ${combat.opponent.heroName} za ${heroDmg}!${heroCrit ? ' 💥 KRYT!' : ''} (${oppHp}/${combat.oppMaxHp} HP)`, type: 'hero', timestamp: Date.now() });
 
     if (oppHp <= 0) {
       if (!resultRecorded) {
@@ -414,9 +419,9 @@ export default function PvpPanel() {
       return;
     }
 
-    const oppDmg = pvpDmg(combat.oppAtk, combat.heroDef);
+    const { damage: oppDmg, isCrit: oppCrit } = pvpHit(combat.oppAtk, combat.heroDef, combat.oppCritChance);
     heroHp = Math.max(0, heroHp - oppDmg);
-    newLog.unshift({ message: `${combat.opponent.heroName} atakuje za ${oppDmg}! (${heroHp}/${combat.heroMaxHp} HP)`, type: 'enemy', timestamp: Date.now() });
+    newLog.unshift({ message: `${combat.opponent.heroName} atakuje za ${oppDmg}!${oppCrit ? ' 💥 KRYT!' : ''} (${heroHp}/${combat.heroMaxHp} HP)`, type: 'enemy', timestamp: Date.now() });
 
     if (heroHp <= 0) {
       if (!resultRecorded) {
@@ -443,10 +448,10 @@ export default function PvpPanel() {
     const newLog = [...combat.log];
 
     for (let i = 0; i < 500; i++) {
-      const heroDmg = pvpDmg(combat.heroAtk, combat.oppDef);
+      const { damage: heroDmg } = pvpHit(combat.heroAtk, combat.oppDef, combat.heroCritChance);
       oppHp = Math.max(0, oppHp - heroDmg);
       if (oppHp <= 0) break;
-      const oppDmg = pvpDmg(combat.oppAtk, combat.heroDef);
+      const { damage: oppDmg } = pvpHit(combat.oppAtk, combat.heroDef, combat.oppCritChance);
       heroHp = Math.max(0, heroHp - oppDmg);
       if (heroHp <= 0) break;
     }
