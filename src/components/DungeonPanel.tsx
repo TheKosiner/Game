@@ -155,12 +155,46 @@ function DungeonList() {
 }
 
 export default function DungeonPanel() {
-  const currentDungeon = useGameStore(s => s.currentDungeon);
-  const currentEnemy   = useGameStore(s => s.currentEnemy);
-  const inCombat       = useGameStore(s => s.inCombat);
-  const currentFloor   = useGameStore(s => s.currentFloor);
-  const exitDungeon    = useGameStore(s => s.exitDungeon);
-  const combatLog      = useGameStore(s => s.combatLog);
+  const currentDungeon    = useGameStore(s => s.currentDungeon);
+  const currentEnemy      = useGameStore(s => s.currentEnemy);
+  const inCombat          = useGameStore(s => s.inCombat);
+  const currentFloor      = useGameStore(s => s.currentFloor);
+  const exitDungeon       = useGameStore(s => s.exitDungeon);
+  const combatLog         = useGameStore(s => s.combatLog);
+  const defeatedAtDungeon = useGameStore(s => s.defeatedAtDungeon);
+  const clearDefeat       = useGameStore(s => s.clearDefeat);
+
+  if (defeatedAtDungeon) {
+    return (
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{
+          textAlign: 'center', padding: '20px 0',
+          background: 'linear-gradient(135deg, rgba(30,4,4,0.97), rgba(18,2,2,0.99))',
+          border: '1px solid rgba(120,20,20,0.6)',
+          boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.6)',
+        }}>
+          <p style={{ fontSize: 40, marginBottom: 10 }}>💀</p>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 11, color: 'var(--hp-bright)', textShadow: '0 0 16px #ff000066', marginBottom: 10 }}>
+            PRZEGRAŁEŚ!
+          </p>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)', marginBottom: 6 }}>
+            {defeatedAtDungeon}
+          </p>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: '#5070a0', lineHeight: 1.8 }}>
+            Musisz odpocząć aby<br />odzyskać życie.
+          </p>
+        </div>
+        <div className="combat-log">
+          {combatLog.slice(0, 8).map((log, i) => (
+            <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
+          ))}
+        </div>
+        <button onClick={clearDefeat} className="btn btn-secondary" style={{ width: '100%', fontSize: 7 }}>
+          ◀ Wróć do miasta
+        </button>
+      </div>
+    );
+  }
 
   if (currentDungeon && !inCombat) {
     return (

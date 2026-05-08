@@ -74,6 +74,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentEnemy: null,
   combatLog: [],
   inCombat: false,
+  defeatedAtDungeon: null,
   lastSaved: Date.now(),
   shopSeed: Date.now(),
   lastShopRefresh: 0,
@@ -215,6 +216,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().addCombatLog('Opuszczasz loch.', 'system');
   },
 
+  clearDefeat: () => {
+    set({ defeatedAtDungeon: null });
+  },
+
   attackEnemy: () => {
     const { hero, currentEnemy, currentDungeon, currentFloor } = get();
     if (!currentEnemy || !currentDungeon) return;
@@ -266,6 +271,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentDungeon: null,
           currentEnemy: null,
           inCombat: false,
+          defeatedAtDungeon: currentDungeon.name,
         });
       } else {
         set({ hero: { ...hero, hp: newHeroHp }, currentEnemy: { ...currentEnemy, hp: newEnemyHp } });
@@ -293,7 +299,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (heroHp <= 0) {
       get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} cię pokonał!`, 'enemy');
       get().addCombatLog('Skorzystaj z odpoczynku by odzyskać HP.', 'system');
-      set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false });
+      set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name });
     } else {
       get().addCombatLog(`Pokonałeś ${currentEnemy.emoji} ${currentEnemy.name}! (szybka walka)`, 'system');
       get().addXp(currentEnemy.xpReward);

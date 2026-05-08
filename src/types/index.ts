@@ -137,6 +137,7 @@ export interface GameState {
   currentEnemy: Enemy | null;
   combatLog: CombatLog[];
   inCombat: boolean;
+  defeatedAtDungeon: string | null;
   lastSaved: number;
   shopSeed: number;
   lastShopRefresh: number;
@@ -159,6 +160,7 @@ export interface GameState {
   buyShopItem: (item: Item, price: number, slotIndex: number) => boolean;
   enterDungeon: (dungeon: Dungeon) => void;
   exitDungeon: () => void;
+  clearDefeat: () => void;
   attackEnemy: () => void;
   autoFightEnemy: () => void;
   startQuest: (quest: Quest) => void;
