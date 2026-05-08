@@ -28,7 +28,8 @@ export function getHeroAttack(hero: Hero): number {
     .filter(([k]) => k !== 'vitality')
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
   const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
-  return Math.round((weapon.attackBonus ?? 0) * (1 + softCap(heroStatVal) / 100));
+  const levelBase = 5 + hero.level * 2;
+  return Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
 }
 
 export function getHeroDefense(hero: Hero): number {
@@ -60,18 +61,21 @@ export function rollDamage(base: number, variance = 0.2): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function quadDmg(atk: number, def: number): number {
+  const base = atk * atk / (atk + Math.max(1, def));
+  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+}
+
 export function heroAttackEnemy(hero: Hero, enemy: Enemy): { damage: number; isCrit: boolean } {
   const eq = getEquipmentStats(hero.equipment);
   const attack = getHeroAttack(hero);
-  const netDamage = Math.max(1, attack - enemy.defense);
   const isCrit = Math.random() < 0.1 + (hero.stats.dexterity + eq.dexterity) * 0.005;
-  const damage = rollDamage(netDamage) * (isCrit ? 2 : 1);
+  const damage = quadDmg(attack, enemy.defense) * (isCrit ? 2 : 1);
   return { damage: Math.max(1, damage), isCrit };
 }
 
 export function enemyAttackHero(enemy: Enemy, hero: Hero): { damage: number } {
   const defense = getHeroDefense(hero);
-  const netDamage = Math.max(1, enemy.attack - defense);
-  const damage = rollDamage(netDamage);
-  return { damage: Math.max(1, damage) };
+  const damage = quadDmg(enemy.attack, defense);
+  return { damage };
 }

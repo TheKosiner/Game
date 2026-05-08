@@ -11,6 +11,12 @@ const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
+// atk²/(atk+def) — always deals meaningful damage regardless of defense
+function pvpDmg(atk: number, def: number): number {
+  const base = atk * atk / (atk + Math.max(1, def));
+  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+}
+
 function formatTimeAgo(ts: number): string {
   const diff = Date.now() - ts;
   const m = Math.floor(diff / 60000);
@@ -389,7 +395,7 @@ export default function PvpPanel() {
     const newLog = [...combat.log];
     let { heroHp, oppHp } = combat;
 
-    const heroDmg = Math.max(1, Math.round(combat.heroAtk * (0.85 + Math.random() * 0.3)) - combat.oppDef);
+    const heroDmg = pvpDmg(combat.heroAtk, combat.oppDef);
     oppHp = Math.max(0, oppHp - heroDmg);
     newLog.unshift({ message: `Atakujesz ${combat.opponent.heroName} za ${heroDmg}! (${oppHp}/${combat.oppMaxHp} HP)`, type: 'hero', timestamp: Date.now() });
 
@@ -408,7 +414,7 @@ export default function PvpPanel() {
       return;
     }
 
-    const oppDmg = Math.max(1, Math.round(combat.oppAtk * (0.85 + Math.random() * 0.3)) - combat.heroDef);
+    const oppDmg = pvpDmg(combat.oppAtk, combat.heroDef);
     heroHp = Math.max(0, heroHp - oppDmg);
     newLog.unshift({ message: `${combat.opponent.heroName} atakuje za ${oppDmg}! (${heroHp}/${combat.heroMaxHp} HP)`, type: 'enemy', timestamp: Date.now() });
 
@@ -437,15 +443,15 @@ export default function PvpPanel() {
     const newLog = [...combat.log];
 
     for (let i = 0; i < 500; i++) {
-      const heroDmg = Math.max(1, Math.round(combat.heroAtk * (0.85 + Math.random() * 0.3)) - combat.oppDef);
+      const heroDmg = pvpDmg(combat.heroAtk, combat.oppDef);
       oppHp = Math.max(0, oppHp - heroDmg);
       if (oppHp <= 0) break;
-      const oppDmg = Math.max(1, Math.round(combat.oppAtk * (0.85 + Math.random() * 0.3)) - combat.heroDef);
+      const oppDmg = pvpDmg(combat.oppAtk, combat.heroDef);
       heroHp = Math.max(0, heroHp - oppDmg);
       if (heroHp <= 0) break;
     }
 
-    const won = oppHp <= 0;
+    const won = oppHp <= 0 || (heroHp > 0 && heroHp / combat.heroMaxHp >= oppHp / combat.oppMaxHp);
     setResultRecorded(true);
     const result = recordPvpResult(won, combat.opponent);
 

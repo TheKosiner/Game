@@ -13,13 +13,18 @@ export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
 
+function simDmg(atk: number, def: number): number {
+  const base = atk * atk / (atk + Math.max(1, def));
+  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+}
+
 function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number): boolean {
   let hHp = heroHp;
   let oHp = oppHp;
   for (let i = 0; i < 300; i++) {
-    oHp -= Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - oppDef);
+    oHp -= simDmg(heroAtk, oppDef);
     if (oHp <= 0) return true;
-    hHp -= Math.max(1, Math.round(oppAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+    hHp -= simDmg(oppAtk, heroDef);
     if (hHp <= 0) return false;
   }
   return hHp >= oHp;

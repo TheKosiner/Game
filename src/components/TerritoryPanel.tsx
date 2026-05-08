@@ -13,6 +13,11 @@ import { getHeroAttack, getHeroDefense } from '../utils/combat';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+function siegeDmg(atk: number, def: number): number {
+  const base = atk * atk / (atk + Math.max(1, def));
+  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+}
+
 // ── Combat types ──────────────────────────────────────────────────────────────
 
 interface SiegeCombatState {
@@ -242,7 +247,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = prev;
       const log = [...prev.log];
 
-      const heroDmg = Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - enemyDef);
+      const heroDmg = siegeDmg(heroAtk, enemyDef);
       enemyHp = Math.max(0, enemyHp - heroDmg);
       damageDealt += heroDmg;
       log.push(`Zadajesz ${heroDmg} obrażeń. (Razem: ${damageDealt})`);
@@ -252,7 +257,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
       }
 
-      const enemyDmg = Math.max(1, Math.round(enemyAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+      const enemyDmg = siegeDmg(enemyAtk, heroDef);
       heroHp = Math.max(0, heroHp - enemyDmg);
       log.push(`Wróg zadaje ci ${enemyDmg} obrażeń.`);
 
@@ -272,14 +277,14 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       const log = [...prev.log, '⚡ Szybka walka...'];
 
       for (let i = 0; i < 500; i++) {
-        const heroDmg = Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - enemyDef);
+        const heroDmg = siegeDmg(heroAtk, enemyDef);
         enemyHp = Math.max(0, enemyHp - heroDmg);
         damageDealt += heroDmg;
         if (enemyHp <= 0) {
           log.push('HP oblężenia zredukowane do 0!');
           return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
         }
-        const enemyDmg = Math.max(1, Math.round(enemyAtk * (0.85 + Math.random() * 0.3)) - heroDef);
+        const enemyDmg = siegeDmg(enemyAtk, heroDef);
         heroHp = Math.max(0, heroHp - enemyDmg);
         if (heroHp <= 0) {
           log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
