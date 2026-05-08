@@ -56,9 +56,10 @@ function CooldownTimer({ end }: { end: number }) {
   return <span style={{ color: 'var(--hp-bright)' }}>{formatMs(rem)}</span>;
 }
 
-function PvpCombat({ combat, onAttack, onExit }: {
+function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
   combat: CombatState;
   onAttack: () => void;
+  onAutoFight: () => void;
   onExit: () => void;
 }) {
   const hero = useGameStore(s => s.hero);
@@ -120,7 +121,10 @@ function PvpCombat({ combat, onAttack, onExit }: {
       </div>
 
       {!combat.done ? (
-        <button onClick={onAttack} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>⚔ Atakuj!</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onAttack} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>⚔ Atakuj!</button>
+          <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>⚡ Szybka walka</button>
+        </div>
       ) : (
         <>
           <div style={{
@@ -426,10 +430,44 @@ export default function PvpPanel() {
     setCombat({ ...combat, oppHp, heroHp, log: newLog });
   }
 
+  function handleAutoFight() {
+    if (!combat || combat.done || resultRecorded) return;
+
+    let { heroHp, oppHp } = combat;
+    const newLog = [...combat.log];
+
+    for (let i = 0; i < 500; i++) {
+      const heroDmg = Math.max(1, Math.round(combat.heroAtk * (0.85 + Math.random() * 0.3)) - combat.oppDef);
+      oppHp = Math.max(0, oppHp - heroDmg);
+      if (oppHp <= 0) break;
+      const oppDmg = Math.max(1, Math.round(combat.oppAtk * (0.85 + Math.random() * 0.3)) - combat.heroDef);
+      heroHp = Math.max(0, heroHp - oppDmg);
+      if (heroHp <= 0) break;
+    }
+
+    const won = oppHp <= 0;
+    setResultRecorded(true);
+    const result = recordPvpResult(won, combat.opponent);
+
+    if (won) {
+      newLog.unshift({ message: `🏆 Pokonałeś ${combat.opponent.heroName}! (szybka walka) +${result.xpGained}XP +${result.goldGained}🪙`, type: 'loot', timestamp: Date.now() });
+    } else {
+      newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. (szybka walka) +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
+    }
+
+    if (user) addPvpFight({
+      attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+      defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+      attackerWon: won, timestamp: Date.now(),
+    }).catch(() => {});
+
+    setCombat({ ...combat, heroHp: Math.max(0, heroHp), oppHp: Math.max(0, oppHp), log: newLog, done: true, won, xpGained: result.xpGained, goldGained: result.goldGained });
+  }
+
   return (
     <div className="card p-3">
       {combat
-        ? <PvpCombat combat={combat} onAttack={handleAttack} onExit={() => { setCombat(null); setResultRecorded(false); }} />
+        ? <PvpCombat combat={combat} onAttack={handleAttack} onAutoFight={handleAutoFight} onExit={() => { setCombat(null); setResultRecorded(false); }} />
         : <ArenaList onChallenge={startCombat} />
       }
     </div>
