@@ -4,11 +4,11 @@ import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 
 const RARITY_COLORS: Record<string, string> = {
-  common: '#7a7060', uncommon: '#3a8050', rare: '#3060a0',
-  epic: '#7040a0', legendary: '#9c7a3c',
+  common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
+  epic: '#cc44ff', legendary: '#ffd700',
 };
 const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
+  common: 'ZWYKxc5x81Y', uncommon: 'NIEZWYKxc5x81Y', rare: 'RZADKI',
   epic: 'EPICKI', legendary: 'LEGENDARNY',
 };
 const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
@@ -17,9 +17,10 @@ const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
   { slot: 'armor',  label: 'Zbroja',    icon: '🛡' },
   { slot: 'ring',   label: 'Pierścień', icon: '💍' },
   { slot: 'boots',  label: 'Buty',      icon: '👢' },
-  { slot: 'amulet', label: 'Amulet',    icon: '📿' },
+  { slot: 'amulet', label: 'Amulet',    icon: '💿' },
 ];
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const STAT_NAMES: Record<string, string> = {
   strength: 'Siła', dexterity: 'Zręczność',
   intelligence: 'Wiedza', vitality: 'Żywotność',
@@ -31,56 +32,61 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(16,12,4,0.98), rgba(10,8,2,0.99))',
-      border: `1px solid ${rc}66`,
+      background: 'linear-gradient(135deg, rgba(10,10,20,0.98), rgba(5,5,15,0.99))',
+      border: `1px solid ${rc}55`,
       padding: 12,
       boxShadow: `0 0 24px ${rc}18, inset 0 2px 8px rgba(0,0,0,0.5)`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <div style={{ background: 'var(--bg-deep)', border: `1px solid ${rc}44`, padding: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          background: 'rgba(0,0,0,0.6)', border: `1px solid ${rc}44`,
+          padding: 6, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 0 10px ${rc}22`,
+        }}>
           <ItemIcon item={item} scale={3} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ ...PX(7), color: rc, marginBottom: 3 }}>{item.name}</p>
-          <span style={{ ...PX(4), color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 4px' }}>
+          <p style={{ ...ORB, fontSize: 9, color: rc, marginBottom: 3, textShadow: `0 0 8px ${rc}` }}>{item.name}</p>
+          <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
             {RARITY_LABEL[item.rarity]}
           </span>
         </div>
-        <button onClick={onClose} style={{ color: 'var(--text-muted)', fontSize: 10, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
+        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
-        <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 3 }}>STATYSTYKI</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>STATYSTYKI</p>
         {statEntries.map(([k, v]) => (
           <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{STAT_NAMES[k] ?? k}</span>
-            <span style={{ ...PX(6), color: '#6aaa30' }}>+{v as number}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{STAT_NAMES[k] ?? k}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>+{v as number}</span>
           </div>
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>⚔ Atak</span>
-            <span style={{ ...PX(6), color: '#c05050' }}>+{item.attackBonus}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>⚔ Atak</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
         {item.defenseBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>🛡 Obrona</span>
-            <span style={{ ...PX(6), color: '#5070c0' }}>+{item.defenseBonus}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>🛡 Obrona</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...PX(5), color: 'var(--text-muted)' }}>Brak bonusów statystyk</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Brak bonusów statystyk</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <p style={{ ...PX(4), color: 'var(--text-muted)' }}>Min. poziom: {item.level}</p>
-        <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>Wartość: {item.goldValue}🪙</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Min. poziom: {item.level}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{item.goldValue}🪙</p>
       </div>
 
-      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '7px' }}>
-        ✕ Zdejmij przedmiot
+      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '7px' }}>
+        ✕ ZDEJMIJ PRZEDMIOT
       </button>
     </div>
   );
@@ -89,39 +95,36 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
 function ItemBadge({ item, onSelect }: { item: Item; onSelect: () => void }) {
   const rc = RARITY_COLORS[item.rarity];
   return (
-    <div
-      onClick={onSelect}
-      style={{
-        background: 'var(--bg-inset)',
-        border: `1px solid ${rc}55`,
-        padding: '6px 7px',
-        display: 'flex', alignItems: 'center', gap: 6,
-        boxShadow: item.rarity === 'legendary' || item.rarity === 'epic' ? `0 0 12px ${rc}22` : 'none',
-        cursor: 'pointer',
-      }}
-    >
-      <div style={{ background: 'var(--bg-deep)', border: `1px solid ${rc}33`, padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div onClick={onSelect} style={{
+      background: `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}08)`,
+      border: `1px solid ${rc}44`,
+      padding: '6px 7px',
+      display: 'flex', alignItems: 'center', gap: 6,
+      boxShadow: item.rarity === 'legendary' || item.rarity === 'epic' ? `0 0 14px ${rc}22` : 'none',
+      cursor: 'pointer',
+      transition: 'border-color 0.15s, box-shadow 0.15s',
+    }}>
+      <div style={{ background: 'rgba(0,0,0,0.5)', border: `1px solid ${rc}33`, padding: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <ItemIcon item={item} scale={2} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: rc, marginBottom: 2 }}>{item.name}</p>
-        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 4, color: 'var(--text-muted)' }}>Poz. {item.level}</p>
+        <p style={{ ...MONO, fontSize: 10, color: rc, marginBottom: 2 }}>{item.name}</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Poz. {item.level}</p>
       </div>
-      <span style={{ color: 'var(--text-muted)', fontSize: 8, flexShrink: 0 }}>ℹ</span>
+      <span style={{ color: 'var(--text-dim)', fontSize: 10, flexShrink: 0 }}>ℹ</span>
     </div>
   );
 }
 
 export default function EquipmentPanel() {
-  const equipment = useGameStore(s => s.hero.equipment);
+  const equipment  = useGameStore(s => s.hero.equipment);
   const unequipItem = useGameStore(s => s.unequipItem);
-
   const [selectedSlot, setSelectedSlot] = useState<ItemSlot | null>(null);
   const selectedItem = selectedSlot ? equipment[selectedSlot] : null;
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>
+      <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)' }}>
         ⚔ EKWIPUNEK
       </p>
 
@@ -138,9 +141,9 @@ export default function EquipmentPanel() {
             return item ? (
               <ItemBadge key={slot} item={item} onSelect={() => setSelectedSlot(slot)} />
             ) : (
-              <div key={slot} className="df-slot empty" style={{ minHeight: 48 }}>
-                <span style={{ fontSize: 16, opacity: 0.2 }}>{icon}</span>
-                <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 4, color: 'var(--text-muted)', marginTop: 3 }}>{label}</span>
+              <div key={slot} className="df-slot empty" style={{ minHeight: 52 }}>
+                <span style={{ fontSize: 18, opacity: 0.15 }}>{icon}</span>
+                <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>{label}</span>
               </div>
             );
           })}

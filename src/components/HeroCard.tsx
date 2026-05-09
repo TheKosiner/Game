@@ -5,9 +5,51 @@ import { getHeroAttack, getHeroDefense, getEquipmentStats } from '../utils/comba
 import PixelSprite from './PixelSprite';
 import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import AppearanceEditor from './AppearanceEditor';
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
-function RestTimer({ endsAt, restHp, startAt, cancelRest }: { endsAt: number; restHp: number; startAt: number; cancelRest: () => void }) {
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+
+function StatBox({ icon, value, label, color }: {
+  icon: string; value: number | string; label: string; color: string; glow?: string;
+}) {
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(0,0,0,0.6), rgba(0,0,0,0.3))',
+      border: `1px solid ${color}44`,
+      padding: '6px 4px',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      flex: 1,
+      boxShadow: `inset 0 0 8px rgba(0,0,0,0.4)`,
+    }}>
+      <span style={{ fontSize: 10, marginBottom: 2 }}>{icon}</span>
+      <span style={{ ...ORB, fontSize: 14, color, textShadow: `0 0 10px ${color}` }}>{value}</span>
+      <span style={{ ...MONO, fontSize: 9, color: `${color}99`, marginTop: 1 }}>{label}</span>
+    </div>
+  );
+}
+
+function NeonBar({ pct, color, height = 10 }: { pct: number; color: string; glow?: string; height?: number }) {
+  return (
+    <div style={{
+      height, background: 'rgba(0,0,0,0.5)',
+      border: `1px solid ${color}22`, overflow: 'hidden', position: 'relative',
+    }}>
+      <div style={{
+        width: `${Math.min(100, pct)}%`, height: '100%',
+        background: `linear-gradient(90deg, rgba(0,0,0,0.2), ${color})`,
+        boxShadow: `0 0 8px ${color}`,
+        transition: 'width 0.6s ease',
+        position: 'relative',
+      }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.2)' }} />
+      </div>
+    </div>
+  );
+}
+
+function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
+  endsAt: number; restHp: number; startAt: number; cancelRest: () => void;
+}) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -17,35 +59,37 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest }: { endsAt: number; re
     }, 1000);
     return () => clearInterval(id);
   }, [endsAt]);
+
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
   const totalDuration = Math.max(1, endsAt - startAt);
   const elapsed = totalDuration - remaining;
   const earnedNow = Math.floor(restHp * Math.min(elapsed, totalDuration) / totalDuration);
   const progressPct = Math.min(100, (elapsed / totalDuration) * 100);
+
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
-      border: '1px solid rgba(50,80,30,0.5)',
+      background: 'linear-gradient(135deg, rgba(0,245,255,0.04), rgba(0,0,0,0.8))',
+      border: '1px solid rgba(0,245,255,0.25)',
       padding: '10px 12px',
+      boxShadow: '0 0 16px rgba(0,245,255,0.08)',
       display: 'flex', flexDirection: 'column', gap: 8,
-      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div className="df-flicker" style={{ fontSize: 22, lineHeight: 1 }}>🔥</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 20, filter: 'drop-shadow(0 0 6px #ff6600)' }}>🔥</span>
         <div style={{ flex: 1 }}>
-          <p style={{ ...PX(7), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 4 }}>
-            ✦ ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
+          <p style={{ ...ORB, fontSize: 9, color: '#00f5ff', textShadow: '0 0 10px #00f5ff', marginBottom: 3 }}>
+            ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
           </p>
-          <p style={{ ...PX(5), color: '#5a8840' }}>+{earnedNow}/{restHp} HP</p>
+          <p style={{ ...MONO, fontSize: 11, color: '#00ff88' }}>
+            Odzyskasz +{earnedNow}/{restHp} HP
+          </p>
         </div>
-        <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 5, padding: '5px 8px', flexShrink: 0 }}>
-          ✕ Przerwij
+        <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
+          ✕ STOP
         </button>
       </div>
-      <div className="pixel-bar">
-        <div className="pixel-bar-fill" style={{ width: `${progressPct}%`, background: '#3a7a20' }} />
-      </div>
+      <NeonBar pct={progressPct} color="#00f5ff" height={6} />
     </div>
   );
 }
@@ -57,46 +101,52 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   blocked?: boolean;
   blockedReason?: string;
 }) {
-  const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.02));
-  const missing = hero.maxHp - hero.hp;
+  const hpPerMin   = Math.max(1, Math.round(hero.maxHp * 0.02));
+  const missing    = hero.maxHp - hero.hp;
   const maxMinutes = Math.ceil(missing / hpPerMin);
   const [minutes, setMinutes] = useState(Math.min(10, maxMinutes));
+
   if (blocked && blockedReason) return (
-    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>🏕 Odpoczynek — {blockedReason}</p>
+    <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,245,255,0.1)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK — {blockedReason}</p>
     </div>
   );
+
   if (missing <= 0) return (
-    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>HP PEŁNE — odpoczynek zbędny</p>
+    <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,245,255,0.1)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>HP PEŁNE — odpoczynek zbędny</p>
     </div>
   );
-  const clamped = Math.min(Math.max(1, minutes), maxMinutes);
+
+  const clamped    = Math.min(Math.max(1, minutes), maxMinutes);
   const healPreview = Math.min(clamped * hpPerMin, missing);
+
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(8,16,6,0.97), rgba(6,12,4,0.99))',
-      border: '1px solid rgba(45,65,25,0.5)',
+      background: 'linear-gradient(135deg, rgba(0,245,255,0.03), rgba(0,0,0,0.7))',
+      border: '1px solid rgba(0,245,255,0.15)',
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK</p>
-        <p style={{ ...PX(6), color: '#6aaa40' }}>+{healPreview} HP / {clamped} min</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>+{healPreview} HP / {clamped} min</p>
       </div>
       <input type="range" min={1} max={maxMinutes} value={clamped}
         onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1 min = 2% HP (~{hpPerMin} HP)</span>
-        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>max {maxMinutes} min</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1 min = 2% HP (~{hpPerMin} HP)</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>max {maxMinutes} min</span>
       </div>
-      <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
-        ▶ Rozpocznij odpoczynek
+      <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
+        ▶ ROZPOCZNIJ ODPOCZYNEK
       </button>
     </div>
   );
 }
 
-function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: { endsAt: number; reward: number; startAt: number; cancelBegging: () => void }) {
+function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
+  endsAt: number; reward: number; startAt: number; cancelBegging: () => void;
+}) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -106,6 +156,7 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: { endsAt: numb
     }, 1000);
     return () => clearInterval(id);
   }, [endsAt]);
+
   const h = Math.floor(remaining / 3600000);
   const m = Math.floor((remaining % 3600000) / 60000);
   const s = Math.floor((remaining % 60000) / 1000);
@@ -114,27 +165,28 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: { endsAt: numb
   const elapsed = totalDuration - remaining;
   const earnedNow = Math.floor(reward * Math.min(elapsed, totalDuration) / totalDuration);
   const progressPct = Math.min(100, (elapsed / totalDuration) * 100);
+
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
-      border: '1px solid rgba(30,50,80,0.5)',
+      background: 'linear-gradient(135deg, rgba(157,78,221,0.04), rgba(0,0,0,0.8))',
+      border: '1px solid rgba(157,78,221,0.3)',
       padding: '10px 12px',
+      boxShadow: '0 0 16px rgba(157,78,221,0.08)',
       display: 'flex', flexDirection: 'column', gap: 8,
-      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontSize: 22 }}>🙏</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 20 }}>🙏</span>
         <div style={{ flex: 1 }}>
-          <p style={{ ...PX(7), color: '#5070a0', marginBottom: 4 }}>✦ ŻEBRANIE — {timeStr}</p>
-          <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>+{earnedNow}/{reward}🪙</p>
+          <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
+            ŻEBRANIE — {timeStr}
+          </p>
+          <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>+{earnedNow}/{reward}🪙</p>
         </div>
-        <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 5, padding: '5px 8px', flexShrink: 0 }}>
-          ✕ Przerwij
+        <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
+          ✕ STOP
         </button>
       </div>
-      <div className="pixel-bar">
-        <div className="pixel-bar-fill" style={{ width: `${progressPct}%`, background: '#3a5080' }} />
-      </div>
+      <NeonBar pct={progressPct} color="#9d4edd" height={6} />
     </div>
   );
 }
@@ -142,15 +194,16 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: { endsAt: numb
 function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () => void }) {
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(28,20,4,0.97), rgba(20,15,3,0.99))',
-      border: '1px solid var(--gold-darker)',
+      background: 'linear-gradient(135deg, rgba(255,215,0,0.06), rgba(0,0,0,0.8))',
+      border: '1px solid rgba(255,215,0,0.3)',
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+      boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
-      <p style={{ ...PX(6), color: 'var(--gold-bright)', textShadow: '0 0 8px var(--gold-glow)' }}>
-        🙏 Żebranie zakończone! +{reward}🪙
+      <p style={{ ...ORB, fontSize: 9, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
+        🙏 ŻEBRANIE ZAKŁĆCZONE! +{reward}🪙
       </p>
-      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
-        🪙 Odbierz jałmużnę
+      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
+        🪙 ODBIERZ JAŁMUŻNĘ
       </button>
     </div>
   );
@@ -164,43 +217,46 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
 }) {
   const [hours, setHours] = useState(2);
   if (blocked && blockedReason) return (
-    <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>🙏 Żebranie — {blockedReason}</p>
+    <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.15)', padding: '8px 12px', textAlign: 'center' }}>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🙏 ŻEBRANIE — {blockedReason}</p>
     </div>
   );
   return (
     <div style={{
-      background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
-      border: '1px solid rgba(25,40,65,0.5)',
+      background: 'linear-gradient(135deg, rgba(157,78,221,0.03), rgba(0,0,0,0.7))',
+      border: '1px solid rgba(157,78,221,0.15)',
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>🙏 ŻEBRANIE</p>
-        <p style={{ ...PX(6), color: '#5070a0' }}>{hours}h</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🙏 ŻEBRANIE</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{hours}h</p>
       </div>
       <input type="range" min={1} max={10} value={hours}
         onChange={e => setHours(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>1h min</span>
-        <span style={{ ...PX(4), color: 'var(--text-muted)' }}>10h max</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1h min</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>10h max</span>
       </div>
-      <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '8px' }}>
-        ▶ Zacznij żebrać
+      <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{
+        width: '100%', fontSize: 8, padding: '8px',
+        borderColor: 'rgba(157,78,221,0.4)', color: '#9d4edd', textShadow: '0 0 6px #9d4edd',
+      }}>
+        ▶ ZACZNIJ ŻEBRAĆ
       </button>
     </div>
   );
 }
 
 export default function HeroCard() {
-  const hero = useGameStore(s => s.hero);
+  const hero           = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
-  const restHero = useGameStore(s => s.restHero);
-  const cancelRest = useGameStore(s => s.cancelRest);
-  const startBegging = useGameStore(s => s.startBegging);
-  const cancelBegging = useGameStore(s => s.cancelBegging);
+  const restHero       = useGameStore(s => s.restHero);
+  const cancelRest     = useGameStore(s => s.cancelRest);
+  const startBegging   = useGameStore(s => s.startBegging);
+  const cancelBegging  = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
-  const inCombat = useGameStore(s => s.inCombat);
-  const activeQuest = useGameStore(s => s.activeQuest);
+  const inCombat       = useGameStore(s => s.inCombat);
+  const activeQuest    = useGameStore(s => s.activeQuest);
   const currentDungeon = useGameStore(s => s.currentDungeon);
   const [, forceUpdate] = useState(0);
   const [editingAppearance, setEditingAppearance] = useState(false);
@@ -210,131 +266,119 @@ export default function HeroCard() {
     return () => clearInterval(id);
   }, []);
 
-  const isResting = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
+  const isResting   = hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
   const earnedRestHp = isResting && hero.voluntaryRestStartAt && hero.voluntaryRestHp && hero.voluntaryRestUntil
     ? Math.floor(hero.voluntaryRestHp * Math.min(Date.now() - hero.voluntaryRestStartAt, hero.voluntaryRestUntil - hero.voluntaryRestStartAt) / Math.max(1, hero.voluntaryRestUntil - hero.voluntaryRestStartAt))
     : 0;
-  const isBegging = hero.beggingUntil !== null && Date.now() < hero.beggingUntil;
+  const isBegging   = hero.beggingUntil !== null && Date.now() < hero.beggingUntil;
   const beggingDone = hero.beggingUntil !== null && Date.now() >= hero.beggingUntil;
-  const hasQuest = activeQuest !== null;
+  const hasQuest    = activeQuest !== null;
+  const inDungeon   = currentDungeon !== null || inCombat;
 
-  const inDungeon = currentDungeon !== null || inCombat;
-  const restBlockReason = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
+  const restBlockReason    = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
   const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
-  const displayHp = hero.hp + earnedRestHp;
-  const hpPct  = (displayHp / hero.maxHp) * 100;
-  const attack  = getHeroAttack(hero);
-  const defense = getHeroDefense(hero);
-  const eqStats = getEquipmentStats(hero.equipment);
-  const sprite  = SPRITE_PORTRAIT;
-  const palette = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2, hero.clothingColor ?? 0);
+
+  const displayHp  = hero.hp + earnedRestHp;
+  const hpPct      = (displayHp / hero.maxHp) * 100;
+  const attack     = getHeroAttack(hero);
+  const defense    = getHeroDefense(hero);
+  const eqStats    = getEquipmentStats(hero.equipment);
+  const sprite     = SPRITE_PORTRAIT;
+  const palette    = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2, hero.clothingColor ?? 0);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
   return (
-    <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-      {/* ── PORTRAIT + INFO ── */}
-      <div style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+      {/* HERO PANEL */}
+      <div className="card p-3" style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
 
-        {/* Portrait scene + appearance button */}
-        <div style={{ width: 108, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* Portrait */}
+        <div style={{ width: 112, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div className="df-portrait-bg" style={{
-            flex: 1, minHeight: 152,
-            border: '1px solid var(--border-main)',
+            flex: 1, minHeight: 158,
+            border: '1px solid rgba(255,45,120,0.3)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 0 20px rgba(255,45,120,0.1)',
           }}>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} style={{
+                position: 'absolute',
+                top: '-100%', left: `${8 + i * 16}%`,
+                width: 1, height: '60%',
+                background: `linear-gradient(180deg, transparent, rgba(0,245,255,${0.04 + (i % 3) * 0.02}), transparent)`,
+                animation: `rain ${1.4 + i * 0.35}s linear infinite`,
+                animationDelay: `${i * 0.25}s`,
+              }} />
+            ))}
             <div className="df-fire-glow" />
             <div className="df-portrait-vignette" />
-            <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 6px 16px rgba(0,0,0,0.95))' }}>
+            <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 0 12px rgba(255,45,120,0.4)) drop-shadow(0 6px 16px rgba(0,0,0,0.9))' }}>
               <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
             </div>
           </div>
-          <button
-            onClick={() => setEditingAppearance(true)}
-            style={{
-              background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-              color: 'var(--text-muted)', cursor: 'pointer', width: '100%',
-              padding: '5px 0', ...PX(4),
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-            }}
-          >
-            <span>🎨</span>
-            <span>ZMIEŃ WYGLĄD</span>
+          <button onClick={() => setEditingAppearance(true)} style={{
+            background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)',
+            color: 'rgba(255,45,120,0.7)', cursor: 'pointer', width: '100%',
+            padding: '5px 0', ...MONO, fontSize: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}>
+            🎨 WYGŁĄD
           </button>
         </div>
 
-        {/* Info column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center' }}>
+        {/* Stats column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
           <div>
-            <p style={{ ...PX(11), color: 'var(--gold-bright)', textShadow: '0 0 14px var(--gold-glow)', marginBottom: 4, wordBreak: 'break-all' }}>
+            <p style={{ ...ORB, fontSize: 14, color: '#ffffff', textShadow: '0 0 12px rgba(255,255,255,0.25)', marginBottom: 2, wordBreak: 'break-all' }}>
               {hero.name}
             </p>
-            <p style={{ ...PX(5), color: 'var(--text-dim)' }}>POZ. {hero.level}</p>
+            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>ŁOTRZYK · POZ. {hero.level}</p>
           </div>
 
-          {/* ATK / DEF / HP boxes */}
           <div style={{ display: 'flex', gap: 4 }}>
-            {[
-              { icon: '⚔', val: attack,    col: '#c05050', label: 'ATAK' },
-              { icon: '🛡', val: defense,   col: '#5070c0', label: 'OBRON' },
-              { icon: '♥', val: hero.maxHp, col: '#c04040', label: 'MAX HP' },
-            ].map(({ icon, val, col, label }) => (
-              <div key={label} style={{
-                background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-                padding: '5px 4px', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', flex: 1,
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
-              }}>
-                <span style={{ fontSize: 9 }}>{icon}</span>
-                <span style={{ ...PX(8), color: col, marginTop: 2 }}>{val}</span>
-                <span style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 1 }}>{label}</span>
-              </div>
-            ))}
+            <StatBox icon="⚔" value={attack}    label="ATAK"   color="#ff2d78" />
+            <StatBox icon="🛡" value={defense}   label="OBRON"  color="#00f5ff" />
+            <StatBox icon="♥" value={hero.maxHp} label="MAX HP" color="#ff4444" />
           </div>
 
-          {/* Gold */}
           <div style={{
-            background: 'rgba(50,36,14,0.4)', border: '1px solid var(--gold-darker)',
-            padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
+            background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
+            padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
+            boxShadow: '0 0 10px rgba(255,215,0,0.08)',
           }}>
-            <span style={{ fontSize: 12 }}>🪙</span>
-            <span style={{ ...PX(9), color: 'var(--gold-bright)', textShadow: '0 0 8px var(--gold-glow)' }}>{hero.gold}</span>
+            <span style={{ fontSize: 13 }}>🪙</span>
+            <span style={{ ...ORB, fontSize: 11, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.6)' }}>{hero.gold}</span>
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>♥ ŻYWOTNOŚĆ</span>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
+            </div>
+            <NeonBar pct={hpPct} color="#ff2d78" />
+          </div>
+
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>✦ DOŚWIADCZENIE</span>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.xp}/{hero.xpToNext}</span>
+            </div>
+            <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
           </div>
         </div>
       </div>
 
       {editingAppearance && <AppearanceEditor onClose={() => setEditingAppearance(false)} />}
 
-      {/* ── HP / XP BARS ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span style={{ ...PX(5), color: '#904040' }}>♥ ŻYWOTNOŚĆ</span>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{displayHp} / {hero.maxHp}</span>
-          </div>
-          <div className="pixel-bar">
-            <div className="pixel-bar-fill hp-fill" style={{ width: `${hpPct}%` }} />
-          </div>
-        </div>
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-            <span style={{ ...PX(5), color: '#906830' }}>✦ DOŚWIADCZENIE</span>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.xp} / {hero.xpToNext}</span>
-          </div>
-          <div className="pixel-bar">
-            <div className="pixel-bar-fill xp-fill" style={{ width: `${(hero.xp / hero.xpToNext) * 100}%` }} />
-          </div>
-        </div>
-      </div>
-
-      {/* ── REST ── */}
+      {/* REST */}
       {isResting
         ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} blocked={!!restBlockReason} blockedReason={restBlockReason} />
       }
 
-      {/* ── ŻEBRANIE ── */}
+      {/* BEGGING */}
       {isBegging
         ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} startAt={hero.beggingStartAt ?? hero.beggingUntil!} cancelBegging={cancelBegging} />
         : beggingDone
@@ -342,63 +386,61 @@ export default function HeroCard() {
           : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
       }
 
-      {/* ── DZIENNY LIMIT ── */}
-      <div className="df-section">
-        <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>DZIENNY LIMIT</p>
+      {/* DZIENNY LIMIT */}
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>◈ DZIENNY LIMIT</p>
         {[
-          { label: 'Lochy',   cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, col: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? 'var(--hp-color)' : '#7060b8' },
-          { label: 'Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   col: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? 'var(--hp-color)' : '#306880' },
-        ].map(({ label, cur, max, pct, col }) => (
-          <div key={label} style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{label}</span>
-              <span style={{ ...PX(5), color: cur >= max ? 'var(--hp-bright)' : 'var(--text-dim)' }}>{cur}/{max}</span>
+          { label: '⚔ Lochy',   cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
+          { label: '📜 Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
+        ].map(({ label, cur, max, pct, color }) => (
+          <div key={label}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{label}</span>
+              <span style={{ ...ORB, fontSize: 9, color, textShadow: `0 0 6px ${color}` }}>{cur}/{max}</span>
             </div>
-            <div className="pixel-bar">
-              <div className="pixel-bar-fill" style={{ width: `${pct}%`, background: col }} />
-            </div>
+            <NeonBar pct={pct} color={color} height={8} />
           </div>
         ))}
       </div>
 
-      {/* ── STATYSTYKI Z ULEPSZANIEM ── */}
-      <div className="df-section">
-        <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 8 }}>STATYSTYKI</p>
+      {/* STATYSTYKI */}
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>◈ STATYSTYKI</p>
         {([
-          { attr: 'strength',     icon: '💪', name: 'Siła',       desc: '↑ obrażenia' },
-          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ szansa na kryt' },
-          { attr: 'intelligence', icon: '🧠', name: 'Wiedza',     desc: '↑ obrażenia mag.' },
-          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona' },
-        ] as const).map(({ attr, icon, name, desc }) => {
+          { attr: 'strength',     icon: '💪', name: 'Moc ciała',  desc: '↑ obrażenia',     color: '#ff2d78' },
+          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ kryt',           color: '#00f5ff' },
+          { attr: 'intelligence', icon: '🧠', name: 'Wiedza',     desc: '↑ obrażenia mag.', color: '#9d4edd' },
+          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona',   color: '#ff4444' },
+        ] as const).map(({ attr, icon, name, desc, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
           const cost = Math.round(base * 75);
           const canAfford = hero.gold >= cost;
           return (
-            <div key={attr} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
+            <div key={attr} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ flex: 1 }}>
-                <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{icon} {name}</span>
-                <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 2 }}>{desc}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontSize: 12 }}>{icon}</span>
+                  <span style={{ ...MONO, fontSize: 11, color }}>{name}</span>
+                </div>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
               </div>
-              <span style={{ ...PX(7), color: 'var(--gold-bright)', minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
-              {eq > 0 && (
-                <span style={{ ...PX(4), color: '#6aaa30', minWidth: 26 }}>+{eq}♦</span>
-              )}
+              <span style={{ ...ORB, fontSize: 13, color, textShadow: `0 0 8px ${color}`, minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
+              {eq > 0 && <span style={{ ...MONO, fontSize: 10, color: '#00ff88', minWidth: 26 }}>+{eq}♦</span>}
               <button
                 onClick={() => upgradeAttribute(attr)}
                 disabled={!canAfford}
-                className="btn btn-secondary"
-                style={{ fontSize: 4, padding: '4px 5px', opacity: canAfford ? 1 : 0.45, minWidth: 48 }}
+                className="btn btn-primary"
+                style={{ fontSize: 7, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
               >
                 🪙{cost}
               </button>
             </div>
           );
         })}
-        <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 2 }}>
-          ♦ = bonus z ekwipunku
-        </p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>♦ = bonus z ekwipunku</p>
       </div>
+
     </div>
   );
 }

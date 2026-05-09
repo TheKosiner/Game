@@ -38,9 +38,8 @@ export default function App() {
         try {
           const loaded = await loadFromCloud(user.uid);
           if (loaded === null) {
-            // New account — wipe any localStorage from a previous account
             try { localStorage.removeItem('realm_of_valor_save'); } catch {}
-            initHero('Hero', 1, 2, true); // skipSave=true so hasSave stays false → CharacterCreation shows
+            initHero('Hero', 1, 2, true);
           } else if (!loaded) {
             loadGame();
           }
@@ -72,7 +71,7 @@ export default function App() {
   if (authLoading || !gameLoaded) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: 'var(--gold-main)', fontFamily: "'Press Start 2P', monospace", fontSize: 7 }}>⏳ Ładowanie...</p>
+        <p style={{ fontFamily: "'Orbitron', monospace", fontSize: 11, color: '#ff2d78', textShadow: '0 0 10px #ff2d78' }}>⧖ ŁADOWANIE...</p>
       </div>
     );
   }
@@ -93,55 +92,63 @@ export default function App() {
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 80 }}>
 
-      {/* HEADER */}
+      {/* CYBERPUNK TOP BAR */}
       <header style={{
-        background: 'linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)',
-        borderBottom: '2px solid var(--border-main)',
+        background: 'linear-gradient(180deg, #080810 0%, #0a0a18 100%)',
+        borderBottom: '1px solid rgba(255,45,120,0.3)',
         position: 'sticky', top: 0, zIndex: 40,
-        padding: '9px 14px',
+        padding: '8px 12px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.7)',
-        backgroundImage: `
-          linear-gradient(var(--gold-darker), var(--gold-darker)),
-          linear-gradient(180deg, #0e0c09 0%, #0a0907 100%)
-        `,
-        backgroundSize: '100% 1px, 100% 100%',
-        backgroundPosition: 'bottom, top',
-        backgroundRepeat: 'no-repeat',
+        boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
       }}>
         <h1 style={{
           margin: 0,
-          fontFamily: "'Press Start 2P', monospace",
-          fontSize: 8,
-          color: 'var(--gold-main)',
-          textShadow: '0 0 12px var(--gold-glow), 0 1px 0 rgba(0,0,0,0.9)',
-          letterSpacing: '0.06em',
-        }}>✦ REALM OF VALOR</h1>
+          fontFamily: "'Orbitron', monospace",
+          fontSize: 11,
+          fontWeight: 900,
+          color: '#ff2d78',
+          textShadow: '0 0 10px #ff2d78, 0 0 20px rgba(255,45,120,0.5)',
+          letterSpacing: '0.04em',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ fontSize: 16 }}>⊕</span> REALM OF VALOR
+        </h1>
 
-        <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <span style={{
-            fontFamily: "'Press Start 2P', monospace",
-            color: 'var(--gold-bright)', fontSize: 7,
-            background: 'rgba(60,44,20,0.4)',
-            border: '1px solid var(--gold-darker)',
-            padding: '2px 7px',
+            fontFamily: "'Share Tech Mono', monospace",
+            color: '#ffd700', fontSize: 12,
+            background: 'rgba(255,215,0,0.08)',
+            border: '1px solid rgba(255,215,0,0.25)',
+            padding: '3px 8px',
+            textShadow: '0 0 8px rgba(255,215,0,0.5)',
           }}>🪙 {hero.gold}</span>
           <span style={{
-            fontFamily: "'Press Start 2P', monospace",
-            color: 'var(--text-dim)', fontSize: 6,
-            background: 'rgba(20,18,14,0.8)',
-            border: '1px solid var(--border-main)',
-            padding: '2px 6px',
+            fontFamily: "'Orbitron', monospace",
+            color: '#00f5ff', fontSize: 9,
+            fontWeight: 700,
+            background: 'rgba(0,245,255,0.08)',
+            border: '1px solid rgba(0,245,255,0.25)',
+            padding: '3px 7px',
+            textShadow: '0 0 8px rgba(0,245,255,0.5)',
           }}>POZ.{hero.level}</span>
-          {user && <span style={{ fontFamily: "'Press Start 2P', monospace", color: 'var(--text-muted)', fontSize: 5 }}>{user.username}</span>}
           {user && (
-            <button onClick={() => logout()} style={{
-              fontFamily: "'Press Start 2P', monospace",
-              color: 'var(--text-muted)', fontSize: 5,
-              background: 'none', border: 'none', cursor: 'pointer',
-            }}>WYJDŹ</button>
+            <>
+              <span style={{ fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', fontSize: 10 }}>
+                {user.username}
+              </span>
+              <button onClick={() => logout()} style={{
+                fontFamily: "'Orbitron', monospace",
+                color: 'rgba(255,45,120,0.6)', fontSize: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+                textShadow: '0 0 6px rgba(255,45,120,0.3)',
+              }}>WYJĄDŻ</button>
+            </>
           )}
-          <button onClick={handleReset} style={{ color: 'var(--text-muted)', fontSize: 11, background: 'none', border: 'none', cursor: 'pointer' }}>↩</button>
+          <button onClick={handleReset} style={{
+            color: 'rgba(255,45,120,0.4)', fontSize: 14,
+            background: 'none', border: 'none', cursor: 'pointer',
+          }}>↩</button>
         </div>
       </header>
 
