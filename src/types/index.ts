@@ -44,6 +44,7 @@ export interface Hero {
   voluntaryRestStartAt: number | null;
   beggingUntil: number | null;
   beggingReward: number | null;
+  beggingStartAt: number | null;
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
@@ -57,25 +58,6 @@ export interface Hero {
   hairColor: number;
   clothingColor: number;
   lastRespecAt: number | null;
-}
-
-export interface Guild {
-  id: string;
-  name: string;
-  tag: string;
-  leaderId: string;
-  createdAt: number;
-  members: Record<string, GuildMember>;
-  lastSiegeAt?: number;
-}
-
-export interface GuildMember {
-  uid: string;
-  username: string;
-  heroName: string;
-  level: number;
-  joinedAt: number;
-  role: 'leader' | 'officer' | 'member';
 }
 
 export interface Enemy {
@@ -194,6 +176,7 @@ export interface GameState {
   restHero: (minutes: number) => void;
   cancelRest: () => void;
   startBegging: (hours: number) => void;
+  cancelBegging: () => void;
   collectBegging: () => void;
   loadGame: () => void;
   saveGame: () => void;

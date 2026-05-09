@@ -96,7 +96,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   );
 }
 
-function BeggingTimer({ endsAt, reward }: { endsAt: number; reward: number }) {
+function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: { endsAt: number; reward: number; startAt: number; cancelBegging: () => void }) {
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -110,18 +110,30 @@ function BeggingTimer({ endsAt, reward }: { endsAt: number; reward: number }) {
   const m = Math.floor((remaining % 3600000) / 60000);
   const s = Math.floor((remaining % 60000) / 1000);
   const timeStr = h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`;
+  const totalDuration = Math.max(1, endsAt - startAt);
+  const elapsed = totalDuration - remaining;
+  const earnedNow = Math.floor(reward * Math.min(elapsed, totalDuration) / totalDuration);
+  const progressPct = Math.min(100, (elapsed / totalDuration) * 100);
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(6,10,18,0.97), rgba(4,8,14,0.99))',
       border: '1px solid rgba(30,50,80,0.5)',
       padding: '10px 12px',
-      display: 'flex', alignItems: 'center', gap: 10,
+      display: 'flex', flexDirection: 'column', gap: 8,
       boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
     }}>
-      <div style={{ fontSize: 22 }}>🙏</div>
-      <div>
-        <p style={{ ...PX(7), color: '#5070a0', marginBottom: 4 }}>✦ ŻEBRANIE — {timeStr}</p>
-        <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>Zarobisz +{reward}🪙</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ fontSize: 22 }}>🙏</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ ...PX(7), color: '#5070a0', marginBottom: 4 }}>✦ ŻEBRANIE — {timeStr}</p>
+          <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>+{earnedNow}/{reward}🪙</p>
+        </div>
+        <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 5, padding: '5px 8px', flexShrink: 0 }}>
+          ✕ Przerwij
+        </button>
+      </div>
+      <div className="pixel-bar">
+        <div className="pixel-bar-fill" style={{ width: `${progressPct}%`, background: '#3a5080' }} />
       </div>
     </div>
   );
@@ -185,6 +197,7 @@ export default function HeroCard() {
   const restHero = useGameStore(s => s.restHero);
   const cancelRest = useGameStore(s => s.cancelRest);
   const startBegging = useGameStore(s => s.startBegging);
+  const cancelBegging = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
   const inCombat = useGameStore(s => s.inCombat);
   const activeQuest = useGameStore(s => s.activeQuest);
@@ -323,7 +336,7 @@ export default function HeroCard() {
 
       {/* ── ŻEBRANIE ── */}
       {isBegging
-        ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} />
+        ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} startAt={hero.beggingStartAt ?? hero.beggingUntil!} cancelBegging={cancelBegging} />
         : beggingDone
           ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={collectBegging} />
           : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
