@@ -8,7 +8,7 @@ const RARITY_COLORS: Record<string, string> = {
   epic: '#cc44ff', legendary: '#ffd700',
 };
 const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKxc5x81Y', uncommon: 'NIEZWYKxc5x81Y', rare: 'RZADKI',
+  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
   epic: 'EPICKI', legendary: 'LEGENDARNY',
 };
 const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
@@ -23,7 +23,7 @@ const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const STAT_NAMES: Record<string, string> = {
   strength: 'Siła', dexterity: 'Zręczność',
-  intelligence: 'Wiedza', vitality: 'Żywotność',
+  intelligence: 'Celność', vitality: 'Żywotność',
 };
 
 function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {

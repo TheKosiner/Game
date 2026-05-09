@@ -200,7 +200,7 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
       boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
       <p style={{ ...ORB, fontSize: 9, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
-        🙏 ŻEBRANIE ZAKŁĆCZONE! +{reward}🪙
+        🙏 ŻEBRANIE ZAKOŃCZONE! +{reward}🪙
       </p>
       <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
         🪙 ODBIERZ JAŁMUŻNĘ
@@ -324,7 +324,7 @@ export default function HeroCard() {
             padding: '5px 0', ...MONO, fontSize: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}>
-            🎨 WYGŁĄD
+            🎨 WYGLĄD
           </button>
         </div>
 
@@ -407,10 +407,10 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>◈ STATYSTYKI</p>
         {([
-          { attr: 'strength',     icon: '💪', name: 'Moc ciała',  desc: '↑ obrażenia',     color: '#ff2d78' },
-          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ kryt',           color: '#00f5ff' },
-          { attr: 'intelligence', icon: '🧠', name: 'Wiedza',     desc: '↑ obrażenia mag.', color: '#9d4edd' },
-          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona',   color: '#ff4444' },
+          { attr: 'strength',     icon: '💪', name: 'Moc ciała',  desc: '↑ obrażenia',       color: '#ff2d78' },
+          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ kryt',             color: '#00f5ff' },
+          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ celność strzałów', color: '#9d4edd' },
+          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona',     color: '#ff4444' },
         ] as const).map(({ attr, icon, name, desc, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
