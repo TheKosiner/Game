@@ -24,8 +24,8 @@ function timeAgo(ts: number): string {
 
 function InviteCard({ invite, onAccept, onDecline }: {
   invite: GuildInvite;
-  onAccept: () => void;
-  onDecline: () => void;
+  onAccept: () => Promise<void>;
+  onDecline: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
   async function handle(fn: () => Promise<void>) {
