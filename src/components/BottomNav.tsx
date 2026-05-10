@@ -1,4 +1,4 @@
-export type Tab = 'hero' | 'dungeon' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking';
+export type Tab = 'hero' | 'dungeon' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail';
 
 interface Props {
   active: Tab;
@@ -13,6 +13,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'pvp',     label: 'ARENA',   icon: '🏆' },
   { id: 'guild',   label: 'GILDIA',  icon: '🏰' },
   { id: 'ranking', label: 'TOP',     icon: '👑' },
+  { id: 'mail',    label: 'POCZTA',  icon: '📨' },
 ];
 
 export default function BottomNav({ active, onChange }: Props) {

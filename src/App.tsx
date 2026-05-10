@@ -15,6 +15,7 @@ import ShopPanel from './components/ShopPanel';
 import LeaderboardPanel from './components/LeaderboardPanel';
 import PvpPanel from './components/PvpPanel';
 import GuildPanel from './components/GuildPanel';
+import MailPanel from './components/MailPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 
 export default function App() {
@@ -160,6 +161,7 @@ export default function App() {
         {tab === 'pvp'     && <PvpPanel />}
         {tab === 'guild'   && <GuildPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
+        {tab === 'mail'    && <MailPanel />}
       </main>
 
       <BottomNav active={tab} onChange={setTab} />

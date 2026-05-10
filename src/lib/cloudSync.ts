@@ -203,6 +203,17 @@ export interface GuildInvite {
   createdAt: number;
 }
 
+export interface MailMessage {
+  id: string;
+  fromUid: string;
+  fromUsername: string;
+  toUid: string;
+  toUsername: string;
+  body: string;
+  createdAt: number;
+  read: boolean;
+}
+
 export async function createGuild(
   leaderUid: string,
   leaderUsername: string,
@@ -560,4 +571,41 @@ export async function claimTerritoryReward(
     tx.update(ref, { lastRewardAt: now });
     return { gold: 0, xp: 0 };
   });
+}
+
+// ── Mail ─────────────────────────────────────────────────────────────────────
+
+export async function sendMail(
+  fromUid: string,
+  fromUsername: string,
+  toUid: string,
+  toUsername: string,
+  body: string,
+): Promise<void> {
+  if (!db) return;
+  await addDoc(collection(db, 'mail'), {
+    fromUid, fromUsername, toUid, toUsername, body,
+    createdAt: Date.now(), read: false,
+  });
+}
+
+export async function getMyMail(uid: string): Promise<MailMessage[]> {
+  if (!db) return [];
+  const snap = await getDocs(query(
+    collection(db, 'mail'),
+    where('toUid', '==', uid),
+    orderBy('createdAt', 'desc'),
+    limit(50),
+  ));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as MailMessage));
+}
+
+export async function markMailRead(mailId: string): Promise<void> {
+  if (!db) return;
+  await updateDoc(doc(db, 'mail', mailId), { read: true });
+}
+
+export async function deleteMail(mailId: string): Promise<void> {
+  if (!db) return;
+  await deleteDoc(doc(db, 'mail', mailId));
 }
