@@ -26,8 +26,8 @@ function timeAgo(ts: number): string {
 
 function InviteCard({ invite, onAccept, onDecline }: {
   invite: GuildInvite;
-  onAccept: () => void;
-  onDecline: () => void;
+  onAccept: () => Promise<void>;
+  onDecline: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
   async function handle(fn: () => Promise<void>) {
@@ -292,7 +292,6 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
 export default function MailPanel() {
   const user = useAuthStore(s => s.user);
   const hero = useGameStore(s => s.hero);
-  const equipItem = useGameStore(s => s.equipItem);
 
   const [view, setView] = useState<'inbox' | 'compose'>('inbox');
   const [messages, setMessages] = useState<MailMessage[]>([]);
