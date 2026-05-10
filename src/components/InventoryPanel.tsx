@@ -37,6 +37,9 @@ function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; 
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+          <span style={{ ...MONO, fontSize: 7, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
+            {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
+          </span>
           <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{item.name}</p>
           <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
             {RARITY_LABEL[item.rarity]}

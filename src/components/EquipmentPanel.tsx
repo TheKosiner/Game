@@ -11,6 +11,9 @@ const RARITY_LABEL: Record<string, string> = {
   common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
   epic: 'EPICKI', legendary: 'LEGENDARNY',
 };
+const SLOT_SHORT: Record<string, string> = {
+  weapon: 'BROŃ', armor: 'ZBR', helmet: 'HEŁM', boots: 'BUTY', ring: 'IMPL', amulet: 'AMU',
+};
 const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
   { slot: 'helmet', label: 'Hełm',      icon: '⛑' },
   { slot: 'weapon', label: 'Broń',      icon: '⚔' },
@@ -47,7 +50,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <ItemIcon item={item} scale={3} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ ...ORB, fontSize: 9, color: rc, marginBottom: 3, textShadow: `0 0 8px ${rc}` }}>{item.name}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+            <span style={{ ...MONO, fontSize: 7, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 4px', flexShrink: 0 }}>
+              {SLOT_SHORT[item.slot] ?? item.slot.toUpperCase()}
+            </span>
+            <p style={{ ...ORB, fontSize: 9, color: rc, textShadow: `0 0 8px ${rc}` }}>{item.name}</p>
+          </div>
           <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
             {RARITY_LABEL[item.rarity]}
           </span>
@@ -108,7 +116,12 @@ function ItemBadge({ item, onSelect }: { item: Item; onSelect: () => void }) {
         <ItemIcon item={item} scale={2} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ ...MONO, fontSize: 10, color: rc, marginBottom: 2 }}>{item.name}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+          <span style={{ ...MONO, fontSize: 6, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
+            {SLOT_SHORT[item.slot] ?? item.slot.toUpperCase()}
+          </span>
+          <p style={{ ...MONO, fontSize: 10, color: rc }}>{item.name}</p>
+        </div>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Poz. {item.level}</p>
       </div>
       <span style={{ color: 'var(--text-dim)', fontSize: 10, flexShrink: 0 }}>ℹ</span>
