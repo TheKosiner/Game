@@ -7,12 +7,12 @@ const RARITY_COLORS: Record<string, string> = {
   epic: '#cc44ff', legendary: '#ffd700',
 };
 const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
+  common: 'ZWYKLY', uncommon: 'NIEZWYKLY', rare: 'RZADKI',
   epic: 'EPICKI', legendary: 'LEGENDARNY',
 };
 const SLOT_LABEL: Record<string, string> = {
-  weapon: 'Broń', armor: 'Zbroja', helmet: 'Hełm',
-  boots: 'Buty', ring: 'Pierścień', amulet: 'Amulet',
+  weapon: 'Bron', armor: 'Zbroja', helmet: 'Helm',
+  boots: 'Buty', ring: 'Pierscień', amulet: 'Amulet',
 };
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -37,6 +37,9 @@ function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; 
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+          <span style={{ ...MONO, fontSize: 7, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
+            {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
+          </span>
           <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{item.name}</p>
           <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
             {RARITY_LABEL[item.rarity]}
@@ -46,13 +49,13 @@ function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; 
           {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
         </p>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>
-          {statEntries.map(([k, v]) => `+${v} ${{ strength: 'Moc', dexterity: 'Zwin', intelligence: 'Cel', vitality: 'Żyw' }[k] ?? k}`).join('  ')}
+          {statEntries.map(([k, v]) => `+${v} ${{ strength: 'Moc', dexterity: 'Zwin', intelligence: 'Cel', vitality: 'Zyw' }[k] ?? k}`).join('  ')}
           {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
           {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
         </p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-        <button onClick={onEquip} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>Załóż</button>
+        <button onClick={onEquip} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>Zaloz</button>
         <button onClick={onSell}  className="btn btn-secondary" style={{ fontSize: 7, padding: '5px 8px' }}>🪙{item.goldValue}</button>
       </div>
     </div>
@@ -80,7 +83,7 @@ export default function InventoryPanel() {
       {inventory.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
           <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>PLECAK PUSTY</p>
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Idź walczyć!</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Idz walczyc!</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 400, overflowY: 'auto', paddingRight: 2 }}>
