@@ -13,9 +13,11 @@ import { getHeroAttack, getHeroDefense } from '../utils/combat';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function siegeDmg(atk: number, def: number): number {
+function siegeDmg(atk: number, def: number, critChance = 0.08): number {
   const base = atk * atk / (atk + Math.max(1, def));
-  return Math.max(1, Math.round(base * (0.85 + Math.random() * 0.3)));
+  const isCrit = Math.random() < critChance;
+  const variance = 0.7 + Math.random() * 0.6;
+  return Math.max(1, Math.round(base * variance * (isCrit ? 2 : 1)));
 }
 
 // ── Combat types ──────────────────────────────────────────────────────────────
