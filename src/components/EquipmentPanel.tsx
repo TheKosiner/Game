@@ -8,25 +8,25 @@ const RARITY_COLORS: Record<string, string> = {
   epic: '#cc44ff', legendary: '#ffd700',
 };
 const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKLY', uncommon: 'NIEZWYKLY', rare: 'RZADKI',
+  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
   epic: 'EPICKI', legendary: 'LEGENDARNY',
 };
 const SLOT_SHORT: Record<string, string> = {
-  weapon: 'BRON', armor: 'ZBR', helmet: 'HELM', boots: 'BUTY', ring: 'IMPL', amulet: 'AMU',
+  weapon: 'BROŃ', armor: 'ZBR', helmet: 'HEŁM', boots: 'BUTY', ring: 'IMPL', amulet: 'AMU',
 };
 const SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
-  { slot: 'helmet', label: 'Helm',      icon: '⛑' },
-  { slot: 'weapon', label: 'Bron',      icon: '⚔' },
+  { slot: 'helmet', label: 'Hełm',      icon: '⛑' },
+  { slot: 'weapon', label: 'Broń',      icon: '⚔' },
   { slot: 'armor',  label: 'Zbroja',    icon: '🛡' },
-  { slot: 'ring',   label: 'Pierscień', icon: '💍' },
+  { slot: 'ring',   label: 'Pierścień', icon: '💍' },
   { slot: 'boots',  label: 'Buty',      icon: '👢' },
   { slot: 'amulet', label: 'Amulet',    icon: '💿' },
 ];
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const STAT_NAMES: Record<string, string> = {
-  strength: 'Sila', dexterity: 'Zrecznosc',
-  intelligence: 'Celnosc', vitality: 'Zywotnosc',
+  strength: 'Siła', dexterity: 'Zręczność',
+  intelligence: 'Celność', vitality: 'Żywotność',
 };
 
 function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {
@@ -84,7 +84,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Brak bonusow statystyk</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Brak bonusów statystyk</p>
         )}
       </div>
 

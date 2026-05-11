@@ -199,6 +199,17 @@ export default function ShopPanel() {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
+                    <span style={{
+                      fontFamily: "'Share Tech Mono', monospace",
+                      fontSize: 5,
+                      color: 'var(--text-muted)',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      padding: '1px 3px',
+                      flexShrink: 0,
+                    }}>
+                      {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
+                    </span>
                     <p style={{ color: rarityColor, fontSize: 7, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
                       {item.name}
                     </p>

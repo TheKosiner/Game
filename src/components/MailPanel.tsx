@@ -22,6 +22,8 @@ function timeAgo(ts: number): string {
   return 'teraz';
 }
 
+// ── Invite card ──────────────────────────────────────────────────────────────
+
 function InviteCard({ invite, onAccept, onDecline }: {
   invite: GuildInvite;
   onAccept: () => Promise<void>;
@@ -68,12 +70,14 @@ function InviteCard({ invite, onAccept, onDecline }: {
           className="btn btn-secondary"
           style={{ flex: 1, fontSize: 6, padding: '6px' }}
         >
-          ✕ Odrzuc
+          ✕ Odrzuć
         </button>
       </div>
     </div>
   );
 }
+
+// ── Message card ─────────────────────────────────────────────────────────────
 
 function MessageCard({ msg, onDelete, onMarkRead }: {
   msg: MailMessage;
@@ -133,13 +137,15 @@ function MessageCard({ msg, onDelete, onMarkRead }: {
             className="btn btn-secondary"
             style={{ fontSize: 6, padding: '4px 10px' }}
           >
-            🗑 Usun
+            🗑 Usuń
           </button>
         </div>
       )}
     </div>
   );
 }
+
+// ── Compose ──────────────────────────────────────────────────────────────────
 
 function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) {
   const user = useAuthStore(s => s.user);
@@ -181,15 +187,16 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ ...PX(7), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>
-        ✏ NAPISZ WIADOMOSC
+        ✏ NAPISZ WIADOMOŚĆ
       </p>
 
       {done && (
         <div style={{ background: 'rgba(20,60,20,0.9)', border: '1px solid rgba(60,160,60,0.5)', padding: '10px 14px', textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: '#60c060' }}>✓ Wiadomosc wyslana!</p>
+          <p style={{ ...PX(6), color: '#60c060' }}>✓ Wiadomość wysłana!</p>
         </div>
       )}
 
+      {/* Recipient */}
       <div style={{ position: 'relative' }}>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>Odbiorca</p>
         {recipient ? (
@@ -209,7 +216,7 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder={loadingPlayers ? 'Ladowanie graczy...' : 'Szukaj po nazwie gracza lub bohatera...'}
+              placeholder={loadingPlayers ? 'Ładowanie graczy...' : 'Szukaj po nazwie gracza lub bohatera...'}
               disabled={loadingPlayers}
               style={{
                 width: '100%', boxSizing: 'border-box',
@@ -246,14 +253,15 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
         )}
       </div>
 
+      {/* Body */}
       <div>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>Tresc</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>Treść</p>
         <textarea
           value={body}
           onChange={e => setBody(e.target.value)}
           maxLength={500}
           rows={5}
-          placeholder="Wpisz wiadomosc..."
+          placeholder="Wpisz wiadomość..."
           style={{
             width: '100%', boxSizing: 'border-box',
             background: 'var(--bg-inset)', border: '1px solid var(--border-main)',
@@ -273,11 +281,13 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
         className="btn btn-primary"
         style={{ width: '100%', fontSize: 7, padding: '10px', opacity: (!recipient || !body.trim()) ? 0.5 : 1 }}
       >
-        {sending ? '⏳ Wysylanie...' : '📨 Wyslij'}
+        {sending ? '⏳ Wysyłanie...' : '📨 Wyślij'}
       </button>
     </div>
   );
 }
+
+// ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function MailPanel() {
   const user = useAuthStore(s => s.user);
@@ -308,7 +318,7 @@ export default function MailPanel() {
   async function handleAcceptInvite(invite: GuildInvite) {
     if (!user) return;
     await acceptInvite(invite.id, invite.guildId, user.uid, user.username, hero.name, hero.level);
-    setInviteResult(`Dolaczyles do gildii [${invite.guildTag}] ${invite.guildName}!`);
+    setInviteResult(`Dołączyłeś do gildii [${invite.guildTag}] ${invite.guildName}!`);
     setTimeout(() => setInviteResult(null), 3000);
     await reload();
   }
@@ -332,13 +342,14 @@ export default function MailPanel() {
   if (!user) {
     return (
       <div className="card p-3" style={{ textAlign: 'center', padding: 30 }}>
-        <p style={{ ...PX(6), color: 'var(--text-muted)' }}>Zaloguj sie, aby uzywac poczty.</p>
+        <p style={{ ...PX(6), color: 'var(--text-muted)' }}>Zaloguj się, aby używać poczty.</p>
       </div>
     );
   }
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>
@@ -357,6 +368,7 @@ export default function MailPanel() {
         <button onClick={reload} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>⟳</button>
       </div>
 
+      {/* Tabs */}
       <div style={{ display: 'flex', gap: 6 }}>
         {(['inbox', 'compose'] as const).map(v => (
           <button
@@ -372,22 +384,25 @@ export default function MailPanel() {
         ))}
       </div>
 
+      {/* Invite result banner */}
       {inviteResult && (
         <div style={{ background: 'rgba(20,50,10,0.9)', border: '1px solid rgba(40,120,40,0.5)', padding: '8px 12px', textAlign: 'center' }}>
           <p style={{ ...PX(5), color: '#60c060' }}>{inviteResult}</p>
         </div>
       )}
 
+      {/* Content */}
       {view === 'inbox' ? (
         loading ? (
-          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ladowanie...</p>
+          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
         ) : totalCount === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <p style={{ fontSize: 32, marginBottom: 10 }}>📭</p>
-            <p style={{ ...PX(6), color: 'var(--text-muted)' }}>Brak wiadomosci</p>
+            <p style={{ ...PX(6), color: 'var(--text-muted)' }}>Brak wiadomości</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Guild invites first */}
             {invites.length > 0 && (
               <>
                 <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>— ZAPROSZENIA DO GILDII —</p>
@@ -401,9 +416,11 @@ export default function MailPanel() {
                 ))}
               </>
             )}
+
+            {/* Messages */}
             {messages.length > 0 && (
               <>
-                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginTop: invites.length > 0 ? 4 : 0 }}>— WIADOMOSCI —</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginTop: invites.length > 0 ? 4 : 0 }}>— WIADOMOŚCI —</p>
                 {messages.map(msg => (
                   <MessageCard
                     key={msg.id}

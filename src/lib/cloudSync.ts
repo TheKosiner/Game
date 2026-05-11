@@ -30,6 +30,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   const { class: _cls, ...heroClean } = hero as any;
   const now = Date.now();
 
+  // Public leaderboard data — no saveData, no email, no private fields
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
@@ -48,6 +49,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     updatedAt: now,
   }, { merge: true });
 
+  // Private save data — only owner can read
   await setDoc(doc(db, 'saves', uid), {
     hero: heroClean,
     activeQuest,
@@ -80,17 +82,26 @@ function migrateHeroFromRaw(raw: any) {
   };
 }
 
+/** true = loaded from cloud, false = local is newer (use loadGame), null = no save exists (new account) */
 export async function loadFromCloud(uid: string): Promise<boolean | null> {
   if (!db) return null;
+
+  // Read from private saves collection
   const saveSnap = await getDoc(doc(db, 'saves', uid));
+
+  // Fall back to legacy saveData in players doc if no saves doc yet
   const legacySnap = !saveSnap.exists() ? await getDoc(doc(db, 'players', uid)) : null;
   const raw = saveSnap.exists()
     ? saveSnap.data()
     : legacySnap?.data()?.saveData;
+
   if (!raw?.hero) return null;
+
   const cloudTs: number = saveSnap.exists()
     ? (saveSnap.data().updatedAt ?? 0)
     : (legacySnap?.data()?.updatedAt ?? 0);
+
+  // Prefer localStorage only if it belongs to this user and is newer
   try {
     const localRaw = localStorage.getItem('realm_of_valor_save');
     if (localRaw) {
@@ -98,6 +109,7 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
       if (localSave.uid === uid && (localSave.lastSaved ?? 0) > cloudTs) return false;
     }
   } catch { /* ignore */ }
+
   const hero = migrateHeroFromRaw(raw.hero);
   useGameStore.setState({
     hero,
@@ -156,6 +168,8 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
   const snap = await getDocs(q);
   return snap.docs.map(d => d.data() as PvpFightRecord);
 }
+
+// ── GUILDS ────────────────────────────────────────────────────────────────
 
 export interface GuildMemberData {
   username: string;
@@ -259,6 +273,7 @@ export async function inviteToGuild(
   toUsername: string,
 ): Promise<void> {
   if (!db) return;
+  // Avoid duplicate invites
   const existing = await getDocs(query(
     collection(db, 'guildInvites'),
     where('guildId', '==', guildId),
@@ -301,6 +316,7 @@ export async function acceptInvite(
     guildId,
     guildTag: guildSnap.data().tag,
   }, { merge: true });
+  // Remove all invites for this user
   const allInvites = await getDocs(query(collection(db, 'guildInvites'), where('toUid', '==', uid)));
   for (const d of allInvites.docs) await deleteDoc(d.ref);
 }
@@ -332,8 +348,10 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   for (const uid of Object.keys(guild.members)) {
     await updateDoc(doc(db, 'players', uid), { guildId: deleteField(), guildTag: deleteField() });
   }
+  // Remove pending invites
   const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
   for (const d of invites.docs) await deleteDoc(d.ref);
+  // Release any territories owned by this guild
   const ownedTerritories = await getDocs(query(collection(db, 'territories'), where('guildId', '==', guildId)));
   for (const d of ownedTerritories.docs) {
     await setDoc(d.ref, {
@@ -347,6 +365,8 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   await deleteDoc(doc(db, 'guilds', guildId));
 }
 
+// ── TERRITORIES ───────────────────────────────────────────────────────────────
+
 export interface TerritoryState {
   id: string;
   guildId: string | null;
@@ -357,6 +377,7 @@ export interface TerritoryState {
   expiresAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
+  // Cooperative siege fields
   siegeGuildId: string | null;
   siegeGuildTag: string | null;
   siegeCurrentHp: number | null;
@@ -372,35 +393,45 @@ const EMPTY_TERRITORY = {
   siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
 };
 
-const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000;
+const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2h stale siege can be overwritten
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
   if (!db) return {};
   const snap = await getDocs(collection(db, 'territories'));
   const result: Record<string, TerritoryState> = {};
+
+  // Collect unique guild IDs referenced by territories
   const guildIds = new Set<string>();
   snap.docs.forEach(d => {
     const data = d.data() as TerritoryState;
     if (data.guildId) guildIds.add(data.guildId);
     if (data.siegeGuildId) guildIds.add(data.siegeGuildId);
   });
+
+  // Check which guilds still exist
   const existingGuilds = new Set<string>();
   await Promise.all([...guildIds].map(async id => {
     const g = await getDoc(doc(db!, 'guilds', id));
     if (g.exists()) existingGuilds.add(id);
   }));
+
+  // Build result, auto-cleaning orphaned ownership/siege data and expired territories
   const now = Date.now();
   const expiryWrites: Promise<void>[] = [];
+
   await Promise.all(snap.docs.map(async d => {
     const data = { id: d.id, ...d.data() } as TerritoryState;
     let dirty = false;
+
+    // Lazy expiry: reset territory to neutral if expiresAt has passed
     if (data.guildId && data.expiresAt !== null && data.expiresAt < now) {
       Object.assign(data, EMPTY_TERRITORY, { id: d.id });
       expiryWrites.push(setDoc(d.ref, { ...EMPTY_TERRITORY }));
       result[d.id] = data;
       return;
     }
+
     if (data.guildId && !existingGuilds.has(data.guildId)) {
       Object.assign(data, EMPTY_TERRITORY, { id: d.id });
       dirty = true;
@@ -412,13 +443,17 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
       data.siegeLastHitAt = null;
       dirty = true;
     }
+
     if (dirty) await setDoc(d.ref, data);
     result[d.id] = data;
   }));
+
   Promise.all(expiryWrites).catch(() => {});
+
   return result;
 }
 
+/** Start or rejoin a siege. Returns current siege HP, or null if blocked by another guild. */
 export async function initOrJoinSiege(
   territoryId: string,
   attackingGuildId: string,
@@ -431,9 +466,11 @@ export async function initOrJoinSiege(
     const snap = await tx.get(ref);
     const data = snap.exists() ? snap.data() as TerritoryState : {} as TerritoryState;
     const now = Date.now();
+    // Active siege by same guild — rejoin
     if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0) {
       return { currentHp: data.siegeCurrentHp! };
     }
+    // Active siege by different guild that hasn't gone stale — blocked
     if (
       data.siegeGuildId && data.siegeGuildId !== attackingGuildId &&
       (data.siegeCurrentHp ?? 0) > 0 &&
@@ -442,6 +479,7 @@ export async function initOrJoinSiege(
     ) {
       return { blocked: true as const, byTag: data.siegeGuildTag ?? '?' };
     }
+    // Start fresh siege
     tx.set(ref, {
       ...(snap.exists() ? data : {}),
       siegeGuildId: attackingGuildId,
@@ -454,6 +492,7 @@ export async function initOrJoinSiege(
   });
 }
 
+/** Apply damage dealt in one player session. Returns remaining siege HP. */
 export async function commitSiegeDamage(
   territoryId: string,
   attackingGuildId: string,
@@ -482,14 +521,19 @@ export async function captureTerritory(
 ): Promise<void> {
   if (!db) return;
   await setDoc(doc(db, 'territories', territoryId), {
-    guildId, guildName, guildTag,
+    guildId,
+    guildName,
+    guildTag,
     capturedAt: Date.now(),
     lastRewardAt: null,
     expiresAt: Date.now() + WEEK_MS,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
-    siegeGuildId: null, siegeGuildTag: null,
-    siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+    siegeGuildId: null,
+    siegeGuildTag: null,
+    siegeCurrentHp: null,
+    siegeMaxHp: null,
+    siegeLastHitAt: null,
   });
 }
 
@@ -529,7 +573,7 @@ export async function claimTerritoryReward(
   });
 }
 
-// Mail
+// ── Mail ─────────────────────────────────────────────────────────────────────
 
 export async function sendMail(
   fromUid: string,

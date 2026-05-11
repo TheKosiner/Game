@@ -39,6 +39,7 @@ export function getRarityPalette(rarity: Rarity): Record<string, string> {
 
 const SPRITES: Record<string, string[][]> = {
 
+  // Plasma/mono-filament blade — vertical, tech crossguard
   energy_blade: parse([
     '.....LL.....',
     '....kLMk....',
@@ -54,6 +55,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Compact pistol / SMG — side view
   gun: parse([
     '............',
     '..kkkkkkk...',
@@ -69,6 +71,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Long-barrel sniper with scope
   sniper_rifle: parse([
     '............',
     '.kkkkkkkkk..',
@@ -84,6 +87,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Shock baton — vertical rod with electric tip
   baton: parse([
     '....bbb.....',
     '...kbbbk....',
@@ -99,6 +103,7 @@ const SPRITES: Record<string, string[][]> = {
     '....kkkk....',
   ]),
 
+  // Diagonal railgun / electro-pike
   railgun: parse([
     '.........kLL',
     '........kLMM',
@@ -114,6 +119,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Compact nano-knife — diagonal blade
   nano_knife: parse([
     '...........L',
     '..........LM',
@@ -129,6 +135,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Ballistic vest — chest plate
   vest: parse([
     '............',
     '..kkkkkk....',
@@ -144,6 +151,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Heavy exoskeleton — chest plate with shoulder pads
   exo_suit: parse([
     '.kkkkkkkk...',
     'kMMMMMMMk...',
@@ -159,6 +167,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Cyberpunk trenchcoat — hacker/netrunner
   hacker_coat: parse([
     '..kkkkkk....',
     '.kMMMMMMk...',
@@ -174,6 +183,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Cyber visor / goggles
   visor: parse([
     '............',
     '.kkkkkkkk...',
@@ -189,6 +199,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Tactical combat helmet — full head coverage
   tac_helmet: parse([
     '..kkkkkk....',
     '.kMMMMMMk...',
@@ -204,6 +215,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Half-face cyber mask — ventilation grille
   cyber_mask: parse([
     '............',
     '............',
@@ -219,6 +231,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Neural implant chip — head slot
   neural_implant: parse([
     '............',
     '...kkkkkk...',
@@ -234,6 +247,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Armored cyber boots — side view
   cyber_boots: parse([
     '............',
     '..kkkk......',
@@ -249,6 +263,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Injected muscle/reflex implant — ring slot
   implant: parse([
     '.....kk.....',
     '....kLLk....',
@@ -264,6 +279,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Circuit data chip — ring slot
   data_chip: parse([
     '............',
     '..kkkkkkkk..',
@@ -279,6 +295,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Hexagonal data storage core — amulet slot
   data_core: parse([
     '....kkkk....',
     '...kMLLMk...',
@@ -294,6 +311,7 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Satellite dish signal amplifier — amulet slot
   signal_amp: parse([
     '....kMk.....',
     '....kMk.....',
