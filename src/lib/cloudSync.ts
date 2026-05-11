@@ -179,6 +179,7 @@ export interface GuildMemberData {
   level: number;
   role: 'leader' | 'member';
   joinedAt: number;
+  portrait?: 0 | 1;
 }
 
 export interface Guild {
@@ -224,6 +225,7 @@ export async function createGuild(
   name: string,
   tag: string,
   description: string,
+  leaderPortrait?: 0 | 1,
 ): Promise<string> {
   if (!db) throw new Error('No DB');
   const now = Date.now();
@@ -241,6 +243,7 @@ export async function createGuild(
         level: leaderLevel,
         role: 'leader',
         joinedAt: now,
+        portrait: leaderPortrait ?? 0,
       },
     },
   });
@@ -306,13 +309,14 @@ export async function acceptInvite(
   username: string,
   heroName: string,
   level: number,
+  portrait?: 0 | 1,
 ): Promise<void> {
   if (!db) return;
   const now = Date.now();
   const guildSnap = await getDoc(doc(db, 'guilds', guildId));
   if (!guildSnap.exists()) return;
   await updateDoc(doc(db, 'guilds', guildId), {
-    [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now },
+    [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now, portrait: portrait ?? 0 },
   });
   await setDoc(doc(db, 'players', uid), {
     guildId,
