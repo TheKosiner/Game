@@ -4,7 +4,15 @@ import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
 
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+
+const VARIANTS = [
+  { key: 'xp',   label: '⚡ XP',    xpMult: 1.7, goldMult: 0.3, color: '#4488ff', bg: 'rgba(68,136,255,0.08)', border: 'rgba(68,136,255,0.3)' },
+  { key: 'bal',  label: '⚖ Balans', xpMult: 1.0, goldMult: 1.0, color: '#aaa',    bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.12)' },
+  { key: 'gold', label: '🪙 Złoto',  xpMult: 0.3, goldMult: 1.7, color: '#ffd700', bg: 'rgba(255,215,0,0.08)', border: 'rgba(255,215,0,0.3)' },
+] as const;
 
 function formatTime(ms: number): string {
   if (ms <= 0) return 'Gotowe!';
@@ -43,15 +51,15 @@ export default function QuestPanel() {
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>📜 ZADANIA</p>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>ZADANIA</p>
         <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
-          {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} dziś
+          {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} dzis
         </p>
       </div>
 
       {limitReached && !activeQuest && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit zadań wyczerpany!</p>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit zadan wyczerpany!</p>
         </div>
       )}
 
@@ -82,7 +90,7 @@ export default function QuestPanel() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canCollect ? 10 : 0 }}>
             <p style={{ ...PX(5), color: canCollect ? '#6aaa30' : 'var(--text-dim)' }}>
-              {canCollect ? '✓ Gotowe do odbioru!' : `⏳ ${formatTime(remaining)}`}
+              {canCollect ? 'Gotowe do odbioru!' : `${formatTime(remaining)}`}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <span style={{ ...PX(5), color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
@@ -92,7 +100,7 @@ export default function QuestPanel() {
 
           {canCollect && (
             <button onClick={collectQuest} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
-              🎁 Odbierz nagrodę!
+              Odbierz nagrode!
             </button>
           )}
         </div>
@@ -100,15 +108,15 @@ export default function QuestPanel() {
 
       {isResting && !activeQuest && (
         <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: '#5070a0' }}>💤 Odpoczywasz — wróć gdy odzyskasz siły</p>
+          <p style={{ ...PX(6), color: '#5070a0' }}>Odpoczywasz - wróc gdy odzyskasz sily</p>
         </div>
       )}
 
       {!activeQuest && !limitReached && !isResting && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 420, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 480, overflowY: 'auto' }}>
           {available.length === 0 ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
-              Brak zadań dla twojego poziomu.
+              Brak zadan dla twojego poziomu.
             </p>
           ) : (
             available.map((quest: Quest) => {
@@ -118,23 +126,46 @@ export default function QuestPanel() {
                   background: 'var(--bg-inset)',
                   border: '1px solid var(--border-dark)',
                   padding: 10,
+                  display: 'flex', flexDirection: 'column', gap: 8,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                    <span style={{ fontSize: 18 }}>{quest.emoji}</span>
+                  {/* Quest header */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ fontSize: 18, flexShrink: 0 }}>{quest.emoji}</span>
                     <div style={{ flex: 1 }}>
-                      <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 4 }}>{quest.name}</p>
-                      <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{quest.description}</p>
+                      <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 3 }}>{quest.name}</p>
+                      <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 3 }}>{quest.description}</p>
+                      <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <span style={{ ...PX(5), color: 'var(--gold-bright)' }}>🪙 {quest.goldReward}</span>
-                      <span style={{ ...PX(5), color: '#5070a0' }}>✦ {quest.xpReward} XP</span>
-                      <span style={{ ...PX(5), color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
-                    </div>
-                    <button onClick={() => startQuest(quest)} className="btn btn-primary" style={{ fontSize: 5, padding: '6px 10px' }}>
-                      Start ▶
-                    </button>
+
+                  {/* 3 variant buttons */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
+                    {VARIANTS.map(v => {
+                      const xp   = Math.round(quest.xpReward * v.xpMult);
+                      const gold = Math.round(quest.goldReward * v.goldMult);
+                      return (
+                        <button
+                          key={v.key}
+                          onClick={() => startQuest({
+                            ...quest,
+                            id: `${quest.id}_${v.key}`,
+                            xpReward: xp,
+                            goldReward: gold,
+                          } as Quest)}
+                          style={{
+                            background: v.bg,
+                            border: `1px solid ${v.border}`,
+                            padding: '6px 4px',
+                            cursor: 'pointer',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                          }}
+                        >
+                          <span style={{ ...ORB, fontSize: 7, color: v.color }}>{v.label}</span>
+                          <span style={{ ...MONO, fontSize: 8, color: '#5070a0' }}>+{xp} XP</span>
+                          <span style={{ ...MONO, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               );

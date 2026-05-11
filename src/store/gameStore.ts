@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { getItemById } from '../data/items';
+import { getItemById, ALL_ITEMS } from '../data/items';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const SAVE_KEY = 'realm_of_valor_save';
@@ -12,6 +12,15 @@ export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
+
+function tryLegendaryDrop(heroLevel: number, inventory: Item[], setHero: (h: Item[]) => void, log: (msg: string, t: string) => void): void {
+  if (Math.random() >= 0.008) return;
+  const pool = ALL_ITEMS.filter(i => i.rarity === 'legendary' && i.level <= heroLevel + 8);
+  if (!pool.length || inventory.length >= MAX_INVENTORY) return;
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  setHero([...inventory, item]);
+  log(`✨ LEGENDARNY DROP: ${item.emoji} ${item.name}!`, 'loot');
+}
 
 function simDmg(atk: number, def: number): number {
   const base = atk * atk / (atk + Math.max(1, def));
@@ -253,6 +262,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           get().addCombatLog(`Zdobywasz: ${lootItem.emoji} ${lootItem.name}!`, 'loot');
         }
       }
+      tryLegendaryDrop(get().hero.level, get().hero.inventory, inv => set({ hero: { ...get().hero, inventory: inv } }), get().addCombatLog);
 
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
@@ -324,6 +334,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           get().addCombatLog(`Zdobywasz: ${lootItem.emoji} ${lootItem.name}!`, 'loot');
         }
       }
+      tryLegendaryDrop(get().hero.level, get().hero.inventory, inv => set({ hero: { ...get().hero, inventory: inv } }), get().addCombatLog);
 
       const fresh = get().hero;
       set({ hero: { ...fresh, hp: Math.min(heroHp, fresh.maxHp) } });
