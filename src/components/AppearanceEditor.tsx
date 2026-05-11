@@ -4,8 +4,8 @@ import { useGameStore } from '../store/gameStore';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 const PORTRAITS = [
-  { index: 0 as const, src: '/portraits/male.jpg',   label: 'MĘŻCZYZNA' },
-  { index: 1 as const, src: '/portraits/female.jpg', label: 'KOBIETA'   },
+  { index: 0 as const, src: '/portraits/male.png',   label: 'MĘŻCZYZNA' },
+  { index: 1 as const, src: '/portraits/female.png', label: 'KOBIETA'   },
 ];
 
 interface Props { onClose: () => void; }
