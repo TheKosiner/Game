@@ -13,7 +13,7 @@ export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
 
-function tryLegendaryDrop(heroLevel: number, inventory: Item[], setHero: (h: Item[]) => void, log: (msg: string, t: string) => void): void {
+function tryLegendaryDrop(heroLevel: number, inventory: Item[], setHero: (h: Item[]) => void, log: (msg: string, t: CombatLog['type']) => void): void {
   if (Math.random() >= 0.008) return;
   const pool = ALL_ITEMS.filter(i => i.rarity === 'legendary' && i.level <= heroLevel + 8);
   if (!pool.length || inventory.length >= MAX_INVENTORY) return;
