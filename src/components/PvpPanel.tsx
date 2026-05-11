@@ -3,7 +3,8 @@ import { getLeaderboard, getPvpHistory, addPvpFight, type LeaderboardEntry, type
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
-function portraitSrc(p: number | undefined) { return p === 1 ? '/portraits/female.png' : '/portraits/male.png'; }
+const BASE = import.meta.env.BASE_URL;
+function portraitSrc(p: number | undefined) { return p === 1 ? `${BASE}portraits/female.png` : `${BASE}portraits/male.png`; }
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];

@@ -3,9 +3,10 @@ import { useGameStore } from '../store/gameStore';
 
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
+const BASE = import.meta.env.BASE_URL;
 const PORTRAITS = [
-  { index: 0 as const, src: '/portraits/male.png',   label: 'MĘŻCZYZNA' },
-  { index: 1 as const, src: '/portraits/female.png', label: 'KOBIETA'   },
+  { index: 0 as const, src: `${BASE}portraits/male.png`,   label: 'MĘŻCZYZNA' },
+  { index: 1 as const, src: `${BASE}portraits/female.png`, label: 'KOBIETA'   },
 ];
 
 interface Props { onClose: () => void; }

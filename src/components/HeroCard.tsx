@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense, getEquipmentStats } from '../utils/combat';
-function portraitSrc(p: 0 | 1 | undefined) { return p === 1 ? '/portraits/female.png' : '/portraits/male.png'; }
+const BASE = import.meta.env.BASE_URL;
+function portraitSrc(p: 0 | 1 | undefined) { return p === 1 ? `${BASE}portraits/female.png` : `${BASE}portraits/male.png`; }
 import AppearanceEditor from './AppearanceEditor';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
