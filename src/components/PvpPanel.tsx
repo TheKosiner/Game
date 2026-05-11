@@ -8,8 +8,121 @@ import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
+
+function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', minWidth: 36 }}>{label}</span>
+      <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div style={{ width: `${pct}%`, height: '100%', background: color, boxShadow: `0 0 6px ${color}` }} />
+      </div>
+      <span style={{ ...ORB, fontSize: 8, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}
+
+function OpponentProfile({ entry, rank, canFight, onChallenge, onClose }: {
+  entry: LeaderboardEntry;
+  rank: number;
+  canFight: boolean;
+  onChallenge: (e: LeaderboardEntry) => void;
+  onClose: () => void;
+}) {
+  const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
+  const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
+  const atk = entry.attack ?? 0;
+  const def = entry.defense ?? 0;
+  const hp  = entry.maxHp ?? 0;
+  const wins   = entry.pvpWins ?? 0;
+  const losses = entry.pvpLosses ?? 0;
+  const total  = wins + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  const maxStat = Math.max(atk, def, 1);
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(20,5,5,0.98), rgba(10,3,3,0.99))',
+      border: '1px solid rgba(180,40,40,0.35)',
+      padding: 12,
+      display: 'flex', flexDirection: 'column', gap: 10,
+      boxShadow: '0 0 24px rgba(180,40,40,0.08)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {rank <= 3
+            ? <span style={{ fontSize: 14 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+            : <span style={{ ...PX(6), color: rankColor }}>#{rank}</span>
+          }
+          <span style={{ ...ORB, fontSize: 8, color: '#c05050' }}>PROFIL PRZECIWNIKA</span>
+        </div>
+        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{
+          background: 'var(--bg-deep)', border: '2px solid rgba(180,40,40,0.4)',
+          padding: 6, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 0 16px rgba(180,40,40,0.15)',
+        }}>
+          <PixelSprite grid={SPRITE_PORTRAIT} scale={5} paletteOverrides={palette} />
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <p style={{ ...ORB, fontSize: 11, color: '#c05050', textShadow: '0 0 8px rgba(180,40,40,0.5)' }}>
+            {entry.username}
+          </p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{entry.heroName}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ ...ORB, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 6px' }}>
+              POZ.{entry.level}
+            </span>
+            {entry.guildTag && (
+              <span style={{ ...MONO, fontSize: 9, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '2px 6px' }}>
+                [{entry.guildTag}]
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>STATYSTYKI BOJOWE</p>
+        <StatBar label="ATK" value={atk} max={maxStat * 1.2} color="#ff2d78" />
+        <StatBar label="OBR" value={def} max={maxStat * 1.2} color="#00f5ff" />
+        <StatBar label="HP"  value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1, background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', padding: '5px 8px', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 12, color: '#00ff88' }}>{wins}</p>
+          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WYGRANE</p>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)', padding: '5px 8px', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 12, color: '#ff2d78' }}>{losses}</p>
+          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>PRZEGRANE</p>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', padding: '5px 8px', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 12, color: '#ffd700' }}>{winRate}%</p>
+          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WIN RATE</p>
+        </div>
+      </div>
+
+      <button
+        onClick={() => onChallenge(entry)}
+        disabled={!canFight}
+        className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
+        style={{ width: '100%', fontSize: 8, padding: '8px', opacity: canFight ? 1 : 0.5, cursor: canFight ? 'pointer' : 'not-allowed' }}
+      >
+        ⚔ WALCZ Z {entry.heroName.toUpperCase()}
+      </button>
+    </div>
+  );
+}
 
 function pvpHit(atk: number, def: number, critChance: number): { damage: number; isCrit: boolean } {
   const base = atk * atk / (atk + Math.max(1, def));
@@ -173,6 +286,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
   const [now, setNow] = useState(Date.now());
   const [globalHistory, setGlobalHistory] = useState<PvpFightRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [selected, setSelected] = useState<{ entry: LeaderboardEntry; rank: number } | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -238,7 +352,17 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
         </div>
       )}
 
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>⏳ Ładowanie...</p>}
+      {selected && (
+        <OpponentProfile
+          entry={selected.entry}
+          rank={selected.rank}
+          canFight={canFight}
+          onChallenge={(e) => { setSelected(null); onChallenge(e); }}
+          onClose={() => setSelected(null)}
+        />
+      )}
+
+      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Ladowanie...</p>}
       {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
       {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Brak graczy.</p>}
 
@@ -247,17 +371,23 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
           {entries.map((entry, i) => {
             const rank = i + 1;
             const isMe = entry.uid === user?.uid;
-            const sprite = SPRITE_PORTRAIT;
+            const isSelected = selected?.entry.uid === entry.uid;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
             const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
 
             return (
-              <div key={entry.uid} style={{
-                background: isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
-                border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
-                padding: '7px 8px',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
+              <div
+                key={entry.uid}
+                onClick={() => !isMe && setSelected(isSelected ? null : { entry, rank })}
+                style={{
+                  background: isSelected ? 'rgba(180,40,40,0.08)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
+                  border: `1px solid ${isSelected ? 'rgba(180,40,40,0.5)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
+                  padding: '7px 8px',
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  cursor: isMe ? 'default' : 'pointer',
+                  transition: 'border-color 0.15s, background 0.15s',
+                }}
+              >
                 <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
                   {rank <= 3
                     ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
@@ -265,11 +395,9 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
                   }
                 </div>
 
-                {sprite && (
-                  <div style={{ background: 'var(--bg-deep)', border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`, padding: 2, flexShrink: 0 }}>
-                    <PixelSprite grid={sprite} scale={2} paletteOverrides={palette} />
-                  </div>
-                )}
+                <div style={{ background: 'var(--bg-deep)', border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`, padding: 2, flexShrink: 0 }}>
+                  <PixelSprite grid={SPRITE_PORTRAIT} scale={2} paletteOverrides={palette} />
+                </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -284,7 +412,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
                   <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
                   {!isMe && (
                     <button
-                      onClick={() => onChallenge(entry)}
+                      onClick={(ev) => { ev.stopPropagation(); onChallenge(entry); }}
                       disabled={!canFight}
                       className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
                       style={{ fontSize: 5, padding: '3px 7px', opacity: canFight ? 1 : 0.5, cursor: canFight ? 'pointer' : 'not-allowed' }}
