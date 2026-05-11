@@ -9,9 +9,39 @@ const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
 const VARIANTS = [
-  { key: 'xp',   label: '⚡ XP',    xpMult: 1.7, goldMult: 0.3, color: '#4488ff', bg: 'rgba(68,136,255,0.08)', border: 'rgba(68,136,255,0.3)' },
-  { key: 'bal',  label: '⚖ Balans', xpMult: 1.0, goldMult: 1.0, color: '#aaa',    bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.12)' },
-  { key: 'gold', label: '🪙 Złoto',  xpMult: 0.3, goldMult: 1.7, color: '#ffd700', bg: 'rgba(255,215,0,0.08)', border: 'rgba(255,215,0,0.3)' },
+  {
+    key: 'xp',
+    label: 'ZLECENIE XP',
+    badge: '⚡',
+    desc: 'Duze doswiadczenie, mala zaplate.',
+    xpMult: 1.8, goldMult: 0.3,
+    color: '#4488ff',
+    bg: 'linear-gradient(135deg, rgba(20,30,60,0.97), rgba(10,18,50,0.99))',
+    border: 'rgba(68,136,255,0.35)',
+    glow: 'rgba(68,136,255,0.08)',
+  },
+  {
+    key: 'bal',
+    label: 'KONTRAKT',
+    badge: '⚖',
+    desc: 'Standardowe wynagrodzenie.',
+    xpMult: 1.0, goldMult: 1.0,
+    color: '#aaaaaa',
+    bg: 'linear-gradient(135deg, rgba(20,20,25,0.97), rgba(12,12,18,0.99))',
+    border: 'rgba(160,160,160,0.2)',
+    glow: 'rgba(160,160,160,0.04)',
+  },
+  {
+    key: 'gold',
+    label: 'MISJA LUPOW',
+    badge: '🪙',
+    desc: 'Wysoka zaplata, mniej doswiadczenia.',
+    xpMult: 0.3, goldMult: 1.8,
+    color: '#ffd700',
+    bg: 'linear-gradient(135deg, rgba(40,28,5,0.97), rgba(28,18,3,0.99))',
+    border: 'rgba(255,215,0,0.3)',
+    glow: 'rgba(255,215,0,0.07)',
+  },
 ] as const;
 
 function formatTime(ms: number): string {
@@ -25,9 +55,9 @@ function formatTime(ms: number): string {
 }
 
 export default function QuestPanel() {
-  const hero = useGameStore(s => s.hero);
+  const hero        = useGameStore(s => s.hero);
   const activeQuest = useGameStore(s => s.activeQuest);
-  const startQuest = useGameStore(s => s.startQuest);
+  const startQuest  = useGameStore(s => s.startQuest);
   const collectQuest = useGameStore(s => s.collectQuest);
   const [now, setNow] = useState(Date.now());
 
@@ -39,10 +69,13 @@ export default function QuestPanel() {
     return () => clearInterval(id);
   }, []);
 
+  // Pick best quest for current level (highest minLevel not exceeding hero level)
   const available = ALL_QUESTS.filter(q => q.minLevel <= hero.level);
-  const remaining = activeQuest ? activeQuest.endsAt - now : 0;
+  const base = available.length > 0 ? available[available.length - 1] : null;
+
+  const remaining  = activeQuest ? activeQuest.endsAt - now : 0;
   const canCollect = activeQuest && now >= activeQuest.endsAt;
-  const progress = activeQuest
+  const progress   = activeQuest
     ? Math.min(100, ((now - activeQuest.startedAt) / (activeQuest.endsAt - activeQuest.startedAt)) * 100)
     : 0;
   const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
@@ -58,11 +91,12 @@ export default function QuestPanel() {
       </div>
 
       {limitReached && !activeQuest && (
-        <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
+        <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 10, textAlign: 'center' }}>
           <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit zadan wyczerpany!</p>
         </div>
       )}
 
+      {/* Active quest card */}
       {activeQuest && (
         <div style={{
           background: 'linear-gradient(135deg, rgba(24,18,6,0.97), rgba(18,14,4,0.99))',
@@ -71,10 +105,10 @@ export default function QuestPanel() {
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 22 }}>{activeQuest.quest.emoji}</span>
+            <span style={{ fontSize: 24 }}>{activeQuest.quest.emoji}</span>
             <div style={{ flex: 1 }}>
-              <p style={{ ...PX(7), color: 'var(--gold-bright)', marginBottom: 4 }}>{activeQuest.quest.name}</p>
-              <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
+              <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>{activeQuest.quest.name}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
             </div>
           </div>
 
@@ -89,12 +123,12 @@ export default function QuestPanel() {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canCollect ? 10 : 0 }}>
-            <p style={{ ...PX(5), color: canCollect ? '#6aaa30' : 'var(--text-dim)' }}>
-              {canCollect ? 'Gotowe do odbioru!' : `${formatTime(remaining)}`}
+            <p style={{ ...MONO, fontSize: 10, color: canCollect ? '#6aaa30' : 'var(--text-dim)' }}>
+              {canCollect ? 'Gotowe do odbioru!' : formatTime(remaining)}
             </p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <span style={{ ...PX(5), color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
-              <span style={{ ...PX(5), color: '#5070a0' }}>+{activeQuest.quest.xpReward}XP</span>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <span style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
+              <span style={{ ...ORB, fontSize: 9, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
             </div>
           </div>
 
@@ -113,65 +147,60 @@ export default function QuestPanel() {
       )}
 
       {!activeQuest && !limitReached && !isResting && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 480, overflowY: 'auto' }}>
-          {available.length === 0 ? (
+        <>
+          {!base ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
               Brak zadan dla twojego poziomu.
             </p>
           ) : (
-            available.map((quest: Quest) => {
-              const duration = scaledQuestDuration(quest.durationMs, hero.level);
-              return (
-                <div key={quest.id} style={{
-                  background: 'var(--bg-inset)',
-                  border: '1px solid var(--border-dark)',
-                  padding: 10,
-                  display: 'flex', flexDirection: 'column', gap: 8,
-                }}>
-                  {/* Quest header */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <span style={{ fontSize: 18, flexShrink: 0 }}>{quest.emoji}</span>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 3 }}>{quest.name}</p>
-                      <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 3 }}>{quest.description}</p>
-                      <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
-                    </div>
-                  </div>
-
-                  {/* 3 variant buttons */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 5 }}>
-                    {VARIANTS.map(v => {
-                      const xp   = Math.round(quest.xpReward * v.xpMult);
-                      const gold = Math.round(quest.goldReward * v.goldMult);
-                      return (
-                        <button
-                          key={v.key}
-                          onClick={() => startQuest({
-                            ...quest,
-                            id: `${quest.id}_${v.key}`,
-                            xpReward: xp,
-                            goldReward: gold,
-                          } as Quest)}
-                          style={{
-                            background: v.bg,
-                            border: `1px solid ${v.border}`,
-                            padding: '6px 4px',
-                            cursor: 'pointer',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                          }}
-                        >
-                          <span style={{ ...ORB, fontSize: 7, color: v.color }}>{v.label}</span>
-                          <span style={{ ...MONO, fontSize: 8, color: '#5070a0' }}>+{xp} XP</span>
-                          <span style={{ ...MONO, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+            <>
+              {/* Base quest info */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+                <span style={{ fontSize: 20 }}>{base.emoji}</span>
+                <div>
+                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{base.name}</p>
+                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{base.description}</p>
                 </div>
-              );
-            })
+              </div>
+
+              {/* 3 variant cards */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {VARIANTS.map(v => {
+                  const duration = scaledQuestDuration(base.durationMs, hero.level);
+                  const xp   = Math.round(base.xpReward * v.xpMult);
+                  const gold = Math.round(base.goldReward * v.goldMult);
+                  return (
+                    <div key={v.key} style={{
+                      background: v.bg,
+                      border: `1px solid ${v.border}`,
+                      padding: '10px 12px',
+                      boxShadow: `0 0 16px ${v.glow}`,
+                      display: 'flex', alignItems: 'center', gap: 10,
+                    }}>
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 4 }}>{v.label}</p>
+                        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{v.desc}</p>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <span style={{ ...ORB, fontSize: 8, color: '#4488ff' }}>+{xp} XP</span>
+                          <span style={{ ...ORB, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
+                          <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => startQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold } as Quest)}
+                        className="btn btn-primary"
+                        style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
+                      >
+                        START
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
-        </div>
+        </>
       )}
     </div>
   );
