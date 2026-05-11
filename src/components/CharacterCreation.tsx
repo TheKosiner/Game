@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
+const BASE = import.meta.env.BASE_URL;
 const PORTRAITS = [
-  { index: 0 as const, src: '/portraits/male.png',   label: 'MĘŻCZYZNA' },
-  { index: 1 as const, src: '/portraits/female.png', label: 'KOBIETA'   },
+  { index: 0 as const, src: `${BASE}portraits/male.png`,   label: 'MĘŻCZYZNA' },
+  { index: 1 as const, src: `${BASE}portraits/female.png`, label: 'KOBIETA'   },
 ];
 
 export default function CharacterCreation() {
