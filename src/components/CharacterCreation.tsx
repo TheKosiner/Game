@@ -10,7 +10,6 @@ export default function CharacterCreation() {
   const [name, setName] = useState('');
   const [portrait, setPortrait] = useState<0 | 1>(0);
   const initHero = useGameStore(s => s.initHero);
-  const changeAppearance = useGameStore(s => s.changeAppearance);
 
   function handleCreate() {
     if (!name.trim()) return;
