@@ -57,6 +57,7 @@ export interface Hero {
   skinTone: number;
   hairColor: number;
   clothingColor: number;
+  portrait: 0 | 1;
   lastRespecAt: number | null;
 }
 
@@ -129,6 +130,7 @@ export interface PvpOpponent {
   attack?: number;
   defense?: number;
   maxHp?: number;
+  portrait?: 0 | 1;
 }
 
 export interface GameState {

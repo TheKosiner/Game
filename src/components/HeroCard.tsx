@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense, getEquipmentStats } from '../utils/combat';
-import PixelSprite from './PixelSprite';
-import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
+function portraitSrc(p: 0 | 1 | undefined) { return p === 1 ? '/portraits/female.jpg' : '/portraits/male.jpg'; }
 import AppearanceEditor from './AppearanceEditor';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -283,8 +282,6 @@ export default function HeroCard() {
   const attack     = getHeroAttack(hero);
   const defense    = getHeroDefense(hero);
   const eqStats    = getEquipmentStats(hero.equipment);
-  const sprite     = SPRITE_PORTRAIT;
-  const palette    = getHeroPalette(hero.skinTone ?? 1, hero.hairColor ?? 2, hero.clothingColor ?? 0);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
@@ -296,27 +293,16 @@ export default function HeroCard() {
 
         {/* Portrait */}
         <div style={{ width: 112, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div className="df-portrait-bg" style={{
-            flex: 1, minHeight: 158,
-            border: '1px solid rgba(255,45,120,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 0 20px rgba(255,45,120,0.1)',
+          <div style={{
+            width: 112, height: 112, overflow: 'hidden', flexShrink: 0,
+            border: '2px solid rgba(255,45,120,0.4)',
+            boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
           }}>
-            {[...Array(6)].map((_, i) => (
-              <div key={i} style={{
-                position: 'absolute',
-                top: '-100%', left: `${8 + i * 16}%`,
-                width: 1, height: '60%',
-                background: `linear-gradient(180deg, transparent, rgba(0,245,255,${0.04 + (i % 3) * 0.02}), transparent)`,
-                animation: `rain ${1.4 + i * 0.35}s linear infinite`,
-                animationDelay: `${i * 0.25}s`,
-              }} />
-            ))}
-            <div className="df-fire-glow" />
-            <div className="df-portrait-vignette" />
-            <div style={{ position: 'relative', zIndex: 2, filter: 'drop-shadow(0 0 12px rgba(255,45,120,0.4)) drop-shadow(0 6px 16px rgba(0,0,0,0.9))' }}>
-              <PixelSprite grid={sprite} scale={4} paletteOverrides={palette} />
-            </div>
+            <img
+              src={portraitSrc(hero.portrait)}
+              alt="portret"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            />
           </div>
           <button onClick={() => setEditingAppearance(true)} style={{
             background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)',
@@ -324,7 +310,7 @@ export default function HeroCard() {
             padding: '5px 0', ...MONO, fontSize: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}>
-            🎨 WYGLĄD
+            WYGLĄD
           </button>
         </div>
 

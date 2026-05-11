@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
-import PixelSprite from './PixelSprite';
-import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
+function portraitSrc(p: number | undefined) { return p === 1 ? '/portraits/female.jpg' : '/portraits/male.jpg'; }
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
@@ -24,7 +23,6 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 
 function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank: number; onClose: () => void }) {
   const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-  const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
   const atk = entry.attack ?? 0;
   const def = entry.defense ?? 0;
   const hp  = entry.maxHp ?? 0;
@@ -58,12 +56,11 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
       {/* portrait + identity */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <div style={{
-          background: 'var(--bg-deep)', border: '2px solid rgba(255,215,0,0.3)',
-          padding: 6, flexShrink: 0,
-          boxShadow: '0 0 16px rgba(255,215,0,0.1)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 80, height: 80, overflow: 'hidden', flexShrink: 0,
+          border: '2px solid rgba(255,215,0,0.35)',
+          boxShadow: '0 0 16px rgba(255,215,0,0.12)',
         }}>
-          <PixelSprite grid={SPRITE_PORTRAIT} scale={5} paletteOverrides={palette} />
+          <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -174,7 +171,6 @@ export default function LeaderboardPanel() {
             const isMe = entry.uid === user?.uid;
             const isSelected = selected?.uid === entry.uid;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
 
             return (
               <div
@@ -196,8 +192,8 @@ export default function LeaderboardPanel() {
                   }
                 </div>
 
-                <div style={{ background: 'var(--bg-deep)', border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`, padding: 2, flexShrink: 0 }}>
-                  <PixelSprite grid={SPRITE_PORTRAIT} scale={2} paletteOverrides={palette} />
+                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+                  <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
