@@ -137,6 +137,7 @@ export interface GameState {
   currentDungeon: Dungeon | null;
   currentFloor: number;
   currentEnemy: Enemy | null;
+  dungeonMode: 'xp' | 'balanced' | 'loot';
   combatLog: CombatLog[];
   inCombat: boolean;
   defeatedAtDungeon: string | null;
@@ -160,7 +161,7 @@ export interface GameState {
   sellItem: (item: Item, invIdx?: number) => void;
   buyItem: (item: Item, price: number) => boolean;
   buyShopItem: (item: Item, price: number, slotIndex: number) => boolean;
-  enterDungeon: (dungeon: Dungeon) => void;
+  enterDungeon: (dungeon: Dungeon, mode?: 'xp' | 'balanced' | 'loot') => void;
   exitDungeon: () => void;
   clearDefeat: () => void;
   attackEnemy: () => void;

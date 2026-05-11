@@ -6,8 +6,17 @@ import PixelSprite from './PixelSprite';
 import { ENEMY_SPRITES } from '../data/sprites';
 import type { SpriteKey } from '../data/sprites';
 
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
+
+type DungeonMode = 'xp' | 'balanced' | 'loot';
+const DUNGEON_VARIANTS: { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string }[] = [
+  { key: 'xp',       label: 'TRENING',   badge: '⚡', desc: 'Duzo XP, malo zdobyczy.',     color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
+  { key: 'balanced', label: 'PATROL',    badge: '⚖',  desc: 'Standardowe wynagrodzenie.',  color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
+  { key: 'loot',     label: 'LOCHY',     badge: '💎', desc: 'Malo XP/zlota, duzo dropow.', color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
+];
 
 function EnemyBattleCard() {
   const hero = useGameStore(s => s.hero);
@@ -92,64 +101,104 @@ function EnemyBattleCard() {
 }
 
 function DungeonList() {
-  const hero = useGameStore(s => s.hero);
+  const hero         = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
-  const isResting = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
-                    (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
+  const isResting    = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
+                       (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
+
+  const available = ALL_DUNGEONS.filter((d: Dungeon) => d.minLevel <= hero.level);
+  const best      = available.length > 0 ? available[available.length - 1] : null;
+  const locked    = ALL_DUNGEONS.filter((d: Dungeon) => d.minLevel > hero.level);
+
+  const blocked = isResting || limitReached;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>
-          ⚔ LOCHY
-        </p>
-        <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
-          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dziś
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>LOCHY</p>
+        <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
+          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dzis
         </p>
       </div>
 
       {isResting && (
         <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: '#5070a0' }}>💤 Odpoczywasz — wróć gdy odzyskasz siły</p>
+          <p style={{ ...PX(6), color: '#5070a0' }}>Odpoczywasz — wróc gdy odzyskasz sily</p>
         </div>
       )}
 
       {!isResting && limitReached && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 6, color: 'var(--hp-bright)' }}>⚔ Dzienny limit lochów wyczerpany!</p>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit lochów wyczerpany!</p>
         </div>
       )}
 
-      {ALL_DUNGEONS.map((dungeon: Dungeon) => {
-        const locked = hero.level < dungeon.minLevel;
-        const blocked = locked || isResting || limitReached;
-        return (
-          <div key={dungeon.id} style={{
-            background: 'var(--bg-inset)',
-            border: `1px solid ${locked ? 'var(--border-dark)' : 'var(--border-main)'}`,
-            padding: 10, opacity: blocked ? 0.55 : 1,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-              <span style={{ fontSize: 20 }}>{dungeon.emoji}</span>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: 'var(--text-bright)', marginBottom: 3 }}>{dungeon.name}</p>
-                <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-muted)' }}>{dungeon.description}</p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 4, color: 'var(--text-muted)' }}>MIN. POZ.</p>
-                <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 8, color: 'var(--gold-bright)' }}>{dungeon.minLevel}</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 4, color: 'var(--text-muted)' }}>{dungeon.floors} pięter</p>
-              <button onClick={() => enterDungeon(dungeon)} disabled={blocked} className="btn btn-primary" style={{ fontSize: 6, padding: '5px 10px' }}>
-                {locked ? `🔒 POZ.${dungeon.minLevel}` : isResting ? '💤 Odpoczynek' : limitReached ? '⛔ Limit' : 'Wejdź ▶'}
-              </button>
+      {!best && (
+        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>Brak lochów dla twojego poziomu.</p>
+      )}
+
+      {best && (
+        <>
+          {/* Dungeon header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
+            <span style={{ fontSize: 22 }}>{best.emoji}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{best.name}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{best.description}</p>
+              <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{best.floors} pięter</span>
             </div>
           </div>
-        );
-      })}
+
+          {/* 3 mode cards */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {DUNGEON_VARIANTS.map(v => (
+              <div key={v.key} style={{
+                background: v.bg,
+                border: `1px solid ${v.border}`,
+                padding: '10px 12px',
+                boxShadow: `0 0 16px ${v.glow}`,
+                display: 'flex', alignItems: 'center', gap: 10,
+                opacity: blocked ? 0.5 : 1,
+              }}>
+                <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 3 }}>{v.label}</p>
+                  <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{v.desc}</p>
+                </div>
+                <button
+                  onClick={() => enterDungeon(best, v.key)}
+                  disabled={blocked}
+                  className="btn btn-primary"
+                  style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
+                >
+                  {isResting ? 'ODPOCZYNEK' : limitReached ? 'LIMIT' : 'WEJDZ'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Locked dungeons */}
+      {locked.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
+          {locked.map((d: Dungeon) => (
+            <div key={d.id} style={{
+              background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+              padding: '8px 10px', opacity: 0.45,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{ fontSize: 18 }}>{d.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ ...PX(6), color: 'var(--text-dim)', marginBottom: 2 }}>{d.name}</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{d.floors} pięter</p>
+              </div>
+              <span style={{ ...PX(6), color: 'var(--text-muted)' }}>🔒 POZ.{d.minLevel}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
