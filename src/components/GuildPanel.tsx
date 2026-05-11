@@ -9,9 +9,9 @@ import TerritoryPanel from './TerritoryPanel';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
-import PixelSprite from './PixelSprite';
-import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const BASE = import.meta.env.BASE_URL;
+function portraitSrc(p: number | undefined) { return p === 1 ? `${BASE}portraits/female.png` : `${BASE}portraits/male.png`; }
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
@@ -36,7 +36,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
     if (trimTag.length < 2 || trimTag.length > 4) { setError('Tag musi mieć 2–4 znaki (A-Z, 0-9)'); return; }
     setLoading(true); setError('');
     try {
-      await createGuild(user.uid, user.username, hero.name, hero.level, trimName, trimTag, desc.trim());
+      await createGuild(user.uid, user.username, hero.name, hero.level, trimName, trimTag, desc.trim(), hero.portrait);
       onCreated();
     } catch { setError('Błąd tworzenia gildii'); }
     finally { setLoading(false); }
@@ -100,7 +100,7 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
     if (!user) return;
     setActing(inv.id);
     try {
-      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, hero.level);
+      await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, hero.level, hero.portrait);
       onRefresh();
     } finally { setActing(null); }
   }
@@ -172,12 +172,11 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
         {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>Brak graczy do zaproszenia</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {players.map(p => {
-            const palette = getHeroPalette(p.skinTone ?? 1, p.hairColor ?? 2, p.clothingColor ?? 0);
             const alreadySent = sent.has(p.uid);
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
-                <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                  <PixelSprite grid={SPRITE_PORTRAIT} scale={2} paletteOverrides={palette} />
+                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
+                  <img src={portraitSrc(p.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
@@ -278,8 +277,8 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
               padding: '7px 8px',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                <PixelSprite grid={SPRITE_PORTRAIT} scale={2} />
+              <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${m.role === 'leader' ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+                <img src={portraitSrc(m.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
