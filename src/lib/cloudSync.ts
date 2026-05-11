@@ -14,6 +14,7 @@ export interface LeaderboardEntry {
   skinTone?: number;
   hairColor?: number;
   clothingColor?: number;
+  portrait?: 0 | 1;
   attack?: number;
   defense?: number;
   maxHp?: number;
@@ -41,6 +42,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     skinTone: hero.skinTone ?? 1,
     hairColor: hero.hairColor ?? 2,
     clothingColor: hero.clothingColor ?? 0,
+    portrait: hero.portrait ?? 0,
     attack: getHeroAttack(hero),
     defense: getHeroDefense(hero),
     maxHp: hero.maxHp,

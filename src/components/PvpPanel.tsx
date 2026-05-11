@@ -3,8 +3,7 @@ import { getLeaderboard, getPvpHistory, addPvpFight, type LeaderboardEntry, type
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
-import PixelSprite from './PixelSprite';
-import { SPRITE_PORTRAIT, getHeroPalette } from '../data/sprites';
+function portraitSrc(p: number | undefined) { return p === 1 ? '/portraits/female.jpg' : '/portraits/male.jpg'; }
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
@@ -34,7 +33,6 @@ function OpponentProfile({ entry, rank, canFight, onChallenge, onClose }: {
   onClose: () => void;
 }) {
   const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-  const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
   const atk = entry.attack ?? 0;
   const def = entry.defense ?? 0;
   const hp  = entry.maxHp ?? 0;
@@ -65,12 +63,11 @@ function OpponentProfile({ entry, rank, canFight, onChallenge, onClose }: {
 
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
         <div style={{
-          background: 'var(--bg-deep)', border: '2px solid rgba(180,40,40,0.4)',
-          padding: 6, flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 0 16px rgba(180,40,40,0.15)',
+          width: 80, height: 80, overflow: 'hidden', flexShrink: 0,
+          border: '2px solid rgba(180,40,40,0.5)',
+          boxShadow: '0 0 16px rgba(180,40,40,0.18)',
         }}>
-          <PixelSprite grid={SPRITE_PORTRAIT} scale={5} paletteOverrides={palette} />
+          <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <p style={{ ...ORB, fontSize: 11, color: '#c05050', textShadow: '0 0 8px rgba(180,40,40,0.5)' }}>
@@ -144,7 +141,7 @@ function formatTimeAgo(ts: number): string {
 
 interface CombatState {
   opponent: PvpOpponent;
-  oppSprite: string[][] | undefined;
+  oppPortrait: 0 | 1;
   heroHp: number;
   heroMaxHp: number;
   oppHp: number;
@@ -185,8 +182,7 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
   onExit: () => void;
 }) {
   const hero = useGameStore(s => s.hero);
-  const heroPalette = getHeroPalette(hero.skinTone, hero.hairColor, hero.clothingColor ?? 0);
-  const heroSprite = SPRITE_PORTRAIT;
+  const heroPortraitSrc = portraitSrc(hero.portrait);
 
   const heroHpPct = Math.max(0, (combat.heroHp / combat.heroMaxHp) * 100);
   const oppHpPct = Math.max(0, (combat.oppHp / combat.oppMaxHp) * 100);
@@ -206,13 +202,9 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          {combat.oppSprite ? (
-            <div style={{ background: 'var(--bg-deep)', border: '1px solid rgba(80,20,20,0.5)', padding: 4, flexShrink: 0 }}>
-              <PixelSprite grid={combat.oppSprite} scale={4} />
-            </div>
-          ) : (
-            <span style={{ fontSize: 32 }}>🧙</span>
-          )}
+          <div style={{ width: 64, height: 64, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(80,20,20,0.5)' }}>
+            <img src={portraitSrc(combat.oppPortrait)} alt="oponent" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </div>
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(7), color: '#c05050', marginBottom: 3 }}>{combat.opponent.heroName}</p>
             <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>POZ. {combat.opponent.level}</p>
@@ -228,11 +220,9 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {heroSprite && (
-              <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 2, flexShrink: 0 }}>
-                <PixelSprite grid={heroSprite} scale={2} paletteOverrides={heroPalette} />
-              </div>
-            )}
+            <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
+              <img src={heroPortraitSrc} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </div>
             <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.name}</span>
           </div>
           <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
@@ -373,7 +363,6 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
             const isMe = entry.uid === user?.uid;
             const isSelected = selected?.entry.uid === entry.uid;
             const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-            const palette = getHeroPalette(entry.skinTone ?? 1, entry.hairColor ?? 2, entry.clothingColor ?? 0);
 
             return (
               <div
@@ -395,8 +384,8 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
                   }
                 </div>
 
-                <div style={{ background: 'var(--bg-deep)', border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`, padding: 2, flexShrink: 0 }}>
-                  <PixelSprite grid={SPRITE_PORTRAIT} scale={2} paletteOverrides={palette} />
+                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+                  <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -489,8 +478,6 @@ export default function PvpPanel() {
     const oppDef = entry.defense ?? (5 + entry.level * 2);
     const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5 }, entry.level);
 
-    const sprite = SPRITE_PORTRAIT;
-
     const state: CombatState = {
       opponent: {
         uid: entry.uid,
@@ -500,8 +487,9 @@ export default function PvpPanel() {
         attack: oppAtk,
         defense: oppDef,
         maxHp: oppMaxHp,
+        portrait: (entry.portrait ?? 0) as 0 | 1,
       },
-      oppSprite: sprite,
+      oppPortrait: (entry.portrait ?? 0) as 0 | 1,
       heroHp: hero.maxHp,
       heroMaxHp: hero.maxHp,
       oppHp: oppMaxHp,
