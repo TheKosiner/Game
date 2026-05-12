@@ -506,10 +506,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
     if (activeQuest) return;
     if (hero.hp >= hero.maxHp) return;
-    const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.02));
+    const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.04));
     const hp = Math.min(minutes * hpPerMin, hero.maxHp - hero.hp);
     if (hp <= 0) return;
-    const endsAt = Date.now() + minutes * 30 * 1000;
+    const endsAt = Date.now() + minutes * 60 * 1000;
     set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp, voluntaryRestStartAt: Date.now() } });
     get().addCombatLog(`Odpoczywasz ${minutes} min... Odzyskasz ${hp} HP.`, 'system');
     get().saveGame();
