@@ -56,10 +56,12 @@ function formatTime(ms: number): string {
 
 export default function QuestPanel() {
   const hero        = useGameStore(s => s.hero);
-  const activeQuest = useGameStore(s => s.activeQuest);
-  const startQuest  = useGameStore(s => s.startQuest);
+  const activeQuest  = useGameStore(s => s.activeQuest);
+  const startQuest   = useGameStore(s => s.startQuest);
   const collectQuest = useGameStore(s => s.collectQuest);
+  const abandonQuest = useGameStore(s => s.abandonQuest);
   const [now, setNow] = useState(Date.now());
+  const [confirmAbandon, setConfirmAbandon] = useState(false);
 
   const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
                     (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
@@ -136,6 +138,18 @@ export default function QuestPanel() {
             <button onClick={collectQuest} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
               Odbierz nagrode!
             </button>
+          )}
+
+          {!canCollect && !confirmAbandon && (
+            <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, marginTop: 4, opacity: 0.7 }}>
+              ✕ Zrezygnuj z zadania
+            </button>
+          )}
+          {!canCollect && confirmAbandon && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 6 }}>Anuluj</button>
+              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 6 }}>✕ Porzuć zadanie</button>
+            </div>
           )}
         </div>
       )}

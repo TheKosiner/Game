@@ -12,12 +12,12 @@ const RARITY_LABEL: Record<string, string> = {
 };
 const SLOT_LABEL: Record<string, string> = {
   weapon: 'Bron', armor: 'Zbroja', helmet: 'Helm',
-  boots: 'Buty', ring: 'Pierscień', amulet: 'Amulet',
+  boots: 'Buty', ring: 'Pierscień', amulet: 'Amulet', consumable: 'Apteczka',
 };
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
-function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; onSell: () => void }) {
+function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () => void; onSell: () => void; onUse?: () => void }) {
   const rc = RARITY_COLORS[item.rarity];
   const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
   return (
@@ -55,8 +55,11 @@ function ItemCard({ item, onEquip, onSell }: { item: Item; onEquip: () => void; 
         </p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-        <button onClick={onEquip} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>Zaloz</button>
-        <button onClick={onSell}  className="btn btn-secondary" style={{ fontSize: 7, padding: '5px 8px' }}>🪙{item.goldValue}</button>
+        {item.slot === 'consumable'
+          ? <button onClick={onUse} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>▶ Użyj</button>
+          : <button onClick={onEquip} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>Zaloz</button>
+        }
+        <button onClick={onSell} className="btn btn-secondary" style={{ fontSize: 7, padding: '5px 8px' }}>🪙{item.goldValue}</button>
       </div>
     </div>
   );
@@ -66,6 +69,7 @@ export default function InventoryPanel() {
   const inventory  = useGameStore(s => s.hero.inventory);
   const equipItem  = useGameStore(s => s.equipItem);
   const sellItem   = useGameStore(s => s.sellItem);
+  const useItem    = useGameStore(s => s.useItem);
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -89,7 +93,7 @@ export default function InventoryPanel() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 400, overflowY: 'auto', paddingRight: 2 }}>
           {inventory.map((item: Item, idx: number) => (
             <ItemCard key={idx} item={item}
-              onEquip={() => equipItem(item, idx)} onSell={() => sellItem(item, idx)} />
+              onEquip={() => equipItem(item, idx)} onSell={() => sellItem(item, idx)} onUse={() => useItem(item, idx)} />
           ))}
         </div>
       )}

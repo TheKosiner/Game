@@ -1,5 +1,5 @@
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type ItemSlot = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet';
+export type ItemSlot = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet' | 'consumable';
 export type QuestStatus = 'idle' | 'active' | 'complete';
 
 export interface Stats {
@@ -178,6 +178,8 @@ export interface GameState {
   checkDailyReset: () => void;
   restHero: (minutes: number) => void;
   cancelRest: () => void;
+  abandonQuest: () => void;
+  useItem: (item: Item, invIdx: number) => void;
   startBegging: (hours: number) => void;
   cancelBegging: () => void;
   collectBegging: () => void;

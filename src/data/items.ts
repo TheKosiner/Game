@@ -126,6 +126,12 @@ export const ALL_ITEMS: Item[] = [
   { id: 'core_phoenix',     name: 'Rdzeń Feniksa',              slot: 'amulet', rarity: 'epic',      stats: { vitality: 16, strength: 8 },                            level: 20, goldValue: 2000, emoji: '🔥' },
   { id: 'core_megacorp',    name: 'Rdzeń Megakorpu',            slot: 'amulet', rarity: 'legendary', stats: { strength: 18, intelligence: 18 },                       level: 27, goldValue: 4800, emoji: '🔥' },
   { id: 'core_quantum',     name: 'Kwantowy Rdzeń',             slot: 'amulet', rarity: 'legendary', stats: { strength: 15, intelligence: 15, vitality: 15, dexterity: 10 }, level: 35, goldValue: 11000, emoji: '🌐' },
+
+  // ── Consumables: Medkits ─────────────────────────────────────────────────────
+  { id: 'medkit_basic',    name: 'Apteczka Polowa',             slot: 'consumable', rarity: 'common',    stats: {}, level: 1,  goldValue: 60,   emoji: '🩹' },
+  { id: 'medkit_advanced', name: 'Apteczka Zaawansowana',       slot: 'consumable', rarity: 'uncommon',  stats: {}, level: 5,  goldValue: 180,  emoji: '💊' },
+  { id: 'medkit_military', name: 'Apteczka Wojskowa',           slot: 'consumable', rarity: 'rare',      stats: {}, level: 12, goldValue: 500,  emoji: '🧬' },
+  { id: 'medkit_nano',     name: 'Nano-Apteczka',               slot: 'consumable', rarity: 'epic',      stats: {}, level: 20, goldValue: 1400, emoji: '💉' },
 ];
 
 export function getItemById(id: string): Item | undefined {
