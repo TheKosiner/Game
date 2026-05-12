@@ -123,10 +123,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpWins: 0,
   pvpLosses: 0,
   pvpLog: [],
+  lastPassiveRegenAt: Date.now(),
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [] });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [], lastPassiveRegenAt: Date.now() });
     if (!skipSave) get().saveGame();
   },
 
@@ -575,6 +576,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  tickPassiveRegen: () => {
+    const { hero, lastPassiveRegenAt } = get();
+    const now = Date.now();
+    const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
+                      (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
+    if (isResting || hero.hp >= hero.maxHp) {
+      set({ lastPassiveRegenAt: now });
+      return;
+    }
+    const elapsed = now - lastPassiveRegenAt;
+    const gain = Math.floor(elapsed * (hero.maxHp * 0.004) / 60000);
+    if (gain < 1) return;
+    set({ hero: { ...hero, hp: Math.min(hero.maxHp, hero.hp + gain) }, lastPassiveRegenAt: now });
+  },
+
   saveGame: () => {
     const state = get();
     const save = {
@@ -589,6 +605,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpWins: state.pvpWins,
       pvpLosses: state.pvpLosses,
       pvpLog: state.pvpLog,
+      lastPassiveRegenAt: state.lastPassiveRegenAt,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -665,6 +682,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           pvpWins: save.pvpWins ?? 0,
           pvpLosses: save.pvpLosses ?? 0,
           pvpLog: save.pvpLog ?? [],
+          lastPassiveRegenAt: save.lastPassiveRegenAt ?? Date.now(),
         });
         get().checkDailyReset();
       }
