@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
@@ -12,6 +13,13 @@ const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
 type DungeonMode = 'xp' | 'balanced' | 'loot';
+type DungeonDifficulty = 'easy' | 'normal' | 'hard';
+
+const DIFFICULTY_OPTIONS: { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string }[] = [
+  { key: 'easy',   label: 'ŁATWY',   badge: '🌿', desc: 'Słabsi wrogowie, mniej nagród.', color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
+  { key: 'normal', label: 'NORMALNY',badge: '⚔',  desc: 'Standardowy balans wyzwania.',   color: '#aaaaaa', border: 'rgba(160,160,160,0.3)' },
+  { key: 'hard',   label: 'TRUDNY',  badge: '💀', desc: 'Silniejsi wrogowie, +60% nagród.',color: '#ff4444', border: 'rgba(255,68,68,0.45)'  },
+];
 const DUNGEON_VARIANTS: { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string }[] = [
   { key: 'xp',       label: 'TRENING',   badge: '⚡', desc: 'Duzo XP, malo zdobyczy.',     color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
   { key: 'balanced', label: 'PATROL',    badge: '⚖',  desc: 'Standardowe wynagrodzenie.',  color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
@@ -107,6 +115,8 @@ function DungeonList() {
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
+  const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
+
   const available = ALL_DUNGEONS.filter((d: Dungeon) => d.minLevel <= hero.level);
   const best      = available.length > 0 ? available[available.length - 1] : null;
   const locked    = ALL_DUNGEONS.filter((d: Dungeon) => d.minLevel > hero.level);
@@ -150,6 +160,38 @@ function DungeonList() {
             </div>
           </div>
 
+          {/* Difficulty selector */}
+          <div>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>POZIOM TRUDNOŚCI</p>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {DIFFICULTY_OPTIONS.map(d => {
+                const active = difficulty === d.key;
+                return (
+                  <button
+                    key={d.key}
+                    onClick={() => setDifficulty(d.key)}
+                    style={{
+                      flex: 1,
+                      background: active ? `rgba(${d.key === 'easy' ? '68,204,119' : d.key === 'hard' ? '255,68,68' : '160,160,160'},0.12)` : 'var(--bg-inset)',
+                      border: `1px solid ${active ? d.border : 'var(--border-dark)'}`,
+                      padding: '7px 4px',
+                      cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                      boxShadow: active ? `0 0 10px ${d.border}` : 'none',
+                      transition: 'border-color 0.15s, box-shadow 0.15s',
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{d.badge}</span>
+                    <span style={{ ...ORB, fontSize: 6, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 5 }}>
+              {DIFFICULTY_OPTIONS.find(d => d.key === difficulty)?.desc}
+            </p>
+          </div>
+
           {/* 3 mode cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {DUNGEON_VARIANTS.map(v => (
@@ -167,7 +209,7 @@ function DungeonList() {
                   <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{v.desc}</p>
                 </div>
                 <button
-                  onClick={() => enterDungeon(best, v.key)}
+                  onClick={() => enterDungeon(best, v.key, difficulty)}
                   disabled={blocked}
                   className="btn btn-primary"
                   style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}

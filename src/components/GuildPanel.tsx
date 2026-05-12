@@ -10,7 +10,7 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-import { portraitSrc } from '../data/portraits';
+import { portraitSrc, resolvePortrait } from '../data/portraits';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
@@ -175,7 +175,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
                 <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
-                  <img src={portraitSrc(p.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={portraitSrc(resolvePortrait(p.portrait, p.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
@@ -198,7 +198,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   );
 }
 
-function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, 0 | 1> }) {
+function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, number> }) {
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const isLeader = guild.leaderUid === myUid;
@@ -277,7 +277,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${m.role === 'leader' ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                <img src={portraitSrc(playerPortraits[m.uid] ?? m.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={portraitSrc(resolvePortrait(playerPortraits[m.uid] ?? m.portrait, m.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
@@ -327,7 +327,7 @@ export default function GuildPanel() {
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'guild' | 'territory'>('guild');
-  const [playerPortraits, setPlayerPortraits] = useState<Record<string, 0 | 1>>({});
+  const [playerPortraits, setPlayerPortraits] = useState<Record<string, number>>({});
 
   async function load() {
     if (!user || !isFirebaseConfigured) { setLoading(false); return; }
@@ -338,8 +338,8 @@ export default function GuildPanel() {
         getMyInvites(user.uid),
         getLeaderboard(),
       ]);
-      const portraits: Record<string, 0 | 1> = {};
-      for (const e of leaderboard) portraits[e.uid] = (e.portrait ?? 0) as 0 | 1;
+      const portraits: Record<string, number> = {};
+      for (const e of leaderboard) portraits[e.uid] = resolvePortrait(e.portrait, e.username);
       setPlayerPortraits(portraits);
       setInvites(myInvites);
       if (guildId) {

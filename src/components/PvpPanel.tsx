@@ -3,7 +3,7 @@ import { getLeaderboard, getPvpHistory, addPvpFight, type LeaderboardEntry, type
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
-import { portraitSrc } from '../data/portraits';
+import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
@@ -67,7 +67,7 @@ function OpponentProfile({ entry, rank, canFight, onChallenge, onClose }: {
           border: '2px solid rgba(180,40,40,0.5)',
           boxShadow: '0 0 16px rgba(180,40,40,0.18)',
         }}>
-          <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
           <p style={{ ...ORB, fontSize: 11, color: '#c05050', textShadow: '0 0 8px rgba(180,40,40,0.5)' }}>
@@ -141,7 +141,7 @@ function formatTimeAgo(ts: number): string {
 
 interface CombatState {
   opponent: PvpOpponent;
-  oppPortrait: 0 | 1;
+  oppPortrait: number;
   heroHp: number;
   heroMaxHp: number;
   oppHp: number;
@@ -385,7 +385,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
                 </div>
 
                 <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                  <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -487,9 +487,9 @@ export default function PvpPanel() {
         attack: oppAtk,
         defense: oppDef,
         maxHp: oppMaxHp,
-        portrait: (entry.portrait ?? 0) as 0 | 1,
+        portrait: resolvePortrait(entry.portrait, entry.username),
       },
-      oppPortrait: (entry.portrait ?? 0) as 0 | 1,
+      oppPortrait: resolvePortrait(entry.portrait, entry.username),
       heroHp: hero.maxHp,
       heroMaxHp: hero.maxHp,
       oppHp: oppMaxHp,

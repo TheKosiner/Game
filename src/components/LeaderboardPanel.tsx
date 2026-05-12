@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
-import { portraitSrc } from '../data/portraits';
+import { portraitSrc, resolvePortrait } from '../data/portraits';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
@@ -60,7 +60,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
           border: '2px solid rgba(255,215,0,0.35)',
           boxShadow: '0 0 16px rgba(255,215,0,0.12)',
         }}>
-          <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -193,7 +193,7 @@ export default function LeaderboardPanel() {
                 </div>
 
                 <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                  <img src={portraitSrc(entry.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
