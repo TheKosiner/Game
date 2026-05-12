@@ -65,7 +65,7 @@ export default function CharacterCreation() {
           <div>
             <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 10, letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {PORTRAIT_LIST.map(p => (
+              {PORTRAIT_LIST.filter(p => !p.hidden).map(p => (
                 <button
                   key={p.index}
                   onClick={() => setPortrait(p.index)}

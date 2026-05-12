@@ -17,6 +17,7 @@ import PvpPanel from './components/PvpPanel';
 import GuildPanel from './components/GuildPanel';
 import MailPanel from './components/MailPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
+import { PORTRAIT_OVERRIDES } from './data/portraits';
 
 export default function App() {
   const hero = useGameStore(s => s.hero);
@@ -53,6 +54,14 @@ export default function App() {
     }
     load();
   }, [authLoading, user?.uid]);
+
+  useEffect(() => {
+    if (!gameLoaded || !user) return;
+    const overrideIdx = PORTRAIT_OVERRIDES[user.username];
+    if (overrideIdx !== undefined) {
+      useGameStore.setState(s => ({ hero: { ...s.hero, portrait: overrideIdx } }));
+    }
+  }, [gameLoaded, user?.username]);
 
   useEffect(() => {
     if (!gameLoaded) return;
