@@ -24,6 +24,7 @@ export default function App() {
   const saveGame = useGameStore(s => s.saveGame);
   const initHero = useGameStore(s => s.initHero);
   const checkDailyReset = useGameStore(s => s.checkDailyReset);
+  const tickPassiveRegen = useGameStore(s => s.tickPassiveRegen);
 
   const user = useAuthStore(s => s.user);
   const authLoading = useAuthStore(s => s.authLoading);
@@ -56,8 +57,10 @@ export default function App() {
   useEffect(() => {
     if (!gameLoaded) return;
     checkDailyReset();
+    tickPassiveRegen();
     const id = setInterval(() => {
       checkDailyReset();
+      tickPassiveRegen();
       saveGame();
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
     }, 30_000);

@@ -151,6 +151,7 @@ export interface GameState {
   pvpWins: number;
   pvpLosses: number;
   pvpLog: PvpResult[];
+  lastPassiveRegenAt: number;
 
   // actions
   initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean, clothingColor?: number) => void;
@@ -180,6 +181,7 @@ export interface GameState {
   cancelRest: () => void;
   abandonQuest: () => void;
   useItem: (item: Item, invIdx: number) => void;
+  tickPassiveRegen: () => void;
   startBegging: (hours: number) => void;
   cancelBegging: () => void;
   collectBegging: () => void;
