@@ -100,7 +100,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   blocked?: boolean;
   blockedReason?: string;
 }) {
-  const hpPerMin   = Math.max(1, Math.round(hero.maxHp * 0.02));
+  const hpPerMin   = Math.max(1, Math.round(hero.maxHp * 0.04));
   const missing    = hero.maxHp - hero.hp;
   const maxMinutes = Math.ceil(missing / hpPerMin);
   const [minutes, setMinutes] = useState(Math.min(10, maxMinutes));
@@ -133,7 +133,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
       <input type="range" min={1} max={maxMinutes} value={clamped}
         onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1 min = 2% HP (~{hpPerMin} HP)</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1 min = 4% HP (~{hpPerMin} HP)</span>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>max {maxMinutes} min</span>
       </div>
       <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
