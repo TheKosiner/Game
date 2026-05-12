@@ -10,8 +10,7 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const BASE = import.meta.env.BASE_URL;
-function portraitSrc(p: number | undefined) { return p === 1 ? `${BASE}portraits/female.png` : `${BASE}portraits/male.png`; }
+import { portraitSrc } from '../data/portraits';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });

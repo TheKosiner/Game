@@ -1,19 +1,15 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+import { PORTRAIT_LIST } from '../data/portraits';
 
-const BASE = import.meta.env.BASE_URL;
-const PORTRAITS = [
-  { index: 0 as const, src: `${BASE}portraits/male.png`,   label: 'MĘŻCZYZNA' },
-  { index: 1 as const, src: `${BASE}portraits/female.png`, label: 'KOBIETA'   },
-];
+const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 interface Props { onClose: () => void; }
 
 export default function AppearanceEditor({ onClose }: Props) {
   const hero = useGameStore(s => s.hero);
-  const [portrait, setPortrait] = useState<0 | 1>(hero.portrait ?? 0);
+  const [portrait, setPortrait] = useState(hero.portrait ?? 0);
 
   function handleSave() {
     useGameStore.setState(s => ({ hero: { ...s.hero, portrait } }));
@@ -42,7 +38,7 @@ export default function AppearanceEditor({ onClose }: Props) {
           <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {PORTRAITS.map(p => (
+            {PORTRAIT_LIST.map(p => (
               <button
                 key={p.index}
                 onClick={() => setPortrait(p.index)}

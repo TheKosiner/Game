@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
-const BASE = import.meta.env.BASE_URL;
-const PORTRAITS = [
-  { index: 0 as const, src: `${BASE}portraits/male.png`,   label: 'MĘŻCZYZNA' },
-  { index: 1 as const, src: `${BASE}portraits/female.png`, label: 'KOBIETA'   },
-];
+import { PORTRAIT_LIST } from '../data/portraits';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');
-  const [portrait, setPortrait] = useState<0 | 1>(0);
+  const [portrait, setPortrait] = useState(0);
   const initHero = useGameStore(s => s.initHero);
 
   function handleCreate() {
@@ -69,7 +65,7 @@ export default function CharacterCreation() {
           <div>
             <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 10, letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              {PORTRAITS.map(p => (
+              {PORTRAIT_LIST.map(p => (
                 <button
                   key={p.index}
                   onClick={() => setPortrait(p.index)}
