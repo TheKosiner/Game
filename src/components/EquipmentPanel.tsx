@@ -133,7 +133,7 @@ export default function EquipmentPanel() {
   const equipment  = useGameStore(s => s.hero.equipment);
   const unequipItem = useGameStore(s => s.unequipItem);
   const [selectedSlot, setSelectedSlot] = useState<ItemSlot | null>(null);
-  const selectedItem = selectedSlot ? equipment[selectedSlot] : null;
+  const selectedItem = selectedSlot && selectedSlot !== 'consumable' ? equipment[selectedSlot as keyof typeof equipment] : null;
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -150,7 +150,7 @@ export default function EquipmentPanel() {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
           {SLOTS.map(({ slot, label, icon }) => {
-            const item = equipment[slot];
+            const item = equipment[slot as keyof typeof equipment];
             return item ? (
               <ItemBadge key={slot} item={item} onSelect={() => setSelectedSlot(slot)} />
             ) : (

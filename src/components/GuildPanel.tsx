@@ -199,7 +199,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   );
 }
 
-function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void }) {
+function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, 0 | 1> }) {
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const isLeader = guild.leaderUid === myUid;
@@ -278,7 +278,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap }: { guild: Guild; myUid
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${m.role === 'leader' ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                <img src={portraitSrc(m.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                <img src={portraitSrc(playerPortraits[m.uid] ?? m.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
@@ -328,15 +328,20 @@ export default function GuildPanel() {
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'guild' | 'territory'>('guild');
+  const [playerPortraits, setPlayerPortraits] = useState<Record<string, 0 | 1>>({});
 
   async function load() {
     if (!user || !isFirebaseConfigured) { setLoading(false); return; }
     setLoading(true);
     try {
-      const [guildId, myInvites] = await Promise.all([
+      const [guildId, myInvites, leaderboard] = await Promise.all([
         getMyGuildId(user.uid),
         getMyInvites(user.uid),
+        getLeaderboard(),
       ]);
+      const portraits: Record<string, 0 | 1> = {};
+      for (const e of leaderboard) portraits[e.uid] = (e.portrait ?? 0) as 0 | 1;
+      setPlayerPortraits(portraits);
       setInvites(myInvites);
       if (guildId) {
         const g = await getGuild(guildId);
@@ -379,7 +384,7 @@ export default function GuildPanel() {
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} onOpenMap={() => setView('territory')} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} onOpenMap={() => setView('territory')} playerPortraits={playerPortraits} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}

@@ -178,7 +178,7 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
         <span style={{ fontSize: 20 }}>🙏</span>
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
-            ŻEBRANIE — {timeStr}
+            ZBIERANIE ZŁOMU — {timeStr}
           </p>
           <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>+{earnedNow}/{reward}🪙</p>
         </div>
@@ -200,7 +200,7 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
       boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
       <p style={{ ...ORB, fontSize: 9, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
-        🙏 ŻEBRANIE ZAKOŃCZONE! +{reward}🪙
+        🔩 ZŁOM ZEBRANY! +{reward}🪙
       </p>
       <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
         🪙 ODBIERZ JAŁMUŻNĘ
@@ -218,7 +218,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
   const [hours, setHours] = useState(2);
   if (blocked && blockedReason) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.15)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🙏 ŻEBRANIE — {blockedReason}</p>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🔩 ZBIERANIE ZŁOMU — {blockedReason}</p>
     </div>
   );
   return (
@@ -228,7 +228,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🙏 ŻEBRANIE</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🔩 ZBIERANIE ZŁOMU</p>
         <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{hours}h</p>
       </div>
       <input type="range" min={1} max={10} value={hours}
@@ -241,7 +241,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
         width: '100%', fontSize: 8, padding: '8px',
         borderColor: 'rgba(157,78,221,0.4)', color: '#9d4edd', textShadow: '0 0 6px #9d4edd',
       }}>
-        ▶ ZACZNIJ ŻEBRAĆ
+        ▶ ZACZNIJ ZBIERAĆ ZŁOM
       </button>
     </div>
   );
@@ -275,7 +275,7 @@ export default function HeroCard() {
   const hasQuest    = activeQuest !== null;
   const inDungeon   = currentDungeon !== null || inCombat;
 
-  const restBlockReason    = isBegging ? 'postać żebrze' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
+  const restBlockReason    = isBegging ? 'postać zbiera złom' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
   const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
 
   const displayHp  = hero.hp + earnedRestHp;
@@ -321,7 +321,7 @@ export default function HeroCard() {
             <p style={{ ...ORB, fontSize: 14, color: '#ffffff', textShadow: '0 0 12px rgba(255,255,255,0.25)', marginBottom: 2, wordBreak: 'break-all' }}>
               {hero.name}
             </p>
-            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>ŁOTRZYK · POZ. {hero.level}</p>
+            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>POZ. {hero.level}</p>
           </div>
 
           <div style={{ display: 'flex', gap: 4 }}>

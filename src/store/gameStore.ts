@@ -171,24 +171,26 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   equipItem: (item: Item, invIdx?: number) => {
+    if (item.slot === 'consumable') return;
     const { hero } = get();
-    const oldEquipped = hero.equipment[item.slot];
+    const oldEquipped = hero.equipment[item.slot as keyof typeof hero.equipment];
     const newInventory = [...hero.inventory];
     const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx !== -1) newInventory.splice(idx, 1);
     if (oldEquipped) newInventory.push(oldEquipped);
-    const newEquipment = { ...hero.equipment, [item.slot]: item };
+    const newEquipment = { ...hero.equipment, [item.slot as string]: item };
     const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
     set({ hero: { ...hero, equipment: newEquipment, inventory: newInventory, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
   },
 
   unequipItem: (slot: ItemSlot) => {
+    if (slot === 'consumable') return;
     const { hero } = get();
-    const item = hero.equipment[slot];
+    const item = hero.equipment[slot as keyof typeof hero.equipment];
     if (!item) return;
     if (hero.inventory.length >= MAX_INVENTORY) return;
     const newEquipment = { ...hero.equipment };
-    delete newEquipment[slot];
+    delete (newEquipment as any)[slot];
     const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
     set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item], maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
   },
@@ -393,6 +395,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().addXp(activeQuest.quest.xpReward);
     get().addGold(activeQuest.quest.goldReward);
     set({ activeQuest: null, hero: { ...get().hero, questsCompletedToday: hero.questsCompletedToday + 1 } });
+    get().saveGame();
+  },
+
+  abandonQuest: () => {
+    if (!get().activeQuest) return;
+    set({ activeQuest: null });
+    get().saveGame();
+  },
+
+  useItem: (item: Item, invIdx: number) => {
+    const hero = get().hero;
+    if (item.slot !== 'consumable') return;
+    const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
+    const healAmount = Math.round(hero.maxHp * 0.25);
+    const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
+    set({ hero: { ...hero, hp: newHp, inventory: newInventory } });
+    get().addCombatLog(`${item.emoji} Użyto ${item.name}: +${newHp - hero.hp} HP`, 'system');
     get().saveGame();
   },
 
