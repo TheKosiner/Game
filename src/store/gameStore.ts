@@ -112,6 +112,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentFloor: 1,
   currentEnemy: null,
   dungeonMode: 'balanced',
+  dungeonDifficulty: 'normal',
   combatLog: [],
   inCombat: false,
   defeatedAtDungeon: null,
@@ -226,7 +227,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
-  enterDungeon: (dungeon: Dungeon, mode: 'xp' | 'balanced' | 'loot' = 'balanced') => {
+  enterDungeon: (dungeon: Dungeon, mode: 'xp' | 'balanced' | 'loot' = 'balanced', difficulty: 'easy' | 'normal' | 'hard' = 'normal') => {
     const { hero } = get();
     if (hero.level < dungeon.minLevel) return;
     if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
@@ -237,13 +238,22 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`Dzienny limit lochow (${MAX_DAILY_DUNGEONS}) wyczerpany! Wróc jutro.`, 'system');
       return;
     }
+    const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
-    const enemy = scaleEnemy(baseEnemy, 1);
+    const scaled = scaleEnemy(baseEnemy, 1);
+    const enemy = {
+      ...scaled,
+      hp: Math.round(scaled.hp * diffStatMult),
+      maxHp: Math.round(scaled.maxHp * diffStatMult),
+      attack: Math.round(scaled.attack * diffStatMult),
+      defense: Math.round(scaled.defense * diffStatMult),
+    };
     set({
       currentDungeon: dungeon,
       dungeonMode: mode,
+      dungeonDifficulty: difficulty,
       currentFloor: 1,
       currentEnemy: { ...enemy },
       inCombat: true,
@@ -276,8 +286,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (newEnemyHp <= 0) {
       get().addCombatLog(`Pokonales ${currentEnemy.emoji} ${currentEnemy.name}!`, 'system');
       const mode = get().dungeonMode;
-      const xpMult  = mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1;
-      const goldMult = mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1;
+      const diff = get().dungeonDifficulty;
+      const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
+      const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
+      const xpMult  = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
+      const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
       const dropChance = mode === 'xp' ? 0.35 : mode === 'loot' ? 1.0 : 0.65;
       const legMult  = mode === 'loot' ? 5   : 1;
       const xpEarned   = Math.round(currentEnemy.xpReward * xpMult);
@@ -295,7 +308,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
-          const nextEnemy = scaleEnemy(baseEnemy, nextFloor);
+          const scaled = scaleEnemy(baseEnemy, nextFloor);
+          const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult), maxHp: Math.round(scaled.maxHp * diffStatMult), attack: Math.round(scaled.attack * diffStatMult), defense: Math.round(scaled.defense * diffStatMult) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
           get().addCombatLog(`Piętro ${nextFloor}: ${nextEnemy.emoji} ${nextEnemy.name} atakuje!`, 'system');
         }
@@ -345,8 +359,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     } else {
       get().addCombatLog(`Pokonales ${currentEnemy.emoji} ${currentEnemy.name}! (szybka walka)`, 'system');
       const mode2 = get().dungeonMode;
-      const xpMult2   = mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1;
-      const goldMult2 = mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1;
+      const diff2 = get().dungeonDifficulty;
+      const diffRewardMult2 = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.6 : 1;
+      const diffStatMult2   = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.5 : 1;
+      const xpMult2   = (mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
+      const goldMult2 = (mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
       const dropChance2 = mode2 === 'xp' ? 0.35 : mode2 === 'loot' ? 1.0 : 0.65;
       const legMult2  = mode2 === 'loot' ? 5   : 1;
       const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2);
@@ -367,7 +384,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
-          const nextEnemy = scaleEnemy(baseEnemy, nextFloor);
+          const scaled2 = scaleEnemy(baseEnemy, nextFloor);
+          const nextEnemy = { ...scaled2, hp: Math.round(scaled2.hp * diffStatMult2), maxHp: Math.round(scaled2.maxHp * diffStatMult2), attack: Math.round(scaled2.attack * diffStatMult2), defense: Math.round(scaled2.defense * diffStatMult2) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
           get().addCombatLog(`Piętro ${nextFloor}: ${nextEnemy.emoji} ${nextEnemy.name} atakuje!`, 'system');
         }
