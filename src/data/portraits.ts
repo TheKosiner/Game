@@ -21,6 +21,10 @@ export const PORTRAIT_OVERRIDES: Record<string, number> = {
   'Kosiner': 2,
 };
 
+export function resolvePortrait(p: number | undefined, username: string): number {
+  return PORTRAIT_OVERRIDES[username] ?? p ?? 0;
+}
+
 export function portraitSrc(p: number | undefined): string {
   const found = PORTRAIT_LIST.find(x => x.index === (p ?? 0));
   return found?.src ?? PORTRAIT_LIST[0].src;
