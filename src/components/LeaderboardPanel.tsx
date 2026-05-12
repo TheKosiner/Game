@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
-const BASE = import.meta.env.BASE_URL;
-function portraitSrc(p: number | undefined) { return p === 1 ? `${BASE}portraits/female.png` : `${BASE}portraits/male.png`; }
+import { portraitSrc } from '../data/portraits';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);

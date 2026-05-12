@@ -14,7 +14,7 @@ export interface LeaderboardEntry {
   skinTone?: number;
   hairColor?: number;
   clothingColor?: number;
-  portrait?: 0 | 1;
+  portrait?: number;
   attack?: number;
   defense?: number;
   maxHp?: number;
@@ -179,7 +179,7 @@ export interface GuildMemberData {
   level: number;
   role: 'leader' | 'member';
   joinedAt: number;
-  portrait?: 0 | 1;
+  portrait?: number;
 }
 
 export interface Guild {
@@ -225,7 +225,7 @@ export async function createGuild(
   name: string,
   tag: string,
   description: string,
-  leaderPortrait?: 0 | 1,
+  leaderPortrait?: number,
 ): Promise<string> {
   if (!db) throw new Error('No DB');
   const now = Date.now();
@@ -309,7 +309,7 @@ export async function acceptInvite(
   username: string,
   heroName: string,
   level: number,
-  portrait?: 0 | 1,
+  portrait?: number,
 ): Promise<void> {
   if (!db) return;
   const now = Date.now();
