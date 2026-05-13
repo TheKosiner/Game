@@ -40,6 +40,15 @@
   100% { background-position: 0 40px; }
 }
 
+@keyframes mapPulse {
+  0%   { r: 5; opacity: 0.7; }
+  100% { r: 12; opacity: 0; }
+}
+
+@keyframes mapFlow {
+  to { stroke-dashoffset: -20; }
+}
+
 /* ============================================================
    CSS VARIABLES
 ============================================================ */
