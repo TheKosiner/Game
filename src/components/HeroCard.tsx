@@ -393,11 +393,11 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>◈ STATYSTYKI</p>
         {([
-          { attr: 'strength',     icon: '💪', name: 'Moc ciała',  desc: '↑ obrażenia',       color: '#ff2d78' },
-          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ kryt',             color: '#00f5ff' },
-          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ obrażenia broni dystansowych', color: '#9d4edd' },
-          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona',     color: '#ff4444' },
-        ] as const).map(({ attr, icon, name, desc, color }) => {
+          { attr: 'strength',     icon: '💪', name: 'Siła',       desc: '↑ obrażenia broni wręcz',        note: '⚔ kliny · pałki · noże · piki · +1% DMG/pkt',   color: '#ff2d78' },
+          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ szansa na trafienie krytyczne', note: 'baza 10% kryt · +0.5% kryt/pkt',                color: '#00f5ff' },
+          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ obrażenia broni dystansowych',  note: '🔫 działa · 🔱 railguny · +0.4% DMG/pkt',       color: '#9d4edd' },
+          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP maksymalne i obrona',        note: '+10 HP · +1 obrona na każdy pkt',               color: '#ff4444' },
+        ] as const).map(({ attr, icon, name, desc, note, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
           const cost = Math.round(base * 75);
@@ -410,11 +410,7 @@ export default function HeroCard() {
                   <span style={{ ...MONO, fontSize: 11, color }}>{name}</span>
                 </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
-                {attr === 'intelligence' && (
-                  <p style={{ ...MONO, fontSize: 9, color: '#9d4edd', opacity: 0.7, marginTop: 1 }}>
-                    🔫 działa · 🔱 railguny · +0.4% DMG/pkt
-                  </p>
-                )}
+                <p style={{ ...MONO, fontSize: 9, color, opacity: 0.6, marginTop: 1 }}>{note}</p>
               </div>
               <span style={{ ...ORB, fontSize: 13, color, textShadow: `0 0 8px ${color}`, minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
               {eq > 0 && <span style={{ ...MONO, fontSize: 10, color: '#00ff88', minWidth: 26 }}>+{eq}♦</span>}
