@@ -17,6 +17,12 @@ export const ALL_ENEMIES: Enemy[] = [
   { id: 'rogue_ai',       name: 'Zbuntowane AI',            emoji: '👾',  level: 14, hp: 180, maxHp: 180, attack: 38,  defense: 18, xpReward: 140, goldReward: 90,  lootTable: ['sniper_longrange', 'suit_netrunner', 'implant_power'] },
   { id: 'cyber_titan',    name: 'Cybernetyczny Tytan',      emoji: '🦾',  level: 18, hp: 250, maxHp: 250, attack: 50,  defense: 25, xpReward: 185, goldReward: 120, lootTable: ['suit_stealth', 'blade_disruptor'] },
 
+  // Pustkowia
+  { id: 'Ghul',  name: 'Ghul',     emoji: '🧟',  level: 14, hp: 180, maxHp: 180, attack: 38,  defense: 18, xpReward: 140, goldReward: 90,  lootTable: ['sniper_longrange', 'suit_netrunner', 'implant_power'] },
+  { id: 'zmutowany_karaluch',       name: 'Zmutowany Karaluch',            emoji: '🪳',  level: 18, hp: 250, maxHp: 250, attack: 50,  defense: 25, xpReward: 185, goldReward: 120, lootTable: ['suit_stealth', 'blade_disruptor'] },
+  { id: 'zmutowany_niedzwiedz',    name: 'Zmutowany Niedzwiedź',      emoji: '🐻',  level: 22, hp: 350, maxHp: 350, attack: 65,  defense: 32, xpReward: 255, goldReward: 165, lootTable: ['boots_jet', 'amplifier_signal'] },
+
+
   // Twierdza Megakorpu (Megacorp Fortress)
   { id: 'war_mech',       name: 'Mech Wojenny',             emoji: '🤖',  level: 22, hp: 350, maxHp: 350, attack: 65,  defense: 32, xpReward: 255, goldReward: 165, lootTable: ['boots_jet', 'amplifier_signal'] },
   { id: 'nuclear_drone',  name: 'Nuklearny Dron',           emoji: '☢️',  level: 26, hp: 450, maxHp: 450, attack: 80,  defense: 35, xpReward: 325, goldReward: 215, lootTable: ['core_megacorp', 'blade_titan'] },
