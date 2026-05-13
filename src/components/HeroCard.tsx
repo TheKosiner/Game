@@ -395,7 +395,7 @@ export default function HeroCard() {
         {([
           { attr: 'strength',     icon: '💪', name: 'Moc ciała',  desc: '↑ obrażenia',       color: '#ff2d78' },
           { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ kryt',             color: '#00f5ff' },
-          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ celność strzałów', color: '#9d4edd' },
+          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ obrażenia broni dystansowych', color: '#9d4edd' },
           { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP i obrona',     color: '#ff4444' },
         ] as const).map(({ attr, icon, name, desc, color }) => {
           const base = hero.stats[attr];
@@ -410,6 +410,11 @@ export default function HeroCard() {
                   <span style={{ ...MONO, fontSize: 11, color }}>{name}</span>
                 </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
+                {attr === 'intelligence' && (
+                  <p style={{ ...MONO, fontSize: 9, color: '#9d4edd', opacity: 0.7, marginTop: 1 }}>
+                    🔫 działa · 🔱 railguny · +0.4% DMG/pkt
+                  </p>
+                )}
               </div>
               <span style={{ ...ORB, fontSize: 13, color, textShadow: `0 0 8px ${color}`, minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
               {eq > 0 && <span style={{ ...MONO, fontSize: 10, color: '#00ff88', minWidth: 26 }}>+{eq}♦</span>}

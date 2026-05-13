@@ -29,7 +29,12 @@ export function getHeroAttack(hero: Hero): number {
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
   const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
   const levelBase = 5 + hero.level * 2;
-  return Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
+  const base = Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
+  if (weapon.ranged) {
+    const intVal = softCap(hero.stats.intelligence + eq.intelligence);
+    return Math.round(base * (1 + intVal / 250));
+  }
+  return base;
 }
 
 export function getHeroDefense(hero: Hero): number {

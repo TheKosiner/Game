@@ -213,6 +213,17 @@ export default function ShopPanel() {
                     <p style={{ color: rarityColor, fontSize: 7, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
                       {item.name}
                     </p>
+                    {item.ranged && (
+                      <span style={{
+                        fontFamily: "'Share Tech Mono', monospace",
+                        fontSize: 5, color: '#00f5ff',
+                        background: 'rgba(0,245,255,0.08)',
+                        border: '1px solid rgba(0,245,255,0.3)',
+                        padding: '1px 3px', flexShrink: 0,
+                      }}>
+                        🔫 DYSTANSOWA
+                      </span>
+                    )}
                     <span style={{
                       color: rarityColor, fontSize: 5,
                       background: rarityColor + '18',
