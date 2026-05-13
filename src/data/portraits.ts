@@ -17,6 +17,7 @@ export const PORTRAIT_LIST: PortraitDef[] = [
   { index: 4, src: `${BASE}portraits/Portrait_2.png`,      label: 'PAWEŁEK'      },
   { index: 5, src: `${BASE}portraits/Portrait_3.png`,      label: 'FIFI'  },
   { index: 6, src: `${BASE}portraits/Portrait_4.png`,      label: 'LUCYNA'},
+  { index: 7, src: `${BASE}portraits/Portrait_5.png`,      label: 'GRAZYNA'},
   { index: 2, src: `${BASE}portraits/1778573895348.png`,   label: 'KOSINER', hidden: true },
 ];
 
