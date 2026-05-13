@@ -17,13 +17,13 @@ export const ALL_ITEMS: Item[] = [
   { id: 'blade_supernova',  name: 'Rozbłysk Supernowej',        slot: 'weapon', rarity: 'legendary', stats: { strength: 45, dexterity: 20 },         attackBonus: 120,level: 50, goldValue: 25000, emoji: '🌟' },
 
   // ── Weapons: Heavy Rotary (Ciężka Artyleria) ─────────────────────────────
-  { id: 'cannon_rotary',    name: 'Minigun MK-I',               slot: 'weapon', rarity: 'common',    stats: { strength: 3 },                         attackBonus: 7,  level: 2,  goldValue: 35,    emoji: '🔫' },
-  { id: 'cannon_shredder',  name: 'Szatkownica S-10',           slot: 'weapon', rarity: 'uncommon',  stats: { strength: 6, vitality: 2 },            attackBonus: 12, level: 5,  goldValue: 110,   emoji: '🔫' },
-  { id: 'cannon_gatling',   name: 'Gatling X-400',              slot: 'weapon', rarity: 'uncommon',  stats: { strength: 8 },                         attackBonus: 16, level: 7,  goldValue: 160,   emoji: '🔫' },
-  { id: 'cannon_chain',     name: 'Działko Łańcuchowe',         slot: 'weapon', rarity: 'rare',      stats: { strength: 14, vitality: 4 },           attackBonus: 30, level: 14, goldValue: 550,   emoji: '🔫' },
-  { id: 'cannon_vulcan',    name: 'Wulkan V-8',                 slot: 'weapon', rarity: 'rare',      stats: { strength: 18, vitality: 6 },           attackBonus: 38, level: 18, goldValue: 920,   emoji: '🔫' },
-  { id: 'cannon_plasma',    name: 'Plazmo-Rotary',              slot: 'weapon', rarity: 'epic',      stats: { strength: 24, dexterity: -2 },         attackBonus: 52, level: 22, goldValue: 2200,  emoji: '🔫' },
-  { id: 'cannon_fusion',    name: 'Działo Fuzyjne "Słońce"',    slot: 'weapon', rarity: 'legendary', stats: { strength: 40, vitality: 15 },          attackBonus: 105,level: 42, goldValue: 15000, emoji: '💥' },
+  { id: 'cannon_rotary',    name: 'Minigun MK-I',               slot: 'weapon', rarity: 'common',    stats: { strength: 3 },                         attackBonus: 7,  level: 2,  goldValue: 35,    emoji: '🔫', ranged: true },
+  { id: 'cannon_shredder',  name: 'Szatkownica S-10',           slot: 'weapon', rarity: 'uncommon',  stats: { strength: 6, vitality: 2 },            attackBonus: 12, level: 5,  goldValue: 110,   emoji: '🔫', ranged: true },
+  { id: 'cannon_gatling',   name: 'Gatling X-400',              slot: 'weapon', rarity: 'uncommon',  stats: { strength: 8 },                         attackBonus: 16, level: 7,  goldValue: 160,   emoji: '🔫', ranged: true },
+  { id: 'cannon_chain',     name: 'Działko Łańcuchowe',         slot: 'weapon', rarity: 'rare',      stats: { strength: 14, vitality: 4 },           attackBonus: 30, level: 14, goldValue: 550,   emoji: '🔫', ranged: true },
+  { id: 'cannon_vulcan',    name: 'Wulkan V-8',                 slot: 'weapon', rarity: 'rare',      stats: { strength: 18, vitality: 6 },           attackBonus: 38, level: 18, goldValue: 920,   emoji: '🔫', ranged: true },
+  { id: 'cannon_plasma',    name: 'Plazmo-Rotary',              slot: 'weapon', rarity: 'epic',      stats: { strength: 24, dexterity: -2 },         attackBonus: 52, level: 22, goldValue: 2200,  emoji: '🔫', ranged: true },
+  { id: 'cannon_fusion',    name: 'Działo Fuzyjne "Słońce"',    slot: 'weapon', rarity: 'legendary', stats: { strength: 40, vitality: 15 },          attackBonus: 105,level: 42, goldValue: 15000, emoji: '💥', ranged: true },
 
   // ── Weapons: Shock & EMP (Bronie Paralizujące) ───────────────────────────
   { id: 'baton_shock',      name: 'Szok-Baton E1',              slot: 'weapon', rarity: 'common',    stats: { strength: 2, vitality: 1 },            attackBonus: 6,  level: 2,  goldValue: 30,    emoji: '⚡' },
@@ -36,9 +36,9 @@ export const ALL_ITEMS: Item[] = [
   // ── Weapons: Electro-Pikes & Railguns ────────────────────────────────────
   { id: 'pike_electro',     name: 'Elektro-Pika',               slot: 'weapon', rarity: 'common',    stats: { dexterity: 2, strength: 1 },           attackBonus: 6,  level: 2,  goldValue: 28,    emoji: '🔱' },
   { id: 'lance_hyper',      name: 'Hiper-Lanca',                slot: 'weapon', rarity: 'uncommon',  stats: { dexterity: 5, strength: 4 },           attackBonus: 15, level: 8,  goldValue: 170,   emoji: '🔱' },
-  { id: 'railgun_scout',    name: 'Lekki Railgun R1',           slot: 'weapon', rarity: 'rare',      stats: { dexterity: 10, intelligence: 5 },      attackBonus: 28, level: 12, goldValue: 490,   emoji: '🔱' },
-  { id: 'railgun_heavy',    name: 'Railgun Ciężki',             slot: 'weapon', rarity: 'epic',      stats: { dexterity: 12, strength: 14 },         attackBonus: 46, level: 22, goldValue: 2100,  emoji: '🔱' },
-  { id: 'railgun_orbital',  name: 'Orbitalny Przebijacz',       slot: 'weapon', rarity: 'legendary', stats: { dexterity: 30, intelligence: 20 },     attackBonus: 88, level: 36, goldValue: 9500,  emoji: '🛰️' },
+  { id: 'railgun_scout',    name: 'Lekki Railgun R1',           slot: 'weapon', rarity: 'rare',      stats: { dexterity: 10, intelligence: 5 },      attackBonus: 28, level: 12, goldValue: 490,   emoji: '🔱', ranged: true },
+  { id: 'railgun_heavy',    name: 'Railgun Ciężki',             slot: 'weapon', rarity: 'epic',      stats: { dexterity: 12, strength: 14 },         attackBonus: 46, level: 22, goldValue: 2100,  emoji: '🔱', ranged: true },
+  { id: 'railgun_orbital',  name: 'Orbitalny Przebijacz',       slot: 'weapon', rarity: 'legendary', stats: { dexterity: 30, intelligence: 20 },     attackBonus: 88, level: 36, goldValue: 9500,  emoji: '🛰️', ranged: true },
 
   // ── Weapons: Mono-Knives & Nano-Daggers ──────────────────────────────────
   { id: 'knife_mono',       name: 'Mono-Nóż',                   slot: 'weapon', rarity: 'common',    stats: { dexterity: 3 },                        attackBonus: 6,  level: 1,  goldValue: 28,    emoji: '🔪' },

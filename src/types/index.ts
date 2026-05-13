@@ -17,6 +17,7 @@ export interface Item {
   stats: Partial<Stats>;
   attackBonus?: number;
   defenseBonus?: number;
+  ranged?: boolean;
   level: number;
   goldValue: number;
   emoji: string;

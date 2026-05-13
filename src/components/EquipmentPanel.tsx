@@ -54,6 +54,11 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             <span style={{ ...MONO, fontSize: 7, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 4px', flexShrink: 0 }}>
               {SLOT_SHORT[item.slot] ?? item.slot.toUpperCase()}
             </span>
+            {item.ranged && (
+              <span style={{ ...MONO, fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px', flexShrink: 0 }}>
+                🔫 DYSTANSOWA
+              </span>
+            )}
             <p style={{ ...ORB, fontSize: 9, color: rc, textShadow: `0 0 8px ${rc}` }}>{item.name}</p>
           </div>
           <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
@@ -120,6 +125,11 @@ function ItemBadge({ item, onSelect }: { item: Item; onSelect: () => void }) {
           <span style={{ ...MONO, fontSize: 6, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
             {SLOT_SHORT[item.slot] ?? item.slot.toUpperCase()}
           </span>
+          {item.ranged && (
+            <span style={{ ...MONO, fontSize: 6, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '1px 3px', flexShrink: 0 }}>
+              🔫 DYST
+            </span>
+          )}
           <p style={{ ...MONO, fontSize: 10, color: rc }}>{item.name}</p>
         </div>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Poz. {item.level}</p>
