@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { getItemById, ALL_ITEMS } from '../data/items';
+import { ALL_ITEMS } from '../data/items';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const SAVE_KEY = 'realm_of_valor_save';
@@ -13,33 +13,38 @@ export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
 
-function tryLegendaryDrop(heroLevel: number, inventory: Item[], setHero: (h: Item[]) => void, log: (msg: string, t: CombatLog['type']) => void, chance = 0.008): void {
-  if (Math.random() >= chance) return;
-  const pool = ALL_ITEMS.filter(i => i.rarity === 'legendary' && i.level <= heroLevel + 8);
-  if (!pool.length || inventory.length >= MAX_INVENTORY) return;
-  const item = pool[Math.floor(Math.random() * pool.length)];
-  setHero([...inventory, item]);
-  log(`✨ LEGENDARNY DROP: ${item.emoji} ${item.name}!`, 'loot');
+type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+const RARITY_BASE: Record<Rarity, number> = { common: 50, uncommon: 28, rare: 14, epic: 6, legendary: 2 };
+const RARITY_EMOJI: Record<Rarity, string> = { common: '⬜', uncommon: '🟩', rare: '🟦', epic: '🟪', legendary: '✨' };
+const RARITY_LABEL: Record<Rarity, string> = { common: '', uncommon: '', rare: ' RZADKI!', epic: ' 💜 EPICKI!', legendary: ' ✨ LEGENDARNY!' };
+
+function rollRarity(mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard'): Rarity {
+  const w: Record<string, number> = { ...RARITY_BASE };
+  if (mode === 'loot')   { w.common *= 0.4; w.uncommon *= 0.9; w.rare *= 2.2; w.epic *= 3; w.legendary *= 4; }
+  else if (mode === 'xp'){ w.rare   *= 0.6; w.epic     *= 0.4; w.legendary *= 0.3; }
+  if (difficulty === 'hard') { w.rare *= 1.4; w.epic *= 2; w.legendary *= 3; }
+  else if (difficulty === 'easy') { w.epic *= 0.4; w.legendary *= 0.15; }
+  const total = Object.values(w).reduce((a, b) => a + b, 0);
+  let roll = Math.random() * total;
+  for (const [r, weight] of Object.entries(w)) { roll -= weight; if (roll <= 0) return r as Rarity; }
+  return 'common';
 }
 
-function tryDungeonLoot(dungeon: Dungeon, heroLevel: number, _inventory: Item[], dropChance: number, legMult: number, set: (partial: any) => void, get: () => GameState): void {
-  const log = get().addCombatLog;
-  const setInv = (inv: Item[]) => set({ hero: { ...get().hero, inventory: inv } });
-  if (Math.random() < dropChance) {
-    const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
-    const enemy = getEnemyById(enemyId);
-    const lootTable = enemy?.lootTable ?? [];
-    if (lootTable.length > 0) {
-      const lootId = lootTable[Math.floor(Math.random() * lootTable.length)];
-      const lootItem = getItemById(lootId);
-      if (lootItem && get().hero.inventory.length < MAX_INVENTORY) {
-        const h = get().hero;
-        set({ hero: { ...h, inventory: [...h.inventory, lootItem] } });
-        log(`🎁 Skarb lochu: ${lootItem.emoji} ${lootItem.name}!`, 'loot');
-      }
-    }
-  }
-  tryLegendaryDrop(heroLevel, get().hero.inventory, setInv, log, 0.04 * legMult);
+function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
+  if (Math.random() >= dropChance) return;
+  const hero = get().hero;
+  if (hero.inventory.length >= MAX_INVENTORY) return;
+  const rarity = rollRarity(mode, difficulty);
+  const lvMin = Math.max(1, heroLevel - 3);
+  const lvMax = heroLevel + 5;
+  let pool = ALL_ITEMS.filter(i => i.rarity === rarity && i.level >= lvMin && i.level <= lvMax && i.slot !== 'consumable');
+  if (!pool.length) pool = ALL_ITEMS.filter(i => i.rarity === rarity && i.slot !== 'consumable');
+  if (!pool.length) pool = ALL_ITEMS.filter(i => i.slot !== 'consumable');
+  if (!pool.length) return;
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
+  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${item.name}${RARITY_LABEL[rarity]}`, 'loot');
 }
 
 function simDmg(atk: number, def: number): number {
@@ -291,8 +296,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
       const xpMult  = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
       const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-      const dropChance = mode === 'xp' ? 0.35 : mode === 'loot' ? 1.0 : 0.65;
-      const legMult  = mode === 'loot' ? 5   : 1;
+      const dropChance = mode === 'xp' ? 0.30 : mode === 'loot' ? 1.0 : 0.60;
       const xpEarned   = Math.round(currentEnemy.xpReward * xpMult);
       const goldEarned = Math.round(currentEnemy.goldReward * goldMult);
       get().addXp(xpEarned);
@@ -302,7 +306,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
-        tryDungeonLoot(currentDungeon, get().hero.level, get().hero.inventory, dropChance, legMult, set, get);
+        tryDungeonLoot(get().hero.level, dropChance, mode, diff, set, get);
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
@@ -364,8 +368,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const diffStatMult2   = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.5 : 1;
       const xpMult2   = (mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
       const goldMult2 = (mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
-      const dropChance2 = mode2 === 'xp' ? 0.35 : mode2 === 'loot' ? 1.0 : 0.65;
-      const legMult2  = mode2 === 'loot' ? 5   : 1;
+      const dropChance2 = mode2 === 'xp' ? 0.30 : mode2 === 'loot' ? 1.0 : 0.60;
       const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2);
       const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2);
       get().addXp(xpEarned2);
@@ -378,7 +381,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
-        tryDungeonLoot(currentDungeon, get().hero.level, get().hero.inventory, dropChance2, legMult2, set, get);
+        tryDungeonLoot(get().hero.level, dropChance2, mode2, diff2, set, get);
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
