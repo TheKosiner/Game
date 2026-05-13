@@ -11,8 +11,12 @@ export interface PortraitDef {
 // Wrzuć plik PNG do /public/portraits/ i dodaj wpis poniżej.
 // Indeks musi być unikalny i rosnący.
 export const PORTRAIT_LIST: PortraitDef[] = [
-  { index: 0, src: `${BASE}portraits/male.png`,            label: 'MĘŻCZYZNA' },
-  { index: 1, src: `${BASE}portraits/female.png`,          label: 'KOBIETA'   },
+  { index: 0, src: `${BASE}portraits/male.png`,            label: 'MĘŻCZYZNA'  },
+  { index: 1, src: `${BASE}portraits/female.png`,          label: 'KOBIETA'    },
+  { index: 3, src: `${BASE}portraits/Portrait_1.png`,      label: 'WOJOWNIK'   },
+  { index: 4, src: `${BASE}portraits/Portrait_2.png`,      label: 'ŁOWCA'      },
+  { index: 5, src: `${BASE}portraits/Portrait_3.png`,      label: 'CZAROWNIK'  },
+  { index: 6, src: `${BASE}portraits/Portrait_4.png`,      label: 'BARBARZYŃCA'},
   { index: 2, src: `${BASE}portraits/1778573895348.png`,   label: 'KOSINER', hidden: true },
 ];
 
