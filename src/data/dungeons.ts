@@ -35,7 +35,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 15,
     description: 'Niezbadane pustkowia, pełne niebezpieczeństw.',
     floors: 11,
-    enemies: ['corp_assassin', 'rogue_ai', 'cyber_titan'],
+    enemies: ['ghul', 'zmutowany_karaluch', 'zmutowany_niedzwiedz'],
   },
   {
     id: 'dragon_lair',
