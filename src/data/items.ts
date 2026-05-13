@@ -1,4 +1,4 @@
-impimport type { Item, Rarity } from '../types';
+import type { Item, Rarity } from '../types';
 
 export const ALL_ITEMS: Item[] = [
   // ── Weapons: Energy Blades (Ostrza Energetyczne) ─────────────────────────
