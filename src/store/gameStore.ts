@@ -427,7 +427,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const hero = get().hero;
     if (item.slot !== 'consumable') return;
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
-    const healAmount = Math.round(hero.maxHp * 0.25);
+    const healAmount = Math.round(hero.maxHp * 1);
     const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
     set({ hero: { ...hero, hp: newHp, inventory: newInventory } });
     get().addCombatLog(`${item.emoji} Użyto ${item.name}: +${newHp - hero.hp} HP`, 'system');
