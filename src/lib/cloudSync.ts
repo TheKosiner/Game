@@ -28,6 +28,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   if (!db) return;
   useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
+  const { pvpLog, lastPvpFight } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
   const now = Date.now();
 
@@ -55,6 +56,10 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   await setDoc(doc(db, 'saves', uid), {
     hero: heroClean,
     activeQuest,
+    pvpWins: pvpWins ?? 0,
+    pvpLosses: pvpLosses ?? 0,
+    pvpLog: pvpLog ?? [],
+    lastPvpFight: lastPvpFight ?? 0,
     updatedAt: now,
   });
 }
@@ -113,12 +118,21 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
   } catch { /* ignore */ }
 
   const hero = migrateHeroFromRaw(raw.hero);
+
+  // Read pvp stats — prefer saves doc, fall back to players doc for older saves
+  const playerSnap = await getDoc(doc(db, 'players', uid));
+  const playerData = playerSnap.exists() ? playerSnap.data() : {};
+
   useGameStore.setState({
     hero,
     activeQuest: raw.activeQuest ?? null,
     currentDungeon: null,
     currentEnemy: null,
     inCombat: false,
+    pvpWins:      raw.pvpWins      ?? playerData.pvpWins      ?? 0,
+    pvpLosses:    raw.pvpLosses    ?? playerData.pvpLosses    ?? 0,
+    pvpLog:       raw.pvpLog       ?? [],
+    lastPvpFight: raw.lastPvpFight ?? 0,
   });
   return true;
 }
