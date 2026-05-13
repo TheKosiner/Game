@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getLeaderboard, getPvpHistory, addPvpFight, type LeaderboardEntry, type PvpFightRecord } from '../lib/cloudSync';
+import { getLeaderboard, getPvpHistory, addPvpFight, syncToCloud, type LeaderboardEntry, type PvpFightRecord } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
@@ -526,11 +526,14 @@ export default function PvpPanel() {
         const result = recordPvpResult(true, combat.opponent);
         newLog.unshift({ message: `🏆 Pokonałeś ${combat.opponent.heroName}! +${result.xpGained}XP +${result.goldGained}🪙`, type: 'loot', timestamp: Date.now() });
         setCombat({ ...combat, oppHp: 0, heroHp, log: newLog, done: true, won: true, xpGained: result.xpGained, goldGained: result.goldGained });
-        if (user) addPvpFight({
-          attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-          defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-          attackerWon: true, timestamp: Date.now(),
-        }).catch(() => {});
+        if (user) {
+          addPvpFight({
+            attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+            defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+            attackerWon: true, timestamp: Date.now(),
+          }).catch(() => {});
+          syncToCloud(user.uid, user.username).catch(() => {});
+        }
       }
       return;
     }
@@ -545,11 +548,14 @@ export default function PvpPanel() {
         const result = recordPvpResult(false, combat.opponent);
         newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
         setCombat({ ...combat, oppHp, heroHp: 0, log: newLog, done: true, won: false, xpGained: result.xpGained, goldGained: 0 });
-        if (user) addPvpFight({
-          attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-          defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-          attackerWon: false, timestamp: Date.now(),
-        }).catch(() => {});
+        if (user) {
+          addPvpFight({
+            attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+            defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+            attackerWon: false, timestamp: Date.now(),
+          }).catch(() => {});
+          syncToCloud(user.uid, user.username).catch(() => {});
+        }
       }
       return;
     }
@@ -582,11 +588,14 @@ export default function PvpPanel() {
       newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. (szybka walka) +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
     }
 
-    if (user) addPvpFight({
-      attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-      defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-      attackerWon: won, timestamp: Date.now(),
-    }).catch(() => {});
+    if (user) {
+      addPvpFight({
+        attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
+        defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
+        attackerWon: won, timestamp: Date.now(),
+      }).catch(() => {});
+      syncToCloud(user.uid, user.username).catch(() => {});
+    }
 
     setCombat({ ...combat, heroHp: Math.max(0, heroHp), oppHp: Math.max(0, oppHp), log: newLog, done: true, won, xpGained: result.xpGained, goldGained: result.goldGained });
   }
