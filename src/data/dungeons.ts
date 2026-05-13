@@ -28,6 +28,15 @@ export const ALL_DUNGEONS: Dungeon[] = [
     floors: 10,
     enemies: ['corp_assassin', 'rogue_ai', 'cyber_titan'],
   },
+    {
+    id: 'westland',
+    name: 'Pustkowia',
+    emoji: '🟨',
+    minLevel: 15,
+    description: 'Niezbadane pustkowia, pełne niebezpieczeństw.',
+    floors: 11,
+    enemies: ['corp_assassin', 'rogue_ai', 'cyber_titan'],
+  },
   {
     id: 'dragon_lair',
     name: 'Twierdza Megakorpu',
