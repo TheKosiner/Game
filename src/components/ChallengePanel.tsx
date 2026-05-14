@@ -512,8 +512,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 1 – Neural Phantom: ghostly floating entity with circuit patterns
-    1: (
+    // 2 – Neural Phantom: ghostly floating entity with circuit patterns
+    2: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="np"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* ghost trail bottom */}
@@ -565,8 +565,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 2 – Iron Warlord: massive robot with shoulder cannons
-    2: (
+    // 4 – Iron Warlord: massive robot with shoulder cannons
+    4: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="iw"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         <ellipse cx="60" cy="152" rx="40" ry="6" fill="#44000020"/>
@@ -626,8 +626,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 3 – Quantum Berserker: rage-filled humanoid with energy erupting
-    3: (
+    // 6 – Quantum Berserker: rage-filled humanoid with energy erupting
+    6: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="qb"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* rage energy aura */}
@@ -696,8 +696,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 4 – Shadow Protocol: sleek ninja dissolving into shadows with blades
-    4: (
+    // 8 – Shadow Protocol: sleek ninja dissolving into shadows with blades
+    8: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="sp"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* shadow wisps at bottom */}
@@ -752,8 +752,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 5 – Void Predator: serpentine dragon from the void
-    5: (
+    // 10 – Void Predator: serpentine dragon from the void
+    10: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="vp"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* void energy bg */}
@@ -812,8 +812,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 6 – The Architect: floating brain with mechanical tentacle arms
-    6: (
+    // 12 – The Architect: floating brain with mechanical tentacle arms
+    12: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="ta"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* hover glow below */}
@@ -868,8 +868,8 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 7 – Omega Unit ZERO: colossal mech — all systems online
-    7: (
+    // 15 – Omega Unit ZERO: colossal mech — all systems online
+    15: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
         <defs><filter id="ou"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* power aura */}
@@ -942,6 +942,538 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
           <circle cx="44" cy="70" r="11" fill="#FFCC00" opacity="0.2"/>
           <circle cx="76" cy="70" r="11" fill="#FFCC00" opacity="0.2"/>
           <circle cx="60" cy="86" r="11" fill="#FF8800" opacity="0.2"/>
+        </g>
+      </svg>
+    ),
+
+    // 1 – Neon Slayer: dual cyan neon blades, sleek fighter
+    1: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="ns"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <ellipse cx="60" cy="152" rx="34" ry="7" fill="#00AAFF18"/>
+        {/* blade trails */}
+        <line x1="18" y1="20" x2="50" y2="70" stroke="#00AAFF" strokeWidth="1" opacity="0.3"/>
+        <line x1="102" y1="20" x2="70" y2="70" stroke="#00F5FF" strokeWidth="1" opacity="0.3"/>
+        {/* left blade */}
+        <polygon points="18,8 22,12 52,72 46,72" fill="#003366"/>
+        <polygon points="20,8 21,12 50,72 48,72" fill="#00AAFF" opacity="0.9"/>
+        <line x1="20" y1="9" x2="49" y2="71" stroke="#00F5FF" strokeWidth="1.5" opacity="0.9"/>
+        <rect x="44" y="70" width="10" height="5" rx="1" fill="#005588"/>
+        {/* right blade */}
+        <polygon points="102,8 98,12 68,72 74,72" fill="#003366"/>
+        <polygon points="100,8 99,12 70,72 72,72" fill="#00F5FF" opacity="0.9"/>
+        <line x1="100" y1="9" x2="71" y2="71" stroke="#AAFFFF" strokeWidth="1.5" opacity="0.9"/>
+        <rect x="66" y="70" width="10" height="5" rx="1" fill="#005588"/>
+        {/* legs */}
+        <rect x="44" y="112" width="12" height="36" rx="3" fill="#001133"/>
+        <rect x="64" y="112" width="12" height="36" rx="3" fill="#001133"/>
+        <line x1="50" y1="114" x2="50" y2="144" stroke="#00AAFF" strokeWidth="1" opacity="0.5"/>
+        <line x1="70" y1="114" x2="70" y2="144" stroke="#00AAFF" strokeWidth="1" opacity="0.5"/>
+        <rect x="42" y="140" width="16" height="7" rx="2" fill="#002244"/>
+        <rect x="62" y="140" width="16" height="7" rx="2" fill="#002244"/>
+        {/* torso — slim */}
+        <rect x="36" y="66" width="48" height="50" rx="5" fill="#001133"/>
+        <rect x="40" y="70" width="40" height="42" rx="4" fill="#001E44" opacity="0.8"/>
+        {/* chest X pattern */}
+        <line x1="40" y1="70" x2="80" y2="112" stroke="#00AAFF" strokeWidth="1.5" opacity="0.6"/>
+        <line x1="80" y1="70" x2="40" y2="112" stroke="#00AAFF" strokeWidth="1.5" opacity="0.6"/>
+        <circle cx="60" cy="91" r="6" fill="#001133"/>
+        <circle cx="60" cy="91" r="4" fill="#00AAFF" opacity="0.8"/>
+        <circle cx="60" cy="91" r="2" fill="#AAFFFF"/>
+        {/* arms holding blades */}
+        <rect x="18" y="68" width="18" height="8" rx="3" fill="#001133" transform="rotate(-50 27 72)"/>
+        <rect x="84" y="68" width="18" height="8" rx="3" fill="#001133" transform="rotate(50 93 72)"/>
+        {/* neck */}
+        <rect x="52" y="54" width="16" height="14" rx="3" fill="#001133"/>
+        {/* head */}
+        <ellipse cx="60" cy="40" rx="20" ry="22" fill="#001133"/>
+        <ellipse cx="60" cy="38" rx="15" ry="17" fill="#001E44" opacity="0.7"/>
+        {/* visor */}
+        <rect x="44" y="36" width="32" height="8" rx="3" fill="#000811"/>
+        <rect x="46" y="37" width="28" height="6" rx="2" fill="#00AAFF" opacity="0.5"/>
+        <line x1="46" y1="40" x2="74" y2="40" stroke="#00F5FF" strokeWidth="2" opacity="0.95"/>
+        {/* blade glow tips */}
+        <circle cx="19" cy="9" r="4" fill="#00F5FF" opacity="0.6"/>
+        <circle cx="101" cy="9" r="4" fill="#00F5FF" opacity="0.6"/>
+        <g filter="url(#ns)">
+          <line x1="20" y1="9" x2="49" y2="71" stroke="#00F5FF" strokeWidth="3" opacity="0.3"/>
+          <line x1="100" y1="9" x2="71" y2="71" stroke="#00F5FF" strokeWidth="3" opacity="0.3"/>
+          <circle cx="60" cy="91" r="7" fill="#00AAFF" opacity="0.3"/>
+        </g>
+      </svg>
+    ),
+
+    // 3 – Plague Bot: corroded robot dripping acid/virus
+    3: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="pb"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <ellipse cx="60" cy="153" rx="38" ry="6" fill="#22AA0018"/>
+        {/* dripping acid */}
+        <ellipse cx="44" cy="155" rx="4" ry="7" fill="#44FF00" opacity="0.3"/>
+        <ellipse cx="60" cy="157" rx="5" ry="6" fill="#44FF00" opacity="0.4"/>
+        <ellipse cx="76" cy="154" rx="3" ry="6" fill="#44FF00" opacity="0.3"/>
+        <line x1="44" y1="140" x2="44" y2="155" stroke="#44FF00" strokeWidth="2" opacity="0.5"/>
+        <line x1="60" y1="138" x2="60" y2="157" stroke="#44FF00" strokeWidth="2.5" opacity="0.6"/>
+        <line x1="76" y1="142" x2="76" y2="154" stroke="#44FF00" strokeWidth="2" opacity="0.4"/>
+        {/* legs — corroded */}
+        <rect x="36" y="108" width="20" height="38" rx="4" fill="#3A3A22"/>
+        <rect x="64" y="108" width="20" height="38" rx="4" fill="#3A3A22"/>
+        <rect x="34" y="136" width="24" height="9" rx="3" fill="#2A2A18"/>
+        <rect x="62" y="136" width="24" height="9" rx="3" fill="#2A2A18"/>
+        {/* rust patches */}
+        <rect x="38" y="112" width="6" height="4" rx="1" fill="#88AA00" opacity="0.5"/>
+        <rect x="74" y="118" width="5" height="4" rx="1" fill="#88AA00" opacity="0.5"/>
+        {/* torso — bulky, corroded */}
+        <rect x="26" y="58" width="68" height="54" rx="7" fill="#3A3A22"/>
+        <rect x="30" y="62" width="60" height="46" rx="5" fill="#2E3818" opacity="0.9"/>
+        {/* bio-hazard symbol on chest */}
+        <circle cx="60" cy="82" r="16" fill="#1A2A00"/>
+        <circle cx="60" cy="82" r="13" fill="#2A4400" opacity="0.8"/>
+        {/* biohazard simplified */}
+        <circle cx="60" cy="82" r="4" fill="#44FF00" opacity="0.9"/>
+        <circle cx="60" cy="72" r="4" fill="none" stroke="#44FF00" strokeWidth="2" opacity="0.8"/>
+        <circle cx="51" cy="87" r="4" fill="none" stroke="#44FF00" strokeWidth="2" opacity="0.8"/>
+        <circle cx="69" cy="87" r="4" fill="none" stroke="#44FF00" strokeWidth="2" opacity="0.8"/>
+        <line x1="60" y1="78" x2="60" y2="72" stroke="#44FF00" strokeWidth="2" opacity="0.7"/>
+        <line x1="56" y1="84" x2="51" y2="87" stroke="#44FF00" strokeWidth="2" opacity="0.7"/>
+        <line x1="64" y1="84" x2="69" y2="87" stroke="#44FF00" strokeWidth="2" opacity="0.7"/>
+        {/* vents dripping */}
+        <rect x="32" y="96" width="8" height="3" rx="1" fill="#1A2A00"/>
+        <rect x="44" y="96" width="8" height="3" rx="1" fill="#1A2A00"/>
+        <rect x="68" y="96" width="8" height="3" rx="1" fill="#1A2A00"/>
+        <rect x="80" y="96" width="8" height="3" rx="1" fill="#1A2A00"/>
+        {/* arms — with injector claws */}
+        <rect x="8" y="68" width="18" height="10" rx="4" fill="#2E3818"/>
+        <rect x="94" y="68" width="18" height="10" rx="4" fill="#2E3818"/>
+        {/* injector tips */}
+        <polygon points="8,70 4,73 8,76" fill="#44FF00" opacity="0.8"/>
+        <polygon points="112,70 116,73 112,76" fill="#44FF00" opacity="0.8"/>
+        {/* neck — corroded pipes */}
+        <rect x="50" y="46" width="20" height="14" rx="3" fill="#2E3818"/>
+        <line x1="54" y1="46" x2="54" y2="58" stroke="#44FF00" strokeWidth="1" opacity="0.4"/>
+        <line x1="60" y1="46" x2="60" y2="58" stroke="#44FF00" strokeWidth="1" opacity="0.4"/>
+        <line x1="66" y1="46" x2="66" y2="58" stroke="#44FF00" strokeWidth="1" opacity="0.4"/>
+        {/* head — cracked dome */}
+        <ellipse cx="60" cy="32" rx="24" ry="26" fill="#3A3A22"/>
+        <ellipse cx="60" cy="30" rx="19" ry="21" fill="#2E3818" opacity="0.8"/>
+        {/* cracked dome cracks */}
+        <line x1="50" y1="14" x2="58" y2="28" stroke="#44FF00" strokeWidth="1" opacity="0.6"/>
+        <line x1="70" y1="14" x2="62" y2="30" stroke="#44FF00" strokeWidth="1" opacity="0.5"/>
+        {/* glowing eyes — toxic green */}
+        <ellipse cx="50" cy="30" rx="7" ry="5" fill="#002200"/>
+        <ellipse cx="70" cy="30" rx="7" ry="5" fill="#002200"/>
+        <ellipse cx="50" cy="30" rx="5" ry="3.5" fill="#44FF00" opacity="0.9"/>
+        <ellipse cx="70" cy="30" rx="5" ry="3.5" fill="#44FF00" opacity="0.9"/>
+        <ellipse cx="50" cy="30" rx="2.5" ry="1.8" fill="#AAFFAA"/>
+        <ellipse cx="70" cy="30" rx="2.5" ry="1.8" fill="#AAFFAA"/>
+        <g filter="url(#pb)">
+          <ellipse cx="50" cy="30" rx="6" ry="4" fill="#44FF00" opacity="0.35"/>
+          <ellipse cx="70" cy="30" rx="6" ry="4" fill="#44FF00" opacity="0.35"/>
+          <circle cx="60" cy="82" r="16" fill="#44FF00" opacity="0.1"/>
+        </g>
+      </svg>
+    ),
+
+    // 5 – Storm Mech: mech with electric arcs between arms
+    5: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="sm"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <ellipse cx="60" cy="152" rx="40" ry="7" fill="#FFEE0018"/>
+        {/* lightning arcs between hands */}
+        <path d="M12 72 Q30 55 46 72 Q60 88 74 72 Q90 55 108 72" fill="none" stroke="#FFEE00" strokeWidth="2.5" opacity="0.9"/>
+        <path d="M14 76 Q32 62 48 76 Q60 88 72 76 Q88 62 106 76" fill="none" stroke="#FFFFFF" strokeWidth="1" opacity="0.6"/>
+        {/* energy spheres at hands */}
+        <circle cx="10" cy="72" r="8" fill="#221100"/>
+        <circle cx="10" cy="72" r="6" fill="#FFAA00" opacity="0.8"/>
+        <circle cx="10" cy="72" r="3.5" fill="#FFEE00"/>
+        <circle cx="110" cy="72" r="8" fill="#221100"/>
+        <circle cx="110" cy="72" r="6" fill="#FFAA00" opacity="0.8"/>
+        <circle cx="110" cy="72" r="3.5" fill="#FFEE00"/>
+        {/* legs */}
+        <rect x="34" y="110" width="20" height="38" rx="5" fill="#333322"/>
+        <rect x="66" y="110" width="20" height="38" rx="5" fill="#333322"/>
+        <rect x="32" y="136" width="24" height="10" rx="4" fill="#222211"/>
+        <rect x="64" y="136" width="24" height="10" rx="4" fill="#222211"/>
+        <rect x="36" y="114" width="6" height="20" rx="2" fill="#FFAA00" opacity="0.25"/>
+        <rect x="78" y="114" width="6" height="20" rx="2" fill="#FFAA00" opacity="0.25"/>
+        {/* waist */}
+        <rect x="32" y="100" width="56" height="14" rx="4" fill="#333322"/>
+        {/* torso */}
+        <rect x="22" y="52" width="76" height="52" rx="8" fill="#333322"/>
+        <rect x="26" y="56" width="68" height="44" rx="6" fill="#2A2A18" opacity="0.8"/>
+        {/* chest power core */}
+        <circle cx="60" cy="76" r="14" fill="#181800"/>
+        <circle cx="60" cy="76" r="12" fill="#554400" opacity="0.8"/>
+        <circle cx="60" cy="76" r="8" fill="#FFAA00"/>
+        <circle cx="60" cy="76" r="5" fill="#FFEE00"/>
+        <circle cx="60" cy="76" r="2.5" fill="white"/>
+        {/* electric sparks on chest */}
+        <line x1="56" y1="64" x2="52" y2="58" stroke="#FFEE00" strokeWidth="1.5" opacity="0.8"/>
+        <line x1="64" y1="64" x2="68" y2="58" stroke="#FFEE00" strokeWidth="1.5" opacity="0.8"/>
+        <line x1="72" y1="76" x2="78" y2="72" stroke="#FFEE00" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="48" y1="76" x2="42" y2="72" stroke="#FFEE00" strokeWidth="1.5" opacity="0.7"/>
+        {/* shoulder pads */}
+        <rect x="4" y="52" width="20" height="36" rx="5" fill="#333322"/>
+        <rect x="96" y="52" width="20" height="36" rx="5" fill="#333322"/>
+        <rect x="6" y="54" width="16" height="32" rx="4" fill="#2A2A18" opacity="0.6"/>
+        <rect x="98" y="54" width="16" height="32" rx="4" fill="#2A2A18" opacity="0.6"/>
+        {/* neck */}
+        <rect x="46" y="42" width="28" height="14" rx="4" fill="#333322"/>
+        {/* head */}
+        <rect x="28" y="14" width="64" height="32" rx="8" fill="#333322"/>
+        <rect x="32" y="18" width="56" height="24" rx="6" fill="#2A2A18"/>
+        {/* visor — yellow electric */}
+        <rect x="32" y="24" width="56" height="10" rx="3" fill="#110A00"/>
+        <rect x="34" y="25" width="52" height="8" rx="2" fill="#FFAA00" opacity="0.35"/>
+        <line x1="34" y1="29" x2="86" y2="29" stroke="#FFEE00" strokeWidth="2" opacity="0.95"/>
+        {/* lightning bolt on forehead */}
+        <polygon points="62,16 56,24 61,24 58,32 66,22 61,22" fill="#FFEE00" opacity="0.8"/>
+        <g filter="url(#sm)">
+          <circle cx="10" cy="72" r="8" fill="#FFEE00" opacity="0.3"/>
+          <circle cx="110" cy="72" r="8" fill="#FFEE00" opacity="0.3"/>
+          <path d="M12 72 Q30 55 46 72 Q60 88 74 72 Q90 55 108 72" fill="none" stroke="#FFEE00" strokeWidth="4" opacity="0.2"/>
+          <circle cx="60" cy="76" r="15" fill="#FFEE00" opacity="0.2"/>
+        </g>
+      </svg>
+    ),
+
+    // 7 – Virus Entity: glitching digital form with corruption
+    7: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="ve"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        {/* glitch bg rectangles */}
+        <rect x="20" y="60" width="80" height="4" rx="0" fill="#FF0044" opacity="0.15"/>
+        <rect x="10" y="90" width="100" height="3" rx="0" fill="#FF0044" opacity="0.1"/>
+        <rect x="30" y="120" width="60" height="4" rx="0" fill="#FF0044" opacity="0.12"/>
+        {/* body — glitching humanoid */}
+        <rect x="36" y="62" width="48" height="56" rx="5" fill="#220011"/>
+        {/* glitch slices */}
+        <rect x="40" y="68" width="40" height="6" rx="0" fill="#440022" opacity="0.9"/>
+        <rect x="44" y="75" width="32" height="5" rx="0" fill="#330011" opacity="0.9"/>
+        <rect x="38" y="82" width="44" height="7" rx="0" fill="#440022" opacity="0.9"/>
+        <rect x="42" y="90" width="36" height="5" rx="0" fill="#330011" opacity="0.9"/>
+        <rect x="36" y="97" width="48" height="6" rx="0" fill="#440022" opacity="0.9"/>
+        <rect x="40" y="104" width="40" height="7" rx="0" fill="#330011" opacity="0.9"/>
+        {/* glitch color offsets */}
+        <rect x="52" y="74" width="20" height="3" rx="0" fill="#FF0044" opacity="0.5"/>
+        <rect x="44" y="89" width="28" height="2" rx="0" fill="#FF0044" opacity="0.4"/>
+        <rect x="48" y="103" width="16" height="3" rx="0" fill="#00FFAA" opacity="0.3"/>
+        {/* chest red core */}
+        <circle cx="60" cy="85" r="10" fill="#440000"/>
+        <circle cx="60" cy="85" r="8" fill="#CC0033" opacity="0.9"/>
+        <circle cx="60" cy="85" r="5" fill="#FF0044"/>
+        <circle cx="60" cy="85" r="2.5" fill="#FF88AA"/>
+        {/* arms — glitching */}
+        <rect x="16" y="64" width="20" height="8" rx="3" fill="#220011"/>
+        <rect x="84" y="64" width="20" height="8" rx="3" fill="#220011"/>
+        {/* glitch arm offsets */}
+        <rect x="17" y="65" width="6" height="6" rx="0" fill="#FF0044" opacity="0.4"/>
+        <rect x="97" y="65" width="6" height="6" rx="0" fill="#00FFAA" opacity="0.3"/>
+        {/* hands — spike clusters */}
+        <polygon points="12,62 8,68 12,74 16,68" fill="#CC0033" opacity="0.8"/>
+        <polygon points="108,62 112,68 108,74 104,68" fill="#CC0033" opacity="0.8"/>
+        {/* legs — glitch blocks */}
+        <rect x="38" y="118" width="18" height="34" rx="3" fill="#220011"/>
+        <rect x="64" y="118" width="18" height="34" rx="3" fill="#220011"/>
+        <rect x="39" y="122" width="7" height="4" rx="0" fill="#FF0044" opacity="0.4"/>
+        <rect x="74" y="130" width="5" height="4" rx="0" fill="#00FFAA" opacity="0.3"/>
+        <rect x="36" y="144" width="22" height="7" rx="2" fill="#330011"/>
+        <rect x="62" y="144" width="22" height="7" rx="2" fill="#330011"/>
+        {/* neck */}
+        <rect x="52" y="50" width="16" height="14" rx="3" fill="#220011"/>
+        {/* head — glitch box */}
+        <rect x="34" y="16" width="52" height="38" rx="6" fill="#220011"/>
+        {/* glitch head slices */}
+        <rect x="36" y="20" width="48" height="5" rx="0" fill="#330011" opacity="0.9"/>
+        <rect x="38" y="27" width="44" height="6" rx="0" fill="#2A0011" opacity="0.9"/>
+        <rect x="34" y="35" width="52" height="5" rx="0" fill="#330011" opacity="0.9"/>
+        <rect x="36" y="42" width="48" height="7" rx="0" fill="#2A0011" opacity="0.9"/>
+        {/* eyes — red glow */}
+        <rect x="40" y="26" width="14" height="8" rx="2" fill="#110000"/>
+        <rect x="66" y="26" width="14" height="8" rx="2" fill="#110000"/>
+        <rect x="41" y="27" width="12" height="6" rx="1" fill="#FF0044" opacity="0.9"/>
+        <rect x="67" y="27" width="12" height="6" rx="1" fill="#FF0044" opacity="0.9"/>
+        <rect x="44" y="28" width="6" height="4" rx="0" fill="#FF88AA"/>
+        <rect x="70" y="28" width="6" height="4" rx="0" fill="#FF88AA"/>
+        {/* corruption pixel scatter */}
+        <rect x="22" y="44" width="3" height="3" fill="#FF0044" opacity="0.6"/>
+        <rect x="95" y="52" width="3" height="3" fill="#00FFAA" opacity="0.5"/>
+        <rect x="14" y="100" width="4" height="2" fill="#FF0044" opacity="0.5"/>
+        <rect x="102" y="110" width="3" height="3" fill="#FF0044" opacity="0.4"/>
+        <g filter="url(#ve)">
+          <rect x="41" y="27" width="12" height="6" rx="1" fill="#FF0044" opacity="0.4"/>
+          <rect x="67" y="27" width="12" height="6" rx="1" fill="#FF0044" opacity="0.4"/>
+          <circle cx="60" cy="85" r="11" fill="#FF0044" opacity="0.2"/>
+        </g>
+      </svg>
+    ),
+
+    // 9 – Chrome Predator: sleek chrome panther/cat in pounce
+    9: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="cp"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <ellipse cx="60" cy="154" rx="42" ry="6" fill="#88AACC18"/>
+        {/* tail — arching high */}
+        <path d="M85 120 Q110 90 105 60 Q102 45 110 30" fill="none" stroke="#667788" strokeWidth="10" strokeLinecap="round"/>
+        <path d="M85 120 Q110 90 105 60 Q102 45 110 30" fill="none" stroke="#AABBCC" strokeWidth="5" strokeLinecap="round" opacity="0.7"/>
+        <circle cx="110" cy="30" r="4" fill="#AACCEE" opacity="0.8"/>
+        {/* body — low slung pounce */}
+        <ellipse cx="58" cy="100" rx="38" ry="22" fill="#445566"/>
+        <ellipse cx="56" cy="98" rx="32" ry="17" fill="#556677" opacity="0.7"/>
+        {/* chrome body shine */}
+        <ellipse cx="48" cy="90" rx="16" ry="7" fill="#778899" opacity="0.3" transform="rotate(-20 48 90)"/>
+        {/* front legs — reaching forward */}
+        <path d="M28 108 Q18 120 10 130" fill="none" stroke="#445566" strokeWidth="12" strokeLinecap="round"/>
+        <path d="M28 108 Q18 120 10 130" fill="none" stroke="#667788" strokeWidth="7" strokeLinecap="round" opacity="0.6"/>
+        <path d="M44 114 Q38 128 32 140" fill="none" stroke="#445566" strokeWidth="12" strokeLinecap="round"/>
+        <path d="M44 114 Q38 128 32 140" fill="none" stroke="#667788" strokeWidth="7" strokeLinecap="round" opacity="0.6"/>
+        {/* front paws */}
+        <ellipse cx="10" cy="132" rx="8" ry="5" fill="#334455"/>
+        <ellipse cx="31" cy="142" rx="8" ry="5" fill="#334455"/>
+        {/* claws */}
+        <line x1="6" y1="130" x2="3" y2="136" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="10" y1="135" x2="8" y2="141" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="14" y1="130" x2="17" y2="136" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="27" y1="140" x2="24" y2="146" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="31" y1="145" x2="29" y2="151" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="35" y1="140" x2="38" y2="146" stroke="#AACCEE" strokeWidth="1.5" strokeLinecap="round"/>
+        {/* back legs */}
+        <path d="M75 112 Q82 128 86 142" fill="none" stroke="#445566" strokeWidth="12" strokeLinecap="round"/>
+        <path d="M75 112 Q82 128 86 142" fill="none" stroke="#667788" strokeWidth="7" strokeLinecap="round" opacity="0.6"/>
+        <ellipse cx="86" cy="144" rx="9" ry="5" fill="#334455"/>
+        {/* neck — forward lean */}
+        <path d="M36 86 Q34 72 40 60" fill="none" stroke="#445566" strokeWidth="16" strokeLinecap="round"/>
+        <path d="M36 86 Q34 72 40 60" fill="none" stroke="#667788" strokeWidth="10" strokeLinecap="round" opacity="0.6"/>
+        {/* head — sleek feline */}
+        <ellipse cx="44" cy="50" rx="22" ry="18" fill="#445566"/>
+        <ellipse cx="44" cy="48" rx="18" ry="14" fill="#556677" opacity="0.7"/>
+        {/* ears */}
+        <polygon points="28,42 24,28 34,38" fill="#445566"/>
+        <polygon points="28,42 26,30 32,38" fill="#667788" opacity="0.5"/>
+        <polygon points="58,40 62,26 54,38" fill="#445566"/>
+        <polygon points="58,40 60,28 56,38" fill="#667788" opacity="0.5"/>
+        {/* eyes — chrome blue glow */}
+        <ellipse cx="36" cy="48" rx="7" ry="5" fill="#112233"/>
+        <ellipse cx="52" cy="48" rx="7" ry="5" fill="#112233"/>
+        <ellipse cx="36" cy="48" rx="5" ry="3.5" fill="#4488CC" opacity="0.9"/>
+        <ellipse cx="52" cy="48" rx="5" ry="3.5" fill="#4488CC" opacity="0.9"/>
+        <ellipse cx="36" cy="48" rx="2.5" ry="2" fill="#AACCFF"/>
+        <ellipse cx="52" cy="48" rx="2.5" ry="2" fill="#AACCFF"/>
+        {/* muzzle */}
+        <ellipse cx="44" cy="56" rx="9" ry="6" fill="#334455"/>
+        <line x1="44" y1="54" x2="44" y2="62" stroke="#667788" strokeWidth="1" opacity="0.5"/>
+        {/* whiskers */}
+        <line x1="36" y1="56" x2="20" y2="52" stroke="#AABBCC" strokeWidth="1" opacity="0.6"/>
+        <line x1="36" y1="58" x2="20" y2="58" stroke="#AABBCC" strokeWidth="1" opacity="0.5"/>
+        <line x1="52" y1="56" x2="68" y2="52" stroke="#AABBCC" strokeWidth="1" opacity="0.6"/>
+        <line x1="52" y1="58" x2="68" y2="58" stroke="#AABBCC" strokeWidth="1" opacity="0.5"/>
+        <g filter="url(#cp)">
+          <ellipse cx="36" cy="48" rx="6" ry="4" fill="#4488CC" opacity="0.4"/>
+          <ellipse cx="52" cy="48" rx="6" ry="4" fill="#4488CC" opacity="0.4"/>
+        </g>
+      </svg>
+    ),
+
+    // 11 – Neural Titan: giant with exposed neural network all over body
+    11: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="nt"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <ellipse cx="60" cy="153" rx="44" ry="7" fill="#00CCFF18"/>
+        {/* legs — massive */}
+        <rect x="30" y="108" width="24" height="40" rx="6" fill="#112233"/>
+        <rect x="66" y="108" width="24" height="40" rx="6" fill="#112233"/>
+        <rect x="28" y="136" width="28" height="10" rx="4" fill="#0A1A2A"/>
+        <rect x="64" y="136" width="28" height="10" rx="4" fill="#0A1A2A"/>
+        {/* neural lines on legs */}
+        <path d="M36 112 Q40 120 38 128 Q36 136 40 144" fill="none" stroke="#00AACC" strokeWidth="1" opacity="0.6"/>
+        <path d="M80 112 Q76 120 78 128 Q80 136 76 144" fill="none" stroke="#00AACC" strokeWidth="1" opacity="0.6"/>
+        <circle cx="38" cy="128" r="2" fill="#00CCFF" opacity="0.7"/>
+        <circle cx="78" cy="128" r="2" fill="#00CCFF" opacity="0.7"/>
+        {/* waist */}
+        <rect x="28" y="98" width="64" height="14" rx="5" fill="#112233"/>
+        {/* torso — huge with exposed neural net */}
+        <rect x="16" y="46" width="88" height="56" rx="10" fill="#112233"/>
+        <rect x="20" y="50" width="80" height="48" rx="8" fill="#0A1A2A" opacity="0.9"/>
+        {/* neural network on torso */}
+        <circle cx="36" cy="62" r="3" fill="#00AACC"/>
+        <circle cx="60" cy="58" r="3" fill="#00AACC"/>
+        <circle cx="84" cy="62" r="3" fill="#00AACC"/>
+        <circle cx="30" cy="82" r="3" fill="#00AACC"/>
+        <circle cx="60" cy="86" r="3" fill="#00AACC"/>
+        <circle cx="90" cy="82" r="3" fill="#00AACC"/>
+        <circle cx="46" cy="72" r="3" fill="#00CCFF"/>
+        <circle cx="74" cy="72" r="3" fill="#00CCFF"/>
+        <circle cx="60" cy="70" r="4" fill="#00CCFF"/>
+        <line x1="36" y1="62" x2="46" y2="72" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="60" y1="58" x2="46" y2="72" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="60" y1="58" x2="74" y2="72" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="84" y1="62" x2="74" y2="72" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="46" y1="72" x2="60" y2="70" stroke="#00CCFF" strokeWidth="1.5" opacity="0.8"/>
+        <line x1="74" y1="72" x2="60" y2="70" stroke="#00CCFF" strokeWidth="1.5" opacity="0.8"/>
+        <line x1="46" y1="72" x2="30" y2="82" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="60" y1="70" x2="60" y2="86" stroke="#00CCFF" strokeWidth="1.5" opacity="0.8"/>
+        <line x1="74" y1="72" x2="90" y2="82" stroke="#00AACC" strokeWidth="1" opacity="0.7"/>
+        <line x1="30" y1="82" x2="60" y2="86" stroke="#00AACC" strokeWidth="1" opacity="0.6"/>
+        <line x1="90" y1="82" x2="60" y2="86" stroke="#00AACC" strokeWidth="1" opacity="0.6"/>
+        {/* shoulder plates */}
+        <rect x="2" y="46" width="16" height="28" rx="5" fill="#112233"/>
+        <rect x="102" y="46" width="16" height="28" rx="5" fill="#112233"/>
+        {/* neural arm lines */}
+        <line x1="6" y1="52" x2="12" y2="70" stroke="#00AACC" strokeWidth="1" opacity="0.5"/>
+        <line x1="106" y1="52" x2="112" y2="70" stroke="#00AACC" strokeWidth="1" opacity="0.5"/>
+        {/* neck */}
+        <rect x="44" y="36" width="32" height="14" rx="5" fill="#112233"/>
+        <line x1="54" y1="36" x2="54" y2="48" stroke="#00AACC" strokeWidth="1" opacity="0.5"/>
+        <line x1="66" y1="36" x2="66" y2="48" stroke="#00AACC" strokeWidth="1" opacity="0.5"/>
+        {/* head — exposed brain regions */}
+        <ellipse cx="60" cy="22" rx="26" ry="22" fill="#112233"/>
+        <ellipse cx="60" cy="20" rx="22" ry="18" fill="#0A1A2A" opacity="0.9"/>
+        {/* brain folds visible on top of head */}
+        <path d="M42 12 Q50 6 60 8 Q70 6 78 12" fill="none" stroke="#00AACC" strokeWidth="1.5" opacity="0.6"/>
+        <path d="M38 18 Q46 12 56 14 Q64 12 72 14 Q80 18 82 22" fill="none" stroke="#00CCFF" strokeWidth="1" opacity="0.5"/>
+        {/* eyes — bright neural blue */}
+        <ellipse cx="50" cy="22" rx="8" ry="6" fill="#0A1222"/>
+        <ellipse cx="70" cy="22" rx="8" ry="6" fill="#0A1222"/>
+        <ellipse cx="50" cy="22" rx="6" ry="4.5" fill="#00AACC" opacity="0.9"/>
+        <ellipse cx="70" cy="22" rx="6" ry="4.5" fill="#00AACC" opacity="0.9"/>
+        <ellipse cx="50" cy="22" rx="3" ry="2.5" fill="#AAFFFF"/>
+        <ellipse cx="70" cy="22" rx="3" ry="2.5" fill="#AAFFFF"/>
+        {/* neural crown */}
+        <line x1="52" y1="4" x2="50" y2="-1" stroke="#00CCFF" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="60" y1="2" x2="60" y2="-2" stroke="#00CCFF" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="68" y1="4" x2="70" y2="-1" stroke="#00CCFF" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="50" cy="-1" r="2" fill="#00CCFF"/>
+        <circle cx="60" cy="-2" r="2" fill="#00CCFF"/>
+        <circle cx="70" cy="-1" r="2" fill="#00CCFF"/>
+        <g filter="url(#nt)">
+          <ellipse cx="50" cy="22" rx="7" ry="5" fill="#00AACC" opacity="0.4"/>
+          <ellipse cx="70" cy="22" rx="7" ry="5" fill="#00AACC" opacity="0.4"/>
+          <circle cx="60" cy="70" r="5" fill="#00CCFF" opacity="0.4"/>
+        </g>
+      </svg>
+    ),
+
+    // 13 – Nexus Core: floating crystal with energy rings
+    13: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="nc"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        {/* outer energy rings */}
+        <ellipse cx="60" cy="80" rx="55" ry="18" fill="none" stroke="#FF8800" strokeWidth="2" opacity="0.5"/>
+        <ellipse cx="60" cy="80" rx="45" ry="14" fill="none" stroke="#FFAA00" strokeWidth="1.5" opacity="0.4" transform="rotate(30 60 80)"/>
+        <ellipse cx="60" cy="80" rx="50" ry="16" fill="none" stroke="#FFCC00" strokeWidth="1" opacity="0.3" transform="rotate(60 60 80)"/>
+        {/* ring nodes */}
+        <circle cx="5" cy="80" r="3" fill="#FF8800" opacity="0.7"/>
+        <circle cx="115" cy="80" r="3" fill="#FF8800" opacity="0.7"/>
+        <circle cx="60" cy="62" r="3" fill="#FFAA00" opacity="0.7"/>
+        <circle cx="60" cy="98" r="3" fill="#FFAA00" opacity="0.7"/>
+        {/* energy tether to ground */}
+        <line x1="60" y1="120" x2="60" y2="155" stroke="#FF8800" strokeWidth="2" opacity="0.4" strokeDasharray="4,4"/>
+        <ellipse cx="60" cy="155" rx="20" ry="5" fill="#FF880020"/>
+        {/* main crystal body */}
+        <polygon points="60,20 84,52 80,90 60,108 40,90 36,52" fill="#221100"/>
+        <polygon points="60,22 82,52 78,88 60,106 42,88 38,52" fill="#553300" opacity="0.9"/>
+        {/* crystal facets */}
+        <polygon points="60,22 82,52 60,60" fill="#FF8800" opacity="0.3"/>
+        <polygon points="60,22 38,52 60,60" fill="#FF8800" opacity="0.2"/>
+        <polygon points="60,60 82,52 78,88" fill="#FFAA00" opacity="0.25"/>
+        <polygon points="60,60 38,52 42,88" fill="#FFAA00" opacity="0.2"/>
+        <polygon points="60,60 78,88 60,106" fill="#FF6600" opacity="0.3"/>
+        <polygon points="60,60 42,88 60,106" fill="#FF6600" opacity="0.25"/>
+        {/* inner energy core */}
+        <circle cx="60" cy="64" r="12" fill="#110800"/>
+        <circle cx="60" cy="64" r="10" fill="#FF6600" opacity="0.7"/>
+        <circle cx="60" cy="64" r="7" fill="#FFAA00"/>
+        <circle cx="60" cy="64" r="4" fill="#FFDD00"/>
+        <circle cx="60" cy="64" r="2" fill="white"/>
+        {/* crystal edge highlights */}
+        <line x1="60" y1="22" x2="82" y2="52" stroke="#FFCC00" strokeWidth="1.5" opacity="0.7"/>
+        <line x1="60" y1="22" x2="38" y2="52" stroke="#FF8800" strokeWidth="1" opacity="0.5"/>
+        <line x1="78" y1="88" x2="60" y2="106" stroke="#FF6600" strokeWidth="1" opacity="0.5"/>
+        <line x1="42" y1="88" x2="60" y2="106" stroke="#FF6600" strokeWidth="1" opacity="0.5"/>
+        {/* floating energy fragments */}
+        <polygon points="16,40 20,34 24,40 20,46" fill="#FF8800" opacity="0.5"/>
+        <polygon points="96,44 100,38 104,44 100,50" fill="#FFAA00" opacity="0.4"/>
+        <polygon points="12,110 15,105 18,110 15,115" fill="#FF6600" opacity="0.4"/>
+        <polygon points="100,115 104,108 108,115 104,122" fill="#FF8800" opacity="0.4"/>
+        <g filter="url(#nc)">
+          <circle cx="60" cy="64" r="12" fill="#FFAA00" opacity="0.25"/>
+          <ellipse cx="60" cy="80" rx="55" ry="18" fill="none" stroke="#FF8800" strokeWidth="3" opacity="0.15"/>
+        </g>
+      </svg>
+    ),
+
+    // 14 – Void Colossus: massive dark entity with void tendrils
+    14: (
+      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        <defs><filter id="vc"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        {/* void aura */}
+        <ellipse cx="60" cy="100" rx="56" ry="58" fill="#110022" opacity="0.5"/>
+        <ellipse cx="60" cy="155" rx="40" ry="8" fill="#330055" opacity="0.4"/>
+        {/* void tendrils */}
+        <path d="M20 90 Q4 70 2 50 Q2 35 10 30" fill="none" stroke="#440088" strokeWidth="7" strokeLinecap="round"/>
+        <path d="M20 90 Q4 70 2 50 Q2 35 10 30" fill="none" stroke="#8800CC" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+        <circle cx="10" cy="30" r="5" fill="#AA00FF" opacity="0.6"/>
+        <path d="M100 90 Q116 70 118 50 Q118 35 110 30" fill="none" stroke="#440088" strokeWidth="7" strokeLinecap="round"/>
+        <path d="M100 90 Q116 70 118 50 Q118 35 110 30" fill="none" stroke="#8800CC" strokeWidth="3" strokeLinecap="round" opacity="0.7"/>
+        <circle cx="110" cy="30" r="5" fill="#AA00FF" opacity="0.6"/>
+        <path d="M30 120 Q10 130 6 148" fill="none" stroke="#440088" strokeWidth="6" strokeLinecap="round"/>
+        <path d="M30 120 Q10 130 6 148" fill="none" stroke="#8800CC" strokeWidth="3" strokeLinecap="round" opacity="0.6"/>
+        <path d="M90 120 Q110 130 114 148" fill="none" stroke="#440088" strokeWidth="6" strokeLinecap="round"/>
+        <path d="M90 120 Q110 130 114 148" fill="none" stroke="#8800CC" strokeWidth="3" strokeLinecap="round" opacity="0.6"/>
+        {/* legs */}
+        <rect x="32" y="110" width="22" height="38" rx="6" fill="#1A0033"/>
+        <rect x="66" y="110" width="22" height="38" rx="6" fill="#1A0033"/>
+        <rect x="30" y="136" width="26" height="10" rx="4" fill="#110022"/>
+        <rect x="64" y="136" width="26" height="10" rx="4" fill="#110022"/>
+        {/* void pulse lines on legs */}
+        <line x1="40" y1="114" x2="38" y2="144" stroke="#8800CC" strokeWidth="1.5" opacity="0.5"/>
+        <line x1="80" y1="114" x2="82" y2="144" stroke="#8800CC" strokeWidth="1.5" opacity="0.5"/>
+        {/* torso — void-dark */}
+        <rect x="18" y="54" width="84" height="60" rx="10" fill="#1A0033"/>
+        <rect x="22" y="58" width="76" height="52" rx="8" fill="#220044" opacity="0.9"/>
+        {/* void vortex on chest */}
+        <circle cx="60" cy="82" r="18" fill="#110022"/>
+        <circle cx="60" cy="82" r="15" fill="#1A0033" opacity="0.9"/>
+        <circle cx="60" cy="82" r="12" fill="none" stroke="#550088" strokeWidth="2" opacity="0.8"/>
+        <circle cx="60" cy="82" r="8" fill="none" stroke="#8800CC" strokeWidth="2" opacity="0.7"/>
+        <circle cx="60" cy="82" r="4" fill="#AA00FF" opacity="0.8"/>
+        <circle cx="60" cy="82" r="2" fill="#CC44FF"/>
+        {/* void swirl arms */}
+        <path d="M56 74 Q48 72 46 78 Q44 84 50 86" fill="none" stroke="#8800CC" strokeWidth="1.5" opacity="0.6"/>
+        <path d="M64 90 Q72 92 74 86 Q76 80 70 78" fill="none" stroke="#8800CC" strokeWidth="1.5" opacity="0.6"/>
+        {/* shoulders massive */}
+        <ellipse cx="16" cy="66" rx="14" ry="18" fill="#1A0033"/>
+        <ellipse cx="104" cy="66" rx="14" ry="18" fill="#1A0033"/>
+        <ellipse cx="16" cy="64" rx="10" ry="13" fill="#220044" opacity="0.6"/>
+        <ellipse cx="104" cy="64" rx="10" ry="13" fill="#220044" opacity="0.6"/>
+        {/* neck */}
+        <rect x="46" y="42" width="28" height="16" rx="5" fill="#1A0033"/>
+        {/* head — void entity */}
+        <ellipse cx="60" cy="28" rx="26" ry="24" fill="#1A0033"/>
+        <ellipse cx="60" cy="26" rx="21" ry="19" fill="#220044" opacity="0.8"/>
+        {/* void eye cluster */}
+        <ellipse cx="50" cy="24" rx="9" ry="7" fill="#0A0011"/>
+        <ellipse cx="70" cy="24" rx="9" ry="7" fill="#0A0011"/>
+        <ellipse cx="50" cy="24" rx="7" ry="5" fill="#6600AA" opacity="0.9"/>
+        <ellipse cx="70" cy="24" rx="7" ry="5" fill="#6600AA" opacity="0.9"/>
+        <ellipse cx="50" cy="24" rx="4" ry="3" fill="#CC00FF"/>
+        <ellipse cx="70" cy="24" rx="4" ry="3" fill="#CC00FF"/>
+        <ellipse cx="50" cy="24" rx="1.5" ry="1.5" fill="white" opacity="0.9"/>
+        <ellipse cx="70" cy="24" rx="1.5" ry="1.5" fill="white" opacity="0.9"/>
+        {/* third void eye center */}
+        <ellipse cx="60" cy="16" rx="6" ry="4" fill="#330044"/>
+        <ellipse cx="60" cy="16" rx="4" ry="2.5" fill="#9900CC" opacity="0.8"/>
+        <ellipse cx="60" cy="16" rx="2" ry="1.5" fill="#DD44FF"/>
+        {/* void crown */}
+        <path d="M38 14 Q60 2 82 14" fill="none" stroke="#6600AA" strokeWidth="2" opacity="0.5"/>
+        <polygon points="46,12 44,2 50,10" fill="#440066" opacity="0.7"/>
+        <polygon points="60,10 60,0 64,8" fill="#550088" opacity="0.7"/>
+        <polygon points="74,12 76,2 70,10" fill="#440066" opacity="0.7"/>
+        <g filter="url(#vc)">
+          <ellipse cx="50" cy="24" rx="8" ry="6" fill="#CC00FF" opacity="0.35"/>
+          <ellipse cx="70" cy="24" rx="8" ry="6" fill="#CC00FF" opacity="0.35"/>
+          <circle cx="60" cy="16" r="5" fill="#9900CC" opacity="0.35"/>
+          <circle cx="60" cy="82" r="19" fill="#6600AA" opacity="0.15"/>
         </g>
       </svg>
     ),
