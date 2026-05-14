@@ -652,7 +652,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   startChallengeFight: (bossIdx: number) => {
-    const { hero, inCombat, lastChallengeAt, challengeUnlocked } = get();
+    const { inCombat, lastChallengeAt, challengeUnlocked } = get();
     if (inCombat) return;
     const now = Date.now();
     if (now - lastChallengeAt < CHALLENGE_COOLDOWN) return;
