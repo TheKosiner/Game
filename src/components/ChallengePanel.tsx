@@ -86,7 +86,7 @@ function FightView() {
     if (lastHit.heroDmg > 0) {
       setBossAnimKey(k => k + 1);
       setBossHitKey(k => k + 1);
-      setFloatBoss({ val: lastHit.hereDmg ?? lastHit.heroDmg, crit: lastHit.heroCrit, key: lastHit.ts });
+      setFloatBoss({ val: lastHit.heroDmg, crit: lastHit.heroCrit, key: lastHit.ts });
     }
     const totalBoss = lastHit.bossDmg1 + lastHit.bossDmg2 + lastHit.poisonDmg;
     if (totalBoss > 0) {
