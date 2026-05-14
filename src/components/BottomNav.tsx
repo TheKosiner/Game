@@ -7,7 +7,7 @@ interface Props {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'hero',    label: 'BOHATER' },
-  { id: 'dungeon', label: 'LOCH'    },
+  { id: 'dungeon', label: 'OPERACJE' },
   { id: 'quests',  label: 'ZADANIA' },
   { id: 'shop',    label: 'SKLEP'   },
   { id: 'pvp',     label: 'ARENA'   },
