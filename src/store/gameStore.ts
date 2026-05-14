@@ -1,8 +1,9 @@
 import { create } from 'zustand';
-import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent } from '../types';
+import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeBoss, ChallengeResult } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { ALL_ITEMS } from '../data/items';
+import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
 const SAVE_KEY = 'realm_of_valor_save';
@@ -12,6 +13,7 @@ export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
+export const CHALLENGE_COOLDOWN = 60 * 60 * 1000;
 
 type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
@@ -86,6 +88,133 @@ function isSameDay(ts: number): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
+  const slots = MAX_INVENTORY - inventory.length;
+  if (slots <= 0) return [];
+  const count = Math.min(slots, bossIdx >= 5 ? 3 : bossIdx >= 2 ? 2 : 1);
+  const results: Item[] = [];
+  for (let i = 0; i < count; i++) {
+    const forceRarity: Rarity = bossIdx >= 5 ? 'legendary' : (bossIdx >= 2 && Math.random() < 0.5 ? 'legendary' : 'epic');
+    const lvMin = Math.max(1, heroLevel - 5);
+    const lvMax = heroLevel + 10;
+    let pool = ALL_ITEMS.filter(it => it.rarity === forceRarity && it.level >= lvMin && it.level <= lvMax && it.slot !== 'consumable');
+    if (!pool.length) pool = ALL_ITEMS.filter(it => it.rarity === forceRarity && it.slot !== 'consumable');
+    if (!pool.length) continue;
+    results.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return results;
+}
+
+function simulateChallengeFight(
+  boss: ChallengeBoss,
+  heroAtk: number,
+  heroDef: number,
+  heroHpStart: number,
+  heroMaxHp: number,
+  heroDex: number
+): { won: boolean; log: string[] } {
+  const log: string[] = [];
+  const pw = boss.powers;
+
+  let heroHp = heroHpStart;
+  let bossHp = boss.hp;
+  const bossMaxHp = boss.maxHp;
+
+  const effectiveHeroDef = pw.includes('armor_break') ? Math.floor(heroDef * 0.4) : heroDef;
+  if (pw.includes('armor_break')) log.push(`💥 ARMOR BREAK: ${boss.name} przełamuje twoją obronę! Obrona -60%`);
+
+  let shieldHp = pw.includes('shield') ? Math.floor(bossMaxHp * 0.25) : 0;
+  if (shieldHp > 0) log.push(`🛡 TARCZA: ${boss.name} ma tarczę pochłaniającą ${shieldHp} obrażeń!`);
+
+  let rageActive = false;
+
+  const heroHit = (): number => {
+    const base = heroAtk * heroAtk / (heroAtk + Math.max(1, boss.defense));
+    const crit = Math.random() < 0.10 + heroDex * 0.005;
+    return Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4) * (crit ? 2 : 1)));
+  };
+
+  const bossHit = (): number => {
+    const atkMod = rageActive ? 1.6 : 1;
+    const bAtk = boss.attack * atkMod;
+    const base = bAtk * bAtk / (bAtk + Math.max(1, effectiveHeroDef));
+    return Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4)));
+  };
+
+  for (let r = 1; r <= 60; r++) {
+    // Hero attacks
+    if (pw.includes('dodge') && Math.random() < 0.25) {
+      log.push(`R${r} 💨 UNIK: ${boss.name} unika twojego ataku!`);
+    } else {
+      let dmg = heroHit();
+      if (shieldHp > 0) {
+        const abs = Math.min(shieldHp, dmg);
+        shieldHp -= abs; dmg -= abs;
+        if (abs > 0) log.push(`R${r} 🛡 Tarcza pochłania ${abs} (pozostało: ${shieldHp})`);
+      }
+      if (dmg > 0) {
+        bossHp -= dmg;
+        log.push(`R${r} ⚔ Zadajesz ${dmg} → Boss HP: ${Math.max(0, bossHp)}/${bossMaxHp}`);
+      }
+    }
+    if (bossHp <= 0) {
+      log.push(`🏆 ZWYCIĘSTWO! Pokonałeś ${boss.name} w rundzie ${r}!`);
+      return { won: true, log };
+    }
+
+    // Boss regen
+    if (pw.includes('regen')) {
+      const rAmt = Math.round(bossMaxHp * 0.03);
+      bossHp = Math.min(bossMaxHp, bossHp + rAmt);
+      log.push(`R${r} 🔴 REGEN: ${boss.name} regeneruje ${rAmt} HP → ${bossHp}/${bossMaxHp}`);
+    }
+
+    // Check rage
+    if (pw.includes('rage') && !rageActive && bossHp < bossMaxHp * 0.3) {
+      rageActive = true;
+      log.push(`R${r} 🔥 FURIA: ${boss.name} wchodzi w szał! ATK x1.6!`);
+    }
+
+    // Boss attacks (possibly twice)
+    const doAttack = (label: string) => {
+      const d = bossHit();
+      heroHp -= d;
+      if (pw.includes('lifesteal')) {
+        const steal = Math.round(d * 0.25);
+        bossHp = Math.min(bossMaxHp, bossHp + steal);
+        log.push(`R${r} 💉 VAMP: ${boss.name} kradnie ${steal} HP`);
+      }
+      log.push(`R${r} 🤖 ${label}: -${d} HP → Twoje HP: ${Math.max(0, heroHp)}/${heroMaxHp}`);
+      return heroHp <= 0;
+    };
+
+    if (doAttack(boss.name)) {
+      log.push(`💀 KLĘSKA! Pokonany w rundzie ${r}.`);
+      return { won: false, log };
+    }
+    if (pw.includes('double_strike')) {
+      if (doAttack(`${boss.name} [x2]`)) {
+        log.push(`💀 KLĘSKA! Drugi cios kończy walkę w rundzie ${r}.`);
+        return { won: false, log };
+      }
+    }
+
+    // Poison
+    if (pw.includes('poison')) {
+      const pd = Math.round(heroMaxHp * 0.04);
+      heroHp -= pd;
+      log.push(`R${r} 🟢 TRUCIZNA: -${pd} HP → ${Math.max(0, heroHp)}/${heroMaxHp}`);
+      if (heroHp <= 0) {
+        log.push(`💀 KLĘSKA! Trucizna cię dobija w rundzie ${r}.`);
+        return { won: false, log };
+      }
+    }
+  }
+
+  log.push(`⏱ CZAS! ${boss.name} przeżył 60 rund. Porażka przez wytrzymałość.`);
+  return { won: false, log };
+}
+
 function scaledQuestDuration(durationMs: number, level: number): number {
   return Math.floor(durationMs * (1 + (level - 1) * 0.05));
 }
@@ -144,6 +273,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpLosses: 0,
   pvpLog: [],
   lastPassiveRegenAt: Date.now(),
+  challengeUnlocked: 0,
+  lastChallengeAt: 0,
+  challengeResult: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
@@ -626,6 +758,40 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, hp: Math.min(hero.maxHp, hero.hp + gain) }, lastPassiveRegenAt: now });
   },
 
+  fightChallengeBoss: (bossIdx: number) => {
+    const { hero, inCombat, lastChallengeAt, challengeUnlocked } = get();
+    if (inCombat) return;
+    const now = Date.now();
+    if (now - lastChallengeAt < CHALLENGE_COOLDOWN) return;
+    if (bossIdx > challengeUnlocked) return;
+    const boss = CHALLENGE_BOSSES[bossIdx];
+    if (!boss || hero.level < boss.minLevel) return;
+
+    const heroAtk = getHeroAttack(hero);
+    const heroDef = getHeroDefense(hero);
+    const { won, log } = simulateChallengeFight(boss, heroAtk, heroDef, hero.hp, hero.maxHp, hero.stats.dexterity);
+
+    let loot: Item[] = [];
+    if (won) {
+      loot = challengeLoot(bossIdx, hero.level, hero.inventory);
+      const newInventory = [...hero.inventory, ...loot];
+      const newUnlocked = Math.max(challengeUnlocked, Math.min(bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+      set({
+        hero: { ...hero, inventory: newInventory },
+        challengeUnlocked: newUnlocked,
+        lastChallengeAt: now,
+        challengeResult: { won, bossIdx, log, loot },
+      });
+      get().addXp(boss.xpReward);
+      get().addGold(boss.goldReward);
+    } else {
+      const xp = Math.floor(boss.xpReward * 0.1);
+      set({ lastChallengeAt: now, challengeResult: { won, bossIdx, log, loot: [] } });
+      get().addXp(xp);
+    }
+    get().saveGame();
+  },
+
   saveGame: () => {
     const state = get();
     const save = {
@@ -641,6 +807,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpLosses: state.pvpLosses,
       pvpLog: state.pvpLog,
       lastPassiveRegenAt: state.lastPassiveRegenAt,
+      challengeUnlocked: state.challengeUnlocked,
+      lastChallengeAt: state.lastChallengeAt,
     };
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(save));
@@ -718,6 +886,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           pvpLosses: save.pvpLosses ?? 0,
           pvpLog: save.pvpLog ?? [],
           lastPassiveRegenAt: save.lastPassiveRegenAt ?? Date.now(),
+          challengeUnlocked: save.challengeUnlocked ?? 0,
+          lastChallengeAt: save.lastChallengeAt ?? 0,
         });
         get().checkDailyReset();
       }

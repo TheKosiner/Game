@@ -1,4 +1,4 @@
-export type Tab = 'hero' | 'dungeon' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail';
+export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail';
 
 interface Props {
   active: Tab;
@@ -7,8 +7,9 @@ interface Props {
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'hero',    label: 'BOHATER' },
-  { id: 'dungeon', label: 'OPERACJE' },
-  { id: 'quests',  label: 'ZADANIA' },
+  { id: 'dungeon',    label: 'OPERACJE' },
+  { id: 'challenge',  label: 'BOSS'     },
+  { id: 'quests',     label: 'ZADANIA'  },
   { id: 'shop',    label: 'SKLEP'   },
   { id: 'pvp',     label: 'ARENA'   },
   { id: 'guild',   label: 'GILDIA'  },
@@ -42,6 +43,12 @@ function TabIcon({ id, color }: { id: Tab; color: string }) {
         <path d="M3 15V9Q3 3 9 3Q15 3 15 9V15"/>
         <line x1="9" y1="9" x2="9" y2="15"/>
         <line x1="3" y1="11" x2="15" y2="11"/>
+      </svg>
+    );
+    case 'challenge': return (
+      <svg {...p}>
+        {/* lightning bolt */}
+        <polyline points="11,2 5,10 9,10 7,16 13,8 9,8"/>
       </svg>
     );
     case 'quests': return (

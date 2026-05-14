@@ -86,6 +86,31 @@ export interface Dungeon {
   enemies: string[];
 }
 
+export type ChallengePower = 'regen' | 'double_strike' | 'armor_break' | 'dodge' | 'rage' | 'shield' | 'lifesteal' | 'poison';
+
+export interface ChallengeBoss {
+  id: number;
+  name: string;
+  emoji: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  attack: number;
+  defense: number;
+  powers: ChallengePower[];
+  xpReward: number;
+  goldReward: number;
+  minLevel: number;
+  description: string;
+}
+
+export interface ChallengeResult {
+  won: boolean;
+  bossIdx: number;
+  log: string[];
+  loot: Item[];
+}
+
 export interface CombatLog {
   message: string;
   type: 'hero' | 'enemy' | 'loot' | 'system';
@@ -154,6 +179,9 @@ export interface GameState {
   pvpLosses: number;
   pvpLog: PvpResult[];
   lastPassiveRegenAt: number;
+  challengeUnlocked: number;
+  lastChallengeAt: number;
+  challengeResult: ChallengeResult | null;
 
   // actions
   initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean, clothingColor?: number) => void;
@@ -187,6 +215,7 @@ export interface GameState {
   startBegging: (hours: number) => void;
   cancelBegging: () => void;
   collectBegging: () => void;
+  fightChallengeBoss: (bossIdx: number) => void;
   loadGame: () => void;
   saveGame: () => void;
 }
