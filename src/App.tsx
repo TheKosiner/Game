@@ -27,6 +27,7 @@ export default function App() {
   const initHero = useGameStore(s => s.initHero);
   const checkDailyReset = useGameStore(s => s.checkDailyReset);
   const tickPassiveRegen = useGameStore(s => s.tickPassiveRegen);
+  const challengeResult = useGameStore(s => s.challengeResult);
 
   const user = useAuthStore(s => s.user);
   const authLoading = useAuthStore(s => s.authLoading);
@@ -81,6 +82,12 @@ export default function App() {
     if (user && gameLoaded && hero.name !== 'Hero')
       syncToCloud(user.uid, user.username).catch(() => {});
   }, [hero.level, hero.name]);
+
+  // Sync challenge progress immediately after every boss fight
+  useEffect(() => {
+    if (user && gameLoaded && challengeResult)
+      syncToCloud(user.uid, user.username).catch(() => {});
+  }, [challengeResult]);
 
   if (authLoading || !gameLoaded) {
     return (
