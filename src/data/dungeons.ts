@@ -8,7 +8,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 1,
     description: 'Zdegradowane dzielnice pełne gangsterów i dronów patrolowych. Dobre miejsce dla zielonych.',
     floors: 5,
-    enemies: ['street_punk', 'patrol_drone', 'enforcer', 'gangster'],
+    enemies: ['scavenger', 'street_punk', 'mutant_rat', 'patrol_drone', 'street_hacker', 'enforcer', 'gangster', 'gang_leader'],
   },
   {
     id: 'cave',
@@ -17,7 +17,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 5,
     description: 'Podziemne serwery i fabryki androidów. Zamieszkałe przez drony i bojowe maszyny.',
     floors: 8,
-    enemies: ['spy_drone', 'combat_android', 'heavy_mech'],
+    enemies: ['laser_turret', 'spy_drone', 'nano_swarm', 'combat_android', 'cyber_dog', 'electric_golem', 'heavy_mech'],
   },
   {
     id: 'castle',
@@ -26,16 +26,16 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 10,
     description: 'Wieżowiec megakorpu opanowany przez cyberzabójców i zbuntowane AI.',
     floors: 10,
-    enemies: ['corp_assassin', 'rogue_ai', 'cyber_titan'],
+    enemies: ['security_android', 'corp_assassin', 'corp_sniper', 'holo_guardian', 'rogue_ai', 'cyber_titan', 'exec_hunter'],
   },
-    {
+  {
     id: 'westland',
     name: 'Pustkowia',
     emoji: '🟨',
     minLevel: 15,
-    description: 'Niezbadane pustkowia, pełne niebezpieczeństw.',
+    description: 'Radioaktywne pustkowia za murami miasta. Mutanty i rajderzy czyhają na każdym kroku.',
     floors: 11,
-    enemies: ['ghul', 'zmutowany_karaluch', 'zmutowany_niedzwiedz'],
+    enemies: ['wasteland_raider', 'ghul', 'mutant_spider', 'zmutowany_karaluch', 'cyber_wolf', 'zmutowany_niedzwiedz', 'sand_golem'],
   },
   {
     id: 'dragon_lair',
@@ -44,6 +44,15 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 20,
     description: 'Centrum dowodzenia globalnej korporacji. Tylko najdzielniejsi hakerzy tu wchodzą.',
     floors: 12,
-    enemies: ['war_mech', 'nuclear_drone', 'mega_ai'],
+    enemies: ['war_mech', 'assault_mech', 'nuclear_drone', 'corp_general', 'prototype_ai', 'mega_ai'],
+  },
+  {
+    id: 'neon_undercity',
+    name: 'Neon Undercity',
+    emoji: '🌆',
+    minLevel: 30,
+    description: 'Zapomniane podziemia pod Neon-Warszawa. Najgroźniejsi łowcy i demony czyhają w mroku.',
+    floors: 15,
+    enemies: ['shadow_agent', 'neon_predator', 'cyber_demon', 'quantum_ghost', 'neon_dragon', 'omega_unit'],
   },
 ];

@@ -16,17 +16,19 @@ type DungeonMode = 'xp' | 'balanced' | 'loot';
 type DungeonDifficulty = 'easy' | 'normal' | 'hard';
 
 const NODE_POS: Record<string, { x: number; y: number }> = {
-  forest:      { x: 14, y: 57 },
-  cave:        { x: 34, y: 44 },
-  castle:      { x: 58, y: 30 },
-  westland:    { x: 46, y: 16 },
-  dragon_lair: { x: 80, y: 8  },
+  forest:         { x: 14, y: 57 },
+  cave:           { x: 34, y: 44 },
+  castle:         { x: 58, y: 30 },
+  westland:       { x: 46, y: 16 },
+  dragon_lair:    { x: 80, y: 8  },
+  neon_undercity: { x: 88, y: 30 },
 };
 const CONNECTIONS: [string, string][] = [
   ['forest', 'cave'],
   ['cave', 'castle'],
   ['castle', 'westland'],
   ['westland', 'dragon_lair'],
+  ['dragon_lair', 'neon_undercity'],
 ];
 
 const DIFFICULTY_OPTIONS: { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string }[] = [
