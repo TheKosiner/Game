@@ -238,7 +238,7 @@ export default function ShopPanel() {
                     {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
                   </p>
                   <p style={{ color: '#64748b', fontSize: 6 }}>
-                    {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Siła', dexterity: 'Zwin', intelligence: 'Intel', vitality: 'Kond' } as Record<string, string>)[k] ?? k}`).join('  ')}
+                    {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Siła', dexterity: 'Zręcz', intelligence: 'Cel', vitality: 'Żyw' } as Record<string, string>)[k] ?? k}`).join('  ')}
                     {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
                     {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
                   </p>
