@@ -455,115 +455,16 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
 function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
   const icons: Record<number, React.ReactElement> = {
 
-    // 0 – Cyber Gladiator: armored fighter, energy sword + shield
+    // 0 – Cyber Gladiator
     0: (
-      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="cg"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
-        {/* aura */}
-        <ellipse cx="60" cy="150" rx="40" ry="8" fill="#ff990020"/>
-        {/* legs */}
-        <rect x="42" y="108" width="14" height="35" rx="4" fill="#CC5500"/>
-        <rect x="64" y="108" width="14" height="35" rx="4" fill="#CC5500"/>
-        <rect x="40" y="136" width="18" height="8" rx="3" fill="#884400"/>
-        <rect x="62" y="136" width="18" height="8" rx="3" fill="#884400"/>
-        {/* torso */}
-        <rect x="34" y="60" width="52" height="52" rx="6" fill="#DD6600"/>
-        <rect x="38" y="64" width="44" height="44" rx="4" fill="#FF8800" opacity="0.6"/>
-        {/* chest reactor */}
-        <circle cx="60" cy="84" r="10" fill="#331100"/>
-        <circle cx="60" cy="84" r="8" fill="#FF4400" opacity="0.7"/>
-        <circle cx="60" cy="84" r="5" fill="#FFCC00"/>
-        <circle cx="60" cy="84" r="2.5" fill="white"/>
-        {/* shoulders */}
-        <ellipse cx="30" cy="72" rx="12" ry="14" fill="#DD6600"/>
-        <ellipse cx="90" cy="72" rx="12" ry="14" fill="#DD6600"/>
-        <ellipse cx="30" cy="70" rx="9" ry="10" fill="#FF8800" opacity="0.4"/>
-        <ellipse cx="90" cy="70" rx="9" ry="10" fill="#FF8800" opacity="0.4"/>
-        {/* shield arm left */}
-        <rect x="6" y="68" width="20" height="28" rx="3" fill="#226688"/>
-        <rect x="8" y="70" width="16" height="24" rx="2" fill="#00AADD" opacity="0.5"/>
-        <line x1="16" y1="70" x2="16" y2="92" stroke="#00F5FF" strokeWidth="1.5" opacity="0.8"/>
-        <line x1="10" y1="80" x2="22" y2="80" stroke="#00F5FF" strokeWidth="1.5" opacity="0.8"/>
-        {/* sword arm right */}
-        <rect x="96" y="60" width="6" height="52" rx="2" fill="#886644"/>
-        <polygon points="99,12 103,60 95,60" fill="#DDDDEE"/>
-        <polygon points="99,12 101,60 99,60" fill="#00F5FF" opacity="0.8"/>
-        <line x1="99" y1="14" x2="99" y2="58" stroke="white" strokeWidth="1" opacity="0.6"/>
-        <rect x="93" y="58" width="12" height="5" rx="1" fill="#886644"/>
-        {/* neck */}
-        <rect x="50" y="50" width="20" height="14" rx="3" fill="#AA4400"/>
-        {/* helmet */}
-        <ellipse cx="60" cy="38" rx="22" ry="24" fill="#DD6600"/>
-        <ellipse cx="60" cy="36" rx="18" ry="20" fill="#CC5500"/>
-        {/* visor */}
-        <rect x="42" y="32" width="36" height="12" rx="5" fill="#001122"/>
-        <rect x="44" y="33" width="32" height="10" rx="4" fill="#00AAFF" opacity="0.3"/>
-        <line x1="44" y1="38" x2="76" y2="38" stroke="#00F5FF" strokeWidth="1.5" opacity="0.9"/>
-        {/* helmet crest */}
-        <ellipse cx="60" cy="16" rx="6" ry="10" fill="#FF4400"/>
-        <ellipse cx="60" cy="14" rx="4" ry="8" fill="#FF8800"/>
-        {/* helmet horns */}
-        <polygon points="38,28 32,10 44,26" fill="#AA4400"/>
-        <polygon points="82,28 88,10 76,26" fill="#AA4400"/>
-        <g filter="url(#cg)">
-          <line x1="99" y1="14" x2="99" y2="58" stroke="#00F5FF" strokeWidth="2" opacity="0.7"/>
-          <circle cx="60" cy="84" r="6" fill="#FFCC00" opacity="0.5"/>
-        </g>
-      </svg>
+      <img src="/bosses/cyber-gladiator.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Cyber Gladiator" />
     ),
 
-    // 2 – Neural Phantom: ghostly floating entity with circuit patterns
+    // 2 – Neural Phantom
     2: (
-      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="np"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
-        {/* ghost trail bottom */}
-        <ellipse cx="60" cy="148" rx="30" ry="10" fill="#4400AA" opacity="0.3"/>
-        {/* wisps */}
-        <ellipse cx="35" cy="130" rx="8" ry="20" fill="#6622CC" opacity="0.3"/>
-        <ellipse cx="60" cy="138" rx="12" ry="18" fill="#6622CC" opacity="0.4"/>
-        <ellipse cx="85" cy="132" rx="8" ry="20" fill="#6622CC" opacity="0.3"/>
-        {/* body */}
-        <ellipse cx="60" cy="95" rx="28" ry="42" fill="#220066" opacity="0.85"/>
-        <ellipse cx="60" cy="90" rx="22" ry="36" fill="#4400AA" opacity="0.6"/>
-        {/* circuit lines on body */}
-        <line x1="44" y1="80" x2="76" y2="80" stroke="#AA44FF" strokeWidth="1" opacity="0.7"/>
-        <line x1="44" y1="90" x2="76" y2="90" stroke="#AA44FF" strokeWidth="1" opacity="0.7"/>
-        <line x1="44" y1="100" x2="76" y2="100" stroke="#AA44FF" strokeWidth="1" opacity="0.5"/>
-        <line x1="54" y1="72" x2="54" y2="112" stroke="#AA44FF" strokeWidth="1" opacity="0.5"/>
-        <line x1="66" y1="72" x2="66" y2="112" stroke="#AA44FF" strokeWidth="1" opacity="0.5"/>
-        <circle cx="44" cy="80" r="2" fill="#CC88FF"/>
-        <circle cx="76" cy="80" r="2" fill="#CC88FF"/>
-        <circle cx="54" cy="90" r="2" fill="#CC88FF"/>
-        <circle cx="66" cy="90" r="2" fill="#CC88FF"/>
-        {/* arms — wispy */}
-        <ellipse cx="22" cy="90" rx="10" ry="5" fill="#4400AA" opacity="0.6" transform="rotate(-30 22 90)"/>
-        <ellipse cx="98" cy="90" rx="10" ry="5" fill="#4400AA" opacity="0.6" transform="rotate(30 98 90)"/>
-        <circle cx="14" cy="86" r="5" fill="#AA44FF" opacity="0.7"/>
-        <circle cx="106" cy="86" r="5" fill="#AA44FF" opacity="0.7"/>
-        {/* neck */}
-        <rect x="52" y="50" width="16" height="12" rx="4" fill="#330088" opacity="0.9"/>
-        {/* head */}
-        <ellipse cx="60" cy="36" rx="24" ry="28" fill="#220066" opacity="0.9"/>
-        <ellipse cx="60" cy="34" rx="18" ry="22" fill="#4400AA" opacity="0.5"/>
-        {/* eyes — glowing */}
-        <ellipse cx="50" cy="32" rx="8" ry="5" fill="#001100"/>
-        <ellipse cx="70" cy="32" rx="8" ry="5" fill="#001100"/>
-        <ellipse cx="50" cy="32" rx="6" ry="3.5" fill="#AA00FF" opacity="0.9"/>
-        <ellipse cx="70" cy="32" rx="6" ry="3.5" fill="#AA00FF" opacity="0.9"/>
-        <ellipse cx="50" cy="32" rx="3" ry="2" fill="#EE88FF"/>
-        <ellipse cx="70" cy="32" rx="3" ry="2" fill="#EE88FF"/>
-        {/* circuit headband */}
-        <path d="M38 28 Q60 20 82 28" fill="none" stroke="#CC88FF" strokeWidth="1.5" opacity="0.7"/>
-        <circle cx="60" cy="20" r="3" fill="#AA44FF"/>
-        <circle cx="44" cy="26" r="2" fill="#AA44FF"/>
-        <circle cx="76" cy="26" r="2" fill="#AA44FF"/>
-        <g filter="url(#np)">
-          <ellipse cx="50" cy="32" rx="7" ry="4" fill="#AA00FF" opacity="0.4"/>
-          <ellipse cx="70" cy="32" rx="7" ry="4" fill="#AA00FF" opacity="0.4"/>
-          <ellipse cx="60" cy="138" rx="14" ry="20" fill="#6622CC" opacity="0.2"/>
-        </g>
-      </svg>
+      <img src="/bosses/neural-phantom.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neural Phantom" />
     ),
+
 
     // 4 – Iron Warlord: massive robot with shoulder cannons
     4: (
@@ -626,74 +527,9 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 6 – Quantum Berserker: rage-filled humanoid with energy erupting
+    // 6 – Quantum Berserker
     6: (
-      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="qb"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
-        {/* rage energy aura */}
-        <ellipse cx="60" cy="100" rx="52" ry="58" fill="#FF220010"/>
-        {/* energy cracks */}
-        <line x1="60" y1="40" x2="30" y2="10" stroke="#FF6600" strokeWidth="2" opacity="0.8"/>
-        <line x1="60" y1="40" x2="90" y2="5" stroke="#FFAA00" strokeWidth="1.5" opacity="0.7"/>
-        <line x1="20" y1="80" x2="2" y2="65" stroke="#FF4400" strokeWidth="2" opacity="0.8"/>
-        <line x1="100" y1="80" x2="118" y2="60" stroke="#FF4400" strokeWidth="2" opacity="0.8"/>
-        <line x1="20" y1="80" x2="4" y2="95" stroke="#FF8800" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="100" y1="80" x2="116" y2="98" stroke="#FF8800" strokeWidth="1.5" opacity="0.6"/>
-        {/* legs */}
-        <rect x="36" y="112" width="18" height="36" rx="4" fill="#882200"/>
-        <rect x="66" y="112" width="18" height="36" rx="4" fill="#882200"/>
-        <rect x="34" y="138" width="22" height="8" rx="3" fill="#661100"/>
-        <rect x="64" y="138" width="22" height="8" rx="3" fill="#661100"/>
-        {/* cracked energy legs */}
-        <line x1="45" y1="115" x2="42" y2="145" stroke="#FF6600" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="75" y1="115" x2="78" y2="145" stroke="#FF6600" strokeWidth="1.5" opacity="0.6"/>
-        {/* torso — cracked armor */}
-        <rect x="30" y="60" width="60" height="56" rx="6" fill="#882200"/>
-        <rect x="34" y="64" width="52" height="48" rx="4" fill="#AA3300" opacity="0.7"/>
-        {/* cracks showing energy */}
-        <line x1="42" y1="64" x2="55" y2="80" stroke="#FFCC00" strokeWidth="2" opacity="0.9"/>
-        <line x1="78" y1="64" x2="65" y2="80" stroke="#FF8800" strokeWidth="2" opacity="0.9"/>
-        <line x1="36" y1="90" x2="52" y2="100" stroke="#FFAA00" strokeWidth="1.5" opacity="0.7"/>
-        <line x1="84" y1="90" x2="68" y2="100" stroke="#FF8800" strokeWidth="1.5" opacity="0.7"/>
-        {/* chest energy core — cracked */}
-        <circle cx="60" cy="84" r="14" fill="#440000"/>
-        <circle cx="60" cy="84" r="12" fill="#CC2200" opacity="0.8"/>
-        <circle cx="60" cy="84" r="8" fill="#FF6600"/>
-        <circle cx="60" cy="84" r="4" fill="#FFEE00"/>
-        {/* arms raised in rage */}
-        <rect x="8" y="58" width="22" height="12" rx="4" fill="#882200" transform="rotate(-40 19 64)"/>
-        <rect x="4" y="44" width="14" height="22" rx="4" fill="#882200" transform="rotate(-25 11 55)"/>
-        <rect x="90" y="58" width="22" height="12" rx="4" fill="#882200" transform="rotate(40 101 64)"/>
-        <rect x="102" y="44" width="14" height="22" rx="4" fill="#882200" transform="rotate(25 109 55)"/>
-        {/* fists with energy */}
-        <circle cx="8" cy="42" r="8" fill="#AA3300"/>
-        <circle cx="8" cy="42" r="5" fill="#FF6600" opacity="0.7"/>
-        <circle cx="112" cy="42" r="8" fill="#AA3300"/>
-        <circle cx="112" cy="42" r="5" fill="#FF6600" opacity="0.7"/>
-        {/* neck */}
-        <rect x="50" y="50" width="20" height="14" rx="3" fill="#882200"/>
-        {/* head — enraged */}
-        <ellipse cx="60" cy="36" rx="22" ry="24" fill="#992200"/>
-        <ellipse cx="60" cy="34" rx="17" ry="19" fill="#BB3300" opacity="0.7"/>
-        {/* angry eyes */}
-        <ellipse cx="50" cy="32" rx="7" ry="5" fill="#110000"/>
-        <ellipse cx="70" cy="32" rx="7" ry="5" fill="#110000"/>
-        <ellipse cx="50" cy="32" rx="5" ry="3.5" fill="#FF4400"/>
-        <ellipse cx="70" cy="32" rx="5" ry="3.5" fill="#FF4400"/>
-        <ellipse cx="50" cy="33" rx="2.5" ry="2" fill="#FFEE00"/>
-        <ellipse cx="70" cy="33" rx="2.5" ry="2" fill="#FFEE00"/>
-        {/* angry brow lines */}
-        <line x1="44" y1="26" x2="56" y2="30" stroke="#661100" strokeWidth="2"/>
-        <line x1="76" y1="26" x2="64" y2="30" stroke="#661100" strokeWidth="2"/>
-        {/* mouth open/roar */}
-        <rect x="50" y="40" width="20" height="8" rx="3" fill="#220000"/>
-        <rect x="52" y="41" width="16" height="6" rx="2" fill="#FF0000" opacity="0.5"/>
-        <g filter="url(#qb)">
-          <circle cx="60" cy="84" r="14" fill="#FF6600" opacity="0.3"/>
-          <circle cx="8" cy="42" r="8" fill="#FF6600" opacity="0.4"/>
-          <circle cx="112" cy="42" r="8" fill="#FF6600" opacity="0.4"/>
-        </g>
-      </svg>
+      <img src="/bosses/quantum-berserker.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Quantum Berserker" />
     ),
 
     // 8 – Shadow Protocol: sleek ninja dissolving into shadows with blades
@@ -946,61 +782,9 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
       </svg>
     ),
 
-    // 1 – Neon Slayer: dual cyan neon blades, sleek fighter
+    // 1 – Neon Slayer
     1: (
-      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="ns"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
-        <ellipse cx="60" cy="152" rx="34" ry="7" fill="#00AAFF18"/>
-        {/* blade trails */}
-        <line x1="18" y1="20" x2="50" y2="70" stroke="#00AAFF" strokeWidth="1" opacity="0.3"/>
-        <line x1="102" y1="20" x2="70" y2="70" stroke="#00F5FF" strokeWidth="1" opacity="0.3"/>
-        {/* left blade */}
-        <polygon points="18,8 22,12 52,72 46,72" fill="#003366"/>
-        <polygon points="20,8 21,12 50,72 48,72" fill="#00AAFF" opacity="0.9"/>
-        <line x1="20" y1="9" x2="49" y2="71" stroke="#00F5FF" strokeWidth="1.5" opacity="0.9"/>
-        <rect x="44" y="70" width="10" height="5" rx="1" fill="#005588"/>
-        {/* right blade */}
-        <polygon points="102,8 98,12 68,72 74,72" fill="#003366"/>
-        <polygon points="100,8 99,12 70,72 72,72" fill="#00F5FF" opacity="0.9"/>
-        <line x1="100" y1="9" x2="71" y2="71" stroke="#AAFFFF" strokeWidth="1.5" opacity="0.9"/>
-        <rect x="66" y="70" width="10" height="5" rx="1" fill="#005588"/>
-        {/* legs */}
-        <rect x="44" y="112" width="12" height="36" rx="3" fill="#001133"/>
-        <rect x="64" y="112" width="12" height="36" rx="3" fill="#001133"/>
-        <line x1="50" y1="114" x2="50" y2="144" stroke="#00AAFF" strokeWidth="1" opacity="0.5"/>
-        <line x1="70" y1="114" x2="70" y2="144" stroke="#00AAFF" strokeWidth="1" opacity="0.5"/>
-        <rect x="42" y="140" width="16" height="7" rx="2" fill="#002244"/>
-        <rect x="62" y="140" width="16" height="7" rx="2" fill="#002244"/>
-        {/* torso — slim */}
-        <rect x="36" y="66" width="48" height="50" rx="5" fill="#001133"/>
-        <rect x="40" y="70" width="40" height="42" rx="4" fill="#001E44" opacity="0.8"/>
-        {/* chest X pattern */}
-        <line x1="40" y1="70" x2="80" y2="112" stroke="#00AAFF" strokeWidth="1.5" opacity="0.6"/>
-        <line x1="80" y1="70" x2="40" y2="112" stroke="#00AAFF" strokeWidth="1.5" opacity="0.6"/>
-        <circle cx="60" cy="91" r="6" fill="#001133"/>
-        <circle cx="60" cy="91" r="4" fill="#00AAFF" opacity="0.8"/>
-        <circle cx="60" cy="91" r="2" fill="#AAFFFF"/>
-        {/* arms holding blades */}
-        <rect x="18" y="68" width="18" height="8" rx="3" fill="#001133" transform="rotate(-50 27 72)"/>
-        <rect x="84" y="68" width="18" height="8" rx="3" fill="#001133" transform="rotate(50 93 72)"/>
-        {/* neck */}
-        <rect x="52" y="54" width="16" height="14" rx="3" fill="#001133"/>
-        {/* head */}
-        <ellipse cx="60" cy="40" rx="20" ry="22" fill="#001133"/>
-        <ellipse cx="60" cy="38" rx="15" ry="17" fill="#001E44" opacity="0.7"/>
-        {/* visor */}
-        <rect x="44" y="36" width="32" height="8" rx="3" fill="#000811"/>
-        <rect x="46" y="37" width="28" height="6" rx="2" fill="#00AAFF" opacity="0.5"/>
-        <line x1="46" y1="40" x2="74" y2="40" stroke="#00F5FF" strokeWidth="2" opacity="0.95"/>
-        {/* blade glow tips */}
-        <circle cx="19" cy="9" r="4" fill="#00F5FF" opacity="0.6"/>
-        <circle cx="101" cy="9" r="4" fill="#00F5FF" opacity="0.6"/>
-        <g filter="url(#ns)">
-          <line x1="20" y1="9" x2="49" y2="71" stroke="#00F5FF" strokeWidth="3" opacity="0.3"/>
-          <line x1="100" y1="9" x2="71" y2="71" stroke="#00F5FF" strokeWidth="3" opacity="0.3"/>
-          <circle cx="60" cy="91" r="7" fill="#00AAFF" opacity="0.3"/>
-        </g>
-      </svg>
+      <img src="/bosses/neon-slayer.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neon Slayer" />
     ),
 
     // 3 – Plague Bot: corroded robot dripping acid/virus
