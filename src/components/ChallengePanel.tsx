@@ -466,65 +466,9 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     ),
 
 
-    // 4 – Iron Warlord: massive robot with shoulder cannons
+    // 4 – Iron Warlord
     4: (
-      <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="iw"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
-        <ellipse cx="60" cy="152" rx="40" ry="6" fill="#44000020"/>
-        {/* legs — thick */}
-        <rect x="36" y="108" width="20" height="40" rx="5" fill="#444455"/>
-        <rect x="64" y="108" width="20" height="40" rx="5" fill="#444455"/>
-        <rect x="34" y="136" width="24" height="10" rx="4" fill="#333344"/>
-        <rect x="62" y="136" width="24" height="10" rx="4" fill="#333344"/>
-        <rect x="36" y="110" width="7" height="26" rx="2" fill="#5566AA" opacity="0.4"/>
-        <rect x="77" y="110" width="7" height="26" rx="2" fill="#5566AA" opacity="0.4"/>
-        {/* waist */}
-        <rect x="36" y="100" width="48" height="12" rx="4" fill="#333344"/>
-        {/* torso — huge */}
-        <rect x="24" y="52" width="72" height="52" rx="8" fill="#555566"/>
-        <rect x="28" y="56" width="64" height="44" rx="6" fill="#444455" opacity="0.8"/>
-        {/* chest armor plates */}
-        <rect x="30" y="58" width="26" height="20" rx="3" fill="#666677"/>
-        <rect x="64" y="58" width="26" height="20" rx="3" fill="#666677"/>
-        {/* chest core — red */}
-        <circle cx="60" cy="78" r="12" fill="#220000"/>
-        <circle cx="60" cy="78" r="10" fill="#AA0000" opacity="0.8"/>
-        <circle cx="60" cy="78" r="7" fill="#FF2200"/>
-        <circle cx="60" cy="78" r="4" fill="#FF8800"/>
-        <circle cx="60" cy="78" r="2" fill="#FFDD00"/>
-        {/* belly vents */}
-        <rect x="36" y="86" width="8" height="3" rx="1" fill="#222233"/>
-        <rect x="48" y="86" width="8" height="3" rx="1" fill="#222233"/>
-        <rect x="64" y="86" width="8" height="3" rx="1" fill="#222233"/>
-        <rect x="76" y="86" width="8" height="3" rx="1" fill="#222233"/>
-        {/* shoulder cannons */}
-        <ellipse cx="18" cy="60" rx="14" ry="16" fill="#333344"/>
-        <rect x="4" y="52" width="28" height="12" rx="4" fill="#444455"/>
-        <rect x="2" y="55" width="18" height="6" rx="2" fill="#222233"/>
-        <rect x="2" y="57" width="16" height="2" rx="1" fill="#FF4400" opacity="0.7"/>
-        <ellipse cx="102" cy="60" rx="14" ry="16" fill="#333344"/>
-        <rect x="88" y="52" width="28" height="12" rx="4" fill="#444455"/>
-        <rect x="100" y="55" width="18" height="6" rx="2" fill="#222233"/>
-        <rect x="102" y="57" width="16" height="2" rx="1" fill="#FF4400" opacity="0.7"/>
-        {/* neck */}
-        <rect x="48" y="42" width="24" height="14" rx="4" fill="#444455"/>
-        {/* head */}
-        <rect x="32" y="14" width="56" height="32" rx="8" fill="#555566"/>
-        <rect x="36" y="18" width="48" height="24" rx="6" fill="#444455"/>
-        {/* visor — red band */}
-        <rect x="36" y="24" width="48" height="10" rx="3" fill="#110000"/>
-        <rect x="38" y="25" width="44" height="8" rx="2" fill="#FF2200" opacity="0.5"/>
-        <line x1="38" y1="29" x2="82" y2="29" stroke="#FF4400" strokeWidth="2" opacity="0.9"/>
-        {/* head bolts */}
-        <circle cx="38" cy="20" r="3" fill="#333344"/>
-        <circle cx="82" cy="20" r="3" fill="#333344"/>
-        <circle cx="38" cy="40" r="3" fill="#333344"/>
-        <circle cx="82" cy="40" r="3" fill="#333344"/>
-        <g filter="url(#iw)">
-          <line x1="38" y1="29" x2="82" y2="29" stroke="#FF4400" strokeWidth="3" opacity="0.4"/>
-          <circle cx="60" cy="78" r="13" fill="#FF2200" opacity="0.2"/>
-        </g>
-      </svg>
+      <img src="/bosses/iron-warlord.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Iron Warlord" />
     ),
 
     // 6 – Quantum Berserker
