@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore, CHALLENGE_COOLDOWN } from '../store/gameStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import type { ChallengePower } from '../types';
+import cyberGladiatorImg from '../assets/bosses/cyber-gladiator.png';
+import neonSlayerImg from '../assets/bosses/neon-slayer.png';
+import neuralPhantomImg from '../assets/bosses/neural-phantom.png';
+import ironWarlordImg from '../assets/bosses/iron-warlord.png';
+import quantumBerserkerImg from '../assets/bosses/quantum-berserker.png';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -457,23 +462,23 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
 
     // 0 – Cyber Gladiator
     0: (
-      <img src="/bosses/cyber-gladiator.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Cyber Gladiator" />
+      <img src={cyberGladiatorImg} width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Cyber Gladiator" />
     ),
 
     // 2 – Neural Phantom
     2: (
-      <img src="/bosses/neural-phantom.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neural Phantom" />
+      <img src={neuralPhantomImg} width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neural Phantom" />
     ),
 
 
     // 4 – Iron Warlord
     4: (
-      <img src="/bosses/iron-warlord.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Iron Warlord" />
+      <img src={ironWarlordImg} width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Iron Warlord" />
     ),
 
     // 6 – Quantum Berserker
     6: (
-      <img src="/bosses/quantum-berserker.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Quantum Berserker" />
+      <img src={quantumBerserkerImg} width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Quantum Berserker" />
     ),
 
     // 8 – Shadow Protocol: sleek ninja dissolving into shadows with blades
@@ -728,7 +733,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
 
     // 1 – Neon Slayer
     1: (
-      <img src="/bosses/neon-slayer.png" width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neon Slayer" />
+      <img src={neonSlayerImg} width={size} height={size} style={{ objectFit: 'cover', display: 'block', imageRendering: 'pixelated' }} alt="Neon Slayer" />
     ),
 
     // 3 – Plague Bot: corroded robot dripping acid/virus
