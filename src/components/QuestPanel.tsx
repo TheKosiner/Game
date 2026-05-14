@@ -71,9 +71,7 @@ export default function QuestPanel() {
     return () => clearInterval(id);
   }, []);
 
-  // Pick best quest for current level (highest minLevel not exceeding hero level)
-  const available = ALL_QUESTS.filter(q => q.minLevel <= hero.level);
-  const base = available.length > 0 ? available[available.length - 1] : null;
+  const base = ALL_QUESTS.length > 0 ? ALL_QUESTS[ALL_QUESTS.length - 1] : null;
 
   const remaining  = activeQuest ? activeQuest.endsAt - now : 0;
   const canCollect = activeQuest && now >= activeQuest.endsAt;

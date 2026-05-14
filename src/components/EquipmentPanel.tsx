@@ -158,7 +158,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 <span style={{ ...MONO, fontSize: 10, color: '#00ff88' }}>+{ps.split('+')[1]} {ps.split(' +')[0]}</span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>Poz. wymagany: {item.level}</p>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>Poziom: {item.level}</p>
           </div>
           <span style={{ color: 'var(--text-dim)', fontSize: 12, flexShrink: 0 }}>ℹ</span>
         </>

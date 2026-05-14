@@ -273,7 +273,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   enterDungeon: (dungeon: Dungeon, mode: 'xp' | 'balanced' | 'loot' = 'balanced', difficulty: 'easy' | 'normal' | 'hard' = 'normal') => {
     const { hero } = get();
-    if (hero.level < dungeon.minLevel) return;
     if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
       get().addCombatLog('Odpoczywasz po walce! Poczekaj az wroca sily.', 'system');
       return;
@@ -439,7 +438,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   startQuest: (quest: Quest) => {
     const { hero, activeQuest } = get();
     if (activeQuest) return;
-    if (hero.level < quest.minLevel) return;
     if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) {
       return;
     }
