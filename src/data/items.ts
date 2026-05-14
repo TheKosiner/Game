@@ -92,6 +92,113 @@ export const ALL_ITEMS: Item[] = [
   { id: 'core_fusion',      name: 'Rdzeń Fuzyjny',              slot: 'amulet', rarity: 'rare',      stats: { vitality: 10, strength: 5 },                            level: 15, goldValue: 700,  emoji: '⚛️' },
   { id: 'core_quantum',     name: 'Rdzeń Kwantowy Q-9',         slot: 'amulet', rarity: 'epic',      stats: { intelligence: 25, vitality: 10 },                       level: 28, goldValue: 3200, emoji: '⚛️' },
   { id: 'amulet_void',      name: 'Amulet Pustki',              slot: 'amulet', rarity: 'legendary', stats: { strength: 15, dexterity: 15, intelligence: 15, vitality: 15 }, level: 45, goldValue: 20000, emoji: '🔮' },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // NEW ITEMS — expanded variety
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // ── NEW Weapons: Plasma Pistols (ranged, Celność) ─────────────────────────
+  { id: 'pistol_nano',        name: 'Nano-Pistolet N1',          slot: 'weapon', rarity: 'common',    stats: { intelligence: 2 },                     attackBonus: 5,  level: 2,  goldValue: 28,    emoji: '🔫', ranged: true },
+  { id: 'pistol_plasma',      name: 'Pistolet Plazmowy',         slot: 'weapon', rarity: 'uncommon',  stats: { intelligence: 5, dexterity: 2 },       attackBonus: 11, level: 5,  goldValue: 120,   emoji: '🔫', ranged: true },
+  { id: 'pistol_pulse',       name: 'Pulsator Fotoniczny',       slot: 'weapon', rarity: 'rare',      stats: { intelligence: 9, dexterity: 4 },       attackBonus: 26, level: 11, goldValue: 510,   emoji: '🔫', ranged: true },
+  { id: 'pistol_quantum',     name: 'Kwantowy Rewolwer',         slot: 'weapon', rarity: 'epic',      stats: { intelligence: 18, dexterity: 8 },      attackBonus: 48, level: 21, goldValue: 2100,  emoji: '🔫', ranged: true },
+  { id: 'pistol_antimatter',  name: 'Antymateria MK-X',          slot: 'weapon', rarity: 'legendary', stats: { intelligence: 35, dexterity: 15 },     attackBonus: 88, level: 35, goldValue: 9800,  emoji: '💥', ranged: true },
+
+  // ── NEW Weapons: Sniper Rifles (ranged, Celność + Zręczność) ─────────────
+  { id: 'rifle_laser',        name: 'Karabin Laserowy LR-1',     slot: 'weapon', rarity: 'common',    stats: { intelligence: 3 },                     attackBonus: 8,  level: 3,  goldValue: 40,    emoji: '🎯', ranged: true },
+  { id: 'rifle_precision',    name: 'Precyzyjny Karabin P-50',   slot: 'weapon', rarity: 'uncommon',  stats: { intelligence: 6, dexterity: 3 },       attackBonus: 14, level: 6,  goldValue: 155,   emoji: '🎯', ranged: true },
+  { id: 'rifle_antimaterial', name: 'Karabin Anty-Materiał',     slot: 'weapon', rarity: 'rare',      stats: { intelligence: 10, dexterity: 6 },      attackBonus: 29, level: 13, goldValue: 540,   emoji: '🎯', ranged: true },
+  { id: 'rifle_plasma_sniper',name: 'Plazmowy Snajper PS-7',     slot: 'weapon', rarity: 'epic',      stats: { intelligence: 20, dexterity: 10 },     attackBonus: 54, level: 23, goldValue: 2500,  emoji: '🎯', ranged: true },
+  { id: 'rifle_orbital',      name: 'Orbitalny Snajper O-99',    slot: 'weapon', rarity: 'legendary', stats: { intelligence: 38, dexterity: 18 },     attackBonus: 95, level: 38, goldValue: 11000, emoji: '🛰️', ranged: true },
+
+  // ── NEW Weapons: Cyber Whips (Cyberwici) — Zręczność + Celność ───────────
+  { id: 'whip_electro',       name: 'Elektro-Bicz E1',           slot: 'weapon', rarity: 'common',    stats: { dexterity: 2, intelligence: 1 },       attackBonus: 5,  level: 2,  goldValue: 25,    emoji: '⚡' },
+  { id: 'whip_nano',          name: 'Nano-Smagacz',              slot: 'weapon', rarity: 'uncommon',  stats: { dexterity: 6, intelligence: 3 },       attackBonus: 13, level: 6,  goldValue: 145,   emoji: '⚡' },
+  { id: 'whip_neural',        name: 'Neurobicz MK-2',            slot: 'weapon', rarity: 'rare',      stats: { dexterity: 11, intelligence: 6 },      attackBonus: 27, level: 12, goldValue: 520,   emoji: '⚡' },
+  { id: 'whip_void',          name: 'Bicz Próżni',               slot: 'weapon', rarity: 'epic',      stats: { dexterity: 18, intelligence: 12 },     attackBonus: 45, level: 21, goldValue: 2000,  emoji: '⚡' },
+  { id: 'whip_omega',         name: 'Omega-Smagacz Ω',           slot: 'weapon', rarity: 'legendary', stats: { dexterity: 32, intelligence: 22 },     attackBonus: 85, level: 37, goldValue: 10000, emoji: '⚡' },
+
+  // ── NEW Weapons: Heavy Axes & Cleavers — Siła + Żywotność ────────────────
+  { id: 'axe_plasma',         name: 'Plazmo-Topór A1',           slot: 'weapon', rarity: 'common',    stats: { strength: 3, vitality: 1 },            attackBonus: 7,  level: 3,  goldValue: 38,    emoji: '⚔️' },
+  { id: 'axe_gravity',        name: 'Topór Grawitacyjny',        slot: 'weapon', rarity: 'uncommon',  stats: { strength: 7, vitality: 3 },            attackBonus: 15, level: 7,  goldValue: 165,   emoji: '⚔️' },
+  { id: 'axe_tungsten',       name: 'Wolfram-Halabarda',         slot: 'weapon', rarity: 'rare',      stats: { strength: 13, vitality: 6 },           attackBonus: 31, level: 13, goldValue: 580,   emoji: '⚔️' },
+  { id: 'cleaver_titan',      name: 'Tasak Tytanowy',            slot: 'weapon', rarity: 'epic',      stats: { strength: 21, vitality: 12 },          attackBonus: 50, level: 22, goldValue: 2300,  emoji: '⚔️' },
+  { id: 'axe_executioner',    name: 'Topór Egzekutora',          slot: 'weapon', rarity: 'legendary', stats: { strength: 40, vitality: 18 },          attackBonus: 100,level: 40, goldValue: 13500, emoji: '⚔️' },
+
+  // ── NEW Weapons: Neural Lances — Siła + Celność ───────────────────────────
+  { id: 'lance_shock',        name: 'Wstrząso-Lanca',            slot: 'weapon', rarity: 'uncommon',  stats: { strength: 4, intelligence: 4 },        attackBonus: 14, level: 6,  goldValue: 150,   emoji: '🔱' },
+  { id: 'lance_neural',       name: 'Neuro-Lanca NL-3',          slot: 'weapon', rarity: 'rare',      stats: { strength: 9, intelligence: 8 },        attackBonus: 27, level: 11, goldValue: 470,   emoji: '🔱' },
+  { id: 'lance_void',         name: 'Lanca Próżni',              slot: 'weapon', rarity: 'epic',      stats: { strength: 18, intelligence: 14 },      attackBonus: 47, level: 22, goldValue: 2200,  emoji: '🔱' },
+  { id: 'lance_omega',        name: 'Omega-Lanca Ω',             slot: 'weapon', rarity: 'legendary', stats: { strength: 32, intelligence: 25 },      attackBonus: 92, level: 37, goldValue: 10500, emoji: '🌟' },
+
+  // ── NEW Weapons: Bio Blades — Zręczność + Żywotność ──────────────────────
+  { id: 'bio_shard',          name: 'Bio-Odłamek',               slot: 'weapon', rarity: 'common',    stats: { dexterity: 2, vitality: 1 },           attackBonus: 5,  level: 2,  goldValue: 26,    emoji: '🔪' },
+  { id: 'bio_fang',           name: 'Bio-Kieł MK-2',             slot: 'weapon', rarity: 'uncommon',  stats: { dexterity: 6, vitality: 3 },           attackBonus: 13, level: 7,  goldValue: 155,   emoji: '🔪' },
+  { id: 'bio_claw',           name: 'Cyber-Pazur',               slot: 'weapon', rarity: 'rare',      stats: { dexterity: 12, vitality: 5 },          attackBonus: 28, level: 12, goldValue: 500,   emoji: '🔪' },
+  { id: 'bio_venom',          name: 'Ostrze Jadowe V-9',         slot: 'weapon', rarity: 'epic',      stats: { dexterity: 20, vitality: 10 },         attackBonus: 48, level: 22, goldValue: 2100,  emoji: '🔪' },
+  { id: 'bio_leviathan',      name: 'Lewiatan Bio-X',            slot: 'weapon', rarity: 'legendary', stats: { dexterity: 35, vitality: 20 },         attackBonus: 90, level: 38, goldValue: 12000, emoji: '👻' },
+
+  // ── NEW Weapons: Plasma Cutters — Siła + Celność ──────────────────────────
+  { id: 'cutter_plasma',      name: 'Cęgi Plazmowe C1',          slot: 'weapon', rarity: 'common',    stats: { strength: 2, intelligence: 1 },        attackBonus: 5,  level: 2,  goldValue: 26,    emoji: '⚡' },
+  { id: 'cutter_fusion',      name: 'Nożyce Fuzyjne',            slot: 'weapon', rarity: 'uncommon',  stats: { strength: 5, intelligence: 4 },        attackBonus: 13, level: 6,  goldValue: 148,   emoji: '⚡' },
+  { id: 'cutter_quantum',     name: 'Cęgi Kwantowe Q-5',         slot: 'weapon', rarity: 'rare',      stats: { strength: 10, intelligence: 8 },       attackBonus: 27, level: 13, goldValue: 530,   emoji: '⚡' },
+  { id: 'cutter_void',        name: 'Plazmo-Kamaster',           slot: 'weapon', rarity: 'epic',      stats: { strength: 17, intelligence: 15 },      attackBonus: 47, level: 23, goldValue: 2200,  emoji: '⚔️' },
+  { id: 'cutter_supernova',   name: 'Supernowa Tnąca',           slot: 'weapon', rarity: 'legendary', stats: { strength: 30, intelligence: 28 },      attackBonus: 90, level: 38, goldValue: 11500, emoji: '🌟' },
+
+  // ── NEW Armor: Stealth (Zręczność + Żywotność) ────────────────────────────
+  { id: 'suit_phantom',       name: 'Kombinezon Fantom',         slot: 'armor',  rarity: 'uncommon',  stats: { dexterity: 5, vitality: 4 },           defenseBonus: 11, level: 6,  goldValue: 145,  emoji: '🦾' },
+  { id: 'exo_shadow',         name: 'Egzoszkielet Cień',         slot: 'armor',  rarity: 'rare',      stats: { dexterity: 8, vitality: 12 },          defenseBonus: 20, level: 12, goldValue: 480,  emoji: '🦾' },
+  { id: 'suit_infiltrator',   name: 'Pancerz Infiltratora',      slot: 'armor',  rarity: 'epic',      stats: { dexterity: 16, vitality: 18 },         defenseBonus: 38, level: 22, goldValue: 2800, emoji: '🦾' },
+  { id: 'exo_ghost',          name: 'Egzoszkielet Duch',         slot: 'armor',  rarity: 'legendary', stats: { dexterity: 28, vitality: 30 },         defenseBonus: 65, level: 35, goldValue: 9000, emoji: '🛡️' },
+
+  // ── NEW Armor: Netrunner (Celność + Żywotność) ────────────────────────────
+  { id: 'suit_netrunner',     name: 'Kombinezon Netrunnera',     slot: 'armor',  rarity: 'uncommon',  stats: { intelligence: 6, vitality: 3 },        defenseBonus: 8,  level: 7,  goldValue: 155,  emoji: '🦾' },
+  { id: 'exo_analyst',        name: 'Egzoszkielet Analityka',    slot: 'armor',  rarity: 'rare',      stats: { intelligence: 10, vitality: 10 },      defenseBonus: 18, level: 14, goldValue: 620,  emoji: '🦾' },
+  { id: 'suit_cyborg',        name: 'Pancerz Cyborga',           slot: 'armor',  rarity: 'epic',      stats: { intelligence: 18, vitality: 16 },      defenseBonus: 35, level: 24, goldValue: 3000, emoji: '🦾' },
+
+  // ── NEW Armor: Balanced (Siła + Żywotność + Zręczność) ───────────────────
+  { id: 'suit_chrome',        name: 'Chromowy Kombinezon',       slot: 'armor',  rarity: 'rare',      stats: { strength: 6, vitality: 10 },           defenseBonus: 22, level: 12, goldValue: 500,  emoji: '🦾' },
+  { id: 'exo_dreadnought',    name: 'Pancerz Dreadnought',       slot: 'armor',  rarity: 'epic',      stats: { strength: 14, vitality: 25 },          defenseBonus: 50, level: 28, goldValue: 4500, emoji: '🦾' },
+  { id: 'exo_nemesis',        name: 'Egzoszkielet Nemezis',      slot: 'armor',  rarity: 'legendary', stats: { strength: 18, dexterity: 12, vitality: 25 }, defenseBonus: 80, level: 42, goldValue: 17000, emoji: '🛡️' },
+
+  // ── NEW Helmets: Reflex (Zręczność) ──────────────────────────────────────
+  { id: 'visor_reflex',       name: 'Wizjer Refleksów',          slot: 'helmet', rarity: 'uncommon',  stats: { dexterity: 5, vitality: 1 },           defenseBonus: 7,  level: 6,  goldValue: 115,  emoji: '🥽' },
+  { id: 'helmet_scout',       name: 'Hełm Zwiadowcy',            slot: 'helmet', rarity: 'rare',      stats: { dexterity: 9, vitality: 5 },           defenseBonus: 15, level: 12, goldValue: 520,  emoji: '⛑️' },
+  { id: 'helmet_phantom',     name: 'Hełm Fantoma',              slot: 'helmet', rarity: 'epic',      stats: { dexterity: 16, vitality: 12 },         defenseBonus: 26, level: 24, goldValue: 2600, emoji: '⛑️' },
+
+  // ── NEW Helmets: Targeting (Celność) ─────────────────────────────────────
+  { id: 'visor_targeting',    name: 'Wizjer Celowniczy',         slot: 'helmet', rarity: 'rare',      stats: { intelligence: 10, vitality: 4 },       defenseBonus: 12, level: 14, goldValue: 580,  emoji: '🥽' },
+  { id: 'helmet_neural',      name: 'Hełm Neuronowy',            slot: 'helmet', rarity: 'epic',      stats: { intelligence: 22, vitality: 8 },       defenseBonus: 22, level: 26, goldValue: 3000, emoji: '🥽' },
+  { id: 'helmet_oracle',      name: 'Hełm Wyroczni',             slot: 'helmet', rarity: 'legendary', stats: { intelligence: 30, dexterity: 12 },     defenseBonus: 38, level: 35, goldValue: 8500, emoji: '🥽' },
+
+  // ── NEW Helmets: Berserker (Siła + Żywotność) ────────────────────────────
+  { id: 'helmet_berserker',   name: 'Hełm Berserkera',           slot: 'helmet', rarity: 'rare',      stats: { strength: 8, vitality: 8 },            defenseBonus: 18, level: 15, goldValue: 640,  emoji: '⛑️' },
+  { id: 'helmet_warlord',     name: 'Hełm Warlorda',             slot: 'helmet', rarity: 'legendary', stats: { strength: 20, vitality: 20 },          defenseBonus: 42, level: 40, goldValue: 12000,emoji: '⛑️' },
+
+  // ── NEW Boots: Targeting (Celność + Zręczność) ───────────────────────────
+  { id: 'boots_sniper',       name: 'Buty Snajpera',             slot: 'boots',  rarity: 'uncommon',  stats: { intelligence: 5, dexterity: 2 },       defenseBonus: 5,  level: 7,  goldValue: 120,  emoji: '👟' },
+  { id: 'boots_neural',       name: 'Buty Neuronowe',            slot: 'boots',  rarity: 'rare',      stats: { intelligence: 10, dexterity: 5 },      defenseBonus: 10, level: 15, goldValue: 620,  emoji: '👟' },
+  { id: 'boots_predator',     name: 'Buty Drapieżnika',          slot: 'boots',  rarity: 'legendary', stats: { dexterity: 25, intelligence: 15 },     defenseBonus: 30, level: 40, goldValue: 10500,emoji: '✨' },
+
+  // ── NEW Boots: Tank (Żywotność + Siła) ───────────────────────────────────
+  { id: 'boots_reinforced',   name: 'Buty Wzmocnione',           slot: 'boots',  rarity: 'uncommon',  stats: { vitality: 4, strength: 2 },            defenseBonus: 6,  level: 6,  goldValue: 110,  emoji: '👢' },
+  { id: 'boots_titan_b',      name: 'Buty Tytana',               slot: 'boots',  rarity: 'rare',      stats: { vitality: 12, strength: 4 },           defenseBonus: 14, level: 16, goldValue: 680,  emoji: '🦿' },
+  { id: 'boots_juggernaut',   name: 'Buty Juggernauta',          slot: 'boots',  rarity: 'epic',      stats: { vitality: 20, strength: 8 },           defenseBonus: 20, level: 26, goldValue: 2800, emoji: '🦿' },
+
+  // ── NEW Rings: expanded variety ───────────────────────────────────────────
+  { id: 'chip_strength',      name: 'Chip Siły Mięśni',          slot: 'ring',   rarity: 'uncommon',  stats: { strength: 5, vitality: 2 },                             level: 7,  goldValue: 140,  emoji: '💉' },
+  { id: 'implant_reflex',     name: 'Implant Refleksów',         slot: 'ring',   rarity: 'rare',      stats: { dexterity: 12, intelligence: 4 },                       level: 15, goldValue: 560,  emoji: '🔲' },
+  { id: 'chip_bioboost',      name: 'Chip Bio-Boost',            slot: 'ring',   rarity: 'epic',      stats: { vitality: 18, strength: 10 },                           level: 24, goldValue: 2800, emoji: '💉' },
+  { id: 'implant_hunter',     name: 'Implant Łowcy',             slot: 'ring',   rarity: 'epic',      stats: { dexterity: 18, intelligence: 10 },                      level: 26, goldValue: 3000, emoji: '🔲' },
+  { id: 'ring_nemesis',       name: 'Implant Nemezis',           slot: 'ring',   rarity: 'legendary', stats: { strength: 20, dexterity: 20, intelligence: 10 },        level: 45, goldValue: 19000,emoji: '🐉' },
+
+  // ── NEW Amulets: expanded variety ────────────────────────────────────────
+  { id: 'core_combat',        name: 'Rdzeń Bojowy',              slot: 'amulet', rarity: 'uncommon',  stats: { strength: 5, vitality: 3 },                             level: 7,  goldValue: 150,  emoji: '💾' },
+  { id: 'pendant_sniper',     name: 'Wisior Snajpera',           slot: 'amulet', rarity: 'rare',      stats: { intelligence: 12, dexterity: 5 },                       level: 16, goldValue: 700,  emoji: '📿' },
+  { id: 'core_berserker',     name: 'Rdzeń Berserkera',          slot: 'amulet', rarity: 'epic',      stats: { strength: 20, dexterity: 8 },                           level: 26, goldValue: 2900, emoji: '⚛️' },
+  { id: 'core_shadow',        name: 'Rdzeń Cienia',              slot: 'amulet', rarity: 'epic',      stats: { dexterity: 22, vitality: 10 },                          level: 28, goldValue: 3400, emoji: '⚛️' },
+  { id: 'amulet_titan',       name: 'Amulet Tytana',             slot: 'amulet', rarity: 'legendary', stats: { strength: 25, vitality: 30 },                          level: 45, goldValue: 19000,emoji: '🔮' },
+  { id: 'amulet_genesis',     name: 'Genesis Ω',                 slot: 'amulet', rarity: 'legendary', stats: { strength: 15, dexterity: 15, intelligence: 15, vitality: 5 }, level: 48, goldValue: 22000, emoji: '🔮' },
 ];
 
 
