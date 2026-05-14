@@ -3,9 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
-import PixelSprite from './PixelSprite';
-import { ENEMY_SPRITES } from '../data/sprites';
-import type { SpriteKey } from '../data/sprites';
+import EnemyIcon from './EnemyIcon';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -73,17 +71,7 @@ function EnemyBattleCard() {
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          {ENEMY_SPRITES[enemy.id as SpriteKey] ? (
-            <div style={{
-              background: 'var(--bg-deep)', border: '1px solid rgba(80,20,20,0.5)',
-              padding: 4, flexShrink: 0,
-              boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.5)',
-            }}>
-              <PixelSprite grid={ENEMY_SPRITES[enemy.id as SpriteKey]} scale={4} />
-            </div>
-          ) : (
-            <span style={{ fontSize: 32 }}>{enemy.emoji}</span>
-          )}
+          <EnemyIcon id={enemy.id} size={64} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(8), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
             <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>POZ. {enemy.level}</p>
