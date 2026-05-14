@@ -18,6 +18,9 @@ type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 const RARITY_BASE: Record<Rarity, number> = { common: 50, uncommon: 28, rare: 14, epic: 6, legendary: 2 };
 const RARITY_EMOJI: Record<Rarity, string> = { common: '⬜', uncommon: '🟩', rare: '🟦', epic: '🟪', legendary: '✨' };
 const RARITY_LABEL: Record<Rarity, string> = { common: '', uncommon: '', rare: ' RZADKI!', epic: ' 💜 EPICKI!', legendary: ' ✨ LEGENDARNY!' };
+const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+// Chance to bump one tier higher after normal roll (per difficulty multiplier applied later)
+const RARITY_BUMP: Record<Rarity, number> = { common: 0.15, uncommon: 0.12, rare: 0.08, epic: 0.04, legendary: 0 };
 
 function rollRarity(mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard'): Rarity {
   const w: Record<string, number> = { ...RARITY_BASE };
@@ -31,11 +34,21 @@ function rollRarity(mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'norm
   return 'common';
 }
 
+function tryBumpRarity(rarity: Rarity, difficulty: 'easy' | 'normal' | 'hard'): { rarity: Rarity; bumped: boolean } {
+  const mult = difficulty === 'hard' ? 2 : difficulty === 'easy' ? 0.5 : 1;
+  const idx = RARITY_ORDER.indexOf(rarity);
+  if (idx >= RARITY_ORDER.length - 1) return { rarity, bumped: false };
+  const chance = RARITY_BUMP[rarity] * mult;
+  if (Math.random() < chance) return { rarity: RARITY_ORDER[idx + 1], bumped: true };
+  return { rarity, bumped: false };
+}
+
 function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
   if (Math.random() >= dropChance) return;
   const hero = get().hero;
   if (hero.inventory.length >= MAX_INVENTORY) return;
-  const rarity = rollRarity(mode, difficulty);
+  const baseRarity = rollRarity(mode, difficulty);
+  const { rarity, bumped } = tryBumpRarity(baseRarity, difficulty);
   const lvMin = Math.max(1, heroLevel - 3);
   const lvMax = heroLevel + 5;
   let pool = ALL_ITEMS.filter(i => i.rarity === rarity && i.level >= lvMin && i.level <= lvMax && i.slot !== 'consumable');
@@ -44,7 +57,8 @@ function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'bal
   if (!pool.length) return;
   const item = pool[Math.floor(Math.random() * pool.length)];
   set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
-  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${item.name}${RARITY_LABEL[rarity]}`, 'loot');
+  const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
+  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${item.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
 }
 
 function simDmg(atk: number, def: number): number {
