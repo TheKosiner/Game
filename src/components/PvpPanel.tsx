@@ -476,7 +476,7 @@ export default function PvpPanel() {
     if (Date.now() - lastPvpFight < PVP_COOLDOWN) return;
     const oppAtk = entry.attack ?? (10 + entry.level * 3);
     const oppDef = entry.defense ?? (5 + entry.level * 2);
-    const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5 }, entry.level);
+    const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5, magic: 4, magicResistance: 4 }, entry.level);
 
     const state: CombatState = {
       opponent: {
