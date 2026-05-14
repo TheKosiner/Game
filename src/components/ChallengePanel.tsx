@@ -130,23 +130,23 @@ function FightView() {
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
 
-          {/* Boss emoji with shake animation */}
+          {/* Boss portrait with shake animation */}
           <div
             key={bossAnimKey}
             style={{
-              fontSize: 44, flexShrink: 0, lineHeight: 1,
+              flexShrink: 0,
               animation: bossAnimKey > 0 ? 'bossShake 0.4s ease' : 'none',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 56, height: 56,
               position: 'relative',
+              width: 80, height: 80,
+              overflow: 'hidden',
             }}
           >
-            <span
+            <div
               key={bossHitKey}
-              style={{ animation: bossHitKey > 0 ? 'bossHit 0.35s ease' : 'none' }}
+              style={{ animation: bossHitKey > 0 ? 'bossHit 0.35s ease' : 'none', width: '100%', height: '100%' }}
             >
-              {boss.emoji}
-            </span>
+              <BossSvg id={fight.bossIdx} size={80} />
+            </div>
 
             {/* Floating damage number on boss */}
             {floatBoss && (
