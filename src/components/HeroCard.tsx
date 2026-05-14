@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
-import { getHeroAttack, getHeroDefense, getEquipmentStats } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
 
@@ -281,7 +281,9 @@ export default function HeroCard() {
   const hpPct      = (displayHp / hero.maxHp) * 100;
   const attack     = getHeroAttack(hero);
   const defense    = getHeroDefense(hero);
+  const magicRes   = getHeroMagicResistance(hero);
   const eqStats    = getEquipmentStats(hero.equipment);
+  const isMagicWpn = !!hero.equipment.weapon?.magicDamage;
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
@@ -324,9 +326,10 @@ export default function HeroCard() {
           </div>
 
           <div style={{ display: 'flex', gap: 4 }}>
-            <StatBox icon="⚔" value={attack}    label="ATAK"   color="#ff2d78" />
+            <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? 'MAGIA' : 'ATAK'} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
             <StatBox icon="🛡" value={defense}   label="OBRON"  color="#00f5ff" />
             <StatBox icon="♥" value={hero.maxHp} label="MAX HP" color="#ff4444" />
+            <StatBox icon="✨" value={magicRes}  label="ODP.MAG" color="#9d4edd" />
           </div>
 
           <div style={{
@@ -393,10 +396,12 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>◈ STATYSTYKI</p>
         {([
-          { attr: 'strength',     icon: '💪', name: 'Siła',       desc: '↑ obrażenia broni wręcz',        note: '⚔ kliny · pałki · noże · piki · +1% DMG/pkt',   color: '#ff2d78' },
-          { attr: 'dexterity',    icon: '🏃', name: 'Zręczność',  desc: '↑ szansa na trafienie krytyczne', note: 'baza 10% kryt · +0.5% kryt/pkt',                color: '#00f5ff' },
-          { attr: 'intelligence', icon: '🎯', name: 'Celność',    desc: '↑ obrażenia broni dystansowych',  note: '🔫 działa · 🔱 railguny · +0.4% DMG/pkt',       color: '#9d4edd' },
-          { attr: 'vitality',     icon: '♥',  name: 'Żywotność',  desc: '↑ HP maksymalne i obrona',        note: '+10 HP · +1 obrona na każdy pkt',               color: '#ff4444' },
+          { attr: 'strength',       icon: '💪', name: 'Siła',            desc: '↑ obrażenia broni wręcz',          note: '⚔ kliny · pałki · noże · piki · +1% DMG/pkt',   color: '#ff2d78' },
+          { attr: 'dexterity',      icon: '🏃', name: 'Zręczność',       desc: '↑ szansa na trafienie krytyczne',   note: 'baza 10% kryt · +0.5% kryt/pkt',                color: '#00f5ff' },
+          { attr: 'intelligence',   icon: '🎯', name: 'Celność',         desc: '↑ obrażenia broni dystansowych',    note: '🔫 działa · 🔱 railguny · +0.4% DMG/pkt',       color: '#9d4edd' },
+          { attr: 'vitality',       icon: '♥',  name: 'Żywotność',       desc: '↑ HP maksymalne i obrona',          note: '+10 HP · +1 obrona na każdy pkt',               color: '#ff4444' },
+          { attr: 'magic',          icon: '🔮', name: 'Magia',           desc: '↑ obrażenia magicznych broni',      note: '🪄 laski · sfery · +1.4% DMG/pkt (strome)',     color: '#cc44ff' },
+          { attr: 'magicResistance',icon: '✨', name: 'Odp. Magii',      desc: '↑ odporność na obrażenia magiczne', note: '+2 mag.obr./pkt · przeciwko wrogom magicznym',  color: '#00ff88' },
         ] as const).map(({ attr, icon, name, desc, note, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];

@@ -6,13 +6,15 @@ function softCap(stat: number): number {
 }
 
 export function getEquipmentStats(equipment: Hero['equipment']): Stats {
-  const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
+  const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
   for (const item of Object.values(equipment)) {
     if (!item?.stats) continue;
-    r.strength     += item.stats.strength     ?? 0;
-    r.dexterity    += item.stats.dexterity    ?? 0;
-    r.intelligence += item.stats.intelligence ?? 0;
-    r.vitality     += item.stats.vitality     ?? 0;
+    r.strength        += item.stats.strength        ?? 0;
+    r.dexterity       += item.stats.dexterity       ?? 0;
+    r.intelligence    += item.stats.intelligence    ?? 0;
+    r.vitality        += item.stats.vitality        ?? 0;
+    r.magic           += item.stats.magic           ?? 0;
+    r.magicResistance += item.stats.magicResistance ?? 0;
   }
   return r;
 }
@@ -20,21 +22,30 @@ export function getEquipmentStats(equipment: Hero['equipment']): Stats {
 export function getHeroAttack(hero: Hero): number {
   const eq = getEquipmentStats(hero.equipment);
   const weapon = hero.equipment.weapon;
+  const levelBase = 5 + hero.level * 2;
   if (!weapon) {
-    const base = 5 + hero.level * 2;
-    return Math.round(base * (1 + softCap(hero.stats.strength + eq.strength) / 100));
+    return Math.round(levelBase * (1 + softCap(hero.stats.strength + eq.strength) / 100));
+  }
+  // Magic weapons scale with magic stat (steeper: /70)
+  if (weapon.magicDamage) {
+    const magicVal = softCap(hero.stats.magic + eq.magic);
+    return Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + magicVal / 70));
   }
   const scaleStat = (Object.entries(weapon.stats ?? {})
-    .filter(([k]) => k !== 'vitality')
+    .filter(([k]) => k !== 'vitality' && k !== 'magicResistance')
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
   const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
-  const levelBase = 5 + hero.level * 2;
   const base = Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
   if (weapon.ranged) {
     const intVal = softCap(hero.stats.intelligence + eq.intelligence);
     return Math.round(base * (1 + intVal / 250));
   }
   return base;
+}
+
+export function getHeroMagicResistance(hero: Hero): number {
+  const eq = getEquipmentStats(hero.equipment);
+  return 2 + (hero.stats.magicResistance + eq.magicResistance) * 2;
 }
 
 export function getHeroDefense(hero: Hero): number {
@@ -74,16 +85,28 @@ function quadDmg(atk: number, def: number, critMult = 1): number {
 
 export function heroAttackEnemy(hero: Hero, enemy: Enemy, attackOverride?: number): { damage: number; isCrit: boolean } {
   const eq = getEquipmentStats(hero.equipment);
-  const attack = attackOverride ?? getHeroAttack(hero);
+  const weapon = hero.equipment.weapon;
   const critChance = 0.10 + (hero.stats.dexterity + eq.dexterity) * 0.005;
   const isCrit = Math.random() < critChance;
+  if (weapon?.magicDamage) {
+    const magicAtk = attackOverride ?? getHeroAttack(hero);
+    const enemyMagRes = enemy.magicResistance ?? 0;
+    const damage = quadDmg(magicAtk, enemyMagRes, isCrit ? 2 : 1);
+    return { damage, isCrit };
+  }
+  const attack = attackOverride ?? getHeroAttack(hero);
   const damage = quadDmg(attack, enemy.defense, isCrit ? 2 : 1);
   return { damage, isCrit };
 }
 
 export function enemyAttackHero(enemy: Enemy, hero: Hero, defenseOverride?: number): { damage: number; isCrit: boolean } {
-  const defense = defenseOverride ?? getHeroDefense(hero);
   const isCrit = Math.random() < 0.05;
+  if (enemy.magicAttack) {
+    const magRes = defenseOverride ?? getHeroMagicResistance(hero);
+    const damage = quadDmg(enemy.magicAttack, magRes, isCrit ? 2 : 1);
+    return { damage, isCrit };
+  }
+  const defense = defenseOverride ?? getHeroDefense(hero);
   const damage = quadDmg(enemy.attack, defense, isCrit ? 2 : 1);
   return { damage, isCrit };
 }

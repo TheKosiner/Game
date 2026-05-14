@@ -110,7 +110,7 @@ function scaledQuestDuration(durationMs: number, level: number): number {
 }
 
 function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0, portrait: 0 | 1 = 0): Hero {
-  const stats: Stats = { strength: 4, dexterity: 4, intelligence: 4, vitality: 4 };
+  const stats: Stats = { strength: 4, dexterity: 4, intelligence: 4, vitality: 4, magic: 4, magicResistance: 4 };
   const maxHp = getHeroMaxHp(stats, 1);
   return {
     name,
@@ -186,8 +186,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const now = Date.now();
     const DAY = 24 * 60 * 60 * 1000;
     if (hero.lastRespecAt !== null && now - hero.lastRespecAt < DAY) return;
-    const totalPoints = hero.stats.strength + hero.stats.dexterity + hero.stats.intelligence + hero.stats.vitality;
-    const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0 };
+    const totalPoints = hero.stats.strength + hero.stats.dexterity + hero.stats.intelligence + hero.stats.vitality + hero.stats.magic + hero.stats.magicResistance;
+    const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
     const newMaxHp = getHeroMaxHp(resetStats, hero.level, hero.equipment);
     set({ hero: { ...hero, stats: resetStats, attributePoints: hero.attributePoints + totalPoints, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp), lastRespecAt: now } });
     get().addCombatLog('Statystyki zresetowane! Rozdziel punkty cech.', 'system');
@@ -859,6 +859,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           dexterity: s.dexterity ?? s.agility ?? 0,
           intelligence: s.intelligence ?? 0,
           vitality: s.vitality ?? s.constitution ?? 0,
+          magic: s.magic ?? 4,
+          magicResistance: s.magicResistance ?? 4,
         });
         const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
         const migrateEquipment = (eq: any) => {
