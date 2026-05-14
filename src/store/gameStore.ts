@@ -6,7 +6,7 @@ import { ALL_ITEMS } from '../data/items';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
-const SAVE_KEY = 'realm_of_valor_save';
+const SAVE_KEY = 'cybermagic_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;

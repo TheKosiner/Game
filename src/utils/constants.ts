@@ -12,4 +12,4 @@ export const AGILITY_CRIT_BONUS = 0.005; // 0.5% per agility point
 export const DAMAGE_VARIANCE = 0.2; // ±20%
 export const QUEST_DURATION_SCALE_PER_LEVEL = 0.05; // 5% per level
 export const SHOP_PRICE_MULTIPLIER = 1.5; // 150% of item value
-export const SAVE_KEY = 'realm_of_valor_save';
+export const SAVE_KEY = 'cybermagic_save';
