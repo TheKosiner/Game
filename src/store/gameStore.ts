@@ -658,7 +658,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (now - lastChallengeAt < CHALLENGE_COOLDOWN) return;
     if (bossIdx > challengeUnlocked) return;
     const boss = CHALLENGE_BOSSES[bossIdx];
-    if (!boss || hero.level < boss.minLevel) return;
+    if (!boss) return;
 
     const shieldHp = boss.powers.includes('shield') ? Math.floor(boss.maxHp * 0.25) : 0;
     const openLog: string[] = [`⚡ Walka z ${boss.name} rozpoczęta! (Poz. ${boss.level})`];

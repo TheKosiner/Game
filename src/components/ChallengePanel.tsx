@@ -318,24 +318,151 @@ function FightView() {
   );
 }
 
+// ── Result Screen ───────────────────────────────────────────────────────────
+
+const RARITY_COLOR: Record<string, string> = {
+  common: '#888899', uncommon: '#00cc66', rare: '#4488ff', epic: '#cc44ff', legendary: '#ffd700',
+};
+const RARITY_LABEL: Record<string, string> = {
+  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI', epic: 'EPICKI', legendary: 'LEGENDARNY',
+};
+
+function ResultView({ onDismiss }: { onDismiss: () => void }) {
+  const result = useGameStore(s => s.challengeResult)!;
+  const boss = CHALLENGE_BOSSES[result.bossIdx];
+  const [showLog, setShowLog] = useState(false);
+
+  const won = result.won;
+  const accentColor = won ? '#ffd700' : '#ff4444';
+  const bgColor     = won ? 'rgba(255,215,0,0.05)' : 'rgba(255,68,68,0.05)';
+  const borderColor = won ? 'rgba(255,215,0,0.35)' : 'rgba(255,68,68,0.35)';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* Result header */}
+      <div style={{
+        background: bgColor, border: `1px solid ${borderColor}`,
+        padding: 20, textAlign: 'center',
+        boxShadow: `0 0 30px ${accentColor}18`,
+      }}>
+        <p style={{ fontSize: 48, marginBottom: 8 }}>{won ? '🏆' : '💀'}</p>
+        <p style={{
+          fontFamily: "'Press Start 2P', monospace", fontSize: 11,
+          color: accentColor, textShadow: `0 0 16px ${accentColor}`,
+          marginBottom: 6, letterSpacing: '0.05em',
+        }}>
+          {won ? 'ZWYCIĘSTWO!' : 'KLĘSKA!'}
+        </p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>
+          {boss.emoji} {boss.name}
+        </p>
+      </div>
+
+      {/* Rewards */}
+      <div style={{
+        background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)',
+        padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
+      }}>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>NAGRODY</p>
+
+        <div style={{ display: 'flex', gap: 16 }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>DOŚWIADCZENIE</p>
+            <p style={{ ...ORB, fontSize: 13, color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.5)' }}>
+              +{won ? boss.xpReward.toLocaleString() : Math.floor(boss.xpReward * 0.1).toLocaleString()}
+            </p>
+          </div>
+          {won && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>ZŁOTO</p>
+              <p style={{ ...ORB, fontSize: 13, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
+                +{boss.goldReward.toLocaleString()} 🪙
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Loot */}
+        {won && result.loot.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
+            <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>PRZEDMIOTY</p>
+            {result.loot.map((item, i) => {
+              const rc = RARITY_COLOR[item.rarity];
+              return (
+                <div key={i} style={{
+                  background: `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}08)`,
+                  border: `1px solid ${rc}55`,
+                  padding: '8px 10px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  boxShadow: `0 0 12px ${rc}18`,
+                  animation: 'slide-up 0.3s ease',
+                }}>
+                  <span style={{ fontSize: 24 }}>{item.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ ...MONO, fontSize: 10, color: rc, textShadow: `0 0 6px ${rc}80`, marginBottom: 2 }}>
+                      {item.name}
+                    </p>
+                    <p style={{ ...MONO, fontSize: 8, color: `${rc}99` }}>
+                      {RARITY_LABEL[item.rarity]} · Poz. {item.level}
+                    </p>
+                  </div>
+                  <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
+                    {RARITY_LABEL[item.rarity]}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!won && (
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center' }}>
+            Powróć silniejszy — masz godzinę na przygotowanie.
+          </p>
+        )}
+      </div>
+
+      {/* Combat log toggle */}
+      <button
+        onClick={() => setShowLog(v => !v)}
+        style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', cursor: 'pointer', width: '100%' }}
+      >
+        {showLog ? '▲ UKRYJ LOG WALKI' : '▼ POKAŻ LOG WALKI'}
+      </button>
+
+      {showLog && (
+        <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.07)', padding: 8, maxHeight: 200, overflowY: 'auto' }}>
+          {result.log.map((line, i) => (
+            <p key={i} style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
+          ))}
+        </div>
+      )}
+
+      <button
+        className="btn btn-primary"
+        style={{ width: '100%', padding: '12px', fontSize: 10 }}
+        onClick={onDismiss}
+      >
+        ← WRÓĆ DO WYZWAŃ
+      </button>
+    </div>
+  );
+}
+
 // ── Boss Selection View ─────────────────────────────────────────────────────
 
 function SelectView() {
-  const hero              = useGameStore(s => s.hero);
   const challengeUnlocked = useGameStore(s => s.challengeUnlocked);
   const lastChallengeAt   = useGameStore(s => s.lastChallengeAt);
-  const challengeResult   = useGameStore(s => s.challengeResult);
   const startChallengeFight = useGameStore(s => s.startChallengeFight);
 
   const cooldownLeft = useCooldown(lastChallengeAt);
   const canFight = cooldownLeft === 0;
 
   const [selectedIdx, setSelectedIdx] = useState(challengeUnlocked);
-  const [showLog, setShowLog] = useState(false);
-
   const selected = CHALLENGE_BOSSES[selectedIdx];
   const isUnlocked = selectedIdx <= challengeUnlocked;
-  const meetsLevel = hero.level >= selected.minLevel;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -409,7 +536,7 @@ function SelectView() {
           <span style={{ fontSize: 26 }}>{isUnlocked ? selected.emoji : '🔒'}</span>
           <div style={{ flex: 1 }}>
             <p style={{ ...ORB, fontSize: 10, color: '#ff9900' }}>{selected.name}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>Poziom {selected.level} · Min. poz. {selected.minLevel}</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>Poziom {selected.level}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={{ ...MONO, fontSize: 9, color: '#ffd700' }}>+{selected.xpReward.toLocaleString()} XP</p>
@@ -440,8 +567,6 @@ function SelectView() {
 
         {!isUnlocked ? (
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'center' }}>🔒 Pokonaj poprzedniego bossa aby odblokować</p>
-        ) : !meetsLevel ? (
-          <p style={{ ...MONO, fontSize: 9, color: '#ff4444', textAlign: 'center' }}>⚠ Wymagany poziom: {selected.minLevel} (twój: {hero.level})</p>
         ) : !canFight ? (
           <p style={{ ...MONO, fontSize: 9, color: '#ff9900', textAlign: 'center' }}>⏱ Następna próba za: {fmtMs(cooldownLeft)}</p>
         ) : (
@@ -455,47 +580,20 @@ function SelectView() {
         )}
       </div>
 
-      {/* Last result */}
-      {challengeResult && (
-        <div style={{
-          background: challengeResult.won ? 'rgba(68,204,68,0.05)' : 'rgba(255,68,68,0.05)',
-          border: `1px solid ${challengeResult.won ? 'rgba(68,204,68,0.3)' : 'rgba(255,68,68,0.3)'}`,
-          padding: 10,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-            <p style={{ ...ORB, fontSize: 9, color: challengeResult.won ? '#44cc44' : '#ff4444' }}>
-              {challengeResult.won ? '🏆 ZWYCIĘSTWO' : '💀 PORAŻKA'} — {CHALLENGE_BOSSES[challengeResult.bossIdx]?.name}
-            </p>
-            <button
-              onClick={() => setShowLog(v => !v)}
-              style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', background: 'none', border: '1px solid rgba(255,255,255,0.1)', padding: '2px 6px', cursor: 'pointer' }}
-            >
-              {showLog ? '▲' : '▼ LOG'}
-            </button>
-          </div>
-          {challengeResult.won && challengeResult.loot.length > 0 && (
-            <div style={{ marginBottom: 6 }}>
-              {challengeResult.loot.map((item, i) => (
-                <p key={i} style={{ ...MONO, fontSize: 9, color: item.rarity === 'legendary' ? '#ffd700' : '#cc44ff' }}>
-                  {item.rarity === 'legendary' ? '✨' : '🟪'} {item.emoji} {item.name}
-                </p>
-              ))}
-            </div>
-          )}
-          {showLog && (
-            <div style={{ maxHeight: 200, overflowY: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6, marginTop: 4 }}>
-              {challengeResult.log.map((line, i) => (
-                <p key={i} style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
 export default function ChallengePanel() {
-  const challengeFight = useGameStore(s => s.challengeFight);
-  return challengeFight ? <FightView /> : <SelectView />;
+  const challengeFight  = useGameStore(s => s.challengeFight);
+  const challengeResult = useGameStore(s => s.challengeResult);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (challengeResult) setDismissed(false);
+  }, [challengeResult]);
+
+  if (challengeFight) return <FightView />;
+  if (challengeResult && !dismissed) return <ResultView onDismiss={() => setDismissed(true)} />;
+  return <SelectView />;
 }
