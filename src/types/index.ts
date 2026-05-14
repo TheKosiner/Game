@@ -111,6 +111,27 @@ export interface ChallengeResult {
   loot: Item[];
 }
 
+export interface ChallengeFightState {
+  bossIdx: number;
+  bossHp: number;
+  shieldHp: number;
+  rageActive: boolean;
+  round: number;
+}
+
+export interface ChallengeHitEvent {
+  heroDmg: number;
+  heroCrit: boolean;
+  isDodge: boolean;
+  bossDmg1: number;
+  bossDmg2: number;
+  poisonDmg: number;
+  regenAmt: number;
+  lifeSteal: number;
+  rageTrigger: boolean;
+  ts: number;
+}
+
 export interface CombatLog {
   message: string;
   type: 'hero' | 'enemy' | 'loot' | 'system';
@@ -182,6 +203,9 @@ export interface GameState {
   challengeUnlocked: number;
   lastChallengeAt: number;
   challengeResult: ChallengeResult | null;
+  challengeFight: ChallengeFightState | null;
+  challengeFightLog: string[];
+  challengeLastHit: ChallengeHitEvent | null;
 
   // actions
   initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean, clothingColor?: number) => void;
@@ -215,7 +239,9 @@ export interface GameState {
   startBegging: (hours: number) => void;
   cancelBegging: () => void;
   collectBegging: () => void;
-  fightChallengeBoss: (bossIdx: number) => void;
+  startChallengeFight: (bossIdx: number) => void;
+  attackChallengeBoss: () => void;
+  fleeChallengeFight: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

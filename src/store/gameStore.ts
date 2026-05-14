@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeBoss } from '../types';
+import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeBoss, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { ALL_ITEMS } from '../data/items';
@@ -276,6 +276,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   challengeUnlocked: 0,
   lastChallengeAt: 0,
   challengeResult: null,
+  challengeFight: null,
+  challengeFightLog: [],
+  challengeLastHit: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
@@ -758,7 +761,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ hero: { ...hero, hp: Math.min(hero.maxHp, hero.hp + gain) }, lastPassiveRegenAt: now });
   },
 
-  fightChallengeBoss: (bossIdx: number) => {
+  startChallengeFight: (bossIdx: number) => {
     const { hero, inCombat, lastChallengeAt, challengeUnlocked } = get();
     if (inCombat) return;
     const now = Date.now();
@@ -767,29 +770,165 @@ export const useGameStore = create<GameState>((set, get) => ({
     const boss = CHALLENGE_BOSSES[bossIdx];
     if (!boss || hero.level < boss.minLevel) return;
 
+    const shieldHp = boss.powers.includes('shield') ? Math.floor(boss.maxHp * 0.25) : 0;
+    const openLog: string[] = [`⚡ Walka z ${boss.name} rozpoczęta! (Poz. ${boss.level})`];
+    if (boss.powers.includes('armor_break')) openLog.push(`💥 ARMOR BREAK: Twoja obrona zredukowana o 60%!`);
+    if (shieldHp > 0) openLog.push(`🛡 TARCZA: Boss ma tarczę pochłaniającą ${shieldHp} obrażeń!`);
+
+    set({
+      lastChallengeAt: now,
+      challengeFight: { bossIdx, bossHp: boss.maxHp, shieldHp, rageActive: false, round: 0 },
+      challengeFightLog: openLog,
+      challengeLastHit: null,
+    });
+  },
+
+  attackChallengeBoss: () => {
+    const { hero, challengeFight, challengeFightLog, challengeUnlocked } = get();
+    if (!challengeFight) return;
+
+    const boss = CHALLENGE_BOSSES[challengeFight.bossIdx];
+    const pw = boss.powers;
     const heroAtk = getHeroAttack(hero);
     const heroDef = getHeroDefense(hero);
-    const { won, log } = simulateChallengeFight(boss, heroAtk, heroDef, hero.hp, hero.maxHp, hero.stats.dexterity);
+    const effectiveHeroDef = pw.includes('armor_break') ? Math.floor(heroDef * 0.4) : heroDef;
 
-    let loot: Item[] = [];
-    if (won) {
-      loot = challengeLoot(bossIdx, hero.level, hero.inventory);
+    let { bossHp, shieldHp, rageActive, round } = challengeFight;
+    let heroHp = hero.hp;
+    const heroMaxHp = hero.maxHp;
+    const r = round + 1;
+    const log = [...challengeFightLog];
+
+    const event: ChallengeHitEvent = {
+      heroDmg: 0, heroCrit: false, isDodge: false,
+      bossDmg1: 0, bossDmg2: 0, poisonDmg: 0,
+      regenAmt: 0, lifeSteal: 0, rageTrigger: false,
+      ts: Date.now(),
+    };
+
+    // ── Hero attacks ──
+    const critChance = 0.10 + hero.stats.dexterity * 0.005;
+    const isCrit = Math.random() < critChance;
+    if (pw.includes('dodge') && Math.random() < 0.25) {
+      event.isDodge = true;
+      log.push(`R${r} 💨 UNIK: ${boss.name} unika ataku!`);
+    } else {
+      const base = heroAtk * heroAtk / (heroAtk + Math.max(1, boss.defense));
+      let heroDmg = Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4) * (isCrit ? 2 : 1)));
+      if (shieldHp > 0) {
+        const abs = Math.min(shieldHp, heroDmg);
+        shieldHp -= abs; heroDmg -= abs;
+        log.push(`R${r} 🛡 Tarcza pochłania ${abs}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ' — ZNISZCZONA!'}`);
+      }
+      if (heroDmg > 0) {
+        bossHp -= heroDmg;
+        event.heroDmg = heroDmg;
+        event.heroCrit = isCrit;
+        log.push(`R${r} ⚔${isCrit ? ' KRYT!' : ''} Zadajesz ${heroDmg} → Boss: ${Math.max(0, bossHp)}/${boss.maxHp}`);
+      }
+    }
+
+    // ── Boss death? ──
+    if (bossHp <= 0) {
+      log.push(`🏆 ZWYCIĘSTWO! Pokonałeś ${boss.name} w rundzie ${r}!`);
+      const loot = challengeLoot(challengeFight.bossIdx, hero.level, hero.inventory);
       const newInventory = [...hero.inventory, ...loot];
-      const newUnlocked = Math.max(challengeUnlocked, Math.min(bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+      const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
       set({
         hero: { ...hero, inventory: newInventory },
         challengeUnlocked: newUnlocked,
-        lastChallengeAt: now,
-        challengeResult: { won, bossIdx, log, loot },
+        challengeFight: null,
+        challengeFightLog: [],
+        challengeLastHit: { ...event, ts: Date.now() },
+        challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot },
       });
       get().addXp(boss.xpReward);
       get().addGold(boss.goldReward);
-    } else {
-      const xp = Math.floor(boss.xpReward * 0.1);
-      set({ lastChallengeAt: now, challengeResult: { won, bossIdx, log, loot: [] } });
-      get().addXp(xp);
+      get().saveGame();
+      return;
     }
-    get().saveGame();
+
+    // ── Boss regen ──
+    if (pw.includes('regen')) {
+      const rAmt = Math.round(boss.maxHp * 0.03);
+      bossHp = Math.min(boss.maxHp, bossHp + rAmt);
+      event.regenAmt = rAmt;
+      log.push(`R${r} 🔴 REGEN: +${rAmt} HP → ${bossHp}/${boss.maxHp}`);
+    }
+
+    // ── Rage trigger ──
+    if (pw.includes('rage') && !rageActive && bossHp < boss.maxHp * 0.3) {
+      rageActive = true;
+      event.rageTrigger = true;
+      log.push(`R${r} 🔥 FURIA: ${boss.name} wchodzi w szał! ATK x1.6!`);
+    }
+
+    // ── Boss attacks ──
+    const atkMod = rageActive ? 1.6 : 1;
+    const bAtkVal = boss.attack * atkMod;
+    const calcBossDmg = () => {
+      const base = bAtkVal * bAtkVal / (bAtkVal + Math.max(1, effectiveHeroDef));
+      return Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4)));
+    };
+
+    const dmg1 = calcBossDmg();
+    heroHp -= dmg1;
+    event.bossDmg1 = dmg1;
+    if (pw.includes('lifesteal')) {
+      const steal = Math.round(dmg1 * 0.25);
+      bossHp = Math.min(boss.maxHp, bossHp + steal);
+      event.lifeSteal += steal;
+      log.push(`R${r} 💉 VAMP: +${steal} HP`);
+    }
+    log.push(`R${r} 🤖 ${boss.name}: -${dmg1} HP → Ty: ${Math.max(0, heroHp)}/${heroMaxHp}`);
+
+    if (heroHp > 0 && pw.includes('double_strike')) {
+      const dmg2 = calcBossDmg();
+      heroHp -= dmg2;
+      event.bossDmg2 = dmg2;
+      if (pw.includes('lifesteal')) {
+        const steal2 = Math.round(dmg2 * 0.25);
+        bossHp = Math.min(boss.maxHp, bossHp + steal2);
+        event.lifeSteal += steal2;
+      }
+      log.push(`R${r} ⚡ [x2]: -${dmg2} HP → Ty: ${Math.max(0, heroHp)}/${heroMaxHp}`);
+    }
+
+    // ── Poison ──
+    if (heroHp > 0 && pw.includes('poison')) {
+      const pd = Math.round(heroMaxHp * 0.04);
+      heroHp -= pd;
+      event.poisonDmg = pd;
+      log.push(`R${r} 🟢 TRUCIZNA: -${pd} HP → ${Math.max(0, heroHp)}/${heroMaxHp}`);
+    }
+
+    // ── Hero death? ──
+    if (heroHp <= 0) {
+      log.push(`💀 KLĘSKA! Pokonany w rundzie ${r}.`);
+      set({
+        hero: { ...hero, hp: 1 },
+        challengeFight: null,
+        challengeFightLog: [],
+        challengeLastHit: { ...event, ts: Date.now() },
+        challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] },
+      });
+      get().addXp(Math.floor(boss.xpReward * 0.1));
+      get().saveGame();
+      return;
+    }
+
+    set({
+      hero: { ...hero, hp: heroHp },
+      challengeFight: { bossIdx: challengeFight.bossIdx, bossHp, shieldHp, rageActive, round: r },
+      challengeFightLog: log.slice(-40),
+      challengeLastHit: { ...event, ts: Date.now() },
+    });
+  },
+
+  fleeChallengeFight: () => {
+    const { challengeFight } = get();
+    if (!challengeFight) return;
+    set({ challengeFight: null, challengeFightLog: [] });
   },
 
   saveGame: () => {
