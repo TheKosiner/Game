@@ -119,8 +119,7 @@ function DungeonList() {
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
-  const available = ALL_DUNGEONS.filter((d: Dungeon) => d.minLevel <= hero.level);
-  const defaultDungeon = available.length > 0 ? available[available.length - 1] : null;
+  const defaultDungeon = ALL_DUNGEONS.length > 0 ? ALL_DUNGEONS[ALL_DUNGEONS.length - 1] : null;
 
   const [selectedDungeon, setSelectedDungeon] = useState<Dungeon | null>(defaultDungeon);
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
@@ -129,14 +128,10 @@ function DungeonList() {
   const chosen = selectedDungeon ?? defaultDungeon;
 
   function nodeColor(d: Dungeon) {
-    const unlocked = d.minLevel <= hero.level;
-    if (!unlocked) return '#3a2a5a';
     if (chosen?.id === d.id) return '#ff2d78';
     return '#ffc83a';
   }
   function nodeFill(d: Dungeon) {
-    const unlocked = d.minLevel <= hero.level;
-    if (!unlocked) return 'rgba(10,5,22,0.9)';
     if (chosen?.id === d.id) return 'rgba(255,45,120,0.18)';
     return 'rgba(255,200,58,0.10)';
   }
@@ -207,14 +202,14 @@ function DungeonList() {
             const p2 = NODE_POS[b];
             if (!p1 || !p2) return null;
             const toD = ALL_DUNGEONS.find(d => d.id === b);
-            const unlocked = toD && toD.minLevel <= hero.level;
+            void toD;
             return (
               <line key={`${a}-${b}`}
                 x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-                stroke={unlocked ? 'rgba(255,200,58,0.45)' : 'rgba(90,74,120,0.25)'}
+                stroke="rgba(255,200,58,0.45)"
                 strokeWidth="0.7"
-                strokeDasharray={unlocked ? '3 4' : '1.5 4'}
-                style={unlocked ? { animation: 'mapFlow 1.8s linear infinite' } : {}}
+                strokeDasharray="3 4"
+                style={{ animation: 'mapFlow 1.8s linear infinite' }}
               />
             );
           })}
@@ -223,29 +218,26 @@ function DungeonList() {
           {ALL_DUNGEONS.map(d => {
             const pos = NODE_POS[d.id];
             if (!pos) return null;
-            const unlocked = d.minLevel <= hero.level;
             const isChosen = chosen?.id === d.id;
             const col = nodeColor(d);
             const fill = nodeFill(d);
             return (
               <g key={d.id}
-                onClick={() => unlocked && setSelectedDungeon(d)}
-                style={{ cursor: unlocked ? 'pointer' : 'default' }}
+                onClick={() => setSelectedDungeon(d)}
+                style={{ cursor: 'pointer' }}
               >
                 {/* outer pulse ring */}
-                {(isChosen || unlocked) && (
-                  <circle cx={pos.x} cy={pos.y} r={5} fill="none"
-                    stroke={col} strokeWidth="0.4" opacity={isChosen ? 0.7 : 0.35}
-                    style={{ animation: `mapPulse ${isChosen ? 1.8 : 3}s ease-out infinite`, transformOrigin: `${pos.x}px ${pos.y}px` }}
-                  />
-                )}
+                <circle cx={pos.x} cy={pos.y} r={5} fill="none"
+                  stroke={col} strokeWidth="0.4" opacity={isChosen ? 0.7 : 0.35}
+                  style={{ animation: `mapPulse ${isChosen ? 1.8 : 3}s ease-out infinite`, transformOrigin: `${pos.x}px ${pos.y}px` }}
+                />
                 {/* halo */}
                 {isChosen && (
                   <circle cx={pos.x} cy={pos.y} r={6} fill="rgba(255,45,120,0.08)" stroke="rgba(255,45,120,0.25)" strokeWidth="0.5"/>
                 )}
                 {/* main circle */}
                 <circle cx={pos.x} cy={pos.y} r={4.2} fill={fill} stroke={col} strokeWidth={isChosen ? 0.9 : 0.6}
-                  filter={isChosen ? 'url(#glow-pink)' : unlocked ? 'url(#glow-gold)' : undefined}
+                  filter={isChosen ? 'url(#glow-pink)' : 'url(#glow-gold)'}
                 />
                 {/* emoji */}
                 <text x={pos.x} y={pos.y + 0.7} textAnchor="middle" dominantBaseline="middle" fontSize="3.6" style={{ userSelect: 'none', pointerEvents: 'none' }}>
@@ -253,17 +245,17 @@ function DungeonList() {
                 </text>
                 {/* name */}
                 <text x={pos.x} y={pos.y + 7} textAnchor="middle"
-                  fill={isChosen ? '#ff2d78' : unlocked ? '#e2e8f0' : '#5a4a78'}
+                  fill={isChosen ? '#ff2d78' : '#e2e8f0'}
                   fontSize="1.65" fontFamily="'Share Tech Mono',monospace" letterSpacing="0.12"
                   style={{ pointerEvents: 'none' }}>
                   {d.name.length > 20 ? d.name.slice(0, 18) + '…' : d.name}
                 </text>
                 {/* level */}
                 <text x={pos.x} y={pos.y - 6} textAnchor="middle"
-                  fill={unlocked ? '#ffc83a' : '#4a3a6a'}
+                  fill="#ffc83a"
                   fontSize="1.6" fontFamily="'VT323',monospace"
                   style={{ pointerEvents: 'none' }}>
-                  {unlocked ? `POZ.${d.minLevel}+` : `🔒 ${d.minLevel}`}
+                  {`POZ.${d.minLevel}`}
                 </text>
               </g>
             );
@@ -275,7 +267,6 @@ function DungeonList() {
           {[
             { col: '#ff2d78', label: 'WYBRANY' },
             { col: '#ffc83a', label: 'DOSTĘPNY' },
-            { col: '#3a2a5a', label: 'ZABLOKOWANY' },
           ].map(({ col, label }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 5px ${col}` }}/>
@@ -299,7 +290,7 @@ function DungeonList() {
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>{chosen.description}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{chosen.floors} PIĘTER</span>
-                <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>MIN. POZ.{chosen.minLevel}</span>
+                <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>POZ.{chosen.minLevel}</span>
               </div>
             </div>
           </div>

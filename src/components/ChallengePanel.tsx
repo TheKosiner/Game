@@ -1628,12 +1628,7 @@ function SelectView() {
         </div>
       </div>
 
-      {/* Min level warning */}
-      {boss!.minLevel > 0 && (
-        <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', textAlign: 'center' }}>
-          Min. poziom do walki: <span style={{ color: accentColor }}>{boss!.minLevel}</span>
-        </p>
-      )}
+
 
       {/* Cooldown / fight button */}
       {cooldownLeft > 0 ? (

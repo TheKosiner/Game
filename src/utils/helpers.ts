@@ -8,11 +8,7 @@ export function isHeroVoluntarilyResting(hero: Hero): boolean {
   return hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil;
 }
 
-export function canEnterDungeon(hero: Hero, minLevel: number, maxDailyRuns: number): { canEnter: boolean; reason?: string } {
-  if (hero.level < minLevel) {
-    return { canEnter: false, reason: `Wymagany poziom ${minLevel}` };
-  }
-
+export function canEnterDungeon(hero: Hero, _minLevel: number, maxDailyRuns: number): { canEnter: boolean; reason?: string } {
   if (isHeroResting(hero)) {
     return { canEnter: false, reason: 'Odpoczywasz po walce' };
   }
@@ -24,13 +20,9 @@ export function canEnterDungeon(hero: Hero, minLevel: number, maxDailyRuns: numb
   return { canEnter: true };
 }
 
-export function canStartQuest(hero: Hero, minLevel: number, maxDailyQuests: number, hasActiveQuest: boolean): { canStart: boolean; reason?: string } {
+export function canStartQuest(hero: Hero, _minLevel: number, maxDailyQuests: number, hasActiveQuest: boolean): { canStart: boolean; reason?: string } {
   if (hasActiveQuest) {
     return { canStart: false, reason: 'Masz już aktywne zadanie' };
-  }
-
-  if (hero.level < minLevel) {
-    return { canStart: false, reason: `Wymagany poziom ${minLevel}` };
   }
 
   if (hero.questsCompletedToday >= maxDailyQuests) {
