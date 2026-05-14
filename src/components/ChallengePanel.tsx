@@ -585,15 +585,11 @@ function SelectView() {
 }
 
 export default function ChallengePanel() {
-  const challengeFight  = useGameStore(s => s.challengeFight);
-  const challengeResult = useGameStore(s => s.challengeResult);
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (challengeResult) setDismissed(false);
-  }, [challengeResult]);
+  const challengeFight       = useGameStore(s => s.challengeFight);
+  const challengeResult      = useGameStore(s => s.challengeResult);
+  const clearChallengeResult = useGameStore(s => s.clearChallengeResult);
 
   if (challengeFight) return <FightView />;
-  if (challengeResult && !dismissed) return <ResultView onDismiss={() => setDismissed(true)} />;
+  if (challengeResult) return <ResultView onDismiss={clearChallengeResult} />;
   return <SelectView />;
 }

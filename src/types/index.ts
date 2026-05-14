@@ -247,6 +247,7 @@ export interface GameState {
   startChallengeFight: (bossIdx: number) => void;
   attackChallengeBoss: () => void;
   fleeChallengeFight: () => void;
+  clearChallengeResult: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }
