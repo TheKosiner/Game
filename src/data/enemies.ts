@@ -53,6 +53,28 @@ export const ALL_ENEMIES: Enemy[] = [
   { id: 'quantum_ghost',      name: 'Kwantowy Duch',             emoji: '👻',  level: 36, hp: 1050, maxHp: 1050, attack: 145, defense: 60, xpReward: 820,  goldReward: 600, lootTable: [] },
   { id: 'neon_dragon',        name: 'Neonowy Smok',              emoji: '🐉',  level: 40, hp: 1400, maxHp: 1400, attack: 180, defense: 75, xpReward: 1100, goldReward: 800, lootTable: [] },
   { id: 'omega_unit',         name: 'Jednostka Omega',           emoji: '⚡',  level: 45, hp: 2000, maxHp: 2000, attack: 220, defense: 90, xpReward: 1600, goldReward: 1200,lootTable: [] },
+
+  // ── Magiczne (rozrzucone po wszystkich strefach) ───────────────────────────
+  // Strefa 2: Technologiczne Podziemia
+  { id: 'psi_drone',          name: 'Dron Psi',                  emoji: '🌀',  level: 6,  hp: 70,   maxHp: 70,   attack: 8,   defense: 4,  xpReward: 52,   goldReward: 32,  lootTable: [], magicAttack: 18, magicResistance: 12 },
+  { id: 'nano_witch',         name: 'Nano-Czarownica',           emoji: '🧙',  level: 8,  hp: 85,   maxHp: 85,   attack: 8,   defense: 5,  xpReward: 65,   goldReward: 40,  lootTable: [], magicAttack: 24, magicResistance: 16 },
+
+  // Strefa 3: Korporacyjne HQ
+  { id: 'energy_phantom',     name: 'Fantom Energetyczny',       emoji: '👁️', level: 11, hp: 140,  maxHp: 140,  attack: 15,  defense: 10, xpReward: 100,  goldReward: 65,  lootTable: [], magicAttack: 32, magicResistance: 22 },
+  { id: 'quantum_mage',       name: 'Kwantowy Mag',              emoji: '🌀',  level: 14, hp: 170,  maxHp: 170,  attack: 18,  defense: 12, xpReward: 130,  goldReward: 85,  lootTable: [], magicAttack: 42, magicResistance: 28 },
+  { id: 'psi_hacker',         name: 'Psi-Haker',                 emoji: '🧙',  level: 17, hp: 210,  maxHp: 210,  attack: 22,  defense: 14, xpReward: 165,  goldReward: 108, lootTable: [], magicAttack: 54, magicResistance: 32 },
+
+  // Strefa 4: Pustkowia
+  { id: 'arcane_golem',       name: 'Golem Arkański',            emoji: '🗿',  level: 20, hp: 290,  maxHp: 290,  attack: 28,  defense: 16, xpReward: 195,  goldReward: 130, lootTable: [], magicAttack: 65, magicResistance: 40 },
+  { id: 'void_specter',       name: 'Widmo Próżni',              emoji: '👻',  level: 24, hp: 380,  maxHp: 380,  attack: 32,  defense: 18, xpReward: 250,  goldReward: 165, lootTable: [], magicAttack: 82, magicResistance: 50 },
+
+  // Strefa 5: Twierdza Megakorpu
+  { id: 'cyber_warlock',      name: 'Cyber-Czarnoksiężnik',      emoji: '🧙',  level: 26, hp: 480,  maxHp: 480,  attack: 40,  defense: 22, xpReward: 340,  goldReward: 230, lootTable: [], magicAttack: 100, magicResistance: 58 },
+  { id: 'arcane_titan',       name: 'Arkanowy Tytan',            emoji: '🗿',  level: 30, hp: 680,  maxHp: 680,  attack: 55,  defense: 28, xpReward: 490,  goldReward: 350, lootTable: [], magicAttack: 125, magicResistance: 70 },
+
+  // Strefa 6: Neon Undercity (magia)
+  { id: 'void_dragon',        name: 'Smok Próżni',               emoji: '🐉',  level: 38, hp: 1150, maxHp: 1150, attack: 60,  defense: 35, xpReward: 940,  goldReward: 680, lootTable: [], magicAttack: 165, magicResistance: 88 },
+  { id: 'arcane_omega',       name: 'Arkanowa Jednostka Omega',  emoji: '🌀',  level: 44, hp: 1800, maxHp: 1800, attack: 80,  defense: 45, xpReward: 1450, goldReward: 1050,lootTable: [], magicAttack: 210, magicResistance: 105 },
 ];
 
 export function getEnemyById(id: string): Enemy | undefined {
@@ -69,5 +91,7 @@ export function scaleEnemy(enemy: Enemy, floor: number): Enemy {
     defense: Math.round(enemy.defense * scale),
     xpReward: Math.round(enemy.xpReward * scale),
     goldReward: Math.round(enemy.goldReward * scale),
+    magicAttack:     enemy.magicAttack     ? Math.round(enemy.magicAttack * scale)     : undefined,
+    magicResistance: enemy.magicResistance ? Math.round(enemy.magicResistance * scale) : undefined,
   };
 }

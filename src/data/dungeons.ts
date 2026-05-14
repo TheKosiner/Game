@@ -17,7 +17,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 5,
     description: 'Podziemne serwery i fabryki androidów. Zamieszkałe przez drony i bojowe maszyny.',
     floors: 8,
-    enemies: ['laser_turret', 'spy_drone', 'nano_swarm', 'combat_android', 'cyber_dog', 'electric_golem', 'heavy_mech'],
+    enemies: ['laser_turret', 'spy_drone', 'nano_swarm', 'combat_android', 'cyber_dog', 'electric_golem', 'heavy_mech', 'psi_drone', 'nano_witch'],
   },
   {
     id: 'castle',
@@ -26,7 +26,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 10,
     description: 'Wieżowiec megakorpu opanowany przez cyberzabójców i zbuntowane AI.',
     floors: 10,
-    enemies: ['security_android', 'corp_assassin', 'corp_sniper', 'holo_guardian', 'rogue_ai', 'cyber_titan', 'exec_hunter'],
+    enemies: ['security_android', 'corp_assassin', 'corp_sniper', 'holo_guardian', 'rogue_ai', 'cyber_titan', 'exec_hunter', 'energy_phantom', 'quantum_mage', 'psi_hacker'],
   },
   {
     id: 'westland',
@@ -35,7 +35,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 15,
     description: 'Radioaktywne pustkowia za murami miasta. Mutanty i rajderzy czyhają na każdym kroku.',
     floors: 11,
-    enemies: ['wasteland_raider', 'ghul', 'mutant_spider', 'zmutowany_karaluch', 'cyber_wolf', 'zmutowany_niedzwiedz', 'sand_golem'],
+    enemies: ['wasteland_raider', 'ghul', 'mutant_spider', 'zmutowany_karaluch', 'cyber_wolf', 'zmutowany_niedzwiedz', 'sand_golem', 'arcane_golem', 'void_specter'],
   },
   {
     id: 'dragon_lair',
@@ -44,7 +44,7 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 20,
     description: 'Centrum dowodzenia globalnej korporacji. Tylko najdzielniejsi hakerzy tu wchodzą.',
     floors: 12,
-    enemies: ['war_mech', 'assault_mech', 'nuclear_drone', 'corp_general', 'prototype_ai', 'mega_ai'],
+    enemies: ['war_mech', 'assault_mech', 'nuclear_drone', 'corp_general', 'prototype_ai', 'mega_ai', 'cyber_warlock', 'arcane_titan'],
   },
   {
     id: 'neon_undercity',
@@ -53,6 +53,6 @@ export const ALL_DUNGEONS: Dungeon[] = [
     minLevel: 30,
     description: 'Zapomniane podziemia pod Neon-Warszawa. Najgroźniejsi łowcy i demony czyhają w mroku.',
     floors: 15,
-    enemies: ['shadow_agent', 'neon_predator', 'cyber_demon', 'quantum_ghost', 'neon_dragon', 'omega_unit'],
+    enemies: ['shadow_agent', 'neon_predator', 'cyber_demon', 'quantum_ghost', 'neon_dragon', 'omega_unit', 'void_dragon', 'arcane_omega'],
   },
 ];

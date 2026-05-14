@@ -199,6 +199,45 @@ export const ALL_ITEMS: Item[] = [
   { id: 'core_shadow',        name: 'Rdzeń Cienia',              slot: 'amulet', rarity: 'epic',      stats: { dexterity: 22, vitality: 10 },                          level: 28, goldValue: 3400, emoji: '⚛️' },
   { id: 'amulet_titan',       name: 'Amulet Tytana',             slot: 'amulet', rarity: 'legendary', stats: { strength: 25, vitality: 30 },                          level: 45, goldValue: 19000,emoji: '🔮' },
   { id: 'amulet_genesis',     name: 'Genesis Ω',                 slot: 'amulet', rarity: 'legendary', stats: { strength: 15, dexterity: 15, intelligence: 15, vitality: 5 }, level: 48, goldValue: 22000, emoji: '🔮' },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // MAGIC WEAPONS — skalują się ze statystyką Magia
+  // ════════════════════════════════════════════════════════════════════════════
+  { id: 'staff_nano',        name: 'Nano-Laska N1',             slot: 'weapon', rarity: 'common',    stats: { magic: 2 },                             attackBonus: 9,   level: 4,  goldValue: 50,    emoji: '🪄', magicDamage: true },
+  { id: 'wand_plasma',       name: 'Różdżka Plazmowa',          slot: 'weapon', rarity: 'uncommon',  stats: { magic: 5, vitality: 1 },               attackBonus: 16,  level: 7,  goldValue: 160,   emoji: '🪄', magicDamage: true },
+  { id: 'orb_quantum',       name: 'Kwantowa Sfera',            slot: 'weapon', rarity: 'rare',      stats: { magic: 10, intelligence: 4 },          attackBonus: 29,  level: 11, goldValue: 520,   emoji: '🔮', magicDamage: true },
+  { id: 'staff_void',        name: 'Laska Próżni',              slot: 'weapon', rarity: 'rare',      stats: { magic: 14, vitality: 3 },              attackBonus: 36,  level: 16, goldValue: 820,   emoji: '🪄', magicDamage: true },
+  { id: 'wand_arcane',       name: 'Różdżka Arkanalna',         slot: 'weapon', rarity: 'epic',      stats: { magic: 20, intelligence: 6 },          attackBonus: 52,  level: 21, goldValue: 2200,  emoji: '🔮', magicDamage: true },
+  { id: 'orb_singularity',   name: 'Sfera Osobliwości',         slot: 'weapon', rarity: 'epic',      stats: { magic: 28, vitality: 8 },              attackBonus: 68,  level: 28, goldValue: 4800,  emoji: '🔮', magicDamage: true },
+  { id: 'staff_omega',       name: 'Omega-Laska Ω',             slot: 'weapon', rarity: 'legendary', stats: { magic: 40, intelligence: 15 },         attackBonus: 92,  level: 38, goldValue: 12000, emoji: '✨', magicDamage: true },
+  { id: 'wand_genesis',      name: 'Genesis Różdżka',           slot: 'weapon', rarity: 'legendary', stats: { magic: 55, vitality: 12 },             attackBonus: 125, level: 48, goldValue: 28000, emoji: '🌟', magicDamage: true },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // MAGIC RESISTANCE ARMOR / HELMETS / RINGS / AMULETS
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // Armor
+  { id: 'suit_arcane',       name: 'Kombinezon Arkański',       slot: 'armor',  rarity: 'uncommon',  stats: { magicResistance: 6 },                  defenseBonus: 10, level: 8,  goldValue: 170,   emoji: '🦾' },
+  { id: 'exo_mage',          name: 'Egzoszkielet Maga',         slot: 'armor',  rarity: 'rare',      stats: { magicResistance: 12, intelligence: 5 }, defenseBonus: 18, level: 14, goldValue: 680,   emoji: '🦾' },
+  { id: 'suit_warlock',      name: 'Pancerz Czarnoksiężnika',   slot: 'armor',  rarity: 'epic',      stats: { magicResistance: 20, magic: 8 },        defenseBonus: 32, level: 22, goldValue: 3200,  emoji: '🦾' },
+  { id: 'exo_arcane_titan',  name: 'Arkański Egzoszkielet',     slot: 'armor',  rarity: 'legendary', stats: { magicResistance: 35, magic: 15, vitality: 10 }, defenseBonus: 62, level: 35, goldValue: 14000, emoji: '🛡️' },
+
+  // Helmets
+  { id: 'helmet_arcane',     name: 'Hełm Arkański',             slot: 'helmet', rarity: 'uncommon',  stats: { magicResistance: 5 },                  defenseBonus: 8,  level: 10, goldValue: 155,   emoji: '⛑️' },
+  { id: 'visor_warlock',     name: 'Wizjer Czarnoksiężnika',    slot: 'helmet', rarity: 'rare',      stats: { magicResistance: 10, magic: 6 },        defenseBonus: 14, level: 18, goldValue: 680,   emoji: '🥽' },
+  { id: 'helmet_void',       name: 'Hełm Próżni',               slot: 'helmet', rarity: 'epic',      stats: { magicResistance: 18, magic: 12 },       defenseBonus: 28, level: 30, goldValue: 4200,  emoji: '⛑️' },
+
+  // Rings
+  { id: 'implant_arcane',    name: 'Implant Arkański',          slot: 'ring',   rarity: 'uncommon',  stats: { magicResistance: 4, magic: 3 },                           level: 8,  goldValue: 155,   emoji: '💉' },
+  { id: 'chip_mage',         name: 'Chip Maga',                 slot: 'ring',   rarity: 'rare',      stats: { magic: 12, magicResistance: 6 },                          level: 15, goldValue: 580,   emoji: '🔲' },
+  { id: 'implant_void',      name: 'Implant Próżni',            slot: 'ring',   rarity: 'epic',      stats: { magic: 22, magicResistance: 10 },                         level: 28, goldValue: 3500,  emoji: '🔮' },
+  { id: 'ring_arcane',       name: 'Pierścień Arkanów',         slot: 'ring',   rarity: 'legendary', stats: { magic: 30, magicResistance: 20 },                         level: 45, goldValue: 18000, emoji: '🌟' },
+
+  // Amulets
+  { id: 'core_arcane',       name: 'Rdzeń Arkański',            slot: 'amulet', rarity: 'uncommon',  stats: { magicResistance: 5, magic: 3 },                           level: 6,  goldValue: 145,   emoji: '💾' },
+  { id: 'pendant_mage',      name: 'Wisior Maga',               slot: 'amulet', rarity: 'rare',      stats: { magic: 10, magicResistance: 8 },                          level: 14, goldValue: 720,   emoji: '📿' },
+  { id: 'core_void',         name: 'Rdzeń Próżni',              slot: 'amulet', rarity: 'epic',      stats: { magic: 20, magicResistance: 14 },                         level: 26, goldValue: 3800,  emoji: '⚛️' },
+  { id: 'amulet_arcane',     name: 'Amulet Arkanów',            slot: 'amulet', rarity: 'legendary', stats: { magic: 28, magicResistance: 28 },                         level: 45, goldValue: 21000, emoji: '🔮' },
 ];
 
 

@@ -7,6 +7,8 @@ export interface Stats {
   dexterity: number;
   intelligence: number;
   vitality: number;
+  magic: number;
+  magicResistance: number;
 }
 
 export interface Item {
@@ -18,6 +20,7 @@ export interface Item {
   attackBonus?: number;
   defenseBonus?: number;
   ranged?: boolean;
+  magicDamage?: boolean;
   level: number;
   goldValue: number;
   emoji: string;
@@ -74,6 +77,8 @@ export interface Enemy {
   xpReward: number;
   goldReward: number;
   lootTable: string[];
+  magicAttack?: number;
+  magicResistance?: number;
 }
 
 export interface Dungeon {
