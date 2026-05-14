@@ -61,7 +61,7 @@ export default function AuthScreen() {
         {/* Title */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ fontSize: 40, marginBottom: 8 }}>🏰</p>
-          <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>REALM OF VALOR</h1>
+          <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>CyberMagic</h1>
           <p style={{ color: '#475569', fontSize: 6 }}>FAIR PLAY RPG — BEZ PAY TO WIN</p>
         </div>
 

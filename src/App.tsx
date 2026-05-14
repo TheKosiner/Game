@@ -43,7 +43,7 @@ export default function App() {
         try {
           const loaded = await loadFromCloud(user.uid);
           if (loaded === null) {
-            try { localStorage.removeItem('realm_of_valor_save'); } catch {}
+            try { localStorage.removeItem('cybermagic_save'); } catch {}
             initHero('Hero', 1, 2, true);
           } else if (!loaded) {
             loadGame();
@@ -99,13 +99,13 @@ export default function App() {
 
   if (isFirebaseConfigured && !user) return <AuthScreen />;
 
-  const hasSave = (() => { try { return !!localStorage.getItem('realm_of_valor_save'); } catch { return false; } })();
+  const hasSave = (() => { try { return !!localStorage.getItem('cybermagic_save'); } catch { return false; } })();
   const isNewGame = hero.name === 'Hero' && !hasSave;
   if (isNewGame) return <CharacterCreation />;
 
   async function handleReset() {
     if (!confirm('Zresetować postać? Stracisz cały postęp!')) return;
-    localStorage.removeItem('realm_of_valor_save');
+    localStorage.removeItem('cybermagic_save');
     try { if (user) await deleteCloudSave(user.uid); } catch {}
     initHero('Hero');
   }
@@ -132,7 +132,7 @@ export default function App() {
           letterSpacing: '0.04em',
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{ fontSize: 16 }}>⊕</span> REALM OF VALOR
+          <span style={{ fontSize: 16 }}>⊕</span> CyberMagic
         </h1>
 
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
