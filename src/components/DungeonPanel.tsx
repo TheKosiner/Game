@@ -39,7 +39,7 @@ const DIFFICULTY_OPTIONS: { key: DungeonDifficulty; label: string; badge: string
 const DUNGEON_VARIANTS: { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string }[] = [
   { key: 'xp',       label: 'TRENING',   badge: '⚡', desc: 'Duzo XP, malo zdobyczy.',     color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
   { key: 'balanced', label: 'PATROL',    badge: '⚖',  desc: 'Standardowe wynagrodzenie.',  color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
-  { key: 'loot',     label: 'LOCHY',     badge: '💎', desc: 'Malo XP/zlota, duzo dropow.', color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
+  { key: 'loot',     label: 'ŁUPY',     badge: '💎', desc: 'Malo XP/zlota, duzo dropow.', color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
 ];
 
 function EnemyBattleCard() {
@@ -158,7 +158,7 @@ function DungeonList() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>MAPA LOCHÓW</p>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>MAPA OPERACJI</p>
         <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
           {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dzis
         </p>
@@ -171,7 +171,7 @@ function DungeonList() {
       )}
       {!isResting && limitReached && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit lochów wyczerpany!</p>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit operacji wyczerpany!</p>
         </div>
       )}
 
@@ -422,7 +422,7 @@ export default function DungeonPanel() {
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
           <p style={{ fontSize: 32, marginBottom: 8 }}>🏆</p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
-            LOCH UKOŃCZONY!
+            OPERACJA ZAKOŃCZONA!
           </p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)' }}>
             {currentDungeon.name} — {currentFloor - 1} PIĘTER
