@@ -1,32 +1,58 @@
 import type { Enemy } from '../types';
 
 export const ALL_ENEMIES: Enemy[] = [
-  // Slumsy (Slums)
-  { id: 'street_punk',    name: 'Uliczny Szczur',           emoji: '🧑‍💻', level: 1,  hp: 20,  maxHp: 20,  attack: 4,   defense: 1,  xpReward: 10,  goldReward: 5,   lootTable: ['implant_endure', 'boots_runner'] },
-  { id: 'patrol_drone',   name: 'Dron Patrolowy',           emoji: '🚁',  level: 2,  hp: 30,  maxHp: 30,  attack: 6,   defense: 2,  xpReward: 15,  goldReward: 7,   lootTable: ['boots_runner'] },
-  { id: 'enforcer',       name: 'Ochroniarz',               emoji: '🕵️', level: 3,  hp: 45,  maxHp: 45,  attack: 9,   defense: 4,  xpReward: 22,  goldReward: 12,  lootTable: ['helmet_combat', 'blade_mono'] },
-  { id: 'gangster',       name: 'Gangster',                 emoji: '🦹',  level: 4,  hp: 55,  maxHp: 55,  attack: 11,  defense: 5,  xpReward: 28,  goldReward: 18,  lootTable: ['knife_mono', 'vest_tactical'] },
+  // ── Slumsy (lvl 1–4) ──────────────────────────────────────────────────────
+  { id: 'scavenger',          name: 'Złomiarz',                  emoji: '🧰',  level: 1,  hp: 18,   maxHp: 18,   attack: 3,   defense: 1,  xpReward: 8,    goldReward: 4,   lootTable: [] },
+  { id: 'street_punk',        name: 'Uliczny Szczur',            emoji: '🧑‍💻', level: 1,  hp: 20,   maxHp: 20,   attack: 4,   defense: 1,  xpReward: 10,   goldReward: 5,   lootTable: [] },
+  { id: 'mutant_rat',         name: 'Zmutowany Szczur',          emoji: '🐀',  level: 2,  hp: 28,   maxHp: 28,   attack: 6,   defense: 2,  xpReward: 14,   goldReward: 7,   lootTable: [] },
+  { id: 'patrol_drone',       name: 'Dron Patrolowy',            emoji: '🚁',  level: 2,  hp: 30,   maxHp: 30,   attack: 6,   defense: 2,  xpReward: 15,   goldReward: 7,   lootTable: [] },
+  { id: 'street_hacker',      name: 'Uliczny Haker',             emoji: '💻',  level: 3,  hp: 38,   maxHp: 38,   attack: 8,   defense: 2,  xpReward: 19,   goldReward: 10,  lootTable: [] },
+  { id: 'enforcer',           name: 'Ochroniarz',                emoji: '🕵️', level: 3,  hp: 45,   maxHp: 45,   attack: 9,   defense: 4,  xpReward: 22,   goldReward: 12,  lootTable: [] },
+  { id: 'gangster',           name: 'Gangster',                  emoji: '🦹',  level: 4,  hp: 55,   maxHp: 55,   attack: 11,  defense: 5,  xpReward: 28,   goldReward: 18,  lootTable: [] },
+  { id: 'gang_leader',        name: 'Szef Gangu',                emoji: '😈',  level: 4,  hp: 65,   maxHp: 65,   attack: 13,  defense: 6,  xpReward: 34,   goldReward: 22,  lootTable: [] },
 
-  // Technologiczne Podziemia (Tech Underbelly)
-  { id: 'spy_drone',      name: 'Szpiegowski Dron',         emoji: '🛸',  level: 5,  hp: 60,  maxHp: 60,  attack: 13,  defense: 6,  xpReward: 40,  goldReward: 24,  lootTable: ['chip_hacking'] },
-  { id: 'combat_android', name: 'Bojowy Android',           emoji: '🤖',  level: 6,  hp: 70,  maxHp: 70,  attack: 15,  defense: 8,  xpReward: 48,  goldReward: 30,  lootTable: ['blade_plasma', 'helmet_tactical'] },
-  { id: 'heavy_mech',     name: 'Ciężki Mech',              emoji: '🦿',  level: 8,  hp: 100, maxHp: 100, attack: 20,  defense: 12, xpReward: 70,  goldReward: 42,  lootTable: ['suit_combat', 'boots_combat'] },
+  // ── Technologiczne Podziemia (lvl 5–9) ────────────────────────────────────
+  { id: 'laser_turret',       name: 'Wieżyczka Laserowa',        emoji: '🔦',  level: 5,  hp: 55,   maxHp: 55,   attack: 12,  defense: 8,  xpReward: 38,   goldReward: 22,  lootTable: [] },
+  { id: 'spy_drone',          name: 'Szpiegowski Dron',          emoji: '🛸',  level: 5,  hp: 60,   maxHp: 60,   attack: 13,  defense: 6,  xpReward: 40,   goldReward: 24,  lootTable: [] },
+  { id: 'nano_swarm',         name: 'Rój Nano-Dronów',           emoji: '🐝',  level: 6,  hp: 65,   maxHp: 65,   attack: 14,  defense: 5,  xpReward: 44,   goldReward: 28,  lootTable: [] },
+  { id: 'combat_android',     name: 'Bojowy Android',            emoji: '🤖',  level: 6,  hp: 70,   maxHp: 70,   attack: 15,  defense: 8,  xpReward: 48,   goldReward: 30,  lootTable: [] },
+  { id: 'cyber_dog',          name: 'Cybernetyczny Pies',        emoji: '🐕',  level: 7,  hp: 80,   maxHp: 80,   attack: 17,  defense: 9,  xpReward: 58,   goldReward: 35,  lootTable: [] },
+  { id: 'electric_golem',     name: 'Golem Elektryczny',         emoji: '⚡',  level: 8,  hp: 95,   maxHp: 95,   attack: 19,  defense: 11, xpReward: 65,   goldReward: 40,  lootTable: [] },
+  { id: 'heavy_mech',         name: 'Ciężki Mech',               emoji: '🦿',  level: 8,  hp: 100,  maxHp: 100,  attack: 20,  defense: 12, xpReward: 70,   goldReward: 42,  lootTable: [] },
 
-  // Korporacyjne HQ (Corporate HQ)
-  { id: 'corp_assassin',  name: 'Korporacyjny Zabójca',     emoji: '🥷',  level: 10, hp: 130, maxHp: 130, attack: 28,  defense: 15, xpReward: 95,  goldReward: 60,  lootTable: ['blade_stealth', 'suit_cyber'] },
-  { id: 'rogue_ai',       name: 'Zbuntowane AI',            emoji: '👾',  level: 14, hp: 180, maxHp: 180, attack: 38,  defense: 18, xpReward: 140, goldReward: 90,  lootTable: ['sniper_longrange', 'suit_netrunner', 'implant_power'] },
-  { id: 'cyber_titan',    name: 'Cybernetyczny Tytan',      emoji: '🦾',  level: 18, hp: 250, maxHp: 250, attack: 50,  defense: 25, xpReward: 185, goldReward: 120, lootTable: ['suit_stealth', 'blade_disruptor'] },
+  // ── Korporacyjne HQ (lvl 10–18) ───────────────────────────────────────────
+  { id: 'security_android',   name: 'Android Ochrony',           emoji: '🤖',  level: 10, hp: 130,  maxHp: 130,  attack: 28,  defense: 15, xpReward: 95,   goldReward: 60,  lootTable: [] },
+  { id: 'corp_assassin',      name: 'Korporacyjny Zabójca',      emoji: '🥷',  level: 10, hp: 130,  maxHp: 130,  attack: 28,  defense: 15, xpReward: 95,   goldReward: 60,  lootTable: [] },
+  { id: 'corp_sniper',        name: 'Snajper Korporacyjny',      emoji: '🎯',  level: 12, hp: 120,  maxHp: 120,  attack: 35,  defense: 12, xpReward: 105,  goldReward: 68,  lootTable: [] },
+  { id: 'holo_guardian',      name: 'Holograficzny Strażnik',    emoji: '👁️', level: 14, hp: 170,  maxHp: 170,  attack: 38,  defense: 18, xpReward: 130,  goldReward: 84,  lootTable: [] },
+  { id: 'rogue_ai',           name: 'Zbuntowane AI',             emoji: '👾',  level: 14, hp: 180,  maxHp: 180,  attack: 38,  defense: 18, xpReward: 140,  goldReward: 90,  lootTable: [] },
+  { id: 'cyber_titan',        name: 'Cybernetyczny Tytan',       emoji: '🦾',  level: 18, hp: 250,  maxHp: 250,  attack: 50,  defense: 25, xpReward: 185,  goldReward: 120, lootTable: [] },
+  { id: 'exec_hunter',        name: 'Łowca Dyrektorów',          emoji: '💼',  level: 18, hp: 240,  maxHp: 240,  attack: 52,  defense: 22, xpReward: 180,  goldReward: 118, lootTable: [] },
 
-  // Pustkowia
-  { id: 'Ghul',  name: 'Ghul',     emoji: '🧟',  level: 14, hp: 180, maxHp: 180, attack: 38,  defense: 18, xpReward: 140, goldReward: 90,  lootTable: ['sniper_longrange', 'suit_netrunner', 'implant_power'] },
-  { id: 'zmutowany_karaluch',       name: 'Zmutowany Karaluch',            emoji: '🪳',  level: 18, hp: 250, maxHp: 250, attack: 50,  defense: 25, xpReward: 185, goldReward: 120, lootTable: ['suit_stealth', 'blade_disruptor'] },
-  { id: 'zmutowany_niedzwiedz',    name: 'Zmutowany Niedzwiedź',      emoji: '🐻',  level: 22, hp: 350, maxHp: 350, attack: 65,  defense: 32, xpReward: 255, goldReward: 165, lootTable: ['boots_jet', 'amplifier_signal'] },
+  // ── Pustkowia (lvl 14–22) ─────────────────────────────────────────────────
+  { id: 'wasteland_raider',   name: 'Rajder z Pustkowi',         emoji: '💀',  level: 14, hp: 185,  maxHp: 185,  attack: 40,  defense: 18, xpReward: 140,  goldReward: 90,  lootTable: [] },
+  { id: 'ghul',               name: 'Ghul',                      emoji: '🧟',  level: 15, hp: 200,  maxHp: 200,  attack: 42,  defense: 20, xpReward: 155,  goldReward: 100, lootTable: [] },
+  { id: 'mutant_spider',      name: 'Zmutowany Pająk',           emoji: '🕷️', level: 16, hp: 210,  maxHp: 210,  attack: 44,  defense: 20, xpReward: 162,  goldReward: 105, lootTable: [] },
+  { id: 'zmutowany_karaluch', name: 'Zmutowany Karaluch',        emoji: '🪳',  level: 17, hp: 230,  maxHp: 230,  attack: 48,  defense: 22, xpReward: 175,  goldReward: 115, lootTable: [] },
+  { id: 'cyber_wolf',         name: 'Cyberwilk',                 emoji: '🐺',  level: 19, hp: 275,  maxHp: 275,  attack: 55,  defense: 26, xpReward: 210,  goldReward: 138, lootTable: [] },
+  { id: 'zmutowany_niedzwiedz', name: 'Zmutowany Niedźwiedź',    emoji: '🐻',  level: 21, hp: 330,  maxHp: 330,  attack: 62,  defense: 30, xpReward: 248,  goldReward: 160, lootTable: [] },
+  { id: 'sand_golem',         name: 'Golem Radioaktywny',        emoji: '☢️',  level: 22, hp: 360,  maxHp: 360,  attack: 68,  defense: 34, xpReward: 270,  goldReward: 175, lootTable: [] },
 
+  // ── Twierdza Megakorpu (lvl 22–32) ────────────────────────────────────────
+  { id: 'war_mech',           name: 'Mech Wojenny',              emoji: '🤖',  level: 22, hp: 350,  maxHp: 350,  attack: 65,  defense: 32, xpReward: 255,  goldReward: 165, lootTable: [] },
+  { id: 'assault_mech',       name: 'Mech Szturmowy',            emoji: '🦿',  level: 24, hp: 400,  maxHp: 400,  attack: 72,  defense: 38, xpReward: 290,  goldReward: 192, lootTable: [] },
+  { id: 'nuclear_drone',      name: 'Nuklearny Dron',            emoji: '☢️',  level: 26, hp: 450,  maxHp: 450,  attack: 80,  defense: 35, xpReward: 325,  goldReward: 215, lootTable: [] },
+  { id: 'corp_general',       name: 'Generał Korporacji',        emoji: '👔',  level: 28, hp: 550,  maxHp: 550,  attack: 96,  defense: 44, xpReward: 415,  goldReward: 285, lootTable: [] },
+  { id: 'prototype_ai',       name: 'Prototypowe AI',            emoji: '🧠',  level: 30, hp: 650,  maxHp: 650,  attack: 110, defense: 50, xpReward: 530,  goldReward: 380, lootTable: [] },
+  { id: 'mega_ai',            name: 'Superkomputer Megakorpu',   emoji: '🖥️', level: 30, hp: 700,  maxHp: 700,  attack: 110, defense: 50, xpReward: 580,  goldReward: 420, lootTable: [] },
 
-  // Twierdza Megakorpu (Megacorp Fortress)
-  { id: 'war_mech',       name: 'Mech Wojenny',             emoji: '🤖',  level: 22, hp: 350, maxHp: 350, attack: 65,  defense: 32, xpReward: 255, goldReward: 165, lootTable: ['boots_jet', 'amplifier_signal'] },
-  { id: 'nuclear_drone',  name: 'Nuklearny Dron',           emoji: '☢️',  level: 26, hp: 450, maxHp: 450, attack: 80,  defense: 35, xpReward: 325, goldReward: 215, lootTable: ['core_megacorp', 'blade_titan'] },
-  { id: 'mega_ai',        name: 'Superkomputer Megakorpu',  emoji: '🖥️', level: 30, hp: 700, maxHp: 700, attack: 110, defense: 50, xpReward: 580, goldReward: 420, lootTable: ['blade_titan', 'helmet_megacorp', 'core_megacorp'] },
+  // ── Neon Undercity — nowa strefa (lvl 30–45) ──────────────────────────────
+  { id: 'shadow_agent',       name: 'Agent Cienia',              emoji: '🥷',  level: 30, hp: 650,  maxHp: 650,  attack: 100, defense: 48, xpReward: 540,  goldReward: 390, lootTable: [] },
+  { id: 'neon_predator',      name: 'Neonowy Drapieżnik',        emoji: '🐆',  level: 32, hp: 750,  maxHp: 750,  attack: 115, defense: 52, xpReward: 620,  goldReward: 450, lootTable: [] },
+  { id: 'cyber_demon',        name: 'Cybernetyczny Demon',       emoji: '👹',  level: 34, hp: 900,  maxHp: 900,  attack: 130, defense: 55, xpReward: 720,  goldReward: 520, lootTable: [] },
+  { id: 'quantum_ghost',      name: 'Kwantowy Duch',             emoji: '👻',  level: 36, hp: 1050, maxHp: 1050, attack: 145, defense: 60, xpReward: 820,  goldReward: 600, lootTable: [] },
+  { id: 'neon_dragon',        name: 'Neonowy Smok',              emoji: '🐉',  level: 40, hp: 1400, maxHp: 1400, attack: 180, defense: 75, xpReward: 1100, goldReward: 800, lootTable: [] },
+  { id: 'omega_unit',         name: 'Jednostka Omega',           emoji: '⚡',  level: 45, hp: 2000, maxHp: 2000, attack: 220, defense: 90, xpReward: 1600, goldReward: 1200,lootTable: [] },
 ];
 
 export function getEnemyById(id: string): Enemy | undefined {
