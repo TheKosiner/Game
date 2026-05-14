@@ -821,6 +821,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ challengeFight: null, challengeFightLog: [] });
   },
 
+  clearChallengeResult: () => {
+    set({ challengeResult: null });
+  },
+
   saveGame: () => {
     const state = get();
     const save = {
