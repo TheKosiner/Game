@@ -16,6 +16,7 @@ import LeaderboardPanel from './components/LeaderboardPanel';
 import PvpPanel from './components/PvpPanel';
 import GuildPanel from './components/GuildPanel';
 import MailPanel from './components/MailPanel';
+import ChallengePanel from './components/ChallengePanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 import { PORTRAIT_OVERRIDES } from './data/portraits';
 
@@ -167,8 +168,9 @@ export default function App() {
 
       <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {tab === 'hero'    && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
-        {tab === 'dungeon' && <DungeonPanel />}
-        {tab === 'quests'  && <QuestPanel />}
+        {tab === 'dungeon'    && <DungeonPanel />}
+        {tab === 'challenge'  && <ChallengePanel />}
+        {tab === 'quests'     && <QuestPanel />}
         {tab === 'shop'    && <ShopPanel />}
         {tab === 'pvp'     && <PvpPanel />}
         {tab === 'guild'   && <GuildPanel />}
