@@ -40,6 +40,154 @@ const DUNGEON_VARIANTS: { key: DungeonMode; label: string; badge: string; desc: 
   { key: 'loot',     label: 'ŁUPY',     badge: '💎', desc: 'Malo XP/zlota, duzo dropow.', color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
 ];
 
+// ── Helper: hex points ─────────────────────────────────────────────────────
+function hexPoints(cx: number, cy: number, r: number): string {
+  return Array.from({ length: 6 }, (_, i) => {
+    const angle = (Math.PI / 180) * (60 * i - 30);
+    return `${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`;
+  }).join(' ');
+}
+
+// ── LocationIcon ───────────────────────────────────────────────────────────
+function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?: number; color?: string }) {
+  // viewBox "-6 -6 12 12", scale to `size`
+  const vb = '-6 -6 12 12';
+
+  if (id === 'forest') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* lewy budynek */}
+        <rect x="-5" y="-1.5" width="3" height="4" fill={color} opacity="0.9"/>
+        <polygon points="-5,-1.5 -3.5,-3.5 -2,-1.5" fill={color}/>
+        <line x1="-4" y1="-2.5" x2="-3.2" y2="-3.5" stroke={color} strokeWidth="0.4" opacity="0.7"/>
+        <rect x="-4.2" y="-0.5" width="0.9" height="1" fill="#000" opacity="0.6"/>
+        {/* prawy budynek wyższy */}
+        <rect x="-0.5" y="-3.5" width="3.5" height="6" fill={color} opacity="0.8"/>
+        <polygon points="-0.5,-3.5 1.25,-5.2 3,-3.5" fill={color}/>
+        <rect x="0.3" y="-2.5" width="1" height="1.1" fill="#000" opacity="0.6"/>
+        <rect x="0.3" y="-0.9" width="1" height="1.1" fill="#000" opacity="0.6"/>
+        <rect x="1.6" y="-2" width="0.8" height="0.8" fill="#000" opacity="0.5"/>
+        {/* ziemia */}
+        <line x1="-5.5" y1="2.5" x2="3.5" y2="2.5" stroke={color} strokeWidth="0.5" opacity="0.4"/>
+      </svg>
+    );
+  }
+
+  if (id === 'cave') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* obudowa racka */}
+        <rect x="-4" y="-3.5" width="8" height="6.5" rx="0.5" fill={color} opacity="0.8"/>
+        <rect x="-3.5" y="-3" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+        <rect x="-3.5" y="-1.2" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+        <rect x="-3.5" y="0.6" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+        {/* LEDy rząd 1 */}
+        <circle cx="-2.2" cy="-2.3" r="0.45" fill="#00ffff"/>
+        <circle cx="-0.8" cy="-2.3" r="0.45" fill="#00ff88"/>
+        <circle cx="0.6" cy="-2.3" r="0.45" fill="#ff4444"/>
+        <circle cx="2" cy="-2.3" r="0.45" fill="#00ffff"/>
+        {/* LEDy rząd 2 */}
+        <circle cx="-2.2" cy="-0.5" r="0.45" fill="#00ff88"/>
+        <circle cx="-0.8" cy="-0.5" r="0.45" fill="#00ffff"/>
+        <circle cx="0.6" cy="-0.5" r="0.45" fill="#00ff88"/>
+        {/* pasek boczny */}
+        <rect x="3" y="-3" width="0.8" height="5.5" rx="0.3" fill={color} opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'castle') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* główna wieża */}
+        <rect x="-1.5" y="-5.5" width="3" height="8" fill={color} opacity="0.9"/>
+        {/* podstawa */}
+        <rect x="-3" y="-1.5" width="6" height="4" fill={color} opacity="0.7"/>
+        {/* szeroka podstawa */}
+        <rect x="-5" y="1" width="10" height="1.5" fill={color} opacity="0.5"/>
+        {/* okna wieży */}
+        <rect x="-0.8" y="-4.5" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+        <rect x="-0.8" y="-3.2" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+        <rect x="-0.8" y="-1.9" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+        {/* okna podstawy */}
+        <rect x="-2.3" y="-0.8" width="1" height="1" fill="#000" opacity="0.5"/>
+        <rect x="1.3" y="-0.8" width="1" height="1" fill="#000" opacity="0.5"/>
+        {/* antena */}
+        <line x1="0" y1="-5.5" x2="0" y2="-6" stroke={color} strokeWidth="0.5"/>
+        <circle cx="0" cy="-6.2" r="0.3" fill={color}/>
+      </svg>
+    );
+  }
+
+  if (id === 'westland') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* czaszka */}
+        <ellipse cx="0" cy="-1" rx="3.8" ry="3.2" fill={color} opacity="0.9"/>
+        {/* oczodoły */}
+        <ellipse cx="-1.5" cy="-1.8" rx="1.2" ry="1.1" fill="#000" opacity="0.8"/>
+        <ellipse cx="1.5" cy="-1.8" rx="1.2" ry="1.1" fill="#000" opacity="0.8"/>
+        {/* nos */}
+        <polygon points="0,-0.5 -0.5,0.5 0.5,0.5" fill="#000" opacity="0.7"/>
+        {/* szczęka */}
+        <rect x="-3" y="1.6" width="6" height="1.4" rx="0.3" fill={color} opacity="0.9"/>
+        {/* zęby */}
+        <line x1="-2" y1="1.6" x2="-2" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+        <line x1="-0.8" y1="1.6" x2="-0.8" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+        <line x1="0.4" y1="1.6" x2="0.4" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+        <line x1="1.6" y1="1.6" x2="1.6" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+      </svg>
+    );
+  }
+
+  if (id === 'dragon_lair') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* główna ściana */}
+        <rect x="-4.5" y="-0.5" width="9" height="4" fill={color} opacity="0.9"/>
+        {/* blanki */}
+        <rect x="-4.5" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+        <rect x="-1.5" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+        <rect x="2.3" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+        {/* brama */}
+        <path d="M -1.2 3.5 L -1.2 1 Q -1.2 -0.5 0 -0.5 Q 1.2 -0.5 1.2 1 L 1.2 3.5" fill="#000" opacity="0.7"/>
+        {/* strzelnice */}
+        <rect x="-3.5" y="-0.2" width="1.4" height="0.8" fill="#000" opacity="0.5"/>
+        <rect x="2.1" y="-0.2" width="1.4" height="0.8" fill="#000" opacity="0.5"/>
+        {/* szczeliny blanek */}
+        <rect x="-0.35" y="-2.2" width="0.7" height="1.2" fill="#000" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'neon_undercity') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* zewnętrzny łuk */}
+        <path d="M -5 3 L -5 0 Q -5 -6 0 -6 Q 5 -6 5 0 L 5 3" fill="none" stroke={color} strokeWidth="1.3" opacity="0.9"/>
+        {/* wewnętrzny łuk */}
+        <path d="M -3.2 3 L -3.2 0.3 Q -3.2 -3.8 0 -3.8 Q 3.2 -3.8 3.2 0.3 L 3.2 3" fill="none" stroke={color} strokeWidth="0.8" opacity="0.6"/>
+        {/* podłoga */}
+        <line x1="-5" y1="3" x2="5" y2="3" stroke={color} strokeWidth="0.9"/>
+        {/* neonowy orb w centrum */}
+        <circle cx="0" cy="-2" r="1" fill={color} opacity="0.9"/>
+        <circle cx="0" cy="-2" r="0.5" fill="#ffffff" opacity="0.9"/>
+        {/* neonowe linie podłogi */}
+        <line x1="-2.5" y1="2" x2="2.5" y2="2" stroke={color} strokeWidth="0.5" opacity="0.7"/>
+        <line x1="-3.5" y1="1" x2="-3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
+        <line x1="3.5" y1="1" x2="3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  // fallback — generic dot
+  return (
+    <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg">
+      <circle cx="0" cy="0" r="4" fill={color} opacity="0.8"/>
+    </svg>
+  );
+}
+
 function EnemyBattleCard() {
   const hero = useGameStore(s => s.hero);
   const enemy = useGameStore(s => s.currentEnemy);
@@ -59,7 +207,12 @@ function EnemyBattleCard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Floor info */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(6), color: 'var(--gold-main)' }}>{dungeon.emoji} {dungeon.name}</p>
+        <p style={{ ...PX(6), color: 'var(--gold-main)', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 4 }}>
+            <LocationIcon id={dungeon.id} size={14} color="var(--gold-main)" />
+          </span>
+          {dungeon.name}
+        </p>
         <p style={{ ...PX(5), color: 'var(--text-dim)' }}>Piętro {currentFloor}/{dungeon.floors}</p>
       </div>
 
@@ -112,6 +265,106 @@ function EnemyBattleCard() {
   );
 }
 
+// ── Icon shapes as inline SVG <g> elements for use inside the main map SVG ─
+// Each renders at the node's (cx,cy) with a scale transform so the viewBox
+// "-6 -6 12 12" maps to ~8 SVG units on the map.
+function MapIcon({ id, cx, cy, color }: { id: string; cx: number; cy: number; color: string }) {
+  // scale factor: we want the icon to occupy ~8 units on the map
+  // viewBox is 12 wide → scale = 8/12 ≈ 0.667
+  const s = 8 / 12;
+  const transform = `translate(${cx},${cy}) scale(${s})`;
+
+  if (id === 'forest') return (
+    <g transform={transform}>
+      <rect x="-5" y="-1.5" width="3" height="4" fill={color} opacity="0.9"/>
+      <polygon points="-5,-1.5 -3.5,-3.5 -2,-1.5" fill={color}/>
+      <line x1="-4" y1="-2.5" x2="-3.2" y2="-3.5" stroke={color} strokeWidth="0.4" opacity="0.7"/>
+      <rect x="-4.2" y="-0.5" width="0.9" height="1" fill="#000" opacity="0.6"/>
+      <rect x="-0.5" y="-3.5" width="3.5" height="6" fill={color} opacity="0.8"/>
+      <polygon points="-0.5,-3.5 1.25,-5.2 3,-3.5" fill={color}/>
+      <rect x="0.3" y="-2.5" width="1" height="1.1" fill="#000" opacity="0.6"/>
+      <rect x="0.3" y="-0.9" width="1" height="1.1" fill="#000" opacity="0.6"/>
+      <rect x="1.6" y="-2" width="0.8" height="0.8" fill="#000" opacity="0.5"/>
+      <line x1="-5.5" y1="2.5" x2="3.5" y2="2.5" stroke={color} strokeWidth="0.5" opacity="0.4"/>
+    </g>
+  );
+
+  if (id === 'cave') return (
+    <g transform={transform}>
+      <rect x="-4" y="-3.5" width="8" height="6.5" rx="0.5" fill={color} opacity="0.8"/>
+      <rect x="-3.5" y="-3" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+      <rect x="-3.5" y="-1.2" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+      <rect x="-3.5" y="0.6" width="7" height="1.4" rx="0.2" fill="#000" opacity="0.5"/>
+      <circle cx="-2.2" cy="-2.3" r="0.45" fill="#00ffff"/>
+      <circle cx="-0.8" cy="-2.3" r="0.45" fill="#00ff88"/>
+      <circle cx="0.6" cy="-2.3" r="0.45" fill="#ff4444"/>
+      <circle cx="2" cy="-2.3" r="0.45" fill="#00ffff"/>
+      <circle cx="-2.2" cy="-0.5" r="0.45" fill="#00ff88"/>
+      <circle cx="-0.8" cy="-0.5" r="0.45" fill="#00ffff"/>
+      <circle cx="0.6" cy="-0.5" r="0.45" fill="#00ff88"/>
+      <rect x="3" y="-3" width="0.8" height="5.5" rx="0.3" fill={color} opacity="0.5"/>
+    </g>
+  );
+
+  if (id === 'castle') return (
+    <g transform={transform}>
+      <rect x="-1.5" y="-5.5" width="3" height="8" fill={color} opacity="0.9"/>
+      <rect x="-3" y="-1.5" width="6" height="4" fill={color} opacity="0.7"/>
+      <rect x="-5" y="1" width="10" height="1.5" fill={color} opacity="0.5"/>
+      <rect x="-0.8" y="-4.5" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+      <rect x="-0.8" y="-3.2" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+      <rect x="-0.8" y="-1.9" width="1.6" height="0.9" fill="#000" opacity="0.6"/>
+      <rect x="-2.3" y="-0.8" width="1" height="1" fill="#000" opacity="0.5"/>
+      <rect x="1.3" y="-0.8" width="1" height="1" fill="#000" opacity="0.5"/>
+      <line x1="0" y1="-5.5" x2="0" y2="-6" stroke={color} strokeWidth="0.5"/>
+      <circle cx="0" cy="-6.2" r="0.3" fill={color}/>
+    </g>
+  );
+
+  if (id === 'westland') return (
+    <g transform={transform}>
+      <ellipse cx="0" cy="-1" rx="3.8" ry="3.2" fill={color} opacity="0.9"/>
+      <ellipse cx="-1.5" cy="-1.8" rx="1.2" ry="1.1" fill="#000" opacity="0.8"/>
+      <ellipse cx="1.5" cy="-1.8" rx="1.2" ry="1.1" fill="#000" opacity="0.8"/>
+      <polygon points="0,-0.5 -0.5,0.5 0.5,0.5" fill="#000" opacity="0.7"/>
+      <rect x="-3" y="1.6" width="6" height="1.4" rx="0.3" fill={color} opacity="0.9"/>
+      <line x1="-2" y1="1.6" x2="-2" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+      <line x1="-0.8" y1="1.6" x2="-0.8" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+      <line x1="0.4" y1="1.6" x2="0.4" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+      <line x1="1.6" y1="1.6" x2="1.6" y2="3" stroke="#000" strokeWidth="0.6" opacity="0.7"/>
+    </g>
+  );
+
+  if (id === 'dragon_lair') return (
+    <g transform={transform}>
+      <rect x="-4.5" y="-0.5" width="9" height="4" fill={color} opacity="0.9"/>
+      <rect x="-4.5" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+      <rect x="-1.5" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+      <rect x="2.3" y="-3" width="2.2" height="2.5" fill={color} opacity="0.9"/>
+      <path d="M -1.2 3.5 L -1.2 1 Q -1.2 -0.5 0 -0.5 Q 1.2 -0.5 1.2 1 L 1.2 3.5" fill="#000" opacity="0.7"/>
+      <rect x="-3.5" y="-0.2" width="1.4" height="0.8" fill="#000" opacity="0.5"/>
+      <rect x="2.1" y="-0.2" width="1.4" height="0.8" fill="#000" opacity="0.5"/>
+      <rect x="-0.35" y="-2.2" width="0.7" height="1.2" fill="#000" opacity="0.5"/>
+    </g>
+  );
+
+  if (id === 'neon_undercity') return (
+    <g transform={transform}>
+      <path d="M -5 3 L -5 0 Q -5 -6 0 -6 Q 5 -6 5 0 L 5 3" fill="none" stroke={color} strokeWidth="1.3" opacity="0.9"/>
+      <path d="M -3.2 3 L -3.2 0.3 Q -3.2 -3.8 0 -3.8 Q 3.2 -3.8 3.2 0.3 L 3.2 3" fill="none" stroke={color} strokeWidth="0.8" opacity="0.6"/>
+      <line x1="-5" y1="3" x2="5" y2="3" stroke={color} strokeWidth="0.9"/>
+      <circle cx="0" cy="-2" r="1" fill={color} opacity="0.9"/>
+      <circle cx="0" cy="-2" r="0.5" fill="#ffffff" opacity="0.9"/>
+      <line x1="-2.5" y1="2" x2="2.5" y2="2" stroke={color} strokeWidth="0.5" opacity="0.7"/>
+      <line x1="-3.5" y1="1" x2="-3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
+      <line x1="3.5" y1="1" x2="3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
+    </g>
+  );
+
+  // fallback
+  return <circle cx={cx} cy={cy} r="4" fill={color} opacity="0.8"/>;
+}
+
 function DungeonList() {
   const hero         = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
@@ -126,15 +379,6 @@ function DungeonList() {
 
   const blocked = isResting || limitReached;
   const chosen = selectedDungeon ?? defaultDungeon;
-
-  function nodeColor(d: Dungeon) {
-    if (chosen?.id === d.id) return '#ff2d78';
-    return '#ffc83a';
-  }
-  function nodeFill(d: Dungeon) {
-    if (chosen?.id === d.id) return 'rgba(255,45,120,0.18)';
-    return 'rgba(255,200,58,0.10)';
-  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -173,9 +417,24 @@ function DungeonList() {
 
         <svg viewBox="0 0 100 68" style={{ display: 'block', width: '100%' }}>
           <defs>
-            <pattern id="mapgrid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(185,77,255,0.055)" strokeWidth="0.25"/>
+            {/* base grid — coarse 8-unit lines */}
+            <pattern id="mapgrid8" width="8" height="8" patternUnits="userSpaceOnUse">
+              <path d="M 8 0 L 0 0 0 8" fill="none" stroke="rgba(100,60,160,0.12)" strokeWidth="0.4"/>
             </pattern>
+            {/* fine 2-unit grid */}
+            <pattern id="mapgrid2" width="2" height="2" patternUnits="userSpaceOnUse">
+              <path d="M 2 0 L 0 0 0 2" fill="none" stroke="rgba(185,77,255,0.035)" strokeWidth="0.15"/>
+            </pattern>
+            {/* atmospheric gradient */}
+            <linearGradient id="atmoGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1a0535" stopOpacity="0.7"/>
+              <stop offset="100%" stopColor="#06030d" stopOpacity="0"/>
+            </linearGradient>
+            {/* fog at bottom */}
+            <linearGradient id="fogGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(6,3,13,0)" stopOpacity="0"/>
+              <stop offset="100%" stopColor="#06030d" stopOpacity="0.7"/>
+            </linearGradient>
             {/* glow filters */}
             <filter id="glow-pink" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="1.5" result="blur"/>
@@ -187,28 +446,63 @@ function DungeonList() {
             </filter>
           </defs>
 
-          {/* background */}
-          <rect width="100" height="68" fill="url(#mapgrid)"/>
+          {/* background layers */}
+          <rect width="100" height="68" fill="url(#mapgrid2)"/>
+          <rect width="100" height="68" fill="url(#mapgrid8)"/>
+          {/* atmospheric tint at top */}
+          <rect width="100" height="30" fill="url(#atmoGrad)"/>
 
-          {/* subtle city silhouette */}
+          {/* district zone highlights */}
+          {/* Slumsy — reddish near forest (12,57) */}
+          <polygon points="2,48 24,48 28,68 0,68" fill="rgba(220,60,60,0.07)"/>
+          {/* Tech Podziemia — blue near cave (34,44) */}
+          <polygon points="20,36 46,36 50,54 16,54" fill="rgba(60,120,220,0.07)"/>
+          {/* Corp HQ — greenish near castle (58,30) */}
+          <polygon points="44,20 70,20 74,42 40,42" fill="rgba(60,200,100,0.06)"/>
+          {/* Pustkowia — orange near westland (44,16) */}
+          <polygon points="28,4 60,4 64,28 24,28" fill="rgba(220,130,40,0.07)"/>
+          {/* Twierdza — purple near dragon_lair (80,8) */}
+          <polygon points="66,0 100,0 100,20 62,20" fill="rgba(140,60,220,0.07)"/>
+          {/* Neon Undercity — cyan near neon_undercity (88,30) */}
+          <polygon points="74,18 100,18 100,44 70,44" fill="rgba(0,200,220,0.06)"/>
+
+          {/* city silhouette — back layer (taller, narrower) */}
           <rect x="0" y="52" width="100" height="16" fill="rgba(10,5,20,0.5)"/>
-          {[3,8,14,20,28,35,42,52,60,68,75,82,90,96].map((x, i) => (
-            <rect key={i} x={x} y={42 + (i % 3) * 4} width={2 + (i % 4)} height={10 + (i % 5) * 3} fill="rgba(30,10,50,0.6)"/>
+          {[3,9,15,22,30,38,46,54,62,70,78,86,93].map((x, i) => (
+            <rect key={`bg-${i}`} x={x} y={38 + (i % 4) * 3} width={1.5 + (i % 3)} height={14 + (i % 5) * 4} fill="rgba(20,6,40,0.55)"/>
+          ))}
+          {/* city silhouette — front layer (wider, shorter) */}
+          {[1,6,12,19,26,33,40,47,55,63,71,79,87,94].map((x, i) => (
+            <rect key={`fg-${i}`} x={x} y={46 + (i % 3) * 2} width={2.5 + (i % 4)} height={8 + (i % 4) * 2} fill="rgba(30,10,50,0.65)"/>
           ))}
 
-          {/* Connection lines */}
+          {/* fog overlay at bottom third */}
+          <rect x="0" y="45" width="100" height="23" fill="url(#fogGrad)"/>
+
+          {/* Connection lines — outer glow */}
           {CONNECTIONS.map(([a, b]) => {
             const p1 = NODE_POS[a];
             const p2 = NODE_POS[b];
             if (!p1 || !p2) return null;
-            const toD = ALL_DUNGEONS.find(d => d.id === b);
-            void toD;
             return (
-              <line key={`${a}-${b}`}
+              <line key={`outer-${a}-${b}`}
                 x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
-                stroke="rgba(255,200,58,0.45)"
+                stroke="rgba(255,200,58,0.15)"
+                strokeWidth="1.8"
+              />
+            );
+          })}
+          {/* Connection lines — inner animated dashes */}
+          {CONNECTIONS.map(([a, b]) => {
+            const p1 = NODE_POS[a];
+            const p2 = NODE_POS[b];
+            if (!p1 || !p2) return null;
+            return (
+              <line key={`inner-${a}-${b}`}
+                x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
+                stroke="rgba(255,200,58,0.55)"
                 strokeWidth="0.7"
-                strokeDasharray="3 4"
+                strokeDasharray="2.5 4"
                 style={{ animation: 'mapFlow 1.8s linear infinite' }}
               />
             );
@@ -219,43 +513,44 @@ function DungeonList() {
             const pos = NODE_POS[d.id];
             if (!pos) return null;
             const isChosen = chosen?.id === d.id;
-            const col = nodeColor(d);
-            const fill = nodeFill(d);
+            const col = isChosen ? '#ff2d78' : '#ffc83a';
             return (
               <g key={d.id}
                 onClick={() => setSelectedDungeon(d)}
                 style={{ cursor: 'pointer' }}
               >
-                {/* outer pulse ring */}
-                <circle cx={pos.x} cy={pos.y} r={5} fill="none"
-                  stroke={col} strokeWidth="0.4" opacity={isChosen ? 0.7 : 0.35}
-                  style={{ animation: `mapPulse ${isChosen ? 1.8 : 3}s ease-out infinite`, transformOrigin: `${pos.x}px ${pos.y}px` }}
+                {/* outer glow ring */}
+                <circle cx={pos.x} cy={pos.y} r={6.5} fill="none"
+                  stroke={isChosen ? '#ff2d78' : '#ffc83a'} strokeWidth="0.4" opacity={isChosen ? 0.8 : 0.4}
+                  style={{ animation: `mapPulse ${isChosen ? 1.6 : 2.8}s ease-out infinite`, transformOrigin: `${pos.x}px ${pos.y}px` }}
                 />
-                {/* halo */}
+                {/* selected halo */}
                 {isChosen && (
-                  <circle cx={pos.x} cy={pos.y} r={6} fill="rgba(255,45,120,0.08)" stroke="rgba(255,45,120,0.25)" strokeWidth="0.5"/>
+                  <circle cx={pos.x} cy={pos.y} r={7.5} fill="rgba(255,45,120,0.07)" stroke="rgba(255,45,120,0.22)" strokeWidth="0.6"/>
                 )}
-                {/* main circle */}
-                <circle cx={pos.x} cy={pos.y} r={4.2} fill={fill} stroke={col} strokeWidth={isChosen ? 0.9 : 0.6}
+                {/* hexagonal background */}
+                <polygon
+                  points={hexPoints(pos.x, pos.y, 5.2)}
+                  fill={isChosen ? 'rgba(255,45,120,0.2)' : 'rgba(255,200,58,0.1)'}
+                  stroke={isChosen ? '#ff2d78' : '#ffc83a'}
+                  strokeWidth={isChosen ? 0.9 : 0.6}
                   filter={isChosen ? 'url(#glow-pink)' : 'url(#glow-gold)'}
                 />
-                {/* emoji */}
-                <text x={pos.x} y={pos.y + 0.7} textAnchor="middle" dominantBaseline="middle" fontSize="3.6" style={{ userSelect: 'none', pointerEvents: 'none' }}>
-                  {d.emoji}
-                </text>
+                {/* location icon inline (no foreignObject) */}
+                <MapIcon id={d.id} cx={pos.x} cy={pos.y} color={col} />
                 {/* name */}
-                <text x={pos.x} y={pos.y + 7} textAnchor="middle"
+                <text x={pos.x} y={pos.y + 8.5} textAnchor="middle"
                   fill={isChosen ? '#ff2d78' : '#e2e8f0'}
-                  fontSize="1.65" fontFamily="'Share Tech Mono',monospace" letterSpacing="0.12"
+                  fontSize="1.8" fontFamily="'Share Tech Mono',monospace" letterSpacing="0.1"
                   style={{ pointerEvents: 'none' }}>
-                  {d.name.length > 20 ? d.name.slice(0, 18) + '…' : d.name}
+                  {d.name.length > 16 ? d.name.slice(0, 14) + '…' : d.name}
                 </text>
                 {/* level */}
-                <text x={pos.x} y={pos.y - 6} textAnchor="middle"
-                  fill="#ffc83a"
-                  fontSize="1.6" fontFamily="'VT323',monospace"
+                <text x={pos.x} y={pos.y - 7.5} textAnchor="middle"
+                  fill={isChosen ? '#ff8ab0' : '#ffc83a'}
+                  fontSize="1.7" fontFamily="'VT323',monospace"
                   style={{ pointerEvents: 'none' }}>
-                  {`POZ.${d.minLevel}`}
+                  POZ.{d.minLevel}
                 </text>
               </g>
             );
@@ -284,7 +579,9 @@ function DungeonList() {
             background: 'rgba(255,45,120,0.04)', border: '1px solid rgba(255,45,120,0.2)',
             padding: '10px 12px',
           }}>
-            <span style={{ fontSize: 24, flexShrink: 0 }}>{chosen.emoji}</span>
+            <div style={{ flexShrink: 0, width: 48, height: 48 }}>
+              <LocationIcon id={chosen.id} size={48} color="#ff2d78" />
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>{chosen.name}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>{chosen.description}</p>
