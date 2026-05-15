@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { ALL_ITEMS } from '../data/items';
+import { generateItem } from '../data/itemGenerator';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
@@ -51,16 +51,17 @@ function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'bal
   if (hero.inventory.length >= MAX_INVENTORY) return;
   const baseRarity = rollRarity(mode, difficulty);
   const { rarity, bumped } = tryBumpRarity(baseRarity, difficulty);
-  const lvMin = Math.max(1, heroLevel - 3);
-  const lvMax = heroLevel + 5;
-  let pool = ALL_ITEMS.filter(i => i.rarity === rarity && i.level >= lvMin && i.level <= lvMax && i.slot !== 'consumable');
-  if (!pool.length) pool = ALL_ITEMS.filter(i => i.rarity === rarity && i.slot !== 'consumable');
-  if (!pool.length) pool = ALL_ITEMS.filter(i => i.slot !== 'consumable');
-  if (!pool.length) return;
-  const item = pool[Math.floor(Math.random() * pool.length)];
+  // Item level = hero level ± difficulty offset
+  const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
+  const itemLevel = Math.max(1, heroLevel + levelBonus);
+  const item = generateItem(itemLevel, rarity);
   set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
   get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${item.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
+}
+
+function rollInt(min: number, max: number): number {
+  return Math.floor(min + Math.random() * (max - min + 1));
 }
 
 function simDmg(atk: number, def: number): number {
@@ -95,12 +96,9 @@ function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): I
   const results: Item[] = [];
   for (let i = 0; i < count; i++) {
     const forceRarity: Rarity = bossIdx >= 5 ? 'legendary' : (bossIdx >= 2 && Math.random() < 0.5 ? 'legendary' : 'epic');
-    const lvMin = Math.max(1, heroLevel - 5);
-    const lvMax = heroLevel + 10;
-    let pool = ALL_ITEMS.filter(it => it.rarity === forceRarity && it.level >= lvMin && it.level <= lvMax && it.slot !== 'consumable');
-    if (!pool.length) pool = ALL_ITEMS.filter(it => it.rarity === forceRarity && it.slot !== 'consumable');
-    if (!pool.length) continue;
-    results.push(pool[Math.floor(Math.random() * pool.length)]);
+    // Boss loot is slightly above hero level
+    const itemLevel = Math.max(1, heroLevel + rollInt(0, 4));
+    results.push(generateItem(itemLevel, forceRarity));
   }
   return results;
 }
