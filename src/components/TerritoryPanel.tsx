@@ -396,7 +396,26 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
-    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, def.siegeHp);
+    // Pre-compute siege HP and enemy stats (needed before initOrJoinSiege)
+    let enemyAtk   = def.siegeAtk;
+    let enemyDef   = def.siegeDef;
+    let enemyName  = def.guardianName;
+    let enemyEmoji = def.guardianEmoji;
+    let siegeMaxHp = def.siegeHp;
+
+    if (state?.guildId && state.guildId !== guild.id) {
+      const avgLvl    = state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel;
+      const memberCnt = Math.max(1, state.defenderMemberCount || 1);
+      // Stats like a strong player at that level
+      enemyAtk   = Math.round((5 + avgLvl * 2) * 1.5);
+      enemyDef   = Math.round(2 + avgLvl + Math.floor(avgLvl / 2));
+      enemyName  = `Mistrz [${state.guildTag}]`;
+      enemyEmoji = '⚔';
+      // HP scales with defending member count
+      siegeMaxHp = Math.round(def.siegeHp * Math.max(1, memberCnt * 0.7));
+    }
+
+    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, siegeMaxHp);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
       alert(`Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
@@ -408,27 +427,14 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
-    let enemyAtk  = def.siegeAtk;
-    let enemyDef  = def.siegeDef;
-    let enemyName = def.guardianName;
-    let enemyEmoji = def.guardianEmoji;
-
-    if (state?.guildId && state.guildId !== guild.id) {
-      const mult = Math.min(2.5, 1 + Math.sqrt(state.defenderMemberCount || 1) * (state.defenderAvgLevel || 1) / 30);
-      enemyAtk  = Math.round(def.siegeAtk * mult);
-      enemyDef  = Math.round(def.siegeDef * mult);
-      enemyName = `[${state.guildTag}] ${state.guildName}`;
-      enemyEmoji = '🏢';
-    }
-
     const heroHp    = hero.maxHp;
-    const currentHp = result.currentHp;
+    const currentHp = result.currentHp > siegeMaxHp ? siegeMaxHp : result.currentHp;
 
     setCombat({
       territory: def,
       heroHp, heroMaxHp: heroHp,
       heroAtk: getHeroAttack(hero), heroDef: getHeroDefense(hero),
-      enemyHp: currentHp, enemyStartHp: currentHp, enemyMaxHp: def.siegeHp,
+      enemyHp: currentHp, enemyStartHp: currentHp, enemyMaxHp: siegeMaxHp,
       enemyAtk, enemyDef,
       enemyName, enemyEmoji,
       log: [`Dołączyłeś do oblężenia ${def.name}! HP wroga: ${currentHp}/${def.siegeHp}`],
@@ -729,8 +735,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 {mySiegeActive
                   ? `⚔ Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`
                   : unowned
-                  ? `⚔ Przejmij strefę (vs ${def.guardianEmoji} — ~3 graczy)`
-                  : `⚔ Oblęż (vs [${state.guildTag}] — ~3 graczy)`}
+                  ? `⚔ Przejmij strefę (vs ${def.guardianEmoji} ${def.guardianName})`
+                  : `⚔ Oblęż (vs ⚔ Mistrz [${state.guildTag}] — silniejszy obrońca!)`}
               </button>
             )}
 
