@@ -17,6 +17,7 @@ let _pool: LeaderboardEntry[] = [];
 let _pair: [LeaderboardEntry, LeaderboardEntry] | null = null;
 let _history: PvpFightRecord[] = [];
 let _poolLoaded = false;
+let _lastReroll = 0;
 
 function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
@@ -579,7 +580,7 @@ export default function PvpPanel() {
   const [resultRecorded, setResultRecorded] = useState(false);
   const [arenaKey,       setArenaKey]       = useState(0);
   const [autoFight,      setAutoFight]      = useState(false);
-  const [lastReroll,     setLastReroll]     = useState(0);
+  const [lastReroll,     setLastReroll]     = useState(() => _lastReroll);
 
   const autoRef   = useRef(false);
   const attackRef = useRef<() => void>(() => {});
@@ -692,7 +693,7 @@ export default function PvpPanel() {
             key={arenaKey}
             onChallenge={startCombat}
             lastReroll={lastReroll}
-            onReroll={() => setLastReroll(Date.now())}
+            onReroll={() => { _lastReroll = Date.now(); setLastReroll(_lastReroll); }}
           />
       }
     </div>
