@@ -47,7 +47,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
       <p style={{ ...PX(5), color: 'var(--text-dim)' }}>Stwórz gildię i zapraszaj sojuszników</p>
 
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 2 }}>✦ ZAŁOŻ GILDIĘ</p>
+        <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 2 }}>✦ ZAŁÓŻ GILDIĘ</p>
 
         <div>
           <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>NAZWA</p>

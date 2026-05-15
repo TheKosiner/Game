@@ -183,7 +183,7 @@ export default function App() {
                 color: 'rgba(255,45,120,0.6)', fontSize: 8,
                 background: 'none', border: 'none', cursor: 'pointer',
                 textShadow: '0 0 6px rgba(255,45,120,0.3)',
-              }}>WYJĄDŻ</button>
+              }}>WYJDŹ</button>
             </>
           )}
           <button onClick={handleReset} style={{
