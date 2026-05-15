@@ -9,6 +9,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
+import { portraitSrc, resolvePortrait } from '../data/portraits';
 
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -215,7 +216,9 @@ function CityMap({
 
 interface Defender {
   name: string;
+  username: string;
   level: number;
+  portrait: number;
   hp: number;
   maxHp: number;
   atk: number;
@@ -293,10 +296,40 @@ function SiegeCombat({
 
       {/* Enemy */}
       <div style={{ background: 'var(--bg-inset)', border: '1px solid rgba(180,40,40,0.4)', padding: 10 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-          <p style={{ ...PX(6), color: '#e06060' }}>{state.enemyEmoji} {state.enemyName}</p>
-          <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
-        </div>
+        {/* Portrait row for guild defenders */}
+        {state.defenderIdx >= 0 && (() => {
+          const cur = state.defenders[state.defenderIdx];
+          return (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
+              <div style={{
+                width: 72, height: 72, flexShrink: 0, overflow: 'hidden',
+                border: '2px solid rgba(220,60,60,0.7)',
+                boxShadow: '0 0 16px rgba(220,60,60,0.35)',
+              }}>
+                <img
+                  src={portraitSrc(cur.portrait)}
+                  alt={cur.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <p style={{ ...PX(7), color: '#e06060' }}>{cur.name}</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>@{cur.username}</p>
+                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>POZ. {cur.level}</p>
+                <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Guardian (no portrait) */}
+        {state.defenderIdx < 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+            <p style={{ ...PX(6), color: '#e06060' }}>{state.enemyEmoji} {state.enemyName}</p>
+            <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
+          </div>
+        )}
+
         <HpBar current={state.enemyHp} max={state.enemyStartHp} color="#c03030" />
 
         {/* Remaining defender queue */}
@@ -306,16 +339,19 @@ function SiegeCombat({
               const beaten = i < state.defenderIdx;
               const current = i === state.defenderIdx;
               return (
-                <span key={i} style={{
-                  ...MONO, fontSize: 8,
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4,
                   padding: '2px 6px',
                   border: `1px solid ${current ? '#e06060' : beaten ? 'rgba(100,100,100,0.3)' : 'rgba(180,80,80,0.4)'}`,
-                  color: current ? '#e06060' : beaten ? 'rgba(100,100,100,0.5)' : 'rgba(200,120,120,0.8)',
-                  textDecoration: beaten ? 'line-through' : 'none',
                   background: current ? 'rgba(180,40,40,0.15)' : 'transparent',
+                  opacity: beaten ? 0.4 : 1,
                 }}>
-                  {beaten ? '✓' : current ? '⚔' : '○'} {d.name} {d.level}
-                </span>
+                  <div style={{ width: 18, height: 18, overflow: 'hidden', border: `1px solid ${current ? '#e06060' : '#555'}`, flexShrink: 0 }}>
+                    <img src={portraitSrc(d.portrait)} alt={d.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <span style={{ ...MONO, fontSize: 8, color: current ? '#e06060' : 'rgba(200,120,120,0.8)', textDecoration: beaten ? 'line-through' : 'none' }}>
+                    {beaten ? '✓' : current ? '⚔' : '○'} {d.name} {d.level}
+                  </span>
+                </div>
               );
             })}
           </div>
@@ -467,7 +503,9 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
           const hp = 80 + m.level * 8;
           return {
             name: m.name,
+            username: (m as any).username ?? m.name,
             level: m.level,
+            portrait: resolvePortrait((m as any).portrait, (m as any).username ?? m.name),
             hp,
             maxHp: hp,
             atk: Math.round((5 + m.level * 2) * 1.2),
@@ -632,7 +670,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const avgLevel = members.length > 0
           ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
           : hero.level;
-        const defenderMembers = members.map(m => ({ name: m.heroName || m.username, level: m.level }));
+        const defenderMembers = members.map(m => ({ name: m.heroName || m.username, username: m.username, level: m.level, portrait: m.portrait ?? 0 }));
         const prevOwner = territories[combat.territory.id]?.guildId ?? undefined;
         await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel, defenderMembers, prevOwner);
       }
