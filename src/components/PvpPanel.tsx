@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getLeaderboard, getPvpHistory, addPvpFight, syncToCloud, type LeaderboardEntry, type PvpFightRecord } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
@@ -6,10 +6,11 @@ import { PVP_COOLDOWN } from '../store/gameStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
+
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
-const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
+const REROLL_COOLDOWN = 15 * 60 * 1000;
 
 function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
@@ -23,7 +24,6 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
     </div>
   );
 }
-
 
 function pvpHit(atk: number, def: number, critChance: number): { damage: number; isCrit: boolean } {
   const base = atk * atk / (atk + Math.max(1, def));
@@ -79,67 +79,190 @@ function CooldownTimer({ end }: { end: number }) {
   return <span style={{ color: 'var(--hp-bright)' }}>{formatMs(rem)}</span>;
 }
 
-function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
+function logColor(msg: string): string {
+  if (msg.includes('🏆') || msg.includes('ZWYCIĘSTWO')) return '#ffd700';
+  if (msg.includes('💀') || msg.includes('PORAŻKA'))   return '#ff4444';
+  if (msg.includes('KRYT')) return '#ffd700';
+  if (msg.includes('atakuje')) return '#ff7777';
+  if (msg.includes('Atakujesz')) return 'var(--text-main)';
+  return 'var(--text-dim)';
+}
+
+// ── Boss-style PvP Combat ─────────────────────────────────────────────────────
+
+function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
   combat: CombatState;
   onAttack: () => void;
-  onAutoFight: () => void;
+  autoFight: boolean;
+  onToggleAuto: () => void;
   onExit: () => void;
 }) {
   const hero = useGameStore(s => s.hero);
-  const heroPortraitSrc = portraitSrc(hero.portrait);
 
   const heroHpPct = Math.max(0, (combat.heroHp / combat.heroMaxHp) * 100);
-  const oppHpPct = Math.max(0, (combat.oppHp / combat.oppMaxHp) * 100);
+  const oppHpPct  = Math.max(0, (combat.oppHp  / combat.oppMaxHp)  * 100);
+  const oppHpColor = oppHpPct > 60 ? '#44cc44' : oppHpPct > 30 ? '#ff9900' : '#ff4444';
+
+  const [oppAnimKey,  setOppAnimKey]  = useState(0);
+  const [oppHitKey,   setOppHitKey]   = useState(0);
+  const [heroAnimKey, setHeroAnimKey] = useState(0);
+  const [floatOpp,  setFloatOpp]  = useState<{ val: number; crit: boolean; key: number } | null>(null);
+  const [floatHero, setFloatHero] = useState<{ val: number; key: number } | null>(null);
+
+  const prevOppHp  = useRef(combat.oppHp);
+  const prevHeroHp = useRef(combat.heroHp);
+  const logRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const oppDmg  = prevOppHp.current  - combat.oppHp;
+    const heroDmg = prevHeroHp.current - combat.heroHp;
+    if (oppDmg > 0) {
+      setOppAnimKey(k => k + 1);
+      setOppHitKey(k => k + 1);
+      const isCrit = combat.log[0]?.message.includes('KRYT');
+      setFloatOpp({ val: oppDmg, crit: !!isCrit, key: Date.now() });
+    }
+    if (heroDmg > 0) {
+      setHeroAnimKey(k => k + 1);
+      setFloatHero({ val: heroDmg, key: Date.now() + 1 });
+    }
+    prevOppHp.current  = combat.oppHp;
+    prevHeroHp.current = combat.heroHp;
+  }, [combat.oppHp, combat.heroHp]);
+
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [combat.log.length]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(7), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)' }}>⚔ ARENA PvP</p>
-        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>vs {combat.opponent.heroName}</p>
-      </div>
+      <p style={{ ...PX(7), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)' }}>⚔ ARENA PvP</p>
 
-      {/* Opponent card */}
+      {/* Opponent card — boss style */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(20,5,5,0.97), rgba(14,4,4,0.99))',
-        border: '1px solid rgba(100,30,30,0.6)',
-        padding: 10,
+        border: '1px solid rgba(120,30,30,0.6)',
+        padding: 12,
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          <div style={{ width: 64, height: 64, overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(80,20,20,0.5)' }}>
-            <img src={portraitSrc(combat.oppPortrait)} alt="oponent" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+
+          {/* Portrait with shake + flash on hit */}
+          <div
+            key={oppAnimKey}
+            style={{
+              flexShrink: 0, width: 80, height: 80, overflow: 'hidden',
+              animation: oppAnimKey > 0 ? 'bossShake 0.4s ease' : 'none',
+              position: 'relative',
+            }}
+          >
+            <div
+              key={oppHitKey}
+              style={{ animation: oppHitKey > 0 ? 'bossHit 0.35s ease' : 'none', width: '100%', height: '100%' }}
+            >
+              <img
+                src={portraitSrc(combat.oppPortrait)}
+                alt="oponent"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+            </div>
+            {floatOpp && (
+              <span
+                key={floatOpp.key}
+                style={{
+                  position: 'absolute', top: -4, right: -8,
+                  ...ORB, fontSize: floatOpp.crit ? 13 : 10,
+                  color: floatOpp.crit ? '#ffd700' : '#ff4444',
+                  textShadow: floatOpp.crit ? '0 0 10px #ffd700' : '0 0 6px #ff4444',
+                  pointerEvents: 'none', whiteSpace: 'nowrap',
+                  animation: 'floatDmg 0.9s ease forwards',
+                }}
+              >
+                -{floatOpp.val}{floatOpp.crit ? '💥' : ''}
+              </span>
+            )}
           </div>
+
           <div style={{ flex: 1 }}>
-            <p style={{ ...PX(7), color: '#c05050', marginBottom: 3 }}>{combat.opponent.heroName}</p>
-            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>POZ. {combat.opponent.level}</p>
-            <p style={{ ...PX(6), color: '#903040' }}>{Math.max(0, combat.oppHp)} / {combat.oppMaxHp} HP</p>
+            <p style={{ ...ORB, fontSize: 9, color: '#c05050', marginBottom: 2 }}>{combat.opponent.heroName}</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 5 }}>
+              @{combat.opponent.username} · POZ. {combat.opponent.level}
+            </p>
+            <p style={{ ...MONO, fontSize: 8, color: oppHpColor }}>
+              {Math.max(0, combat.oppHp)} / {combat.oppMaxHp} HP
+            </p>
           </div>
         </div>
+
         <div className="pixel-bar">
-          <div className="pixel-bar-fill" style={{ width: `${oppHpPct}%`, background: 'linear-gradient(90deg, #5a0e0e, #b83030)', transition: 'width 0.3s ease' }} />
+          <div className="pixel-bar-fill" style={{
+            width: `${oppHpPct}%`,
+            background: `linear-gradient(90deg, #5a0e0e, ${oppHpColor})`,
+            transition: 'width 0.3s ease',
+          }} />
         </div>
       </div>
 
-      {/* Hero card */}
-      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 8 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
-              <img src={heroPortraitSrc} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-            <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.name}</span>
+      {/* Hero card — with hit flash animation */}
+      <div
+        key={heroAnimKey}
+        style={{
+          background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+          padding: 8,
+          animation: heroAnimKey > 0 ? 'heroHit 0.5s ease' : 'none',
+          position: 'relative',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+          <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
+            <img src={portraitSrc(hero.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
-          <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
+          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', flex: 1 }}>{hero.name}</span>
+          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
         </div>
         <div className="pixel-bar">
           <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%`, transition: 'width 0.3s ease' }} />
         </div>
+        {floatHero && (
+          <span
+            key={floatHero.key}
+            style={{
+              position: 'absolute', top: 2, right: 8,
+              ...ORB, fontSize: 11,
+              color: '#ff4444', textShadow: '0 0 8px #ff4444',
+              pointerEvents: 'none',
+              animation: 'floatDmg 0.9s ease forwards',
+            }}
+          >
+            -{floatHero.val}
+          </span>
+        )}
       </div>
 
+      {/* Action buttons */}
       {!combat.done ? (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onAttack} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>⚔ Atakuj!</button>
-          <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>⚡ Szybka walka</button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={() => { if (autoFight) onToggleAuto(); onAttack(); }}
+            className="btn btn-primary"
+            style={{ flex: 2, fontSize: 8, padding: '10px' }}
+          >
+            ⚔ ATAKUJ
+          </button>
+          <button
+            onClick={onToggleAuto}
+            className={autoFight ? 'btn btn-danger' : 'btn btn-secondary'}
+            style={{ flex: 2, fontSize: 8, padding: '10px' }}
+          >
+            {autoFight ? '⏹ STOP' : '⚡ AUTO'}
+          </button>
+          <button
+            onClick={() => { if (autoFight) onToggleAuto(); onExit(); }}
+            className="btn btn-secondary"
+            style={{ flex: 1, fontSize: 7, padding: '10px 6px', color: 'var(--text-muted)' }}
+          >
+            🚪 UCIEKAJ
+          </button>
         </div>
       ) : (
         <>
@@ -159,9 +282,18 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
         </>
       )}
 
-      <div className="combat-log">
-        {combat.log.slice(0, 15).map((log, i) => (
-          <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
+      {/* Combat log — scrollable, color-coded */}
+      <div
+        ref={logRef}
+        style={{
+          background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.07)',
+          padding: 8, maxHeight: 180, overflowY: 'auto',
+        }}
+      >
+        {[...combat.log].reverse().map((entry, i) => (
+          <p key={i} style={{ ...MONO, fontSize: 8, color: logColor(entry.message), lineHeight: 1.7, marginBottom: 0 }}>
+            {entry.message}
+          </p>
         ))}
       </div>
     </div>
@@ -170,7 +302,6 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
 
 function pickTwo(pool: LeaderboardEntry[], heroLevel: number): [LeaderboardEntry, LeaderboardEntry] | null {
   if (pool.length < 2) return null;
-  // Prefer similar level (±15), fall back to full pool
   const nearby = pool.filter(e => Math.abs(e.level - heroLevel) <= 15);
   const src = nearby.length >= 2 ? nearby : pool;
   const shuffled = [...src].sort(() => Math.random() - 0.5);
@@ -200,7 +331,6 @@ function ArenaCard({ entry, canFight, onChallenge }: {
       boxShadow: '0 0 20px rgba(180,40,40,0.07)',
       padding: 10,
     }}>
-      {/* Portrait */}
       <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden', border: '2px solid rgba(180,40,40,0.45)', boxShadow: '0 0 16px rgba(180,40,40,0.2)' }}>
         <img
           src={portraitSrc(resolvePortrait(entry.portrait, entry.username))}
@@ -209,7 +339,6 @@ function ArenaCard({ entry, canFight, onChallenge }: {
         />
       </div>
 
-      {/* Name + level */}
       <div>
         <p style={{ ...ORB, fontSize: 9, color: '#c05050', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {entry.username}
@@ -229,14 +358,12 @@ function ArenaCard({ entry, canFight, onChallenge }: {
         </div>
       </div>
 
-      {/* Stats */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <StatBar label="ATK" value={atk} max={maxStat * 1.2} color="#ff2d78" />
         <StatBar label="OBR" value={def} max={maxStat * 1.2} color="#00f5ff" />
         <StatBar label="HP"  value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
       </div>
 
-      {/* Win rate */}
       <div style={{ display: 'flex', gap: 4 }}>
         <div style={{ flex: 1, background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.15)', padding: '3px 0', textAlign: 'center' }}>
           <p style={{ ...ORB, fontSize: 9, color: '#00ff88' }}>{wins}</p>
@@ -252,7 +379,6 @@ function ArenaCard({ entry, canFight, onChallenge }: {
         </div>
       </div>
 
-      {/* Fight button */}
       <button
         onClick={() => onChallenge(entry)}
         disabled={!canFight}
@@ -265,20 +391,24 @@ function ArenaCard({ entry, canFight, onChallenge }: {
   );
 }
 
-function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void }) {
+function ArenaList({ onChallenge, lastReroll, onReroll }: {
+  onChallenge: (e: LeaderboardEntry) => void;
+  lastReroll: number;
+  onReroll: () => void;
+}) {
   const user    = useAuthStore(s => s.user);
   const hero    = useGameStore(s => s.hero);
   const pvpWins   = useGameStore(s => s.pvpWins);
   const pvpLosses = useGameStore(s => s.pvpLosses);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
 
-  const [entries,       setEntries]       = useState<LeaderboardEntry[]>([]);
-  const [loading,       setLoading]       = useState(true);
-  const [error,         setError]         = useState('');
-  const [now,           setNow]           = useState(Date.now());
-  const [globalHistory, setGlobalHistory] = useState<PvpFightRecord[]>([]);
+  const [entries,        setEntries]        = useState<LeaderboardEntry[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [error,          setError]          = useState('');
+  const [now,            setNow]            = useState(Date.now());
+  const [globalHistory,  setGlobalHistory]  = useState<PvpFightRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [pair, setPair] = useState<[LeaderboardEntry, LeaderboardEntry] | null>(null);
+  const [pair,           setPair]           = useState<[LeaderboardEntry, LeaderboardEntry] | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -299,26 +429,28 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
   }
 
   function reroll() {
+    if (now - lastReroll < REROLL_COOLDOWN) return;
     const pool = entries.filter(e => e.uid !== user?.uid);
     setPair(pickTwo(pool, hero.level));
+    onReroll();
   }
 
   useEffect(() => { fetchAll(); }, []);
 
-  const cooldownEnd = lastPvpFight + PVP_COOLDOWN;
-  const canFight    = now >= cooldownEnd;
-  const myRank      = entries.findIndex(e => e.uid === user?.uid) + 1;
+  const cooldownEnd   = lastPvpFight + PVP_COOLDOWN;
+  const canFight      = now >= cooldownEnd;
+  const canReroll     = now - lastReroll >= REROLL_COOLDOWN;
+  const rerollEnd     = lastReroll + REROLL_COOLDOWN;
+  const myRank        = entries.findIndex(e => e.uid === user?.uid) + 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>⚔ ARENA PvP</p>
         <button onClick={fetchAll} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
       </div>
 
-      {/* Stats + cooldown */}
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
@@ -340,7 +472,6 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
         </div>
       </div>
 
-      {/* Two opponent cards */}
       {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Ładowanie...</p>}
       {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
 
@@ -358,8 +489,16 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
             <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Za mało graczy w rankingu.</p>
           )}
 
-          <button onClick={reroll} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '7px' }}>
-            🎲 Losuj nowych przeciwników
+          <button
+            onClick={reroll}
+            disabled={!canReroll}
+            className="btn btn-secondary"
+            style={{ width: '100%', fontSize: 6, padding: '7px', opacity: canReroll ? 1 : 0.5 }}
+          >
+            {canReroll
+              ? '🎲 Losuj nowych przeciwników'
+              : <>🎲 Losuj nowych · ⏳ <CooldownTimer end={rerollEnd} /></>
+            }
           </button>
         </>
       )}
@@ -374,7 +513,7 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
         {!historyLoading && globalHistory.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {globalHistory.map((r, i) => {
-              const isMe = r.attackerUid === user?.uid || r.defenderUid === user?.uid;
+              const isMe  = r.attackerUid === user?.uid || r.defenderUid === user?.uid;
               const meWon = (r.attackerUid === user?.uid && r.attackerWon) || (r.defenderUid === user?.uid && !r.attackerWon);
               return (
                 <div key={i} style={{
@@ -410,47 +549,15 @@ export default function PvpPanel() {
   const recordPvpResult = useGameStore(s => s.recordPvpResult);
   const user = useAuthStore(s => s.user);
 
-  const [combat, setCombat] = useState<CombatState | null>(null);
+  const [combat,         setCombat]         = useState<CombatState | null>(null);
   const [resultRecorded, setResultRecorded] = useState(false);
-  const [arenaKey, setArenaKey] = useState(0);
+  const [arenaKey,       setArenaKey]       = useState(0);
+  const [autoFight,      setAutoFight]      = useState(false);
+  const [lastReroll,     setLastReroll]     = useState(0);
 
-  function startCombat(entry: LeaderboardEntry) {
-    if (Date.now() - lastPvpFight < PVP_COOLDOWN) return;
-    const oppAtk = entry.attack ?? (10 + entry.level * 3);
-    const oppDef = entry.defense ?? (5 + entry.level * 2);
-    const oppMaxHp = entry.maxHp ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5, magic: 4, magicResistance: 4 }, entry.level);
-
-    const state: CombatState = {
-      opponent: {
-        uid: entry.uid,
-        heroName: entry.heroName,
-        username: entry.username,
-        level: entry.level,
-        attack: oppAtk,
-        defense: oppDef,
-        maxHp: oppMaxHp,
-        portrait: resolvePortrait(entry.portrait, entry.username),
-      },
-      oppPortrait: resolvePortrait(entry.portrait, entry.username),
-      heroHp: hero.maxHp,
-      heroMaxHp: hero.maxHp,
-      oppHp: oppMaxHp,
-      oppMaxHp,
-      heroAtk: getHeroAttack(hero),
-      heroDef: getHeroDefense(hero),
-      oppAtk,
-      oppDef,
-      heroCritChance: 0.10 + hero.stats.dexterity * 0.005,
-      oppCritChance: 0.10 + entry.level * 0.003,
-      log: [{ message: `⚔ Walka z ${entry.heroName} (POZ.${entry.level}) rozpoczęta!`, type: 'system', timestamp: Date.now() }],
-      done: false,
-      won: null,
-      xpGained: 0,
-      goldGained: 0,
-    };
-    setCombat(state);
-    setResultRecorded(false);
-  }
+  const autoRef   = useRef(false);
+  const attackRef = useRef<() => void>(() => {});
+  autoRef.current = autoFight;
 
   function handleAttack() {
     if (!combat || combat.done) return;
@@ -469,11 +576,7 @@ export default function PvpPanel() {
         newLog.unshift({ message: `🏆 Pokonałeś ${combat.opponent.heroName}! +${result.xpGained}XP +${result.goldGained}🪙`, type: 'loot', timestamp: Date.now() });
         setCombat({ ...combat, oppHp: 0, heroHp, log: newLog, done: true, won: true, xpGained: result.xpGained, goldGained: result.goldGained });
         if (user) {
-          addPvpFight({
-            attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-            defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-            attackerWon: true, timestamp: Date.now(),
-          }).catch(() => {});
+          addPvpFight({ attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level, defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level, attackerWon: true, timestamp: Date.now() }).catch(() => {});
           syncToCloud(user.uid, user.username).catch(() => {});
         }
       }
@@ -491,11 +594,7 @@ export default function PvpPanel() {
         newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
         setCombat({ ...combat, oppHp, heroHp: 0, log: newLog, done: true, won: false, xpGained: result.xpGained, goldGained: 0 });
         if (user) {
-          addPvpFight({
-            attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-            defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-            attackerWon: false, timestamp: Date.now(),
-          }).catch(() => {});
+          addPvpFight({ attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level, defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level, attackerWon: false, timestamp: Date.now() }).catch(() => {});
           syncToCloud(user.uid, user.username).catch(() => {});
         }
       }
@@ -505,48 +604,67 @@ export default function PvpPanel() {
     setCombat({ ...combat, oppHp, heroHp, log: newLog });
   }
 
-  function handleAutoFight() {
-    if (!combat || combat.done || resultRecorded) return;
+  attackRef.current = handleAttack;
 
-    let { heroHp, oppHp } = combat;
-    const newLog = [...combat.log];
+  // Auto-fight interval
+  useEffect(() => {
+    if (!autoFight) return;
+    const id = setInterval(() => {
+      if (!autoRef.current) { clearInterval(id); return; }
+      attackRef.current();
+    }, 650);
+    return () => clearInterval(id);
+  }, [autoFight]);
 
-    for (let i = 0; i < 500; i++) {
-      const { damage: heroDmg } = pvpHit(combat.heroAtk, combat.oppDef, combat.heroCritChance);
-      oppHp = Math.max(0, oppHp - heroDmg);
-      if (oppHp <= 0) break;
-      const { damage: oppDmg } = pvpHit(combat.oppAtk, combat.heroDef, combat.oppCritChance);
-      heroHp = Math.max(0, heroHp - oppDmg);
-      if (heroHp <= 0) break;
-    }
+  // Stop auto when fight ends
+  useEffect(() => {
+    if (combat?.done) setAutoFight(false);
+  }, [combat?.done]);
 
-    const won = oppHp <= 0 || (heroHp > 0 && heroHp / combat.heroMaxHp >= oppHp / combat.oppMaxHp);
-    setResultRecorded(true);
-    const result = recordPvpResult(won, combat.opponent);
+  function startCombat(entry: LeaderboardEntry) {
+    if (Date.now() - lastPvpFight < PVP_COOLDOWN) return;
+    const oppAtk   = entry.attack  ?? (10 + entry.level * 3);
+    const oppDef   = entry.defense ?? (5  + entry.level * 2);
+    const oppMaxHp = entry.maxHp   ?? getHeroMaxHp({ strength: 5, dexterity: 5, intelligence: 5, vitality: 5, magic: 4, magicResistance: 4 }, entry.level);
 
-    if (won) {
-      newLog.unshift({ message: `🏆 Pokonałeś ${combat.opponent.heroName}! (szybka walka) +${result.xpGained}XP +${result.goldGained}🪙`, type: 'loot', timestamp: Date.now() });
-    } else {
-      newLog.unshift({ message: `💀 Przegrałeś z ${combat.opponent.heroName}. (szybka walka) +${result.xpGained}XP`, type: 'system', timestamp: Date.now() });
-    }
+    setCombat({
+      opponent: { uid: entry.uid, heroName: entry.heroName, username: entry.username, level: entry.level, attack: oppAtk, defense: oppDef, maxHp: oppMaxHp, portrait: resolvePortrait(entry.portrait, entry.username) },
+      oppPortrait: resolvePortrait(entry.portrait, entry.username),
+      heroHp: hero.maxHp, heroMaxHp: hero.maxHp,
+      oppHp: oppMaxHp, oppMaxHp,
+      heroAtk: getHeroAttack(hero), heroDef: getHeroDefense(hero),
+      oppAtk, oppDef,
+      heroCritChance: 0.10 + hero.stats.dexterity * 0.005,
+      oppCritChance:  0.10 + entry.level * 0.003,
+      log: [{ message: `⚔ Walka z ${entry.heroName} (POZ.${entry.level}) rozpoczęta!`, type: 'system', timestamp: Date.now() }],
+      done: false, won: null, xpGained: 0, goldGained: 0,
+    });
+    setResultRecorded(false);
+  }
 
-    if (user) {
-      addPvpFight({
-        attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level,
-        defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level,
-        attackerWon: won, timestamp: Date.now(),
-      }).catch(() => {});
-      syncToCloud(user.uid, user.username).catch(() => {});
-    }
-
-    setCombat({ ...combat, heroHp: Math.max(0, heroHp), oppHp: Math.max(0, oppHp), log: newLog, done: true, won, xpGained: result.xpGained, goldGained: result.goldGained });
+  function exitCombat() {
+    setAutoFight(false);
+    setCombat(null);
+    setResultRecorded(false);
+    setArenaKey(k => k + 1);
   }
 
   return (
     <div className="card p-3">
       {combat
-        ? <PvpCombat combat={combat} onAttack={handleAttack} onAutoFight={handleAutoFight} onExit={() => { setCombat(null); setResultRecorded(false); setArenaKey(k => k + 1); }} />
-        : <ArenaList key={arenaKey} onChallenge={startCombat} />
+        ? <PvpCombat
+            combat={combat}
+            onAttack={handleAttack}
+            autoFight={autoFight}
+            onToggleAuto={() => setAutoFight(v => !v)}
+            onExit={exitCombat}
+          />
+        : <ArenaList
+            key={arenaKey}
+            onChallenge={startCombat}
+            lastReroll={lastReroll}
+            onReroll={() => setLastReroll(Date.now())}
+          />
       }
     </div>
   );
