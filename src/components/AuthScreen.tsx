@@ -58,10 +58,17 @@ function VerificationScreen() {
             <p style={{ ...PX(8), color: '#fff', wordBreak: 'break-all' }}>{pendingEmail}</p>
           </div>
 
-          <p style={{ ...MONO, fontSize: 9, color: '#64748b', lineHeight: 1.6 }}>
-            Kliknij link w emailu, a następnie wróć tutaj i zaloguj się.
-            Sprawdź też folder SPAM jeśli nie widzisz wiadomości.
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+              1. Kliknij link w emailu weryfikacyjnym
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+              2. Wróć tutaj i zaloguj się
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: '#f59e0b', lineHeight: 1.6 }}>
+              ⚠ Sprawdź folder SPAM / Oferty — emaile weryfikacyjne często tam trafiają
+            </p>
+          </div>
 
           {error && (
             <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
