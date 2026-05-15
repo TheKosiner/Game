@@ -11,48 +11,81 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    function isValidHeroLevel(level) {
-      return level is int && level >= 1 && level <= 100;
-    }
-
-    function isValidGold(gold) {
-      return gold is int && gold >= 0 && gold <= 1000000;
-    }
-
-    function isValidXp(xp) {
-      return xp is int && xp >= 0;
-    }
-
+    // User profiles (private)
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
-    }
+
+    // Game saves (private)
     match /saves/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
     }
+
+    // Public leaderboard profiles
+    // Owner can write anything; any authenticated user may update only
+    // guildId/guildTag (needed when guild leader disbands or kicks members)
+    match /players/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['guildId', 'guildTag']);
+    }
+
+    // Username uniqueness registry
+    // Doc id = lowercased username; must contain caller's uid on create
+    match /usernames/{username} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.uid == request.auth.uid;
+    }
+
+    // Guilds
     match /guilds/{guildId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid in resource.data.members;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated()
+        && request.auth.uid in resource.data.members;
     }
+
+    // Guild invites
     match /guildInvites/{inviteId} {
-      allow read: if request.auth != null && (
+      allow read: if isAuthenticated() && (
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
       );
-      allow create: if request.auth != null;
-      allow delete: if request.auth != null && (
+      allow create: if isAuthenticated();
+      allow delete: if isAuthenticated() && (
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
       );
     }
+
+    // PvP fight history
+    // Write requires caller to be the attacker (prevents forged fight records)
     match /pvpHistory/{fightId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.attackerUid == request.auth.uid;
     }
+
+    // Guild territories
+    // Any guild member can participate in a siege (damage, join, capture)
+    // Client-side logic + validatePlayerUpdate Cloud Function guard abuse
     match /territories/{territoryId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null;
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
+
+    // In-game mail
+    match /mail/{mailId} {
+      allow read, delete: if isAuthenticated()
+        && resource.data.toUid == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.fromUid == request.auth.uid;
+    }
+
   }
 }
