@@ -26,13 +26,15 @@ const labelStyle: React.CSSProperties = {
 };
 
 function VerificationScreen() {
-  const pendingEmail    = useAuthStore(s => s.pendingEmail);
+  const pendingEmail       = useAuthStore(s => s.pendingEmail);
   const resendVerification = useAuthStore(s => s.resendVerification);
-  const logout          = useAuthStore(s => s.logout);
-  const error           = useAuthStore(s => s.error);
+  const checkVerification  = useAuthStore(s => s.checkVerification);
+  const logout             = useAuthStore(s => s.logout);
+  const error              = useAuthStore(s => s.error);
 
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [checking, setChecking] = useState(false);
 
   async function handleResend() {
     setSending(true);
@@ -40,6 +42,12 @@ function VerificationScreen() {
     setSending(false);
     setSent(true);
     setTimeout(() => setSent(false), 10000);
+  }
+
+  async function handleCheck() {
+    setChecking(true);
+    await checkVerification();
+    setChecking(false);
   }
 
   return (
@@ -81,6 +89,15 @@ function VerificationScreen() {
               <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>✓ Wysłano ponownie!</p>
             </div>
           )}
+
+          <button
+            onClick={handleCheck}
+            disabled={checking}
+            className="btn btn-primary"
+            style={{ width: '100%', padding: '10px', ...PX(7) }}
+          >
+            {checking ? '...' : '✓ Już zweryfikowałem — wejdź do gry'}
+          </button>
 
           <button
             onClick={handleResend}
