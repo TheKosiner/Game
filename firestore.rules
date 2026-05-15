@@ -11,28 +11,29 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
-    // ── User profiles (private) ──────────────────────────────────────────────
+    // User profiles (private)
     match /users/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // ── Game saves (private) ─────────────────────────────────────────────────
+    // Game saves (private)
     match /saves/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // ── Public leaderboard profiles ──────────────────────────────────────────
-    // Read: anyone authenticated (leaderboard)
-    // Write: only the owner of that profile
+    // Public leaderboard profiles
+    // Owner can write anything; any authenticated user may update only
+    // guildId/guildTag (needed when guild leader disbands or kicks members)
     match /players/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId);
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['guildId', 'guildTag']);
     }
 
-    // ── Username uniqueness registry ─────────────────────────────────────────
-    // Read: anyone authenticated (to check availability)
-    // Write: only during own registration — the doc id IS the username,
-    //        the value must contain the caller's uid
+    // Username uniqueness registry
+    // Doc id = lowercased username; must contain caller's uid on create
     match /usernames/{username} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
@@ -41,7 +42,7 @@ service cloud.firestore {
         && resource.data.uid == request.auth.uid;
     }
 
-    // ── Guilds ───────────────────────────────────────────────────────────────
+    // Guilds
     match /guilds/{guildId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
@@ -49,7 +50,7 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members;
     }
 
-    // ── Guild invites ─────────────────────────────────────────────────────────
+    // Guild invites
     match /guildInvites/{inviteId} {
       allow read: if isAuthenticated() && (
         request.auth.uid == resource.data.toUid ||
@@ -62,32 +63,23 @@ service cloud.firestore {
       );
     }
 
-    // ── PvP fight history ─────────────────────────────────────────────────────
-    // Read: any logged-in player
-    // Create: only if the caller is the attacker in the record
+    // PvP fight history
+    // Write requires caller to be the attacker (prevents forged fight records)
     match /pvpHistory/{fightId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
         && request.resource.data.attackerUid == request.auth.uid;
     }
 
-    // ── Guild territories ─────────────────────────────────────────────────────
-    // Read: any logged-in player
-    // Write: only the guild leader of the current occupying guild OR
-    //        if the territory is being claimed (no current occupier)
+    // Guild territories
+    // Any guild member can participate in a siege (damage, join, capture)
+    // Client-side logic + validatePlayerUpdate Cloud Function guard abuse
     match /territories/{territoryId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated() && (
-        // Territory is unoccupied — anyone can start a siege
-        !exists(/databases/$(database)/documents/territories/$(territoryId)) ||
-        // Or the caller is the guild leader of the occupying guild
-        resource.data.guildLeaderUid == request.auth.uid ||
-        // Or the caller is the guild leader of the attacking guild in the new data
-        request.resource.data.guildLeaderUid == request.auth.uid
-      );
+      allow write: if isAuthenticated();
     }
 
-    // ── In-game mail ──────────────────────────────────────────────────────────
+    // In-game mail
     match /mail/{mailId} {
       allow read, delete: if isAuthenticated()
         && resource.data.toUid == request.auth.uid;
