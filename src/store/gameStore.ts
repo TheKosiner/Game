@@ -504,7 +504,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const heroAtk = getHeroAttack(hero);
     const heroDef = getHeroDefense(hero);
     const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100);
-    const xpGained = won ? Math.max(20, opponent.level * 20) : 8;
+    const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
     const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
     set({
@@ -522,7 +522,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   recordPvpResult: (won: boolean, opponent: PvpOpponent): PvpResult => {
     const { pvpWins, pvpLosses, pvpLog } = get();
     const now = Date.now();
-    const xpGained = won ? Math.max(20, opponent.level * 20) : 8;
+    const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
     const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
     set({
