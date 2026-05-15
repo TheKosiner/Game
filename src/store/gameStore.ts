@@ -6,7 +6,8 @@ import { generateItem } from '../data/itemGenerator';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 
-const SAVE_KEY = 'cybermagic_save';
+const SAVE_KEY = 'glitchsoul_save';
+const OLD_SAVE_KEY = 'cybermagic_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
@@ -849,6 +850,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   loadGame: () => {
     try {
+      // One-time migration from old key
+      if (!localStorage.getItem(SAVE_KEY) && localStorage.getItem(OLD_SAVE_KEY)) {
+        localStorage.setItem(SAVE_KEY, localStorage.getItem(OLD_SAVE_KEY)!);
+        localStorage.removeItem(OLD_SAVE_KEY);
+      }
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const save = JSON.parse(raw);

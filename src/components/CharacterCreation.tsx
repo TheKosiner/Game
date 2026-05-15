@@ -31,7 +31,7 @@ export default function CharacterCreation() {
             background: 'linear-gradient(90deg, #ff2d78, #ff2d78, #ff2d78)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             filter: 'drop-shadow(0 0 10px rgba(255,45,120,0.5))',
-          }}>CyberMagic</h1>
+          }}>GlitchSoul</h1>
           <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#475569', fontSize: 10 }}>Stwórz postać i zacznij przygodę</p>
         </div>
 

@@ -44,7 +44,7 @@ export default function App() {
         try {
           const loaded = await loadFromCloud(user.uid);
           if (loaded === null) {
-            try { localStorage.removeItem('cybermagic_save'); } catch {}
+            try { localStorage.removeItem('glitchsoul_save'); } catch {}
             initHero('Hero', 1, 2, true);
           } else if (!loaded) {
             loadGame();
@@ -123,13 +123,13 @@ export default function App() {
 
   if (isFirebaseConfigured && !user) return <AuthScreen />;
 
-  const hasSave = (() => { try { return !!localStorage.getItem('cybermagic_save'); } catch { return false; } })();
+  const hasSave = (() => { try { return !!localStorage.getItem('glitchsoul_save'); } catch { return false; } })();
   const isNewGame = hero.name === 'Hero' && !hasSave;
   if (isNewGame) return <CharacterCreation />;
 
   async function handleReset() {
     if (!confirm('Zresetować postać? Stracisz cały postęp!')) return;
-    localStorage.removeItem('cybermagic_save');
+    localStorage.removeItem('glitchsoul_save');
     try { if (user) await deleteCloudSave(user.uid); } catch {}
     initHero('Hero');
   }
