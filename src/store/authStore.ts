@@ -135,39 +135,45 @@ export const useAuthStore = create<AuthState>((set) => {
       const normalizedUsername = username.trim().toLowerCase();
 
       try {
-        // Check username availability atomically
+        // Create auth user first — Firestore writes require auth
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+        // Atomically claim username + create profile
+        // If username is already taken, delete the just-created auth user
         const usernameRef = doc(db, 'usernames', normalizedUsername);
-        const usernameSnap = await getDoc(usernameRef);
-        if (usernameSnap.exists()) {
-          set({ error: 'Ten nick jest już zajęty' });
+        const firestoreDb = db;
+        try {
+          await runTransaction(firestoreDb, async (tx) => {
+            const snap = await tx.get(usernameRef);
+            if (snap.exists()) throw new Error('username-taken');
+            tx.set(usernameRef, { uid: cred.user.uid, createdAt: Date.now() });
+            tx.set(doc(firestoreDb, 'users', cred.user.uid), {
+              username: username.trim(),
+              email,
+              createdAt: Date.now(),
+            });
+          });
+        } catch (txErr: unknown) {
+          // Roll back: delete the auth account so email can be reused
+          await cred.user.delete().catch(() => {});
+          if (txErr instanceof Error && txErr.message === 'username-taken') {
+            set({ error: 'Ten nick jest już zajęty' });
+          } else {
+            set({ error: getErrorMessage(txErr) });
+          }
           return;
         }
 
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-        // Claim username + store user profile atomically
-        const firestoreDb = db;
-        await runTransaction(firestoreDb, async (tx) => {
-          const snap = await tx.get(usernameRef);
-          if (snap.exists()) throw new Error('username-taken');
-          tx.set(usernameRef, { uid: cred.user.uid, createdAt: Date.now() });
-          tx.set(doc(firestoreDb, 'users', cred.user.uid), {
-            username: username.trim(),
-            email,
-            createdAt: Date.now(),
-          });
-        });
-
-        await sendEmailVerification(cred.user);
+        try {
+          await sendEmailVerification(cred.user);
+        } catch {
+          // Email sending failure is non-fatal — user can resend from next screen
+        }
         _pendingFirebaseUser = cred.user;
         set({ needsVerification: true, pendingEmail: email });
         await signOut(auth);
       } catch (e: unknown) {
-        if (e instanceof Error && e.message === 'username-taken') {
-          set({ error: 'Ten nick jest już zajęty' });
-        } else {
-          set({ error: getErrorMessage(e) });
-        }
+        set({ error: getErrorMessage(e) });
       }
     },
 
