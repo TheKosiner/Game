@@ -26,9 +26,10 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
   const atk = entry.attack ?? 0;
   const def = entry.defense ?? 0;
   const hp  = entry.maxHp ?? 0;
-  const wins   = entry.pvpWins ?? 0;
-  const losses = entry.pvpLosses ?? 0;
-  const total  = wins + losses;
+  const wins    = entry.pvpWins   ?? 0;
+  const losses  = entry.pvpLosses ?? 0;
+  const rating  = entry.pvpRating ?? 1000;
+  const total   = wins + losses;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
 
   const maxStat = Math.max(atk, def, hp / 4, 1);
@@ -104,6 +105,10 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
           <div style={{ flex: 1, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#ffd700' }}>{winRate}%</p>
             <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WIN RATE</p>
+          </div>
+          <div style={{ flex: 1, background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', padding: '6px 8px', textAlign: 'center' }}>
+            <p style={{ ...ORB, fontSize: 14, color: '#c084fc' }}>{rating}</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>RANKING</p>
           </div>
         </div>
       </div>
@@ -212,6 +217,11 @@ export default function LeaderboardPanel() {
 
                 <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
                   <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
+                  {entry.pvpRating !== undefined && (
+                    <span style={{ ...ORB, fontSize: 7, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
+                      ⚔ {entry.pvpRating}
+                    </span>
+                  )}
                   {entry.guildTag && (
                     <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 8, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
                       [{entry.guildTag}]
