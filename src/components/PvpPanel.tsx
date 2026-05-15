@@ -503,6 +503,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
         </>
       )}
 
+      {/* Fight history */}
       <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
         <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 8 }}>📜 HISTORIA WALK</p>
         {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>⏳ Ładowanie...</p>}
