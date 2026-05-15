@@ -6,7 +6,6 @@ import { PVP_COOLDOWN } from '../store/gameStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
-const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -25,101 +24,6 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   );
 }
 
-function OpponentProfile({ entry, rank, canFight, onChallenge, onClose }: {
-  entry: LeaderboardEntry;
-  rank: number;
-  canFight: boolean;
-  onChallenge: (e: LeaderboardEntry) => void;
-  onClose: () => void;
-}) {
-  const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-  const atk = entry.attack ?? 0;
-  const def = entry.defense ?? 0;
-  const hp  = entry.maxHp ?? 0;
-  const wins   = entry.pvpWins ?? 0;
-  const losses = entry.pvpLosses ?? 0;
-  const total  = wins + losses;
-  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
-  const maxStat = Math.max(atk, def, 1);
-
-  return (
-    <div style={{
-      background: 'linear-gradient(135deg, rgba(20,5,5,0.98), rgba(10,3,3,0.99))',
-      border: '1px solid rgba(180,40,40,0.35)',
-      padding: 12,
-      display: 'flex', flexDirection: 'column', gap: 10,
-      boxShadow: '0 0 24px rgba(180,40,40,0.08)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {rank <= 3
-            ? <span style={{ fontSize: 14 }}>{['🥇','🥈','🥉'][rank-1]}</span>
-            : <span style={{ ...PX(6), color: rankColor }}>#{rank}</span>
-          }
-          <span style={{ ...ORB, fontSize: 8, color: '#c05050' }}>PROFIL PRZECIWNIKA</span>
-        </div>
-        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-        <div style={{
-          width: 80, height: 80, overflow: 'hidden', flexShrink: 0,
-          border: '2px solid rgba(180,40,40,0.5)',
-          boxShadow: '0 0 16px rgba(180,40,40,0.18)',
-        }}>
-          <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <p style={{ ...ORB, fontSize: 11, color: '#c05050', textShadow: '0 0 8px rgba(180,40,40,0.5)' }}>
-            {entry.username}
-          </p>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{entry.heroName}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ ...ORB, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 6px' }}>
-              POZ.{entry.level}
-            </span>
-            {entry.guildTag && (
-              <span style={{ ...MONO, fontSize: 9, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '2px 6px' }}>
-                [{entry.guildTag}]
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>STATYSTYKI BOJOWE</p>
-        <StatBar label="ATK" value={atk} max={maxStat * 1.2} color="#ff2d78" />
-        <StatBar label="OBR" value={def} max={maxStat * 1.2} color="#00f5ff" />
-        <StatBar label="HP"  value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
-      </div>
-
-      <div style={{ display: 'flex', gap: 8 }}>
-        <div style={{ flex: 1, background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', padding: '5px 8px', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 12, color: '#00ff88' }}>{wins}</p>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WYGRANE</p>
-        </div>
-        <div style={{ flex: 1, background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)', padding: '5px 8px', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 12, color: '#ff2d78' }}>{losses}</p>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>PRZEGRANE</p>
-        </div>
-        <div style={{ flex: 1, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', padding: '5px 8px', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 12, color: '#ffd700' }}>{winRate}%</p>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WIN RATE</p>
-        </div>
-      </div>
-
-      <button
-        onClick={() => onChallenge(entry)}
-        disabled={!canFight}
-        className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
-        style={{ width: '100%', fontSize: 8, padding: '8px', opacity: canFight ? 1 : 0.5, cursor: canFight ? 'pointer' : 'not-allowed' }}
-      >
-        ⚔ WALCZ Z {entry.heroName.toUpperCase()}
-      </button>
-    </div>
-  );
-}
 
 function pvpHit(atk: number, def: number, critChance: number): { damage: number; isCrit: boolean } {
   const base = atk * atk / (atk + Math.max(1, def));
@@ -264,58 +168,158 @@ function PvpCombat({ combat, onAttack, onAutoFight, onExit }: {
   );
 }
 
+function pickTwo(pool: LeaderboardEntry[], heroLevel: number): [LeaderboardEntry, LeaderboardEntry] | null {
+  if (pool.length < 2) return null;
+  // Prefer similar level (±15), fall back to full pool
+  const nearby = pool.filter(e => Math.abs(e.level - heroLevel) <= 15);
+  const src = nearby.length >= 2 ? nearby : pool;
+  const shuffled = [...src].sort(() => Math.random() - 0.5);
+  return [shuffled[0], shuffled[1]];
+}
+
+function ArenaCard({ entry, canFight, onChallenge }: {
+  entry: LeaderboardEntry;
+  canFight: boolean;
+  onChallenge: (e: LeaderboardEntry) => void;
+}) {
+  const atk = entry.attack  ?? 0;
+  const def = entry.defense ?? 0;
+  const hp  = entry.maxHp   ?? 0;
+  const wins   = entry.pvpWins   ?? 0;
+  const losses = entry.pvpLosses ?? 0;
+  const total  = wins + losses;
+  const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+  const maxStat = Math.max(atk, def, 1);
+
+  return (
+    <div style={{
+      flex: 1, minWidth: 0,
+      background: 'linear-gradient(160deg, rgba(20,5,5,0.98), rgba(10,3,3,0.99))',
+      border: '1px solid rgba(180,40,40,0.35)',
+      display: 'flex', flexDirection: 'column', gap: 8,
+      boxShadow: '0 0 20px rgba(180,40,40,0.07)',
+      padding: 10,
+    }}>
+      {/* Portrait */}
+      <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden', border: '2px solid rgba(180,40,40,0.45)', boxShadow: '0 0 16px rgba(180,40,40,0.2)' }}>
+        <img
+          src={portraitSrc(resolvePortrait(entry.portrait, entry.username))}
+          alt={entry.username}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      </div>
+
+      {/* Name + level */}
+      <div>
+        <p style={{ ...ORB, fontSize: 9, color: '#c05050', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {entry.username}
+        </p>
+        <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {entry.heroName}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+          <span style={{ ...ORB, fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 5px' }}>
+            POZ.{entry.level}
+          </span>
+          {entry.guildTag && (
+            <span style={{ ...MONO, fontSize: 7, color: '#00cc66', background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.25)', padding: '2px 5px' }}>
+              [{entry.guildTag}]
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <StatBar label="ATK" value={atk} max={maxStat * 1.2} color="#ff2d78" />
+        <StatBar label="OBR" value={def} max={maxStat * 1.2} color="#00f5ff" />
+        <StatBar label="HP"  value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
+      </div>
+
+      {/* Win rate */}
+      <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ flex: 1, background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.15)', padding: '3px 0', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 9, color: '#00ff88' }}>{wins}</p>
+          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>WIN</p>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.15)', padding: '3px 0', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 9, color: '#ff2d78' }}>{losses}</p>
+          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>LOSS</p>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)', padding: '3px 0', textAlign: 'center' }}>
+          <p style={{ ...ORB, fontSize: 9, color: '#ffd700' }}>{winRate}%</p>
+          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>W/R</p>
+        </div>
+      </div>
+
+      {/* Fight button */}
+      <button
+        onClick={() => onChallenge(entry)}
+        disabled={!canFight}
+        className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
+        style={{ width: '100%', fontSize: 7, padding: '9px 4px', marginTop: 'auto', opacity: canFight ? 1 : 0.5 }}
+      >
+        ⚔ WALCZ
+      </button>
+    </div>
+  );
+}
+
 function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void }) {
-  const user = useAuthStore(s => s.user);
-  const pvpWins = useGameStore(s => s.pvpWins);
+  const user    = useAuthStore(s => s.user);
+  const hero    = useGameStore(s => s.hero);
+  const pvpWins   = useGameStore(s => s.pvpWins);
   const pvpLosses = useGameStore(s => s.pvpLosses);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
 
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [now, setNow] = useState(Date.now());
+  const [entries,       setEntries]       = useState<LeaderboardEntry[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState('');
+  const [now,           setNow]           = useState(Date.now());
   const [globalHistory, setGlobalHistory] = useState<PvpFightRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [selected, setSelected] = useState<{ entry: LeaderboardEntry; rank: number } | null>(null);
+  const [pair, setPair] = useState<[LeaderboardEntry, LeaderboardEntry] | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  async function fetchLeaderboard() {
+  async function fetchAll() {
     setLoading(true); setError('');
-    try { setEntries(await getLeaderboard()); }
-    catch { setError('Błąd połączenia z serwerem'); }
-    finally { setLoading(false); }
-  }
-
-  async function fetchHistory() {
     setHistoryLoading(true);
-    try { setGlobalHistory(await getPvpHistory()); }
-    catch { /* silent */ }
-    finally { setHistoryLoading(false); }
+    try {
+      const [lb, hist] = await Promise.all([getLeaderboard(), getPvpHistory()]);
+      setEntries(lb);
+      setGlobalHistory(hist);
+      const pool = lb.filter(e => e.uid !== user?.uid);
+      setPair(pickTwo(pool, hero.level));
+    } catch { setError('Błąd połączenia z serwerem'); }
+    finally { setLoading(false); setHistoryLoading(false); }
   }
 
-  useEffect(() => { fetchLeaderboard(); fetchHistory(); }, []);
+  function reroll() {
+    const pool = entries.filter(e => e.uid !== user?.uid);
+    setPair(pickTwo(pool, hero.level));
+  }
 
-  const myRank = entries.findIndex(e => e.uid === user?.uid) + 1;
+  useEffect(() => { fetchAll(); }, []);
+
   const cooldownEnd = lastPvpFight + PVP_COOLDOWN;
-  const canFight = now >= cooldownEnd;
+  const canFight    = now >= cooldownEnd;
+  const myRank      = entries.findIndex(e => e.uid === user?.uid) + 1;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>⚔ ARENA PvP</p>
-        <button onClick={() => { fetchLeaderboard(); fetchHistory(); }} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
+        <button onClick={fetchAll} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
       </div>
 
       {/* Stats + cooldown */}
-      <div style={{
-        background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-        padding: '8px 12px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-      }}>
+      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...PX(10), color: '#6aaa30' }}>{pvpWins}</p>
@@ -328,94 +332,39 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
+          {myRank > 0 && <p style={{ ...PX(4), color: 'var(--gold-bright)', marginBottom: 3 }}>RANK #{myRank}</p>}
           {canFight
-            ? <p style={{ ...PX(6), color: '#6aaa30' }}>✓ Gotowy do walki</p>
+            ? <p style={{ ...PX(5), color: '#6aaa30' }}>✓ Gotowy</p>
             : <p style={{ ...PX(5), color: 'var(--text-dim)' }}>⏳ <CooldownTimer end={cooldownEnd} /></p>
           }
         </div>
       </div>
 
-      {myRank > 0 && (
-        <div style={{ background: 'rgba(28,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ ...PX(5), color: 'var(--text-dim)' }}>TWOJE MIEJSCE</p>
-          <p style={{ ...PX(10), color: 'var(--gold-bright)' }}>#{myRank}</p>
-        </div>
-      )}
-
-      {selected && (
-        <OpponentProfile
-          entry={selected.entry}
-          rank={selected.rank}
-          canFight={canFight}
-          onChallenge={(e) => { setSelected(null); onChallenge(e); }}
-          onClose={() => setSelected(null)}
-        />
-      )}
-
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Ladowanie...</p>}
+      {/* Two opponent cards */}
+      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>Ładowanie...</p>}
       {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
-      {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Brak graczy.</p>}
 
-      {!loading && entries.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {entries.map((entry, i) => {
-            const rank = i + 1;
-            const isMe = entry.uid === user?.uid;
-            const isSelected = selected?.entry.uid === entry.uid;
-            const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-
-            return (
-              <div
-                key={entry.uid}
-                onClick={() => !isMe && setSelected(isSelected ? null : { entry, rank })}
-                style={{
-                  background: isSelected ? 'rgba(180,40,40,0.08)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
-                  border: `1px solid ${isSelected ? 'rgba(180,40,40,0.5)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
-                  padding: '7px 8px',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  cursor: isMe ? 'default' : 'pointer',
-                  transition: 'border-color 0.15s, background 0.15s',
-                }}
-              >
-                <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
-                  {rank <= 3
-                    ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
-                    : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
-                  }
-                </div>
-
-                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                  <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {entry.username}{isMe ? ' ◀' : ''}
-                  </p>
-                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                    {entry.heroName}
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
-                  {!isMe && (
-                    <button
-                      onClick={(ev) => { ev.stopPropagation(); onChallenge(entry); }}
-                      disabled={!canFight}
-                      className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
-                      style={{ fontSize: 5, padding: '3px 7px', opacity: canFight ? 1 : 0.5, cursor: canFight ? 'pointer' : 'not-allowed' }}
-                    >
-                      ⚔ WALCZ
-                    </button>
-                  )}
-                </div>
+      {!loading && !error && (
+        <>
+          {pair ? (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <ArenaCard entry={pair[0]} canFight={canFight} onChallenge={onChallenge} />
+              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)', writingMode: 'vertical-rl' }}>VS</p>
               </div>
-            );
-          })}
-        </div>
+              <ArenaCard entry={pair[1]} canFight={canFight} onChallenge={onChallenge} />
+            </div>
+          ) : (
+            <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Za mało graczy w rankingu.</p>
+          )}
+
+          <button onClick={reroll} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '7px' }}>
+            🎲 Losuj nowych przeciwników
+          </button>
+        </>
       )}
 
+      {/* Fight history */}
       <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
         <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 8 }}>📜 HISTORIA WALK</p>
         {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>⏳ Ładowanie...</p>}
@@ -427,32 +376,24 @@ function ArenaList({ onChallenge }: { onChallenge: (e: LeaderboardEntry) => void
             {globalHistory.map((r, i) => {
               const isMe = r.attackerUid === user?.uid || r.defenderUid === user?.uid;
               const meWon = (r.attackerUid === user?.uid && r.attackerWon) || (r.defenderUid === user?.uid && !r.attackerWon);
-              const timeAgo = formatTimeAgo(r.timestamp);
               return (
                 <div key={i} style={{
                   background: isMe ? 'rgba(28,20,8,0.5)' : 'var(--bg-inset)',
                   border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
-                  padding: '6px 8px',
-                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 6,
                 }}>
                   <span style={{ ...PX(6), color: r.attackerWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>
                     {r.attackerWon ? '⚔' : '💀'}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ ...PX(5), color: isMe && meWon ? '#6aaa30' : isMe ? 'var(--hp-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ ...PX(5), color: 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       <span style={{ color: r.attackerWon ? '#6aaa30' : 'var(--hp-bright)' }}>{r.attackerHeroName}</span>
                       <span style={{ color: 'var(--text-muted)' }}> vs </span>
                       <span style={{ color: r.attackerWon ? 'var(--hp-bright)' : '#6aaa30' }}>{r.defenderHeroName}</span>
                     </p>
-                    <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                      {r.attackerUsername} vs {r.defenderUsername} · {timeAgo}
-                    </p>
+                    <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{r.attackerUsername} vs {r.defenderUsername} · {formatTimeAgo(r.timestamp)}</p>
                   </div>
-                  {isMe && (
-                    <span style={{ ...PX(4), color: meWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>
-                      {meWon ? 'WYGRANA' : 'PORAŻKA'}
-                    </span>
-                  )}
+                  {isMe && <span style={{ ...PX(4), color: meWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>{meWon ? 'WIN' : 'LOSS'}</span>}
                 </div>
               );
             })}
@@ -471,6 +412,7 @@ export default function PvpPanel() {
 
   const [combat, setCombat] = useState<CombatState | null>(null);
   const [resultRecorded, setResultRecorded] = useState(false);
+  const [arenaKey, setArenaKey] = useState(0);
 
   function startCombat(entry: LeaderboardEntry) {
     if (Date.now() - lastPvpFight < PVP_COOLDOWN) return;
@@ -603,8 +545,8 @@ export default function PvpPanel() {
   return (
     <div className="card p-3">
       {combat
-        ? <PvpCombat combat={combat} onAttack={handleAttack} onAutoFight={handleAutoFight} onExit={() => { setCombat(null); setResultRecorded(false); }} />
-        : <ArenaList onChallenge={startCombat} />
+        ? <PvpCombat combat={combat} onAttack={handleAttack} onAutoFight={handleAutoFight} onExit={() => { setCombat(null); setResultRecorded(false); setArenaKey(k => k + 1); }} />
+        : <ArenaList key={arenaKey} onChallenge={startCombat} />
       }
     </div>
   );
