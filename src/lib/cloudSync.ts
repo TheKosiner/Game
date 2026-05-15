@@ -117,7 +117,7 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
 
   // Prefer localStorage only if it belongs to this user and is newer
   try {
-    const localRaw = localStorage.getItem('cybermagic_save');
+    const localRaw = localStorage.getItem('glitchsoul_save');
     if (localRaw) {
       const localSave = JSON.parse(localRaw);
       if (localSave.uid === uid && (localSave.lastSaved ?? 0) > cloudTs) return false;

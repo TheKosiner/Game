@@ -190,7 +190,7 @@ function CityMap({
         {/* Bottom credit */}
         <text x="50" y="99" textAnchor="middle"
           fill="rgba(255,45,120,0.2)" fontSize="2.5" fontFamily="monospace">
-          CyberMagic · MAPA STREF KONTROLI
+          GlitchSoul · MAPA STREF KONTROLI
         </text>
       </svg>
 
