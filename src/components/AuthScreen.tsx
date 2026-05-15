@@ -3,6 +3,100 @@ import { useAuthStore } from '../store/authStore';
 
 type Mode = 'login' | 'register';
 
+const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+
+const inputStyle: React.CSSProperties = {
+  width: '100%',
+  background: '#0a0a1a',
+  border: '2px solid #334155',
+  padding: '8px 10px',
+  color: '#e2e8f0',
+  fontFamily: "'Press Start 2P', monospace",
+  fontSize: 8,
+  outline: 'none',
+  boxSizing: 'border-box',
+};
+
+const labelStyle: React.CSSProperties = {
+  ...PX(7),
+  color: '#64748b',
+  display: 'block',
+  marginBottom: 5,
+};
+
+function VerificationScreen() {
+  const pendingEmail    = useAuthStore(s => s.pendingEmail);
+  const resendVerification = useAuthStore(s => s.resendVerification);
+  const logout          = useAuthStore(s => s.logout);
+  const error           = useAuthStore(s => s.error);
+
+  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  async function handleResend() {
+    setSending(true);
+    await resendVerification();
+    setSending(false);
+    setSent(true);
+    setTimeout(() => setSent(false), 10000);
+  }
+
+  return (
+    <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: '#0f0e17' }}>
+      <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <p style={{ fontSize: 48, marginBottom: 8 }}>📧</p>
+          <h1 style={{ ...PX(10), color: '#fbbf24', marginBottom: 10 }}>WERYFIKACJA EMAIL</h1>
+        </div>
+
+        <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ background: 'rgba(250,204,21,0.08)', border: '2px solid rgba(250,204,21,0.3)', padding: '12px 14px' }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#fbbf24', marginBottom: 6 }}>
+              Wysłaliśmy link weryfikacyjny na:
+            </p>
+            <p style={{ ...PX(8), color: '#fff', wordBreak: 'break-all' }}>{pendingEmail}</p>
+          </div>
+
+          <p style={{ ...MONO, fontSize: 9, color: '#64748b', lineHeight: 1.6 }}>
+            Kliknij link w emailu, a następnie wróć tutaj i zaloguj się.
+            Sprawdź też folder SPAM jeśli nie widzisz wiadomości.
+          </p>
+
+          {error && (
+            <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
+              <p style={{ color: '#f87171', ...MONO, fontSize: 9 }}>⚠ {error}</p>
+            </div>
+          )}
+
+          {sent && (
+            <div style={{ background: 'rgba(34,197,94,0.08)', border: '2px solid rgba(34,197,94,0.3)', padding: '6px 8px' }}>
+              <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>✓ Wysłano ponownie!</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleResend}
+            disabled={sending || sent}
+            className="btn btn-secondary"
+            style={{ width: '100%', padding: '10px', ...PX(7), opacity: sent ? 0.6 : 1 }}
+          >
+            {sending ? '...' : sent ? '✓ Wysłano' : '🔁 Wyślij ponownie'}
+          </button>
+
+          <button
+            onClick={() => logout()}
+            className="btn"
+            style={{ width: '100%', padding: '8px', ...PX(6), background: 'none', border: '1px solid #334155', color: '#475569' }}
+          >
+            ← Wróć do logowania
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AuthScreen() {
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -10,10 +104,13 @@ export default function AuthScreen() {
   const [username, setUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const login = useAuthStore(s => s.login);
+  const login    = useAuthStore(s => s.login);
   const register = useAuthStore(s => s.register);
-  const error = useAuthStore(s => s.error);
+  const error    = useAuthStore(s => s.error);
+  const needsVerification = useAuthStore(s => s.needsVerification);
   const clearError = useAuthStore(s => s.clearError);
+
+  if (needsVerification) return <VerificationScreen />;
 
   function switchMode(m: Mode) {
     setMode(m);
@@ -35,25 +132,6 @@ export default function AuthScreen() {
     }
     setSubmitting(false);
   }
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: '#0a0a1a',
-    border: '2px solid #334155',
-    padding: '8px 10px',
-    color: '#e2e8f0',
-    fontFamily: "'Press Start 2P', monospace",
-    fontSize: 8,
-    outline: 'none',
-    boxSizing: 'border-box',
-  };
-
-  const labelStyle: React.CSSProperties = {
-    color: '#64748b',
-    fontSize: 7,
-    display: 'block',
-    marginBottom: 5,
-  };
 
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: '#0f0e17' }}>
@@ -129,6 +207,12 @@ export default function AuthScreen() {
                 style={inputStyle}
               />
             </div>
+
+            {mode === 'register' && (
+              <p style={{ ...MONO, fontSize: 8, color: '#475569', lineHeight: 1.5 }}>
+                ✉ Po rejestracji wyślemy link weryfikacyjny na podany adres email.
+              </p>
+            )}
 
             {error && (
               <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
