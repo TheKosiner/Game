@@ -1356,7 +1356,10 @@ function SelectView() {
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
-            <p style={{ ...ORB, fontSize: 10, color: '#cc44ff' }}>{bossIdx >= 5 ? '3×✨' : bossIdx >= 2 ? '2×🟪' : '1×🟪'}</p>
+            <p style={{ ...ORB, fontSize: 10, color: '#cc44ff' }}>
+              {Math.round(bossIdx / 15 * 65)}% ✨
+            </p>
+            <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>szansa LEGENDARNY</p>
           </div>
         </div>
       </div>
