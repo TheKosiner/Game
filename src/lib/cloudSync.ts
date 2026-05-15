@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -212,6 +212,8 @@ export interface Guild {
   createdAt: number;
   guildXp: number;
   lastSiegeAt: number | null;
+  lastCaptureAt: number | null;
+  lastLostAt: number | null;
 }
 
 export interface GuildInvite {
@@ -560,26 +562,34 @@ export async function captureTerritory(
   memberCount: number,
   avgLevel: number,
   defenderMembers: Array<{ name: string; level: number }> = [],
+  prevOwnerGuildId?: string,
 ): Promise<void> {
   if (!db) return;
-  await setDoc(doc(db, 'territories', territoryId), {
-    guildId,
-    guildName,
-    guildTag,
-    capturedAt: Date.now(),
+  const now = Date.now();
+  const batch = writeBatch(db);
+
+  batch.set(doc(db, 'territories', territoryId), {
+    guildId, guildName, guildTag,
+    capturedAt: now,
     lastRewardAt: null,
-    expiresAt: Date.now() + WEEK_MS,
+    expiresAt: now + WEEK_MS,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
     defenderMembers,
-    siegeGuildId: null,
-    siegeGuildTag: null,
-    siegeCurrentHp: null,
-    siegeMaxHp: null,
-    siegeLastHitAt: null,
-    siegeStartedAt: null,
-    siegeAttackers: [],
+    siegeGuildId: null, siegeGuildTag: null,
+    siegeCurrentHp: null, siegeMaxHp: null,
+    siegeLastHitAt: null, siegeStartedAt: null, siegeAttackers: [],
   });
+
+  // Set 24h capture cooldown on the capturing guild
+  batch.update(doc(db, 'guilds', guildId), { lastCaptureAt: now });
+
+  // Set 24h loss cooldown on the previous owner
+  if (prevOwnerGuildId && prevOwnerGuildId !== guildId) {
+    batch.update(doc(db, 'guilds', prevOwnerGuildId), { lastLostAt: now });
+  }
+
+  await batch.commit();
 }
 
 export async function abandonTerritory(territoryId: string, guildId: string): Promise<void> {

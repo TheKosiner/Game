@@ -423,6 +423,18 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
+    const now = Date.now();
+    if (guild.lastCaptureAt && now - guild.lastCaptureAt < DAY_MS) {
+      const left = DAY_MS - (now - guild.lastCaptureAt);
+      alert(`Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
+      return;
+    }
+    if (guild.lastLostAt && now - guild.lastLostAt < DAY_MS) {
+      const left = DAY_MS - (now - guild.lastLostAt);
+      alert(`Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
+      return;
+    }
+
     const isMyActiveSiege = state?.siegeGuildId === guild.id && (state?.siegeCurrentHp ?? 0) > 0;
     const siegeExpired = isMyActiveSiege && state?.siegeStartedAt != null && Date.now() - state.siegeStartedAt >= SIEGE_DURATION_MS;
 
@@ -621,7 +633,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
           ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
           : hero.level;
         const defenderMembers = members.map(m => ({ name: m.heroName || m.username, level: m.level }));
-        await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel, defenderMembers);
+        const prevOwner = territories[combat.territory.id]?.guildId ?? undefined;
+        await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel, defenderMembers, prevOwner);
       }
       await reloadTerritories();
     } finally {
@@ -706,6 +719,24 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         </div>
       )}
 
+      {guild && (() => {
+        const now2 = Date.now();
+        const capCd = guild.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCd = guild.lastLostAt && now2 - guild.lastLostAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        if (!capCd && !lostCd) return null;
+        return (
+          <div style={{ background: 'rgba(40,20,0,0.7)', border: '1px solid rgba(180,100,0,0.4)', padding: 8 }}>
+            <p style={{ ...PX(4), color: '#e09040' }}>
+              {lostCd
+                ? `⏳ Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`
+                : `⏳ Przejęliście strefę dziś — kolejne przejęcie za ${formatCountdown(capCd!)}`}
+            </p>
+          </div>
+        );
+      })()}
+
       {loading && (
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
       )}
@@ -734,7 +765,13 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
           ? DAY_MS - (now - state.lastRewardAt)
           : null;
 
-        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked;
+        const now2 = Date.now();
+        const captureCooldown = guild?.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCooldown = guild?.lastLostAt && now2 - guild.lastLostAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        const onCooldown = !!(captureCooldown || lostCooldown);
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked && !onCooldown;
 
         const borderColor = isFocused
           ? 'rgba(0,245,255,0.6)'
