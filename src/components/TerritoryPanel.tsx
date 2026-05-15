@@ -3,7 +3,7 @@ import { TERRITORY_LIST, type TerritoryDef } from '../data/territories';
 import {
   getTerritories, captureTerritory, claimTerritoryReward,
   initOrJoinSiege, commitSiegeDamage,
-  abandonTerritory, recordGuildSiegeAttempt,
+  abandonTerritory,
   type TerritoryState, type Guild,
 } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
@@ -13,6 +13,7 @@ import { getHeroAttack, getHeroDefense } from '../utils/combat';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SIEGE_DURATION_MS = 5 * 60 * 60 * 1000; // 5h siege window
 
 // ── Map constants ─────────────────────────────────────────────────────────────
 
@@ -229,6 +230,8 @@ interface SiegeCombatState {
   done: boolean;
   won: boolean;
   damageDealt: number;
+  siegeStartedAt: number;
+  siegeAttackers: string[];
 }
 
 // ── HP Bar ────────────────────────────────────────────────────────────────────
@@ -386,25 +389,23 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     }
 
     const isMyActiveSiege = state?.siegeGuildId === guild.id && (state?.siegeCurrentHp ?? 0) > 0;
+    const siegeExpired = isMyActiveSiege && state?.siegeStartedAt != null && Date.now() - state.siegeStartedAt >= SIEGE_DURATION_MS;
 
-    if (!isMyActiveSiege) {
-      const lastSiege = (guild as any).lastSiegeAt ?? 0;
-      if (Date.now() - lastSiege < DAY_MS) {
-        const remaining = (lastSiege + DAY_MS) - Date.now();
-        alert(`Dzienna próba oblężenia zużyta. Następna za ${formatCountdown(remaining)}.`);
-        return;
-      }
+    if (isMyActiveSiege && !siegeExpired && myUid && (state?.siegeAttackers ?? []).includes(myUid)) {
+      alert('Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
+      return;
     }
 
     const result = await initOrJoinSiege(def.id, guild.id, guild.tag, def.siegeHp);
     if ('blocked' in result) {
-      alert(`Inne oblężenie trwa: [${result.byTag}]. Poczekaj aż wygaśnie (2h bez aktywności).`);
+      const remaining = result.endsAt - Date.now();
+      alert(`Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
       return;
     }
 
-    if (!isMyActiveSiege && 'currentHp' in result) {
-      await recordGuildSiegeAttempt(guild.id);
-      onRefresh?.();
+    if (myUid && result.attackers.includes(myUid)) {
+      alert('Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
+      return;
     }
 
     let enemyAtk  = def.siegeAtk;
@@ -432,6 +433,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       enemyName, enemyEmoji,
       log: [`Dołączyłeś do oblężenia ${def.name}! HP wroga: ${currentHp}/${def.siegeHp}`],
       done: false, won: false, damageDealt: 0,
+      siegeStartedAt: result.startedAt,
+      siegeAttackers: result.attackers,
     });
   }
 
@@ -495,7 +498,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     if (!combat || !guild) { setCombat(null); return; }
     setCommitting(true);
     try {
-      const newHp = await commitSiegeDamage(combat.territory.id, guild.id, combat.damageDealt);
+      const newHp = await commitSiegeDamage(combat.territory.id, guild.id, combat.damageDealt, myUid ?? 'unknown');
       if (newHp <= 0 || combat.won) {
         const members  = Object.values(guild.members);
         const avgLevel = members.length > 0
@@ -590,13 +593,6 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
       )}
 
-      {guild && (guild as any).lastSiegeAt && Date.now() - (guild as any).lastSiegeAt < DAY_MS && (
-        <div style={{ background: 'rgba(40,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: 8 }}>
-          <p style={{ ...PX(4), color: 'var(--gold-main)' }}>
-            ⚔ Dzienna próba oblężenia zużyta — następna za {formatCountdown((guild as any).lastSiegeAt + DAY_MS - Date.now())}
-          </p>
-        </div>
-      )}
 
       {/* Territory cards */}
       {!loading && sortedTerritories.map(def => {
@@ -607,18 +603,21 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const locked         = hero.level < def.minLevel;
         const isFocused      = focused === def.id;
 
-        const mySiegeActive    = state?.siegeGuildId === guild?.id && (state?.siegeCurrentHp ?? 0) > 0;
-        const enemySiegeActive = state?.siegeGuildId && state.siegeGuildId !== guild?.id && (state?.siegeCurrentHp ?? 0) > 0;
-
         const now = Date.now();
+        const siegeExpired = state?.siegeStartedAt != null && now - state.siegeStartedAt >= SIEGE_DURATION_MS;
+        const mySiegeActive    = state?.siegeGuildId === guild?.id && (state?.siegeCurrentHp ?? 0) > 0 && !siegeExpired;
+        const enemySiegeActive = state?.siegeGuildId && state.siegeGuildId !== guild?.id && (state?.siegeCurrentHp ?? 0) > 0 && !siegeExpired;
+        const alreadyAttacked  = mySiegeActive && myUid != null && (state?.siegeAttackers ?? []).includes(myUid);
+        const siegeTimeLeft    = mySiegeActive && state?.siegeStartedAt ? (state.siegeStartedAt + SIEGE_DURATION_MS) - now : null;
+        const attackerCount    = mySiegeActive ? (state?.siegeAttackers ?? []).length : 0;
+
         const canClaim = ownedByMyGuild && guild &&
           (state.lastRewardAt === null || now - (state.lastRewardAt ?? 0) >= DAY_MS);
         const nextClaimIn = ownedByMyGuild && !canClaim && state?.lastRewardAt
           ? DAY_MS - (now - state.lastRewardAt)
           : null;
 
-        const siegeLimitReached = !!guild?.lastSiegeAt && Date.now() - (guild as any).lastSiegeAt < DAY_MS;
-        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && (!siegeLimitReached || mySiegeActive);
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked;
 
         const borderColor = isFocused
           ? 'rgba(0,245,255,0.6)'
@@ -675,6 +674,23 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                   </p>
                 </div>
                 <HpBar current={state.siegeCurrentHp ?? 0} max={state.siegeMaxHp} color={mySiegeActive ? '#7040c0' : '#c07020'} />
+                {mySiegeActive && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                    <p style={{ ...MONO, fontSize: 8, color: '#a080e0' }}>
+                      👥 {attackerCount} {attackerCount === 1 ? 'gracz' : 'graczy'} zaatakowało
+                    </p>
+                    {siegeTimeLeft !== null && (
+                      <p style={{ ...MONO, fontSize: 8, color: siegeTimeLeft < 30 * 60 * 1000 ? '#ff6060' : 'var(--text-muted)' }}>
+                        ⏱ {formatCountdown(Math.max(0, siegeTimeLeft))}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {mySiegeActive && alreadyAttacked && (
+                  <p style={{ ...MONO, fontSize: 8, color: '#e09040', marginTop: 3 }}>
+                    ✓ Już zaatakowałeś — czekaj na sojuszników
+                  </p>
+                )}
               </div>
             )}
 

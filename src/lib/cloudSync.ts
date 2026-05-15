@@ -386,6 +386,7 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
       defenderMemberCount: 0, defenderAvgLevel: 0,
       siegeGuildId: null, siegeGuildTag: null,
       siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+      siegeStartedAt: null, siegeAttackers: [],
     });
   }
   await deleteDoc(doc(db, 'guilds', guildId));
@@ -409,6 +410,8 @@ export interface TerritoryState {
   siegeCurrentHp: number | null;
   siegeMaxHp: number | null;
   siegeLastHitAt: number | null;
+  siegeStartedAt: number | null;
+  siegeAttackers: string[]; // UIDs who already attacked in this siege
 }
 
 const EMPTY_TERRITORY = {
@@ -417,9 +420,10 @@ const EMPTY_TERRITORY = {
   defenderMemberCount: 0, defenderAvgLevel: 0,
   siegeGuildId: null, siegeGuildTag: null,
   siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+  siegeStartedAt: null, siegeAttackers: [],
 };
 
-const SIEGE_TIMEOUT = 2 * 60 * 60 * 1000; // 2h stale siege can be overwritten
+const SIEGE_DURATION = 5 * 60 * 60 * 1000; // 5h — siege window
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
@@ -479,33 +483,39 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
   return result;
 }
 
-/** Start or rejoin a siege. Returns current siege HP, or null if blocked by another guild. */
+/** Start or rejoin a siege. Returns current siege state, or blocked info. */
 export async function initOrJoinSiege(
   territoryId: string,
   attackingGuildId: string,
   attackingGuildTag: string,
   siegeMaxHp: number,
-): Promise<{ currentHp: number } | { blocked: true; byTag: string }> {
-  if (!db) return { currentHp: siegeMaxHp };
+): Promise<{ currentHp: number; startedAt: number; attackers: string[] } | { blocked: true; byTag: string; endsAt: number }> {
+  if (!db) return { currentHp: siegeMaxHp, startedAt: Date.now(), attackers: [] };
   const ref = doc(db, 'territories', territoryId);
   return runTransaction(db, async tx => {
     const snap = await tx.get(ref);
     const data = snap.exists() ? snap.data() as TerritoryState : {} as TerritoryState;
     const now = Date.now();
-    // Active siege by same guild — rejoin
-    if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0) {
-      return { currentHp: data.siegeCurrentHp! };
+    const siegeExpired = data.siegeStartedAt !== null && now - data.siegeStartedAt >= SIEGE_DURATION;
+
+    // Active siege by same guild that hasn't expired — rejoin
+    if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0 && !siegeExpired) {
+      return {
+        currentHp: data.siegeCurrentHp!,
+        startedAt: data.siegeStartedAt!,
+        attackers: data.siegeAttackers ?? [],
+      };
     }
-    // Active siege by different guild that hasn't gone stale — blocked
+    // Active siege by different guild that hasn't expired — blocked
     if (
       data.siegeGuildId && data.siegeGuildId !== attackingGuildId &&
       (data.siegeCurrentHp ?? 0) > 0 &&
-      data.siegeLastHitAt !== null &&
-      now - data.siegeLastHitAt < SIEGE_TIMEOUT
+      !siegeExpired
     ) {
-      return { blocked: true as const, byTag: data.siegeGuildTag ?? '?' };
+      return { blocked: true as const, byTag: data.siegeGuildTag ?? '?', endsAt: (data.siegeStartedAt ?? now) + SIEGE_DURATION };
     }
-    // Start fresh siege
+    // Start fresh siege (previous expired or no siege)
+    const startedAt = now;
     tx.set(ref, {
       ...(snap.exists() ? data : {}),
       siegeGuildId: attackingGuildId,
@@ -513,16 +523,19 @@ export async function initOrJoinSiege(
       siegeCurrentHp: siegeMaxHp,
       siegeMaxHp,
       siegeLastHitAt: now,
+      siegeStartedAt: startedAt,
+      siegeAttackers: [],
     }, { merge: true });
-    return { currentHp: siegeMaxHp };
+    return { currentHp: siegeMaxHp, startedAt, attackers: [] };
   });
 }
 
-/** Apply damage dealt in one player session. Returns remaining siege HP. */
+/** Apply damage dealt by one player. Returns remaining siege HP. */
 export async function commitSiegeDamage(
   territoryId: string,
   attackingGuildId: string,
   damage: number,
+  playerUid: string,
 ): Promise<number> {
   if (!db || damage <= 0) return 0;
   const ref = doc(db, 'territories', territoryId);
@@ -532,7 +545,8 @@ export async function commitSiegeDamage(
     const data = snap.data() as TerritoryState;
     if (data.siegeGuildId !== attackingGuildId) return data.siegeCurrentHp ?? 0;
     const newHp = Math.max(0, (data.siegeCurrentHp ?? 0) - damage);
-    tx.update(ref, { siegeCurrentHp: newHp, siegeLastHitAt: Date.now() });
+    const attackers = [...new Set([...(data.siegeAttackers ?? []), playerUid])];
+    tx.update(ref, { siegeCurrentHp: newHp, siegeLastHitAt: Date.now(), siegeAttackers: attackers });
     return newHp;
   });
 }
@@ -560,6 +574,8 @@ export async function captureTerritory(
     siegeCurrentHp: null,
     siegeMaxHp: null,
     siegeLastHitAt: null,
+    siegeStartedAt: null,
+    siegeAttackers: [],
   });
 }
 

@@ -22,7 +22,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Chaotyczny bazar pod neonową kopułą. Tu wszystko można kupić — i stracić głowę.',
     minLevel: 1, dailyGold: 50, dailyXp: 30,
     guardianName: 'Gang Uliczny', guardianEmoji: '🗡️',
-    siegeAtk: 16, siegeDef: 22, siegeHp: 350,
+    siegeAtk: 30, siegeDef: 10, siegeHp: 45,
   },
   {
     id: 'ruined_keep',
@@ -31,7 +31,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Rdzewiające zakłady przerobione na fortecę. Drony patrolują każdy korytarz.',
     minLevel: 5, dailyGold: 130, dailyXp: 80,
     guardianName: 'Mech-Strażnik', guardianEmoji: '🤖',
-    siegeAtk: 22, siegeDef: 28, siegeHp: 500,
+    siegeAtk: 40, siegeDef: 15, siegeHp: 120,
   },
   {
     id: 'dark_mountain',
@@ -40,7 +40,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Szklane iglice korporacji. Prywatna armia pilnuje windykacji długów.',
     minLevel: 10, dailyGold: 280, dailyXp: 170,
     guardianName: 'Korporacyjny Egzekutor', guardianEmoji: '💼',
-    siegeAtk: 30, siegeDef: 36, siegeHp: 700,
+    siegeAtk: 55, siegeDef: 22, siegeHp: 180,
   },
   {
     id: 'cursed_tomb',
@@ -49,7 +49,7 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Tunele pełne kabli i serwerów. Hakerzy kontrolują stąd całą komunikację miasta.',
     minLevel: 15, dailyGold: 450, dailyXp: 280,
     guardianName: 'Mistrz Hakerów', guardianEmoji: '👾',
-    siegeAtk: 38, siegeDef: 48, siegeHp: 900,
+    siegeAtk: 75, siegeDef: 32, siegeHp: 230,
   },
   {
     id: 'dragon_peak',
@@ -58,6 +58,6 @@ export const TERRITORY_LIST: TerritoryDef[] = [
     description: 'Serce Neon-Warszawa. Kto kontroluje Cytadelę, dyktuje prawa całemu miastu.',
     minLevel: 25, dailyGold: 800, dailyXp: 500,
     guardianName: 'Warlord Krypto', guardianEmoji: '👑',
-    siegeAtk: 55, siegeDef: 60, siegeHp: 1500,
+    siegeAtk: 110, siegeDef: 50, siegeHp: 320,
   },
 ];
