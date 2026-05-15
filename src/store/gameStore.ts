@@ -90,17 +90,11 @@ function isSameDay(ts: number): boolean {
 }
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
-  const slots = MAX_INVENTORY - inventory.length;
-  if (slots <= 0) return [];
-  const count = Math.min(slots, bossIdx >= 5 ? 3 : bossIdx >= 2 ? 2 : 1);
-  const results: Item[] = [];
-  for (let i = 0; i < count; i++) {
-    const forceRarity: Rarity = bossIdx >= 5 ? 'legendary' : (bossIdx >= 2 && Math.random() < 0.5 ? 'legendary' : 'epic');
-    // Boss loot is slightly above hero level
-    const itemLevel = Math.max(1, heroLevel + rollInt(0, 4));
-    results.push(generateItem(itemLevel, forceRarity));
-  }
-  return results;
+  if (MAX_INVENTORY - inventory.length <= 0) return [];
+  const legendaryChance = bossIdx / 15 * 0.65; // 0% (boss 0) → 65% (boss 15)
+  const rarity: Rarity = Math.random() < legendaryChance ? 'legendary' : 'epic';
+  const itemLevel = Math.max(1, heroLevel + rollInt(0, 4));
+  return [generateItem(itemLevel, rarity)];
 }
 
 function scaledQuestDuration(durationMs: number, level: number): number {
