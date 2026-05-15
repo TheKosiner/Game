@@ -1,4 +1,4 @@
-import type { Item, Rarity } from '../types';
+import type { Item } from '../types';
 
 export const ALL_ITEMS: Item[] = [
   // ── Weapons: Energy Blades (Ostrza Energetyczne) ─────────────────────────
@@ -245,62 +245,5 @@ export function getItemById(id: string): Item | undefined {
   return ALL_ITEMS.find(i => i.id === id);
 }
 
-function seededRand(seed: { v: number }): number {
-  seed.v = (seed.v * 1664525 + 1013904223) & 0x7fffffff;
-  return seed.v / 0x7fffffff;
-}
 
-const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-
-export function generateShopItems(level: number, seed: number): { item: Item; price: number; featured: boolean }[] {
-  const rng = { v: seed };
-  const rand = () => seededRand(rng);
-  const used = new Set<string>();
-  const result: { item: Item; price: number; featured: boolean }[] = [];
-
-  function pickRarity(featured: boolean): Rarity {
-    const r = rand();
-    if (featured) {
-      if (r < 0.02)  return 'legendary';
-      if (r < 0.10)  return 'epic';
-      if (r < 0.35)  return 'rare';
-      if (r < 0.65)  return 'uncommon';
-      return 'common';
-    }
-    if (r < 0.005) return 'legendary';
-    if (r < 0.02)  return 'epic';
-    if (r < 0.08)  return 'rare';
-    if (r < 0.38)  return 'uncommon';
-    return 'common';
-  }
-
-  function pickItem(targetRarity: Rarity): Item | null {
-    const levelMin = Math.max(1, level - 4);
-    const levelMax = level + 5;
-    let pool = ALL_ITEMS.filter(i => !used.has(i.id) && i.level >= levelMin && i.level <= levelMax && i.rarity === targetRarity);
-
-    if (pool.length === 0) {
-      const idx = RARITY_ORDER.indexOf(targetRarity);
-      for (const delta of [1, -1, 2, -2]) {
-        const alt = RARITY_ORDER[idx + delta];
-        if (!alt) continue;
-        pool = ALL_ITEMS.filter(i => !used.has(i.id) && i.level >= levelMin && i.level <= levelMax && i.rarity === alt);
-        if (pool.length > 0) break;
-      }
-    }
-    if (pool.length === 0) return null;
-    return pool[Math.floor(rand() * pool.length)];
-  }
-
-  const SLOT_COUNT = 6;
-  for (let i = 0; i < SLOT_COUNT; i++) {
-    const featured = i === SLOT_COUNT - 1;
-    const rarity = pickRarity(featured);
-    const item = pickItem(rarity);
-    if (!item) continue;
-    used.add(item.id);
-    const markup = 1.3 + rand() * 0.4;
-    result.push({ item, price: Math.round(item.goldValue * markup), featured });
-  }
-  return result;
-}
+export { generateShopItems } from './itemGenerator';
