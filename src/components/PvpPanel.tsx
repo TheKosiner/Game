@@ -12,6 +12,12 @@ const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const REROLL_COOLDOWN = 15 * 60 * 1000;
 
+// Module-level cache — survives tab navigation (component unmount/remount)
+let _pool: LeaderboardEntry[] = [];
+let _pair: [LeaderboardEntry, LeaderboardEntry] | null = null;
+let _history: PvpFightRecord[] = [];
+let _poolLoaded = false;
+
 function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
   return (
@@ -412,13 +418,13 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
   const pvpRating = useGameStore(s => s.pvpRating);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
 
-  const [entries,        setEntries]        = useState<LeaderboardEntry[]>([]);
-  const [loading,        setLoading]        = useState(true);
+  const [entries,        setEntries]        = useState<LeaderboardEntry[]>(() => _pool);
+  const [loading,        setLoading]        = useState(!_poolLoaded);
   const [error,          setError]          = useState('');
   const [now,            setNow]            = useState(Date.now());
-  const [globalHistory,  setGlobalHistory]  = useState<PvpFightRecord[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const [pair,           setPair]           = useState<[LeaderboardEntry, LeaderboardEntry] | null>(null);
+  const [globalHistory,  setGlobalHistory]  = useState<PvpFightRecord[]>(() => _history);
+  const [historyLoading, setHistoryLoading] = useState(!_poolLoaded);
+  const [pair,           setPair]           = useState<[LeaderboardEntry, LeaderboardEntry] | null>(() => _pair);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -430,10 +436,14 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
     setHistoryLoading(true);
     try {
       const [lb, hist] = await Promise.all([getLeaderboard(), getPvpHistory()]);
+      _pool = lb;
+      _history = hist;
+      _poolLoaded = true;
       setEntries(lb);
       setGlobalHistory(hist);
       const pool = lb.filter(e => e.uid !== user?.uid);
-      setPair(pickTwo(pool, hero.level));
+      if (!_pair) _pair = pickTwo(pool, hero.level);
+      setPair(_pair);
     } catch { setError('Błąd połączenia z serwerem'); }
     finally { setLoading(false); setHistoryLoading(false); }
   }
@@ -441,11 +451,12 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
   function reroll() {
     if (now - lastReroll < REROLL_COOLDOWN) return;
     const pool = entries.filter(e => e.uid !== user?.uid);
-    setPair(pickTwo(pool, hero.level));
+    _pair = pickTwo(pool, hero.level);
+    setPair(_pair);
     onReroll();
   }
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { if (!_poolLoaded) fetchAll(); }, []);
 
   const cooldownEnd   = lastPvpFight + PVP_COOLDOWN;
   const canFight      = now >= cooldownEnd;
@@ -661,6 +672,9 @@ export default function PvpPanel() {
     setAutoFight(false);
     setCombat(null);
     setResultRecorded(false);
+    // After a fight, always rotate to a fresh pair
+    const pool = _pool.filter(e => e.uid !== user?.uid);
+    _pair = pickTwo(pool, hero.level);
     setArenaKey(k => k + 1);
   }
 
