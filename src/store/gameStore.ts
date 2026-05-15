@@ -159,6 +159,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   lastPvpFight: 0,
   pvpWins: 0,
   pvpLosses: 0,
+  pvpRating: 1000,
   pvpLog: [],
   lastPassiveRegenAt: Date.now(),
   challengeUnlocked: 0,
@@ -170,7 +171,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpLog: [], lastPassiveRegenAt: Date.now() });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpRating: 1000, pvpLog: [], lastPassiveRegenAt: Date.now() });
     if (!skipSave) get().saveGame();
   },
 
@@ -497,7 +498,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   performPvp: (opponent: PvpOpponent): PvpResult | null => {
-    const { hero, lastPvpFight, pvpWins, pvpLosses, pvpLog, inCombat } = get();
+    const { hero, lastPvpFight, pvpWins, pvpLosses, pvpRating, pvpLog, inCombat } = get();
     if (inCombat) return null;
     const now = Date.now();
     if (now - lastPvpFight < PVP_COOLDOWN) return null;
@@ -506,11 +507,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100);
     const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
+    const ratingDelta = won ? 25 : -15;
     const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
     set({
       lastPvpFight: now,
       pvpWins: won ? pvpWins + 1 : pvpWins,
       pvpLosses: won ? pvpLosses : pvpLosses + 1,
+      pvpRating: Math.max(0, pvpRating + ratingDelta),
       pvpLog: [result, ...pvpLog].slice(0, 10),
     });
     get().addXp(xpGained);
@@ -520,15 +523,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   recordPvpResult: (won: boolean, opponent: PvpOpponent): PvpResult => {
-    const { pvpWins, pvpLosses, pvpLog } = get();
+    const { pvpWins, pvpLosses, pvpRating, pvpLog } = get();
     const now = Date.now();
     const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
+    const ratingDelta = won ? 25 : -15;
     const result: PvpResult = { won, opponentName: opponent.heroName, xpGained, goldGained, timestamp: now };
     set({
       lastPvpFight: now,
       pvpWins: won ? pvpWins + 1 : pvpWins,
       pvpLosses: won ? pvpLosses : pvpLosses + 1,
+      pvpRating: Math.max(0, pvpRating + ratingDelta),
       pvpLog: [result, ...pvpLog].slice(0, 10),
     });
     get().addXp(xpGained);
@@ -834,6 +839,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       lastPvpFight: state.lastPvpFight,
       pvpWins: state.pvpWins,
       pvpLosses: state.pvpLosses,
+      pvpRating: state.pvpRating,
       pvpLog: state.pvpLog,
       lastPassiveRegenAt: state.lastPassiveRegenAt,
       challengeUnlocked: state.challengeUnlocked,
@@ -915,6 +921,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           lastPvpFight: save.lastPvpFight ?? 0,
           pvpWins: save.pvpWins ?? 0,
           pvpLosses: save.pvpLosses ?? 0,
+          pvpRating: save.pvpRating ?? 1000,
           pvpLog: save.pvpLog ?? [],
           lastPassiveRegenAt: save.lastPassiveRegenAt ?? Date.now(),
           challengeUnlocked: save.challengeUnlocked ?? 0,
