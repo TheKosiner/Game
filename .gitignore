@@ -4,3 +4,6 @@ dist/
 .env.local
 *.log
 .claude/worktrees/
+serviceAccount.json
+*serviceAccount*.json
+*service-account*.json
