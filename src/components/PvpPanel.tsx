@@ -274,8 +274,11 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
             <p style={{ ...PX(9), color: combat.won ? '#6aaa30' : 'var(--hp-bright)', marginBottom: 6 }}>
               {combat.won ? '🏆 ZWYCIĘSTWO!' : '💀 PORAŻKA'}
             </p>
-            <p style={{ ...PX(6), color: 'var(--gold-bright)' }}>
+            <p style={{ ...PX(6), color: 'var(--gold-bright)', marginBottom: 4 }}>
               +{combat.xpGained} XP{combat.goldGained > 0 ? `   +${combat.goldGained}🪙` : ''}
+            </p>
+            <p style={{ ...PX(6), color: combat.won ? '#c084fc' : '#a855f7' }}>
+              {combat.won ? '+25' : '-15'} RANKING
             </p>
           </div>
           <button onClick={onExit} className="btn btn-secondary" style={{ width: '100%', fontSize: 7 }}>◀ Wróć do areny</button>
@@ -316,9 +319,10 @@ function ArenaCard({ entry, canFight, onChallenge }: {
   const atk = entry.attack  ?? 0;
   const def = entry.defense ?? 0;
   const hp  = entry.maxHp   ?? 0;
-  const wins   = entry.pvpWins   ?? 0;
-  const losses = entry.pvpLosses ?? 0;
-  const total  = wins + losses;
+  const wins    = entry.pvpWins   ?? 0;
+  const losses  = entry.pvpLosses ?? 0;
+  const rating  = entry.pvpRating ?? 1000;
+  const total   = wins + losses;
   const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
   const maxStat = Math.max(atk, def, 1);
 
@@ -364,6 +368,11 @@ function ArenaCard({ entry, canFight, onChallenge }: {
         <StatBar label="HP"  value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
       </div>
 
+      <div style={{ background: 'rgba(180,140,255,0.07)', border: '1px solid rgba(180,140,255,0.25)', padding: '4px 8px', textAlign: 'center' }}>
+        <p style={{ ...ORB, fontSize: 11, color: '#c084fc' }}>{rating}</p>
+        <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>RANKING</p>
+      </div>
+
       <div style={{ display: 'flex', gap: 4 }}>
         <div style={{ flex: 1, background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.15)', padding: '3px 0', textAlign: 'center' }}>
           <p style={{ ...ORB, fontSize: 9, color: '#00ff88' }}>{wins}</p>
@@ -400,6 +409,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
   const hero    = useGameStore(s => s.hero);
   const pvpWins   = useGameStore(s => s.pvpWins);
   const pvpLosses = useGameStore(s => s.pvpLosses);
+  const pvpRating = useGameStore(s => s.pvpRating);
   const lastPvpFight = useGameStore(s => s.lastPvpFight);
 
   const [entries,        setEntries]        = useState<LeaderboardEntry[]>([]);
@@ -452,7 +462,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
       </div>
 
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...PX(10), color: '#6aaa30' }}>{pvpWins}</p>
             <p style={{ ...PX(4), color: 'var(--text-muted)' }}>WYGRANE</p>
@@ -461,6 +471,11 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...PX(10), color: 'var(--hp-bright)' }}>{pvpLosses}</p>
             <p style={{ ...PX(4), color: 'var(--text-muted)' }}>PRZEGRANE</p>
+          </div>
+          <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ ...PX(10), color: '#c084fc' }}>{pvpRating}</p>
+            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>RANKING</p>
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>

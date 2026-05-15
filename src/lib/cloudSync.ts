@@ -20,6 +20,7 @@ export interface LeaderboardEntry {
   maxHp?: number;
   pvpWins?: number;
   pvpLosses?: number;
+  pvpRating?: number;
   guildId?: string;
   guildTag?: string;
 }
@@ -27,7 +28,7 @@ export interface LeaderboardEntry {
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
   useGameStore.getState().saveGame();
-  const { hero, activeQuest, pvpWins, pvpLosses } = useGameStore.getState();
+  const { hero, activeQuest, pvpWins, pvpLosses, pvpRating } = useGameStore.getState();
   const { pvpLog, lastPvpFight, challengeUnlocked, lastChallengeAt } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
   const now = Date.now();
@@ -49,6 +50,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     maxHp: hero.maxHp,
     pvpWins: pvpWins ?? 0,
     pvpLosses: pvpLosses ?? 0,
+    pvpRating: pvpRating ?? 1000,
     updatedAt: now,
   }, { merge: true });
 
@@ -58,6 +60,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     activeQuest,
     pvpWins: pvpWins ?? 0,
     pvpLosses: pvpLosses ?? 0,
+    pvpRating: pvpRating ?? 1000,
     pvpLog: pvpLog ?? [],
     lastPvpFight: lastPvpFight ?? 0,
     challengeUnlocked: challengeUnlocked ?? 0,
@@ -135,6 +138,7 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
     inCombat: false,
     pvpWins:           raw.pvpWins           ?? playerData.pvpWins ?? 0,
     pvpLosses:         raw.pvpLosses         ?? playerData.pvpLosses ?? 0,
+    pvpRating:         raw.pvpRating         ?? playerData.pvpRating ?? 1000,
     pvpLog:            raw.pvpLog            ?? [],
     lastPvpFight:      raw.lastPvpFight      ?? 0,
     challengeUnlocked: raw.challengeUnlocked ?? 0,

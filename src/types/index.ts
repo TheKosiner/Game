@@ -203,6 +203,7 @@ export interface GameState {
   lastPvpFight: number;
   pvpWins: number;
   pvpLosses: number;
+  pvpRating: number;
   pvpLog: PvpResult[];
   lastPassiveRegenAt: number;
   challengeUnlocked: number;
