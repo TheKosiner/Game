@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -212,6 +212,8 @@ export interface Guild {
   createdAt: number;
   guildXp: number;
   lastSiegeAt: number | null;
+  lastCaptureAt: number | null;
+  lastLostAt: number | null;
 }
 
 export interface GuildInvite {
@@ -404,6 +406,7 @@ export interface TerritoryState {
   expiresAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
+  defenderMembers: Array<{ name: string; level: number }>;
   // Cooperative siege fields
   siegeGuildId: string | null;
   siegeGuildTag: string | null;
@@ -417,7 +420,7 @@ export interface TerritoryState {
 const EMPTY_TERRITORY = {
   guildId: null, guildName: null, guildTag: null,
   capturedAt: null, lastRewardAt: null, expiresAt: null,
-  defenderMemberCount: 0, defenderAvgLevel: 0,
+  defenderMemberCount: 0, defenderAvgLevel: 0, defenderMembers: [],
   siegeGuildId: null, siegeGuildTag: null,
   siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
   siegeStartedAt: null, siegeAttackers: [],
@@ -558,25 +561,35 @@ export async function captureTerritory(
   guildTag: string,
   memberCount: number,
   avgLevel: number,
+  defenderMembers: Array<{ name: string; level: number }> = [],
+  prevOwnerGuildId?: string,
 ): Promise<void> {
   if (!db) return;
-  await setDoc(doc(db, 'territories', territoryId), {
-    guildId,
-    guildName,
-    guildTag,
-    capturedAt: Date.now(),
+  const now = Date.now();
+  const batch = writeBatch(db);
+
+  batch.set(doc(db, 'territories', territoryId), {
+    guildId, guildName, guildTag,
+    capturedAt: now,
     lastRewardAt: null,
-    expiresAt: Date.now() + WEEK_MS,
+    expiresAt: now + WEEK_MS,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
-    siegeGuildId: null,
-    siegeGuildTag: null,
-    siegeCurrentHp: null,
-    siegeMaxHp: null,
-    siegeLastHitAt: null,
-    siegeStartedAt: null,
-    siegeAttackers: [],
+    defenderMembers,
+    siegeGuildId: null, siegeGuildTag: null,
+    siegeCurrentHp: null, siegeMaxHp: null,
+    siegeLastHitAt: null, siegeStartedAt: null, siegeAttackers: [],
   });
+
+  // Set 24h capture cooldown on the capturing guild
+  batch.update(doc(db, 'guilds', guildId), { lastCaptureAt: now });
+
+  // Set 24h loss cooldown on the previous owner
+  if (prevOwnerGuildId && prevOwnerGuildId !== guildId) {
+    batch.update(doc(db, 'guilds', prevOwnerGuildId), { lastLostAt: now });
+  }
+
+  await batch.commit();
 }
 
 export async function abandonTerritory(territoryId: string, guildId: string): Promise<void> {

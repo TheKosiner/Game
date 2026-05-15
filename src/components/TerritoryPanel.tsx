@@ -213,19 +213,32 @@ function CityMap({
 
 // ── Combat types ──────────────────────────────────────────────────────────────
 
+interface Defender {
+  name: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  atk: number;
+  def: number;
+}
+
 interface SiegeCombatState {
   territory: TerritoryDef;
   heroHp: number;
   heroMaxHp: number;
   heroAtk: number;
   heroDef: number;
+  // Current enemy (either guardian or current defender from queue)
   enemyHp: number;
   enemyStartHp: number;
-  enemyMaxHp: number;
+  enemyMaxHp: number;  // total siege HP for the progress bar
   enemyAtk: number;
   enemyDef: number;
   enemyName: string;
   enemyEmoji: string;
+  // Defender queue (for owned territories)
+  defenders: Defender[];
+  defenderIdx: number;  // -1 = fighting guardian (not owned), >=0 = index in defenders
   log: string[];
   done: boolean;
   won: boolean;
@@ -285,6 +298,28 @@ function SiegeCombat({
           <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
         </div>
         <HpBar current={state.enemyHp} max={state.enemyStartHp} color="#c03030" />
+
+        {/* Remaining defender queue */}
+        {state.defenderIdx >= 0 && state.defenders.length > 1 && (
+          <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {state.defenders.map((d, i) => {
+              const beaten = i < state.defenderIdx;
+              const current = i === state.defenderIdx;
+              return (
+                <span key={i} style={{
+                  ...MONO, fontSize: 8,
+                  padding: '2px 6px',
+                  border: `1px solid ${current ? '#e06060' : beaten ? 'rgba(100,100,100,0.3)' : 'rgba(180,80,80,0.4)'}`,
+                  color: current ? '#e06060' : beaten ? 'rgba(100,100,100,0.5)' : 'rgba(200,120,120,0.8)',
+                  textDecoration: beaten ? 'line-through' : 'none',
+                  background: current ? 'rgba(180,40,40,0.15)' : 'transparent',
+                }}>
+                  {beaten ? '✓' : current ? '⚔' : '○'} {d.name} {d.level}
+                </span>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Hero */}
@@ -388,6 +423,18 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
+    const now = Date.now();
+    if (guild.lastCaptureAt && now - guild.lastCaptureAt < DAY_MS) {
+      const left = DAY_MS - (now - guild.lastCaptureAt);
+      alert(`Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
+      return;
+    }
+    if (guild.lastLostAt && now - guild.lastLostAt < DAY_MS) {
+      const left = DAY_MS - (now - guild.lastLostAt);
+      alert(`Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
+      return;
+    }
+
     const isMyActiveSiege = state?.siegeGuildId === guild.id && (state?.siegeCurrentHp ?? 0) > 0;
     const siegeExpired = isMyActiveSiege && state?.siegeStartedAt != null && Date.now() - state.siegeStartedAt >= SIEGE_DURATION_MS;
 
@@ -396,7 +443,47 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
-    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, def.siegeHp);
+    // Build defender queue or guardian
+    let defenders: Defender[] = [];
+    let defenderIdx = -1;
+    let firstEnemyAtk   = def.siegeAtk;
+    let firstEnemyDef   = def.siegeDef;
+    let firstEnemyName  = def.guardianName;
+    let firstEnemyEmoji = def.guardianEmoji;
+    let siegeMaxHp      = def.siegeHp;
+
+    if (state?.guildId && state.guildId !== guild.id) {
+      // Build defenders from stored member list, sorted weakest first
+      const rawMembers = (state.defenderMembers ?? []).length > 0
+        ? state.defenderMembers
+        : Array.from({ length: Math.max(1, state.defenderMemberCount || 1) }, (_, i) => ({
+            name: `Obrońca ${i + 1}`,
+            level: state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel,
+          }));
+
+      defenders = [...rawMembers]
+        .sort((a, b) => a.level - b.level)
+        .map(m => {
+          const hp = 80 + m.level * 8;
+          return {
+            name: m.name,
+            level: m.level,
+            hp,
+            maxHp: hp,
+            atk: Math.round((5 + m.level * 2) * 1.2),
+            def: Math.round(2 + m.level * 1.2),
+          };
+        });
+
+      siegeMaxHp = defenders.reduce((s, d) => s + d.maxHp, 0);
+      defenderIdx = 0;
+      firstEnemyAtk   = defenders[0].atk;
+      firstEnemyDef   = defenders[0].def;
+      firstEnemyName  = `[${state.guildTag}] ${defenders[0].name} (poz.${defenders[0].level})`;
+      firstEnemyEmoji = '⚔';
+    }
+
+    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, siegeMaxHp);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
       alert(`Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
@@ -408,34 +495,62 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       return;
     }
 
-    let enemyAtk  = def.siegeAtk;
-    let enemyDef  = def.siegeDef;
-    let enemyName = def.guardianName;
-    let enemyEmoji = def.guardianEmoji;
-
-    if (state?.guildId && state.guildId !== guild.id) {
-      const mult = Math.min(2.5, 1 + Math.sqrt(state.defenderMemberCount || 1) * (state.defenderAvgLevel || 1) / 30);
-      enemyAtk  = Math.round(def.siegeAtk * mult);
-      enemyDef  = Math.round(def.siegeDef * mult);
-      enemyName = `[${state.guildTag}] ${state.guildName}`;
-      enemyEmoji = '🏢';
-    }
-
     const heroHp    = hero.maxHp;
-    const currentHp = result.currentHp;
+    const currentHp = Math.min(result.currentHp, siegeMaxHp);
+
+    // Align defenderIdx to remaining HP so rejoining players start on correct defender
+    if (defenderIdx >= 0 && defenders.length > 0) {
+      const totalHp = siegeMaxHp;
+      const hpDealt = totalHp - currentHp;
+      let accumulated = 0;
+      for (let i = 0; i < defenders.length; i++) {
+        if (accumulated + defenders[i].maxHp > hpDealt) {
+          defenderIdx = i;
+          defenders[i] = { ...defenders[i], hp: defenders[i].maxHp - (hpDealt - accumulated) };
+          break;
+        }
+        accumulated += defenders[i].maxHp;
+        if (i === defenders.length - 1) defenderIdx = i;
+      }
+      firstEnemyAtk   = defenders[defenderIdx].atk;
+      firstEnemyDef   = defenders[defenderIdx].def;
+      firstEnemyName  = `[${state!.guildTag}] ${defenders[defenderIdx].name} (poz.${defenders[defenderIdx].level})`;
+    }
 
     setCombat({
       territory: def,
       heroHp, heroMaxHp: heroHp,
       heroAtk: getHeroAttack(hero), heroDef: getHeroDefense(hero),
-      enemyHp: currentHp, enemyStartHp: currentHp, enemyMaxHp: def.siegeHp,
-      enemyAtk, enemyDef,
-      enemyName, enemyEmoji,
-      log: [`Dołączyłeś do oblężenia ${def.name}! HP wroga: ${currentHp}/${def.siegeHp}`],
+      enemyHp: defenderIdx >= 0 ? defenders[defenderIdx].hp : currentHp,
+      enemyStartHp: defenderIdx >= 0 ? defenders[defenderIdx].maxHp : currentHp,
+      enemyMaxHp: siegeMaxHp,
+      enemyAtk: firstEnemyAtk, enemyDef: firstEnemyDef,
+      enemyName: firstEnemyName, enemyEmoji: firstEnemyEmoji,
+      defenders, defenderIdx,
+      log: defenderIdx >= 0
+        ? [`Oblężenie ${def.name}! Walczysz z ${defenders.length} obrońcami. Pierwszy: ${firstEnemyName}`]
+        : [`Dołączyłeś do oblężenia ${def.name}! HP strażnika: ${currentHp}`],
       done: false, won: false, damageDealt: 0,
       siegeStartedAt: result.startedAt,
       siegeAttackers: result.attackers,
     });
+  }
+
+  function advanceDefender(prev: SiegeCombatState, heroHp: number, damageDealt: number, log: string[]): SiegeCombatState {
+    const nextIdx = prev.defenderIdx + 1;
+    if (nextIdx >= prev.defenders.length) {
+      log.push('Wszyscy obrońcy pokonani! Strefa przejęta!');
+      return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
+    }
+    const next = prev.defenders[nextIdx];
+    log.push(`▶ Następny obrońca: ${next.name} (poz.${next.level}) — ${next.hp} HP`);
+    return {
+      ...prev, heroHp, damageDealt, log,
+      defenderIdx: nextIdx,
+      enemyHp: next.hp, enemyStartHp: next.maxHp,
+      enemyAtk: next.atk, enemyDef: next.def,
+      enemyName: `⚔ ${next.name} (poz.${next.level})`,
+    };
   }
 
   function handleCombatAttack() {
@@ -450,13 +565,17 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       log.push(`Zadajesz ${heroDmg} obrażeń. (Razem: ${damageDealt})`);
 
       if (enemyHp <= 0) {
-        log.push('Strefa przejęta!');
-        return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
+        if (prev.defenderIdx < 0) {
+          log.push('Strażnik pokonany! Strefa przejęta!');
+          return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
+        }
+        log.push(`${prev.defenders[prev.defenderIdx].name} pokonany!`);
+        return advanceDefender({ ...prev, enemyHp: 0 }, heroHp, damageDealt, log);
       }
 
       const enemyDmg = siegeDmg(enemyAtk, heroDef);
       heroHp = Math.max(0, heroHp - enemyDmg);
-      log.push(`Wróg zadaje ci ${enemyDmg} obrażeń.`);
+      log.push(`${prev.enemyName} zadaje ci ${enemyDmg} obrażeń.`);
 
       if (heroHp <= 0) {
         log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
@@ -470,27 +589,36 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   function handleAutoFight() {
     setCombat(prev => {
       if (!prev || prev.done) return prev;
-      let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = prev;
-      const log = [...prev.log, '⚡ Szybka walka...'];
+      let state = { ...prev, log: [...prev.log, '⚡ Szybka walka...'] };
 
-      for (let i = 0; i < 500; i++) {
+      for (let i = 0; i < 1000; i++) {
+        let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = state;
         const heroDmg = siegeDmg(heroAtk, enemyDef);
         enemyHp = Math.max(0, enemyHp - heroDmg);
         damageDealt += heroDmg;
+
         if (enemyHp <= 0) {
-          log.push('Strefa przejęta!');
-          return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
+          if (state.defenderIdx < 0) {
+            state.log.push('Strażnik pokonany! Strefa przejęta!');
+            return { ...state, heroHp, enemyHp: 0, damageDealt, done: true, won: true };
+          }
+          state.log.push(`${state.defenders[state.defenderIdx].name} pokonany!`);
+          state = advanceDefender({ ...state, enemyHp: 0 }, heroHp, damageDealt, state.log);
+          if (state.done) return state;
+          continue;
         }
+
         const enemyDmg = siegeDmg(enemyAtk, heroDef);
         heroHp = Math.max(0, heroHp - enemyDmg);
         if (heroHp <= 0) {
-          log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
-          return { ...prev, heroHp: 0, enemyHp, damageDealt, log, done: true, won: false };
+          state.log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
+          return { ...state, heroHp: 0, enemyHp, damageDealt, done: true, won: false };
         }
+        state = { ...state, heroHp, enemyHp, enemyAtk, enemyDef, damageDealt };
       }
 
-      log.push(`Walka wstrzymana po 500 rundach. Zadałeś ${damageDealt} obrażeń.`);
-      return { ...prev, heroHp, enemyHp, damageDealt, log };
+      state.log.push(`Walka wstrzymana. Zadałeś ${state.damageDealt} obrażeń.`);
+      return state;
     });
   }
 
@@ -504,7 +632,9 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const avgLevel = members.length > 0
           ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
           : hero.level;
-        await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel);
+        const defenderMembers = members.map(m => ({ name: m.heroName || m.username, level: m.level }));
+        const prevOwner = territories[combat.territory.id]?.guildId ?? undefined;
+        await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel, defenderMembers, prevOwner);
       }
       await reloadTerritories();
     } finally {
@@ -589,6 +719,24 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         </div>
       )}
 
+      {guild && (() => {
+        const now2 = Date.now();
+        const capCd = guild.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCd = guild.lastLostAt && now2 - guild.lastLostAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        if (!capCd && !lostCd) return null;
+        return (
+          <div style={{ background: 'rgba(40,20,0,0.7)', border: '1px solid rgba(180,100,0,0.4)', padding: 8 }}>
+            <p style={{ ...PX(4), color: '#e09040' }}>
+              {lostCd
+                ? `⏳ Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`
+                : `⏳ Przejęliście strefę dziś — kolejne przejęcie za ${formatCountdown(capCd!)}`}
+            </p>
+          </div>
+        );
+      })()}
+
       {loading && (
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
       )}
@@ -617,7 +765,13 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
           ? DAY_MS - (now - state.lastRewardAt)
           : null;
 
-        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked;
+        const now2 = Date.now();
+        const captureCooldown = guild?.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCooldown = guild?.lastLostAt && now2 - guild.lastLostAt < DAY_MS
+          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        const onCooldown = !!(captureCooldown || lostCooldown);
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked && !onCooldown;
 
         const borderColor = isFocused
           ? 'rgba(0,245,255,0.6)'
@@ -729,8 +883,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 {mySiegeActive
                   ? `⚔ Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`
                   : unowned
-                  ? `⚔ Przejmij strefę (vs ${def.guardianEmoji} — ~3 graczy)`
-                  : `⚔ Oblęż (vs [${state.guildTag}] — ~3 graczy)`}
+                  ? `⚔ Przejmij strefę (vs ${def.guardianEmoji} ${def.guardianName})`
+                  : `⚔ Oblęż (vs ⚔ Mistrz [${state.guildTag}] — silniejszy obrońca!)`}
               </button>
             )}
 
