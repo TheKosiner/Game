@@ -404,6 +404,7 @@ export interface TerritoryState {
   expiresAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
+  defenderMembers: Array<{ name: string; level: number }>;
   // Cooperative siege fields
   siegeGuildId: string | null;
   siegeGuildTag: string | null;
@@ -417,7 +418,7 @@ export interface TerritoryState {
 const EMPTY_TERRITORY = {
   guildId: null, guildName: null, guildTag: null,
   capturedAt: null, lastRewardAt: null, expiresAt: null,
-  defenderMemberCount: 0, defenderAvgLevel: 0,
+  defenderMemberCount: 0, defenderAvgLevel: 0, defenderMembers: [],
   siegeGuildId: null, siegeGuildTag: null,
   siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
   siegeStartedAt: null, siegeAttackers: [],
@@ -558,6 +559,7 @@ export async function captureTerritory(
   guildTag: string,
   memberCount: number,
   avgLevel: number,
+  defenderMembers: Array<{ name: string; level: number }> = [],
 ): Promise<void> {
   if (!db) return;
   await setDoc(doc(db, 'territories', territoryId), {
@@ -569,6 +571,7 @@ export async function captureTerritory(
     expiresAt: Date.now() + WEEK_MS,
     defenderMemberCount: memberCount,
     defenderAvgLevel: avgLevel,
+    defenderMembers,
     siegeGuildId: null,
     siegeGuildTag: null,
     siegeCurrentHp: null,
