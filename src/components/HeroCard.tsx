@@ -327,7 +327,7 @@ export default function HeroCard() {
 
           <div style={{ display: 'flex', gap: 4 }}>
             <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? 'MAGIA' : 'ATAK'} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
-            <StatBox icon="🛡" value={defense}   label="OBRON"  color="#00f5ff" />
+            <StatBox icon="🛡" value={defense}   label="OBRONA"  color="#00f5ff" />
             <StatBox icon="♥" value={hero.maxHp} label="MAX HP" color="#ff4444" />
             <StatBox icon="✨" value={magicRes}  label="ODP.MAG" color="#9d4edd" />
           </div>

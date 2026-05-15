@@ -25,6 +25,7 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, username: string) => Promise<void>;
   resendVerification: () => Promise<void>;
+  checkVerification: () => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -114,8 +115,9 @@ export const useAuthStore = create<AuthState>((set) => {
         const cred = await signInWithEmailAndPassword(auth, email, password);
         if (!cred.user.emailVerified) {
           _pendingFirebaseUser = cred.user;
+          // Keep user signed in — needed so resendVerification can call sendEmailVerification
+          // onAuthStateChanged handles showing the verification screen
           set({ needsVerification: true, pendingEmail: email });
-          await signOut(auth);
           return;
         }
       } catch (e) {
@@ -164,14 +166,16 @@ export const useAuthStore = create<AuthState>((set) => {
           return;
         }
 
+        let emailError: string | null = null;
         try {
           await sendEmailVerification(cred.user);
-        } catch {
-          // Email sending failure is non-fatal — user can resend from next screen
+        } catch (e) {
+          emailError = getErrorMessage(e);
         }
         _pendingFirebaseUser = cred.user;
-        set({ needsVerification: true, pendingEmail: email });
-        await signOut(auth);
+        // Keep user signed in — needed so resendVerification can call sendEmailVerification
+        // onAuthStateChanged handles showing the verification screen for unverified users
+        set({ needsVerification: true, pendingEmail: email, ...(emailError ? { error: emailError } : {}) });
       } catch (e: unknown) {
         set({ error: getErrorMessage(e) });
       }
@@ -181,8 +185,28 @@ export const useAuthStore = create<AuthState>((set) => {
       if (!auth) return;
       set({ error: null });
       try {
-        if (_pendingFirebaseUser) {
-          await sendEmailVerification(_pendingFirebaseUser);
+        // Prefer auth.currentUser (still signed in) over stale _pendingFirebaseUser
+        const target = auth.currentUser ?? _pendingFirebaseUser;
+        if (target) {
+          await sendEmailVerification(target);
+        }
+      } catch (e) {
+        set({ error: getErrorMessage(e) });
+      }
+    },
+
+    checkVerification: async () => {
+      if (!auth) return;
+      set({ error: null });
+      try {
+        const currentUser = auth.currentUser ?? _pendingFirebaseUser;
+        if (!currentUser) return;
+        await currentUser.reload();
+        if (currentUser.emailVerified) {
+          const username = await fetchUsername(currentUser.uid);
+          set({ user: toAuthUser(currentUser, username), needsVerification: false });
+        } else {
+          set({ error: 'Email nie został jeszcze zweryfikowany — sprawdź skrzynkę i kliknij link' });
         }
       } catch (e) {
         set({ error: getErrorMessage(e) });
