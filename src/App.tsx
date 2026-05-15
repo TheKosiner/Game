@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import logoImg from './assets/logo.png';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
@@ -91,8 +92,31 @@ export default function App() {
 
   if (authLoading || !gameLoaded) {
     return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontFamily: "'Orbitron', monospace", fontSize: 11, color: '#ff2d78', textShadow: '0 0 10px #ff2d78' }}>⧖ ŁADOWANIE...</p>
+      <div style={{
+        minHeight: '100dvh',
+        background: '#040408',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 24,
+      }}>
+        <img
+          src={logoImg}
+          alt="Glitch Soul"
+          style={{
+            width: 200, height: 'auto',
+            filter: 'drop-shadow(0 0 24px rgba(140,60,255,0.7)) drop-shadow(0 0 48px rgba(0,200,255,0.3))',
+            animation: 'pulse 2s ease-in-out infinite',
+          }}
+        />
+        <p style={{
+          fontFamily: "'Orbitron', monospace",
+          fontSize: 10,
+          color: '#ff2d78',
+          letterSpacing: '0.3em',
+          textShadow: '0 0 10px #ff2d78',
+          animation: 'pulse 2s ease-in-out infinite',
+          margin: 0,
+        }}>ŁADOWANIE...</p>
+        <style>{`@keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:1} }`}</style>
       </div>
     );
   }
@@ -122,18 +146,14 @@ export default function App() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
       }}>
-        <h1 style={{
-          margin: 0,
-          fontFamily: "'Orbitron', monospace",
-          fontSize: 11,
-          fontWeight: 900,
-          color: '#ff2d78',
-          textShadow: '0 0 10px #ff2d78, 0 0 20px rgba(255,45,120,0.5)',
-          letterSpacing: '0.04em',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <span style={{ fontSize: 16 }}>⊕</span> CyberMagic
-        </h1>
+        <img
+          src={logoImg}
+          alt="Glitch Soul"
+          style={{
+            height: 36, width: 'auto',
+            filter: 'drop-shadow(0 0 8px rgba(140,60,255,0.8)) drop-shadow(0 0 16px rgba(0,200,255,0.3))',
+          }}
+        />
 
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <span style={{
