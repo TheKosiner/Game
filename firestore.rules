@@ -46,7 +46,12 @@ service cloud.firestore {
     match /guilds/{guildId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated()
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.members;
+      // Territory siege: attacker sets lastLostAt on defending guild (not a member)
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt']);
+      allow delete: if isAuthenticated()
         && request.auth.uid in resource.data.members;
     }
 

@@ -577,8 +577,9 @@ export async function captureTerritory(
 ): Promise<void> {
   if (!db) return;
   const now = Date.now();
-  const batch = writeBatch(db);
 
+  // Territory write + attacker cooldown in one batch (attacker IS a guild member — rules allow it)
+  const batch = writeBatch(db);
   batch.set(doc(db, 'territories', territoryId), {
     guildId, guildName, guildTag,
     capturedAt: now,
@@ -591,16 +592,14 @@ export async function captureTerritory(
     siegeCurrentHp: null, siegeMaxHp: null,
     siegeLastHitAt: null, siegeStartedAt: null, siegeAttackers: [],
   });
-
-  // Set 24h capture cooldown on the capturing guild
   batch.update(doc(db, 'guilds', guildId), { lastCaptureAt: now });
-
-  // Set 24h loss cooldown on the previous owner
-  if (prevOwnerGuildId && prevOwnerGuildId !== guildId) {
-    batch.update(doc(db, 'guilds', prevOwnerGuildId), { lastLostAt: now });
-  }
-
   await batch.commit();
+
+  // Defender cooldown is a separate write — attacker is not a member of the defending guild,
+  // so it must be allowed by a dedicated Firestore rule (lastLostAt-only update).
+  if (prevOwnerGuildId && prevOwnerGuildId !== guildId) {
+    await updateDoc(doc(db, 'guilds', prevOwnerGuildId), { lastLostAt: now }).catch(() => {});
+  }
 }
 
 export async function abandonTerritory(territoryId: string, guildId: string): Promise<void> {
