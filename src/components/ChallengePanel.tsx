@@ -1346,7 +1346,7 @@ function SelectView() {
               <div key={p} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <PowerBadge power={p} />
                 <span style={{ ...MONO, fontSize: 6, color: 'var(--text-muted)' }}>
-                  {POWER_INFO[p].desc}
+                  {getPowerInfo(t)[p].desc}
                 </span>
               </div>
             ))}
