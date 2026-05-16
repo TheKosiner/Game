@@ -445,6 +445,6 @@ export const en = {
     itemUsed: (item: string, amount: number) => `Used ${item}: +${amount} HP`,
     rested: (amount: number) => `You rested! +${amount} HP.`,
   },
-} as const;
+};
 
 export type Translations = typeof en;

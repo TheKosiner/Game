@@ -7,14 +7,6 @@ const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
-const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKLY', uncommon: 'NIEZWYKLY', rare: 'RZADKI',
-  epic: 'EPICKI', legendary: 'LEGENDARNY',
-};
-const SLOT_LABEL: Record<string, string> = {
-  weapon: 'Bron', armor: 'Zbroja', helmet: 'Helm',
-  boots: 'Buty', ring: 'Pierscień', amulet: 'Amulet', consumable: 'Apteczka',
-};
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 

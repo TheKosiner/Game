@@ -8,10 +8,6 @@ const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
-const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI',
-  epic: 'EPICKI', legendary: 'LEGENDARNY',
-};
 const STAT_NAMES: Record<string, string> = {
   strength: 'Siła', dexterity: 'Zręczność',
   intelligence: 'Celność', vitality: 'Żywotność',
