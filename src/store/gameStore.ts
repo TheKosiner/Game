@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { generateItem } from '../data/itemGenerator';
+import { generateItem, getItemName } from '../data/itemGenerator';
+import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
 import { getT } from '../hooks/useT';
@@ -59,7 +60,7 @@ function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'bal
   const item = generateItem(itemLevel, rarity);
   set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
-  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${item.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
+  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${getItemName(item, getLang())}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
 }
 
 function rollInt(min: number, max: number): number {
@@ -471,7 +472,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
     const t = getT();
     set({ hero: { ...hero, hp: newHp, inventory: newInventory } });
-    get().addCombatLog(`${item.emoji} ${t.combat.itemUsed(item.name, newHp - hero.hp)}`, 'system');
+    get().addCombatLog(`${item.emoji} ${t.combat.itemUsed(getItemName(item, getLang()), newHp - hero.hp)}`, 'system');
     get().saveGame();
   },
 

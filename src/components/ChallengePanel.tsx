@@ -4,6 +4,8 @@ import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import type { ChallengePower } from '../types';
 import { useT } from '../hooks/useT';
 import type { Translations } from '../i18n/en';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 import cyberGladiatorImg from '../assets/bosses/cyber-gladiator.png';
 import neonSlayerImg from '../assets/bosses/neon-slayer.png';
 import neuralPhantomImg from '../assets/bosses/neural-phantom.png';
@@ -336,7 +338,8 @@ const RARITY_COLOR: Record<string, string> = {
 };
 
 function ResultView({ onDismiss }: { onDismiss: () => void }) {
-  const t = useT();
+  const t    = useT();
+  const lang = useLangStore(s => s.lang);
   const result = useGameStore(s => s.challengeResult)!;
   const boss = CHALLENGE_BOSSES[result.bossIdx];
   const [showLog, setShowLog] = useState(false);
@@ -414,7 +417,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
                   <span style={{ fontSize: 24 }}>{item.emoji}</span>
                   <div style={{ flex: 1 }}>
                     <p style={{ ...MONO, fontSize: 10, color: rc, textShadow: `0 0 6px ${rc}80`, marginBottom: 2 }}>
-                      {item.name}
+                      {getItemName(item, lang)}
                     </p>
                     <p style={{ ...MONO, fontSize: 8, color: `${rc}99` }}>
                       {rarityLabel[item.rarity]} · Poz. {item.level}

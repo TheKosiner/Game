@@ -5,6 +5,8 @@ import { generateShopItems } from '../data/items';
 import ItemIcon from './ItemIcon';
 import type { Item, Stats } from '../types';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -150,7 +152,8 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
 // ── Main panel ───────────────────────────────────────────────────────────────
 
 export default function ShopPanel() {
-  const t = useT();
+  const t    = useT();
+  const lang = useLangStore(s => s.lang);
   const hero = useGameStore(s => s.hero);
   const buyShopItem = useGameStore(s => s.buyShopItem);
   const refreshShop = useGameStore(s => s.refreshShop);
@@ -179,7 +182,7 @@ export default function ShopPanel() {
     e.stopPropagation();
     const success = buyShopItem(item, price, slotIndex);
     if (success) {
-      setNotification({ text: t.shop.bought(item.name), ok: true });
+      setNotification({ text: t.shop.bought(getItemName(item, lang)), ok: true });
       setSelectedIdx(null);
     } else if (hero.gold < price) {
       setNotification({ text: t.shop.notEnoughGold, ok: false });
@@ -323,7 +326,7 @@ export default function ShopPanel() {
                         {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
                       </span>
                       <p style={{ color: rarityColor, fontSize: 7, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
-                        {item.name}
+                        {getItemName(item, lang)}
                       </p>
                       {item.ranged && (
                         <span style={{

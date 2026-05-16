@@ -1,4 +1,12 @@
 import type { Item, ItemSlot, Rarity, Stats } from '../types';
+import { ITEM_NAMES_EN } from './itemNames';
+import type { Lang } from '../store/langStore';
+
+export function getItemName(item: Item, lang: Lang): string {
+  if (lang !== 'en') return item.name;
+  if (item.nameEn) return item.nameEn;
+  return ITEM_NAMES_EN[item.id] ?? item.name;
+}
 
 // ── Seeded RNG (LCG) ──────────────────────────────────────────────────────────
 function makeSRng(seed: number): () => number {
@@ -45,6 +53,38 @@ const SUFFIX = [
   'Siły', 'Cienia', 'Burzy', 'Elektryczności', 'Krwi', 'Ognia', 'Lodu',
   'Próżni', 'Chaosu', 'Przeznaczenia', 'Zniszczenia', 'Chwały', 'Zagłady',
 ];
+
+const PREFIX_EN: Record<Rarity, string[]> = {
+  common:    ['Worn', 'Old', 'Basic', 'Standard', 'Cheap', 'Battered'],
+  uncommon:  ['Solid', 'Reinforced', 'Reliable', 'Improved', 'Sturdy'],
+  rare:      ['Advanced', 'Modified', 'Precise', 'Enhanced', 'Augmented'],
+  epic:      ['Elite', 'Masterwork', 'Flawless', 'Unmatched', 'Mystic'],
+  legendary: ['Mythic', 'Divine', 'Cosmic', 'Transcendent', 'Absolute'],
+};
+
+const SUFFIX_EN = [
+  'of Strength', 'of Shadow', 'of Storm', 'of Lightning', 'of Blood', 'of Fire', 'of Ice',
+  'of the Void', 'of Chaos', 'of Fate', 'of Destruction', 'of Glory', 'of Doom',
+];
+
+const WEAPON_NAMES_EN: string[][] = [
+  ['Sword', 'Blade', 'Axe', 'Saber'],
+  ['Dagger', 'Knife', 'Mono-Knife', 'Razor'],
+  ['Rifle', 'Pistol', 'Shotgun', 'Cannon'],
+  ['Electro-Pike', 'Lance', 'Harpoon', 'Spear'],
+  ['Wand', 'Staff', 'Scepter', 'Power Crystal'],
+  ['Nano-Dagger', 'Bio-Blade', 'Plasma Cutter'],
+  ['Sniper Rifle', 'Launcher', 'Precision Rifle'],
+  ['Cyber-Bat', 'Energy Whip', 'Club'],
+];
+
+const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable'>, string[]> = {
+  armor:  ['Armor', 'Vest', 'Cuirass', 'Suit', 'Exoskeleton'],
+  helmet: ['Helmet', 'Visor', 'Mask', 'Hood', 'Face Shield'],
+  boots:  ['Boots', 'Combat Boots', 'Greaves', 'Battle Shoes', 'Sabatons'],
+  ring:   ['Implant', 'Graft', 'Chip', 'Ring', 'Core'],
+  amulet: ['Amulet', 'Core', 'Pendant', 'Crystal', 'Transmitter'],
+};
 
 // ── Weapon type templates ─────────────────────────────────────────────────────
 interface WeaponTemplate {
@@ -100,10 +140,13 @@ export function generateItem(
   const extraCount = rollInt(minE, maxE, rng);
   const v = () => 0.82 + rng() * 0.36; // variance 0.82–1.18
 
-  const prefix = pick(PREFIX[rarity], rng);
-  const suffix = pick(SUFFIX, rng);
+  const prefixIdx = Math.floor(rng() * PREFIX[rarity].length);
+  const prefix    = PREFIX[rarity][prefixIdx];
+  const suffixIdx = Math.floor(rng() * SUFFIX.length);
+  const suffix    = SUFFIX[suffixIdx];
 
   let name: string;
+  let nameEn: string | undefined;
   let emoji: string;
   let attackBonus: number | undefined;
   let defenseBonus: number | undefined;
@@ -112,8 +155,11 @@ export function generateItem(
   const stats: Partial<Stats> = {};
 
   if (slot === 'weapon') {
-    const tpl = pick(WEAPON_TEMPLATES, rng);
-    name = `${prefix} ${pick(tpl.names, rng)} ${suffix}`;
+    const tplIdx    = Math.floor(rng() * WEAPON_TEMPLATES.length);
+    const tpl       = WEAPON_TEMPLATES[tplIdx];
+    const nameIdx   = Math.floor(rng() * tpl.names.length);
+    name   = `${prefix} ${tpl.names[nameIdx]} ${suffix}`;
+    nameEn = `${PREFIX_EN[rarity][prefixIdx]} ${WEAPON_NAMES_EN[tplIdx][nameIdx]} ${SUFFIX_EN[suffixIdx]}`;
     emoji = tpl.emoji;
     ranged = tpl.ranged;
     magicDamage = tpl.magicDamage;
@@ -134,9 +180,11 @@ export function generateItem(
 
   } else {
     type NonWeaponSlot = keyof typeof SLOT_NAMES;
-    const s = slot as NonWeaponSlot;
+    const s      = slot as NonWeaponSlot;
     const tplDef = SLOT_NAMES[s];
-    name = `${prefix} ${pick(tplDef.names, rng)} ${suffix}`;
+    const nameIdx = Math.floor(rng() * tplDef.names.length);
+    name   = `${prefix} ${tplDef.names[nameIdx]} ${suffix}`;
+    nameEn = `${PREFIX_EN[rarity][prefixIdx]} ${SLOT_NAMES_EN[s][nameIdx]} ${SUFFIX_EN[suffixIdx]}`;
     emoji = tplDef.emoji;
 
     const defScale: Record<NonWeaponSlot, number> = { armor: 0.9, helmet: 0.45, boots: 0.35, ring: 0, amulet: 0 };
@@ -162,6 +210,7 @@ export function generateItem(
   return {
     id: genId(),
     name,
+    nameEn,
     slot,
     rarity,
     stats,

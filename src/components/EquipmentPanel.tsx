@@ -3,6 +3,8 @@ import { useGameStore } from '../store/gameStore';
 import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -36,7 +38,8 @@ function mainBonus(item: Item): { label: string; value: string; color: string } 
 }
 
 function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {
-  const t = useT();
+  const t    = useT();
+  const lang = useLangStore(s => s.lang);
   const rarityLabel: Record<string, string> = {
     common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
     rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
@@ -63,7 +66,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <ItemIcon item={item} size={56} />
         </div>
         <div style={{ flex: 1 }}>
-          <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 4 }}>{item.name}</p>
+          <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 4 }}>{getItemName(item, lang)}</p>
           <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
             {rarityLabel[item.rarity]}
           </span>
@@ -114,7 +117,8 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
 }
 
 function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () => void }) {
-  const t = useT();
+  const t    = useT();
+  const lang = useLangStore(s => s.lang);
   const rarityLabel: Record<string, string> = {
     common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
     rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
@@ -159,7 +163,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 </span>
               )}
             </div>
-            <p style={{ ...ORB, fontSize: 12, color: rc, textShadow: `0 0 8px ${rc}88`, marginBottom: 4 }}>{item.name}</p>
+            <p style={{ ...ORB, fontSize: 12, color: rc, textShadow: `0 0 8px ${rc}88`, marginBottom: 4 }}>{getItemName(item, lang)}</p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {bonus && (
                 <span style={{ ...ORB, fontSize: 10, color: bonus.color, textShadow: `0 0 6px ${bonus.color}88` }}>
@@ -185,6 +189,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
 }
 
 function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; label: string; icon: string; onSelect: () => void }) {
+  const lang = useLangStore(s => s.lang);
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
   const bonus = item ? mainBonus(item) : null;
 
@@ -213,7 +218,7 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
             <ItemIcon item={item} size={36} />
           </div>
           <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            <p style={{ ...MONO, fontSize: 9, color: rc, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</p>
+            <p style={{ ...MONO, fontSize: 9, color: rc, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getItemName(item, lang)}</p>
             {bonus && (
               <span style={{ ...ORB, fontSize: 9, color: bonus.color }}>
                 {bonus.value}

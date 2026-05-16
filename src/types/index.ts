@@ -14,6 +14,7 @@ export interface Stats {
 export interface Item {
   id: string;
   name: string;
+  nameEn?: string;
   slot: ItemSlot;
   rarity: Rarity;
   stats: Partial<Stats>;
