@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GlitchSoul</string>
+    <string name="title_activity_main">GlitchSoul</string>
+    <string name="package_name">com.glitchsoul.game</string>
+    <string name="custom_url_scheme">com.glitchsoul.game</string>
+</resources>
