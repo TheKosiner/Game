@@ -35,7 +35,7 @@ const SLOT_LABEL: Record<string, string> = {
 };
 
 const STAT_LABELS: Record<keyof Stats, string> = {
-  strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Inteligencja',
+  strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Celność',
   vitality: 'Żywotność', magic: 'Magia', magicResistance: 'Odporność',
 };
 
