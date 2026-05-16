@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -417,7 +417,7 @@ export interface TerritoryState {
   expiresAt: number | null;
   defenderMemberCount: number;
   defenderAvgLevel: number;
-  defenderMembers: Array<{ name: string; level: number }>;
+  defenderMembers: Array<{ uid?: string; name: string; username?: string; level: number; portrait?: number; attack?: number; defense?: number; maxHp?: number }>;
   // Cooperative siege fields
   siegeGuildId: string | null;
   siegeGuildTag: string | null;
@@ -497,6 +497,29 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
   return result;
 }
 
+/** Fetch real attack/defense/maxHp for a list of player UIDs from the leaderboard. */
+export async function getPlayersStats(
+  uids: string[],
+): Promise<Record<string, { attack: number; defense: number; maxHp: number; level: number }>> {
+  if (!db || uids.length === 0) return {};
+  const result: Record<string, { attack: number; defense: number; maxHp: number; level: number }> = {};
+  // Firestore 'in' supports up to 30 items per query
+  for (let i = 0; i < uids.length; i += 30) {
+    const chunk = uids.slice(i, i + 30);
+    const snap = await getDocs(query(collection(db, 'players'), where(documentId(), 'in', chunk)));
+    snap.forEach(d => {
+      const data = d.data();
+      result[d.id] = {
+        attack:  data.attack  ?? 0,
+        defense: data.defense ?? 0,
+        maxHp:   data.maxHp   ?? 100,
+        level:   data.level   ?? 1,
+      };
+    });
+  }
+  return result;
+}
+
 /** Start or rejoin a siege. Returns current siege state, or blocked info. */
 export async function initOrJoinSiege(
   territoryId: string,
@@ -572,7 +595,7 @@ export async function captureTerritory(
   guildTag: string,
   memberCount: number,
   avgLevel: number,
-  defenderMembers: Array<{ name: string; level: number }> = [],
+  defenderMembers: TerritoryState['defenderMembers'] = [],
   prevOwnerGuildId?: string,
 ): Promise<void> {
   if (!db) return;

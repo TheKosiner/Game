@@ -3,7 +3,7 @@ import { TERRITORY_LIST, type TerritoryDef } from '../data/territories';
 import {
   getTerritories, captureTerritory, claimTerritoryReward,
   initOrJoinSiege, commitSiegeDamage,
-  abandonTerritory,
+  abandonTerritory, getPlayersStats,
   type TerritoryState, type Guild,
 } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
@@ -497,19 +497,24 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
             level: state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel,
           }));
 
+      // Fetch real stats for defenders who have a stored UID
+      const defUids = rawMembers.map(m => m.uid).filter((u): u is string => !!u);
+      const realStats = await getPlayersStats(defUids);
+
       defenders = [...rawMembers]
         .sort((a, b) => a.level - b.level)
         .map(m => {
-          const hp = 80 + m.level * 8;
+          const ps = m.uid ? realStats[m.uid] : null;
+          const hp = ps?.maxHp ?? (80 + m.level * 8);
           return {
             name: m.name,
-            username: (m as any).username ?? m.name,
-            level: m.level,
-            portrait: resolvePortrait((m as any).portrait, (m as any).username ?? m.name),
+            username: m.username ?? m.name,
+            level: ps?.level ?? m.level,
+            portrait: resolvePortrait(m.portrait, m.username ?? m.name),
             hp,
             maxHp: hp,
-            atk: Math.round((5 + m.level * 2) * 1.2),
-            def: Math.round(2 + m.level * 1.2),
+            atk: ps?.attack  ?? Math.round((5 + m.level * 2) * 1.2),
+            def: ps?.defense ?? Math.round(2 + m.level * 1.2),
           };
         });
 
@@ -670,7 +675,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const avgLevel = members.length > 0
           ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
           : hero.level;
-        const defenderMembers = members.map(m => ({ name: m.heroName || m.username, username: m.username, level: m.level, portrait: m.portrait ?? 0 }));
+        const defenderMembers = Object.entries(guild.members).map(([uid, m]) => ({ uid, name: m.heroName || m.username, username: m.username, level: m.level, portrait: m.portrait ?? 0 }));
         const prevOwner = territories[combat.territory.id]?.guildId ?? undefined;
         await captureTerritory(combat.territory.id, guild.id, guild.name, guild.tag, members.length, avgLevel, defenderMembers, prevOwner);
       }
