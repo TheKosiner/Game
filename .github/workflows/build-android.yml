@@ -56,23 +56,18 @@ jobs:
       - name: Build APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon --stacktrace
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ./gradlew assembleDebug --no-daemon
 
-      - name: Rename APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk GlitchSoul.apk
+      - name: Verify APK exists
+        run: ls -la android/app/build/outputs/apk/debug/
 
-      - name: Delete old release
-        run: gh release delete android-latest --yes || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Publish release with APK
-        run: |
-          gh release create android-latest GlitchSoul.apk \
-            --title "GlitchSoul Android" \
-            --notes "Najnowsza wersja aplikacji. Pobierz i zainstaluj na telefonie z Androidem." \
-            --latest
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: GlitchSoul Android
+          body: Najnowsza wersja aplikacji. Pobierz i zainstaluj na telefonie z Androidem.
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
