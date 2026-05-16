@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { useT } from '../hooks/useT';
 
 import { PORTRAIT_LIST } from '../data/portraits';
 
@@ -7,6 +8,7 @@ export default function CharacterCreation() {
   const [name, setName] = useState('');
   const [portrait, setPortrait] = useState(0);
   const initHero = useGameStore(s => s.initHero);
+  const t = useT();
 
   function handleCreate() {
     if (!name.trim()) return;
@@ -32,20 +34,20 @@ export default function CharacterCreation() {
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             filter: 'drop-shadow(0 0 10px rgba(255,45,120,0.5))',
           }}>GlitchSoul</h1>
-          <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#475569', fontSize: 10 }}>Stwórz postać i zacznij przygodę</p>
+          <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#475569', fontSize: 10 }}>{t.creation.subtitle}</p>
         </div>
 
         <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
           {/* Name */}
           <div>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 6, letterSpacing: '0.1em' }}>NAZWA POSTACI</p>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 6, letterSpacing: '0.1em' }}>{t.creation.nameLabel}</p>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              placeholder="Wpisz imię..."
+              placeholder={t.creation.namePlaceholder}
               maxLength={20}
               style={{
                 width: '100%', boxSizing: 'border-box',
@@ -63,7 +65,7 @@ export default function CharacterCreation() {
 
           {/* Portrait picker */}
           <div>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 10, letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 10, letterSpacing: '0.1em' }}>{t.creation.chooseLabel}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               {PORTRAIT_LIST.filter(p => !p.hidden).map(p => (
                 <button
@@ -98,7 +100,7 @@ export default function CharacterCreation() {
             className="btn btn-primary"
             style={{ width: '100%', padding: '13px', fontSize: 8 }}
           >
-            ▶ ROZPOCZNIJ PRZYGODĘ
+            {t.creation.startBtn}
           </button>
         </div>
       </div>

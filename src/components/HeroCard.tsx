@@ -4,6 +4,7 @@ import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
+import { useT } from '../hooks/useT';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -49,6 +50,7 @@ function NeonBar({ pct, color, height = 10 }: { pct: number; color: string; glow
 function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
   endsAt: number; restHp: number; startAt: number; cancelRest: () => void;
 }) {
+  const t = useT();
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -78,14 +80,14 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
         <span style={{ fontSize: 20, filter: 'drop-shadow(0 0 6px #ff6600)' }}>🔥</span>
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 9, color: '#00f5ff', textShadow: '0 0 10px #00f5ff', marginBottom: 3 }}>
-            ODPOCZYWASZ — {mins}:{secs.toString().padStart(2, '0')}
+            {t.hero.restingActive(`${mins}:${secs.toString().padStart(2, '0')}`)}
           </p>
           <p style={{ ...MONO, fontSize: 11, color: '#00ff88' }}>
-            Odzyskasz +{earnedNow}/{restHp} HP
+            {t.hero.restingRecover(earnedNow, restHp)}
           </p>
         </div>
         <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
-          ✕ STOP
+          {t.hero.restStop}
         </button>
       </div>
       <NeonBar pct={progressPct} color="#00f5ff" height={6} />
@@ -100,6 +102,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
   blocked?: boolean;
   blockedReason?: string;
 }) {
+  const t = useT();
   const hpPerMin   = Math.max(1, Math.round(hero.maxHp * 0.04));
   const missing    = hero.maxHp - hero.hp;
   const maxMinutes = Math.ceil(missing / hpPerMin);
@@ -107,13 +110,13 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
 
   if (blocked && blockedReason) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,245,255,0.1)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK — {blockedReason}</p>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.hero.restBlocked(blockedReason)}</p>
     </div>
   );
 
   if (missing <= 0) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,245,255,0.1)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>HP PEŁNE — odpoczynek zbędny</p>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.hero.restFull}</p>
     </div>
   );
 
@@ -127,17 +130,17 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🏕 ODPOCZYNEK</p>
-        <p style={{ ...ORB, fontSize: 9, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>+{healPreview} HP / {clamped} min</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.hero.restTitle}</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>{t.hero.restPreview(healPreview, clamped)}</p>
       </div>
       <input type="range" min={1} max={maxMinutes} value={clamped}
         onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1 min = 4% HP (~{hpPerMin} HP)</span>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>max {maxMinutes} min</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restRate(hpPerMin)}</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restMax(maxMinutes)}</span>
       </div>
       <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
-        ▶ ROZPOCZNIJ ODPOCZYNEK
+        {t.hero.restStart}
       </button>
     </div>
   );
@@ -146,6 +149,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
 function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
   endsAt: number; reward: number; startAt: number; cancelBegging: () => void;
 }) {
+  const t = useT();
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -177,12 +181,12 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
         <span style={{ fontSize: 20 }}>🙏</span>
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
-            ZBIERANIE ZŁOMU — {timeStr}
+            {t.hero.beggingActive(timeStr)}
           </p>
-          <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>+{earnedNow}/{reward}🪙</p>
+          <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>{t.hero.beggingProgress(earnedNow, reward)}</p>
         </div>
         <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
-          ✕ STOP
+          {t.hero.restStop}
         </button>
       </div>
       <NeonBar pct={progressPct} color="#9d4edd" height={6} />
@@ -191,6 +195,7 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
 }
 
 function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () => void }) {
+  const t = useT();
   return (
     <div style={{
       background: 'linear-gradient(135deg, rgba(255,215,0,0.06), rgba(0,0,0,0.8))',
@@ -199,10 +204,10 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
       boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
       <p style={{ ...ORB, fontSize: 9, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
-        🔩 ZŁOM ZEBRANY! +{reward}🪙
+        {t.hero.beggingDoneMsg(reward)}
       </p>
       <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
-        🪙 ODBIERZ JAŁMUŻNĘ
+        {t.hero.beggingPickup}
       </button>
     </div>
   );
@@ -214,10 +219,11 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
   blocked?: boolean;
   blockedReason?: string;
 }) {
+  const t = useT();
   const [hours, setHours] = useState(2);
   if (blocked && blockedReason) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.15)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>🔩 ZBIERANIE ZŁOMU — {blockedReason}</p>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.hero.beggingActive(blockedReason)}</p>
     </div>
   );
   return (
@@ -227,26 +233,27 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>🔩 ZBIERANIE ZŁOMU</p>
-        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{hours}h</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.hero.beggingTitle}</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{t.hero.beggingHours(hours)}</p>
       </div>
       <input type="range" min={1} max={10} value={hours}
         onChange={e => setHours(Number(e.target.value))} disabled={inCombat} />
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>1h min</span>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>10h max</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMin}</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMax}</span>
       </div>
       <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{
         width: '100%', fontSize: 8, padding: '8px',
         borderColor: 'rgba(157,78,221,0.4)', color: '#9d4edd', textShadow: '0 0 6px #9d4edd',
       }}>
-        ▶ ZACZNIJ ZBIERAĆ ZŁOM
+        {t.hero.beggingStartBtn}
       </button>
     </div>
   );
 }
 
 export default function HeroCard() {
+  const t              = useT();
   const hero           = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
@@ -312,7 +319,7 @@ export default function HeroCard() {
             padding: '5px 0', ...MONO, fontSize: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}>
-            WYGLĄD
+            {t.hero.appearance}
           </button>
         </div>
 
@@ -322,14 +329,14 @@ export default function HeroCard() {
             <p style={{ ...ORB, fontSize: 14, color: '#ffffff', textShadow: '0 0 12px rgba(255,255,255,0.25)', marginBottom: 2, wordBreak: 'break-all' }}>
               {hero.name}
             </p>
-            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>POZ. {hero.level}</p>
+            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.app.level(hero.level)}</p>
           </div>
 
           <div style={{ display: 'flex', gap: 4 }}>
-            <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? 'MAGIA' : 'ATAK'} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
-            <StatBox icon="🛡" value={defense}   label="OBRONA"  color="#00f5ff" />
-            <StatBox icon="♥" value={hero.maxHp} label="MAX HP" color="#ff4444" />
-            <StatBox icon="✨" value={magicRes}  label="ODP.MAG" color="#9d4edd" />
+            <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? t.hero.magic : t.hero.attack} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
+            <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
+            <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
+            <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
           </div>
 
           <div style={{
@@ -343,7 +350,7 @@ export default function HeroCard() {
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>♥ ŻYWOTNOŚĆ</span>
+              <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>{t.hero.vitality}</span>
               <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
             </div>
             <NeonBar pct={hpPct} color="#ff2d78" />
@@ -351,7 +358,7 @@ export default function HeroCard() {
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>✦ DOŚWIADCZENIE</span>
+              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>{t.hero.experience}</span>
               <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.xp}/{hero.xpToNext}</span>
             </div>
             <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
@@ -377,10 +384,10 @@ export default function HeroCard() {
 
       {/* DZIENNY LIMIT */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>◈ DZIENNY LIMIT</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>{t.hero.dailyLimit}</p>
         {[
-          { label: '⚔ Lochy',   cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
-          { label: '📜 Zadania', cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
+          { label: t.hero.dungeons, cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
+          { label: t.hero.quests,   cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
         ].map(({ label, cur, max, pct, color }) => (
           <div key={label}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -394,15 +401,15 @@ export default function HeroCard() {
 
       {/* STATYSTYKI */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>◈ STATYSTYKI</p>
+        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>{t.hero.statsTitle}</p>
         {([
-          { attr: 'strength',       icon: '💪', name: 'Siła',            desc: '↑ obrażenia broni wręcz',          note: '⚔ kliny · pałki · noże · piki · +1% DMG/pkt',   color: '#ff2d78' },
-          { attr: 'dexterity',      icon: '🏃', name: 'Zręczność',       desc: '↑ szansa na trafienie krytyczne',   note: 'baza 10% kryt · +0.5% kryt/pkt',                color: '#00f5ff' },
-          { attr: 'intelligence',   icon: '🎯', name: 'Celność',         desc: '↑ obrażenia broni dystansowych',    note: '🔫 działa · 🔱 railguny · +0.4% DMG/pkt',       color: '#9d4edd' },
-          { attr: 'vitality',       icon: '♥',  name: 'Żywotność',       desc: '↑ HP maksymalne i obrona',          note: '+10 HP · +1 obrona na każdy pkt',               color: '#ff4444' },
-          { attr: 'magic',          icon: '🔮', name: 'Magia',           desc: '↑ obrażenia magicznych broni',      note: '🪄 laski · sfery · +1.4% DMG/pkt (strome)',     color: '#cc44ff' },
-          { attr: 'magicResistance',icon: '✨', name: 'Odp. Magii',      desc: '↑ odporność na obrażenia magiczne', note: '+2 mag.obr./pkt · przeciwko wrogom magicznym',  color: '#00ff88' },
-        ] as const).map(({ attr, icon, name, desc, note, color }) => {
+          { attr: 'strength',       icon: '💪', name: t.hero.statStrength,   desc: t.hero.statStrDesc,    note: t.hero.statStrNote,    color: '#ff2d78' },
+          { attr: 'dexterity',      icon: '🏃', name: t.hero.statDexterity,  desc: t.hero.statDexDesc,    note: t.hero.statDexNote,    color: '#00f5ff' },
+          { attr: 'intelligence',   icon: '🎯', name: t.hero.statAccuracy,   desc: t.hero.statAccDesc,    note: t.hero.statAccNote,    color: '#9d4edd' },
+          { attr: 'vitality',       icon: '♥',  name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
+          { attr: 'magic',          icon: '🔮', name: t.hero.statMagic,      desc: t.hero.statMagDesc,    note: t.hero.statMagNote,    color: '#cc44ff' },
+          { attr: 'magicResistance',icon: '✨', name: t.hero.statMagRes,     desc: t.hero.statMagResDesc, note: t.hero.statMagResNote, color: '#00ff88' },
+        ] as { attr: 'strength'|'dexterity'|'intelligence'|'vitality'|'magic'|'magicResistance'; icon: string; name: string; desc: string; note: string; color: string }[]).map(({ attr, icon, name, desc, note, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
           const cost = Math.round(base * 75);
@@ -430,7 +437,7 @@ export default function HeroCard() {
             </div>
           );
         })}
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>♦ = bonus z ekwipunku</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>{t.hero.eqBonus}</p>
       </div>
 
     </div>

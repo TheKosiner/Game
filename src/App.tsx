@@ -3,6 +3,8 @@ import './App.css';
 import logoImg from './assets/logo.png';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
+import { useT } from './hooks/useT';
+import { useLangStore } from './store/langStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
 import { isFirebaseConfigured } from './lib/firebase';
 import AuthScreen from './components/AuthScreen';
@@ -22,6 +24,8 @@ import BottomNav, { type Tab } from './components/BottomNav';
 import { PORTRAIT_OVERRIDES } from './data/portraits';
 
 export default function App() {
+  const t = useT();
+  const { lang, setLang } = useLangStore();
   const hero = useGameStore(s => s.hero);
   const loadGame = useGameStore(s => s.loadGame);
   const saveGame = useGameStore(s => s.saveGame);
@@ -115,7 +119,7 @@ export default function App() {
           textShadow: '0 0 10px #ff2d78',
           animation: 'pulse 2s ease-in-out infinite',
           margin: 0,
-        }}>ŁADOWANIE...</p>
+        }}>{t.app.loading}</p>
         <style>{`@keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:1} }`}</style>
       </div>
     );
@@ -128,7 +132,7 @@ export default function App() {
   if (isNewGame) return <CharacterCreation />;
 
   async function handleReset() {
-    if (!confirm('Zresetować postać? Stracisz cały postęp!')) return;
+    if (!confirm(t.app.resetConfirm)) return;
     localStorage.removeItem('glitchsoul_save');
     try { if (user) await deleteCloudSave(user.uid); } catch {}
     initHero('Hero');
@@ -172,18 +176,28 @@ export default function App() {
             border: '1px solid rgba(0,245,255,0.25)',
             padding: '3px 7px',
             textShadow: '0 0 8px rgba(0,245,255,0.5)',
-          }}>POZ.{hero.level}</span>
+          }}>{t.app.level(hero.level)}</span>
           {user && (
             <>
               <span style={{ fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', fontSize: 10 }}>
                 {user.username}
               </span>
+              <button onClick={() => setLang('pl')} style={{
+                fontFamily: "'Orbitron', monospace",
+                color: lang === 'pl' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}>PL</button>
+              <button onClick={() => setLang('en')} style={{
+                fontFamily: "'Orbitron', monospace",
+                color: lang === 'en' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 8,
+                background: 'none', border: 'none', cursor: 'pointer',
+              }}>EN</button>
               <button onClick={() => logout()} style={{
                 fontFamily: "'Orbitron', monospace",
                 color: 'rgba(255,45,120,0.6)', fontSize: 8,
                 background: 'none', border: 'none', cursor: 'pointer',
                 textShadow: '0 0 6px rgba(255,45,120,0.3)',
-              }}>WYJDŹ</button>
+              }}>{t.app.logout}</button>
             </>
           )}
           <button onClick={handleReset} style={{

@@ -5,6 +5,7 @@ import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { generateItem } from '../data/itemGenerator';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
+import { getT } from '../hooks/useT';
 
 const SAVE_KEY = 'glitchsoul_save';
 const OLD_SAVE_KEY = 'cybermagic_save';
@@ -184,7 +185,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
     const newMaxHp = getHeroMaxHp(resetStats, hero.level, hero.equipment);
     set({ hero: { ...hero, stats: resetStats, attributePoints: hero.attributePoints + totalPoints, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp), lastRespecAt: now } });
-    get().addCombatLog('Statystyki zresetowane! Rozdziel punkty cech.', 'system');
+    const t = getT();
+    get().addCombatLog(t.combat.statsReset, 'system');
     get().saveGame();
   },
 
@@ -202,7 +204,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = leveled ? newMaxHp - maxHp : 0;
     set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints } });
-    if (leveled) get().addCombatLog(`Awansowałeś na poziom ${level}!`, 'system');
+    if (leveled) { const t = getT(); get().addCombatLog(t.combat.levelUp(level), 'system'); }
   },
 
   addGold: (amount) => {
@@ -267,12 +269,13 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   enterDungeon: (dungeon: Dungeon, mode: 'xp' | 'balanced' | 'loot' = 'balanced', difficulty: 'easy' | 'normal' | 'hard' = 'normal') => {
     const { hero } = get();
+    const t = getT();
     if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
-      get().addCombatLog('Odpoczywasz po walce! Poczekaj az wroca sily.', 'system');
+      get().addCombatLog(t.combat.restingWait, 'system');
       return;
     }
     if (hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS) {
-      get().addCombatLog(`Dzienny limit lochow (${MAX_DAILY_DUNGEONS}) wyczerpany! Wróc jutro.`, 'system');
+      get().addCombatLog(t.combat.dungeonLimit(MAX_DAILY_DUNGEONS), 'system');
       return;
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
@@ -297,14 +300,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       combatLog: [],
       hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
     });
-    get().addCombatLog(`Wchodzisz do "${dungeon.name}" — Pietro 1`, 'system');
-    get().addCombatLog(`Napotykasz: ${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`, 'system');
-    get().addCombatLog(`Lochy dzis: ${hero.dungeonRunsToday + 1}/${MAX_DAILY_DUNGEONS}`, 'system');
+    get().addCombatLog(t.combat.entering(dungeon.name), 'system');
+    get().addCombatLog(t.combat.encounter(`${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`), 'system');
+    get().addCombatLog(t.combat.dungeonsToday(hero.dungeonRunsToday + 1, MAX_DAILY_DUNGEONS), 'system');
   },
 
   exitDungeon: () => {
+    const t = getT();
     set({ currentDungeon: null, currentFloor: 1, currentEnemy: null, inCombat: false });
-    get().addCombatLog('Opuszczasz loch.', 'system');
+    get().addCombatLog(t.combat.leaving, 'system');
   },
 
   clearDefeat: () => {
@@ -314,14 +318,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   attackEnemy: () => {
     const { hero, currentEnemy, currentDungeon, currentFloor } = get();
     if (!currentEnemy || !currentDungeon) return;
+    const t = getT();
 
     const { damage: heroDmg, isCrit } = heroAttackEnemy(hero, currentEnemy);
     const newEnemyHp = Math.max(0, currentEnemy.hp - heroDmg);
-    const critText = isCrit ? ' (KRYTYCZNY!)' : '';
-    get().addCombatLog(`Zadajesz ${heroDmg} obrażeń${critText} ${currentEnemy.emoji} ${currentEnemy.name}`, 'hero');
+    const critText = isCrit ? ` ${t.combat.critical}` : '';
+    get().addCombatLog(`${t.combat.dealDamage(heroDmg)}${critText} ${currentEnemy.emoji} ${currentEnemy.name}`, 'hero');
 
     if (newEnemyHp <= 0) {
-      get().addCombatLog(`Pokonales ${currentEnemy.emoji} ${currentEnemy.name}!`, 'system');
+      get().addCombatLog(t.combat.defeated(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode = get().dungeonMode;
       const diff = get().dungeonDifficulty;
       const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
@@ -333,11 +338,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       const goldEarned = Math.round(currentEnemy.goldReward * goldMult);
       get().addXp(xpEarned);
       get().addGold(goldEarned);
-      get().addCombatLog(`+${xpEarned} XP, +${goldEarned} zlota`, 'loot');
+      get().addCombatLog(t.combat.rewards(xpEarned, goldEarned), 'loot');
 
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
-        get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
+        get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance, mode, diff, set, get);
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
@@ -347,16 +352,16 @@ export const useGameStore = create<GameState>((set, get) => ({
           const scaled = scaleEnemy(baseEnemy, nextFloor);
           const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult), maxHp: Math.round(scaled.maxHp * diffStatMult), attack: Math.round(scaled.attack * diffStatMult), defense: Math.round(scaled.defense * diffStatMult) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
-          get().addCombatLog(`Piętro ${nextFloor}: ${nextEnemy.emoji} ${nextEnemy.name} atakuje!`, 'system');
+          get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }
       }
     } else {
       const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
       const newHeroHp = Math.max(0, hero.hp - enemyDmg);
-      get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} zadaje ci ${enemyDmg} obrażeń${enemyCrit ? ' 💥 KRYT!' : ''}`, 'enemy');
+      get().addCombatLog(`${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
 
       if (newHeroHp <= 0) {
-        get().addCombatLog('Zostałeś pokonany! Skorzystaj z odpoczynku by odzyskać HP.', 'system');
+        get().addCombatLog(t.combat.playerDefeated, 'system');
         const updatedHero = get().hero;
         set({
           hero: { ...updatedHero, hp: 1 },
@@ -375,6 +380,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   autoFightEnemy: () => {
     const { hero, currentEnemy, currentDungeon, currentFloor } = get();
     if (!currentEnemy || !currentDungeon) return;
+    const t = getT();
 
     let heroHp = hero.hp;
     let enemyHp = currentEnemy.hp;
@@ -389,11 +395,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     if (heroHp <= 0) {
-      get().addCombatLog(`${currentEnemy.emoji} ${currentEnemy.name} cię pokonał!`, 'enemy');
-      get().addCombatLog('Skorzystaj z odpoczynku by odzyskać HP.', 'system');
+      get().addCombatLog(t.combat.enemyWins(`${currentEnemy.emoji} ${currentEnemy.name}`), 'enemy');
+      get().addCombatLog(t.combat.playerDefeated, 'system');
       set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name });
     } else {
-      get().addCombatLog(`Pokonales ${currentEnemy.emoji} ${currentEnemy.name}! (szybka walka)`, 'system');
+      get().addCombatLog(t.combat.quickFight(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode2 = get().dungeonMode;
       const diff2 = get().dungeonDifficulty;
       const diffRewardMult2 = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.6 : 1;
@@ -405,14 +411,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2);
       get().addXp(xpEarned2);
       get().addGold(goldEarned2);
-      get().addCombatLog(`+${xpEarned2} XP, +${goldEarned2} zlota`, 'loot');
+      get().addCombatLog(t.combat.rewards(xpEarned2, goldEarned2), 'loot');
 
       const fresh = get().hero;
       set({ hero: { ...fresh, hp: Math.min(heroHp, fresh.maxHp) } });
 
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
-        get().addCombatLog(`Ukończyłeś loch "${currentDungeon.name}"! Brawo!`, 'system');
+        get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance2, mode2, diff2, set, get);
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
@@ -422,7 +428,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           const scaled2 = scaleEnemy(baseEnemy, nextFloor);
           const nextEnemy = { ...scaled2, hp: Math.round(scaled2.hp * diffStatMult2), maxHp: Math.round(scaled2.maxHp * diffStatMult2), attack: Math.round(scaled2.attack * diffStatMult2), defense: Math.round(scaled2.defense * diffStatMult2) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
-          get().addCombatLog(`Piętro ${nextFloor}: ${nextEnemy.emoji} ${nextEnemy.name} atakuje!`, 'system');
+          get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }
       }
     }
@@ -463,8 +469,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
     const healAmount = Math.round(hero.maxHp * 1);
     const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
+    const t = getT();
     set({ hero: { ...hero, hp: newHp, inventory: newInventory } });
-    get().addCombatLog(`${item.emoji} Użyto ${item.name}: +${newHp - hero.hp} HP`, 'system');
+    get().addCombatLog(`${item.emoji} ${t.combat.itemUsed(item.name, newHp - hero.hp)}`, 'system');
     get().saveGame();
   },
 
@@ -548,8 +555,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const hp = Math.min(minutes * hpPerMin, hero.maxHp - hero.hp);
     if (hp <= 0) return;
     const endsAt = Date.now() + minutes * 60 * 1000;
+    const t = getT();
     set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp, voluntaryRestStartAt: Date.now() } });
-    get().addCombatLog(`Odpoczywasz ${minutes} min... Odzyskasz ${hp} HP.`, 'system');
+    get().addCombatLog(t.combat.restingMinutes(minutes, hp), 'system');
     get().saveGame();
   },
 
@@ -565,9 +573,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       earned = Math.floor(hero.voluntaryRestHp * elapsed / Math.max(1, total));
     }
     const healAmount = Math.min(earned, hero.maxHp - hero.hp);
+    const t = getT();
     set({ hero: { ...hero, hp: hero.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
-    if (healAmount > 0) get().addCombatLog(`Przerwałeś odpoczynek. Odzyskałeś +${healAmount} HP.`, 'system');
-    else get().addCombatLog('Przerwałeś odpoczynek.', 'system');
+    if (healAmount > 0) get().addCombatLog(t.combat.restCancelledWithHp(healAmount), 'system');
+    else get().addCombatLog(t.combat.restCancelled, 'system');
     get().saveGame();
   },
 
@@ -580,8 +589,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const clampedHours = Math.max(1, Math.min(10, Math.round(hours)));
     const goldReward = Math.floor(clampedHours * (5 + hero.level * 2) * (0.8 + Math.random() * 0.4));
     const endsAt = Date.now() + clampedHours * 60 * 60 * 1000;
+    const t = getT();
     set({ hero: { ...hero, beggingUntil: endsAt, beggingReward: goldReward, beggingStartAt: Date.now() } });
-    get().addCombatLog(`Zacząłeś żebrać na ${clampedHours}h. Zarobisz ~${goldReward}🪙.`, 'system');
+    get().addCombatLog(t.combat.beggingStart(clampedHours, goldReward), 'system');
     get().saveGame();
   },
 
@@ -596,9 +606,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       const total = hero.beggingUntil - hero.beggingStartAt;
       earned = Math.floor(hero.beggingReward * elapsed / Math.max(1, total));
     }
+    const t = getT();
     set({ hero: { ...hero, gold: hero.gold + earned, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
-    if (earned > 0) get().addCombatLog(`Przerwałeś żebranie. Zarobiłeś +${earned}🪙.`, 'loot');
-    else get().addCombatLog('Przerwałeś żebranie.', 'system');
+    if (earned > 0) get().addCombatLog(t.combat.beggingCancelledWithGold(earned), 'loot');
+    else get().addCombatLog(t.combat.beggingCancelled, 'system');
     get().saveGame();
   },
 
@@ -606,8 +617,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     if (!hero.beggingUntil || Date.now() < hero.beggingUntil) return;
     const reward = hero.beggingReward ?? 0;
+    const t = getT();
     set({ hero: { ...hero, gold: hero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
-    get().addCombatLog(`Zebrałeś jałmużnę! +${reward}🪙`, 'loot');
+    get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
   },
 
@@ -628,7 +640,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const updated = get().hero;
       const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
       set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
-      if (healAmount > 0) get().addCombatLog(`Odpocząłeś! +${healAmount} HP.`, 'system');
+      if (healAmount > 0) { const t = getT(); get().addCombatLog(t.combat.rested(healAmount), 'system'); }
     }
   },
 
@@ -657,9 +669,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!boss) return;
 
     const shieldHp = boss.powers.includes('shield') ? Math.floor(boss.maxHp * 0.25) : 0;
-    const openLog: string[] = [`⚡ Walka z ${boss.name} rozpoczęta! (Poz. ${boss.level})`];
-    if (boss.powers.includes('armor_break')) openLog.push(`💥 ARMOR BREAK: Twoja obrona zredukowana o 60%!`);
-    if (shieldHp > 0) openLog.push(`🛡 TARCZA: Boss ma tarczę pochłaniającą ${shieldHp} obrażeń!`);
+    const t = getT();
+    const openLog: string[] = [t.combat.bossStart(boss.name, boss.level)];
+    if (boss.powers.includes('armor_break')) openLog.push(t.combat.armorBreak);
+    if (shieldHp > 0) openLog.push(t.combat.bossShield(shieldHp));
 
     set({
       lastChallengeAt: now,
@@ -685,6 +698,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const r = round + 1;
     const log = [...challengeFightLog];
 
+    const t = getT();
     const event: ChallengeHitEvent = {
       heroDmg: 0, heroCrit: false, isDodge: false,
       bossDmg1: 0, bossDmg2: 0, poisonDmg: 0,
@@ -697,26 +711,26 @@ export const useGameStore = create<GameState>((set, get) => ({
     const isCrit = Math.random() < critChance;
     if (pw.includes('dodge') && Math.random() < 0.25) {
       event.isDodge = true;
-      log.push(`R${r} 💨 UNIK: ${boss.name} unika ataku!`);
+      log.push(t.combat.dodgeRound(r, boss.name));
     } else {
       const base = heroAtk * heroAtk / (heroAtk + Math.max(1, boss.defense));
       let heroDmg = Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4) * (isCrit ? 2 : 1)));
       if (shieldHp > 0) {
         const abs = Math.min(shieldHp, heroDmg);
         shieldHp -= abs; heroDmg -= abs;
-        log.push(`R${r} 🛡 Tarcza pochłania ${abs}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ' — ZNISZCZONA!'}`);
+        log.push(`${t.combat.shieldAbsorb(r, abs)}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ` — ${t.combat.shieldDestroyed}`}`);
       }
       if (heroDmg > 0) {
         bossHp -= heroDmg;
         event.heroDmg = heroDmg;
         event.heroCrit = isCrit;
-        log.push(`R${r} ⚔${isCrit ? ' KRYT!' : ''} Zadajesz ${heroDmg} → Boss: ${Math.max(0, bossHp)}/${boss.maxHp}`);
+        log.push(`${t.combat.dealDamageRound(r, heroDmg, Math.max(0, bossHp))}/${boss.maxHp}${isCrit ? ` ${t.combat.critical}` : ''}`);
       }
     }
 
     // ── Boss death? ──
     if (bossHp <= 0) {
-      log.push(`🏆 ZWYCIĘSTWO! Pokonałeś ${boss.name} w rundzie ${r}!`);
+      log.push(t.combat.bossVictory(boss.name, r));
       const loot = challengeLoot(challengeFight.bossIdx, hero.level, hero.inventory);
       const newInventory = [...hero.inventory, ...loot];
       const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
@@ -739,14 +753,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       const rAmt = Math.round(boss.maxHp * 0.03);
       bossHp = Math.min(boss.maxHp, bossHp + rAmt);
       event.regenAmt = rAmt;
-      log.push(`R${r} 🔴 REGEN: +${rAmt} HP → ${bossHp}/${boss.maxHp}`);
+      log.push(`${t.combat.regenRound(r, rAmt, bossHp)}/${boss.maxHp}`);
     }
 
     // ── Rage trigger ──
     if (pw.includes('rage') && !rageActive && bossHp < boss.maxHp * 0.3) {
       rageActive = true;
       event.rageTrigger = true;
-      log.push(`R${r} 🔥 FURIA: ${boss.name} wchodzi w szał! ATK x1.6!`);
+      log.push(t.combat.furyRound(r, boss.name));
     }
 
     // ── Boss attacks ──
@@ -764,9 +778,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const steal = Math.round(dmg1 * 0.25);
       bossHp = Math.min(boss.maxHp, bossHp + steal);
       event.lifeSteal += steal;
-      log.push(`R${r} 💉 VAMP: +${steal} HP`);
+      log.push(t.combat.vampRound(r, steal));
     }
-    log.push(`R${r} 🤖 ${boss.name}: -${dmg1} HP → Ty: ${Math.max(0, heroHp)}/${heroMaxHp}`);
+    log.push(t.combat.bossAttack(r, boss.name, dmg1, Math.max(0, heroHp)));
 
     if (heroHp > 0 && pw.includes('double_strike')) {
       const dmg2 = calcBossDmg();
@@ -777,7 +791,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         bossHp = Math.min(boss.maxHp, bossHp + steal2);
         event.lifeSteal += steal2;
       }
-      log.push(`R${r} ⚡ [x2]: -${dmg2} HP → Ty: ${Math.max(0, heroHp)}/${heroMaxHp}`);
+      log.push(t.combat.doubleHit(r, dmg2, Math.max(0, heroHp)));
     }
 
     // ── Poison ──
@@ -785,12 +799,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       const pd = Math.round(heroMaxHp * 0.04);
       heroHp -= pd;
       event.poisonDmg = pd;
-      log.push(`R${r} 🟢 TRUCIZNA: -${pd} HP → ${Math.max(0, heroHp)}/${heroMaxHp}`);
+      log.push(t.combat.poisonRound(r, pd, Math.max(0, heroHp)));
     }
 
     // ── Hero death? ──
     if (heroHp <= 0) {
-      log.push(`💀 KLĘSKA! Pokonany w rundzie ${r}.`);
+      log.push(t.combat.bossDefeat(r));
       set({
         hero: { ...hero, hp: 1 },
         challengeFight: null,

@@ -4,6 +4,7 @@ import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
 import EnemyIcon from './EnemyIcon';
+import { useT } from '../hooks/useT';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -29,16 +30,8 @@ const CONNECTIONS: [string, string][] = [
   ['dragon_lair', 'neon_undercity'],
 ];
 
-const DIFFICULTY_OPTIONS: { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string }[] = [
-  { key: 'easy',   label: 'ŁATWY',   badge: '🌿', desc: 'Słabsi wrogowie, mniej nagród.', color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
-  { key: 'normal', label: 'NORMALNY',badge: '⚔',  desc: 'Standardowy balans wyzwania.',   color: '#aaaaaa', border: 'rgba(160,160,160,0.3)' },
-  { key: 'hard',   label: 'TRUDNY',  badge: '💀', desc: 'Silniejsi wrogowie, +60% nagród.',color: '#ff4444', border: 'rgba(255,68,68,0.45)'  },
-];
-const DUNGEON_VARIANTS: { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string }[] = [
-  { key: 'xp',       label: 'TRENING',   badge: '⚡', desc: 'Duzo XP, malo zdobyczy.',     color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
-  { key: 'balanced', label: 'PATROL',    badge: '⚖',  desc: 'Standardowe wynagrodzenie.',  color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
-  { key: 'loot',     label: 'ŁUPY',     badge: '💎', desc: 'Malo XP/zlota, duzo dropow.', color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
-];
+type DifficultyOption = { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string };
+type DungeonVariant = { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string };
 
 // ── Helper: hex points ─────────────────────────────────────────────────────
 function hexPoints(cx: number, cy: number, r: number): string {
@@ -189,6 +182,7 @@ function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?:
 }
 
 function EnemyBattleCard() {
+  const t = useT();
   const hero = useGameStore(s => s.hero);
   const enemy = useGameStore(s => s.currentEnemy);
   const currentFloor = useGameStore(s => s.currentFloor);
@@ -213,7 +207,7 @@ function EnemyBattleCard() {
           </span>
           {dungeon.name}
         </p>
-        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>Piętro {currentFloor}/{dungeon.floors}</p>
+        <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.dungeon.floor(currentFloor, dungeon.floors)}</p>
       </div>
 
       {/* Enemy */}
@@ -227,7 +221,7 @@ function EnemyBattleCard() {
           <EnemyIcon id={enemy.id} size={64} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(8), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
-            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>POZ. {enemy.level}</p>
+            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {enemy.level}</p>
             <p style={{ ...PX(6), color: '#903040' }}>{enemy.hp} / {enemy.maxHp} HP</p>
           </div>
         </div>
@@ -251,8 +245,8 @@ function EnemyBattleCard() {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>⚔ Atakuj!</button>
-        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>⚡ Szybka walka</button>
+        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>{t.dungeon.attack}</button>
+        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>{t.dungeon.quickFight}</button>
         <button onClick={exitDungeon} className="btn btn-danger" style={{ padding: '8px 14px', fontSize: 8 }}>🚪</button>
       </div>
 
@@ -366,6 +360,7 @@ function MapIcon({ id, cx, cy, color }: { id: string; cx: number; cy: number; co
 }
 
 function DungeonList() {
+  const t = useT();
   const hero         = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
   const isResting    = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
@@ -380,25 +375,36 @@ function DungeonList() {
   const blocked = isResting || limitReached;
   const chosen = selectedDungeon ?? defaultDungeon;
 
+  const DIFFICULTY_OPTIONS: DifficultyOption[] = [
+    { key: 'easy',   label: t.dungeon.diffEasy,   badge: '🌿', desc: t.dungeon.diffEasyDesc,   color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
+    { key: 'normal', label: t.dungeon.diffNormal,  badge: '⚔',  desc: t.dungeon.diffNormalDesc, color: '#aaaaaa', border: 'rgba(160,160,160,0.3)' },
+    { key: 'hard',   label: t.dungeon.diffHard,    badge: '💀', desc: t.dungeon.diffHardDesc,   color: '#ff4444', border: 'rgba(255,68,68,0.45)'  },
+  ];
+  const DUNGEON_VARIANTS: DungeonVariant[] = [
+    { key: 'xp',       label: t.dungeon.modeTraining, badge: '⚡', desc: t.dungeon.modeTrainingDesc, color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
+    { key: 'balanced', label: t.dungeon.modePatrol,   badge: '⚖',  desc: t.dungeon.modePatrolDesc,   color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
+    { key: 'loot',     label: t.dungeon.modeLoot,     badge: '💎', desc: t.dungeon.modeLootDesc,      color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>MAPA OPERACJI</p>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.dungeon.title}</p>
         <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
-          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} dzis
+          {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} {t.dungeon.today}
         </p>
       </div>
 
       {isResting && (
         <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: '#5070a0' }}>Odpoczywasz — wróc gdy odzyskasz sily</p>
+          <p style={{ ...PX(6), color: '#5070a0' }}>{t.dungeon.resting}</p>
         </div>
       )}
       {!isResting && limitReached && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit operacji wyczerpany!</p>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>{t.dungeon.limitReached}</p>
         </div>
       )}
 
@@ -550,7 +556,7 @@ function DungeonList() {
                   fill={isChosen ? '#ff8ab0' : '#ffc83a'}
                   fontSize="1.7" fontFamily="'VT323',monospace"
                   style={{ pointerEvents: 'none' }}>
-                  POZ.{d.minLevel}
+                  {t.dungeon.level}{d.minLevel}
                 </text>
               </g>
             );
@@ -560,8 +566,8 @@ function DungeonList() {
         {/* legend */}
         <div style={{ display: 'flex', gap: 14, padding: '6px 10px', borderTop: '1px solid rgba(185,77,255,0.12)', flexWrap: 'wrap' }}>
           {[
-            { col: '#ff2d78', label: 'WYBRANY' },
-            { col: '#ffc83a', label: 'DOSTĘPNY' },
+            { col: '#ff2d78', label: t.dungeon.selected },
+            { col: '#ffc83a', label: t.dungeon.available },
           ].map(({ col, label }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 5px ${col}` }}/>
@@ -586,15 +592,15 @@ function DungeonList() {
               <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>{chosen.name}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>{chosen.description}</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{chosen.floors} PIĘTER</span>
-                <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>POZ.{chosen.minLevel}</span>
+                <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{chosen.floors} {t.dungeon.floors}</span>
+                <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>{t.dungeon.level}{chosen.minLevel}</span>
               </div>
             </div>
           </div>
 
           {/* Difficulty selector */}
           <div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>POZIOM TRUDNOŚCI</p>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>{t.dungeon.difficultyLabel}</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {DIFFICULTY_OPTIONS.map(d => {
                 const active = difficulty === d.key;
@@ -639,7 +645,7 @@ function DungeonList() {
                   className="btn btn-primary"
                   style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
                 >
-                  {isResting ? 'ODPOCZYNEK' : limitReached ? 'LIMIT' : 'WEJDZ'}
+                  {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
                 </button>
               </div>
             ))}
@@ -651,6 +657,7 @@ function DungeonList() {
 }
 
 export default function DungeonPanel() {
+  const t = useT();
   const currentDungeon    = useGameStore(s => s.currentDungeon);
   const currentEnemy      = useGameStore(s => s.currentEnemy);
   const inCombat          = useGameStore(s => s.inCombat);
@@ -671,13 +678,13 @@ export default function DungeonPanel() {
         }}>
           <p style={{ fontSize: 40, marginBottom: 10 }}>💀</p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 11, color: 'var(--hp-bright)', textShadow: '0 0 16px #ff000066', marginBottom: 10 }}>
-            PRZEGRAŁEŚ!
+            {t.dungeon.defeated}
           </p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)', marginBottom: 6 }}>
             {defeatedAtDungeon}
           </p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: '#5070a0', lineHeight: 1.8 }}>
-            Musisz odpocząć aby<br />odzyskać życie.
+            {t.dungeon.mustRest}<br />{t.dungeon.recoverLife}
           </p>
         </div>
         <div className="combat-log">
@@ -686,7 +693,7 @@ export default function DungeonPanel() {
           ))}
         </div>
         <button onClick={clearDefeat} className="btn btn-secondary" style={{ width: '100%', fontSize: 7 }}>
-          ◀ Wróć do miasta
+          {t.dungeon.backToCity}
         </button>
       </div>
     );
@@ -698,10 +705,10 @@ export default function DungeonPanel() {
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
           <p style={{ fontSize: 32, marginBottom: 8 }}>🏆</p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
-            OPERACJA ZAKOŃCZONA!
+            {t.dungeon.opComplete}
           </p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)' }}>
-            {currentDungeon.name} — {currentFloor - 1} PIĘTER
+            {currentDungeon.name} — {currentFloor - 1} {t.dungeon.floors}
           </p>
         </div>
         <div className="combat-log">
@@ -710,7 +717,7 @@ export default function DungeonPanel() {
           ))}
         </div>
         <button onClick={exitDungeon} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
-          ▶ Wróć do miasta
+          {t.dungeon.backToCity2}
         </button>
       </div>
     );

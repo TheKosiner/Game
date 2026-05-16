@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
+import { useT } from '../hooks/useT';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
@@ -22,6 +23,7 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
 }
 
 function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank: number; onClose: () => void }) {
+  const t = useT();
   const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
   const atk = entry.attack ?? 0;
   const def = entry.defense ?? 0;
@@ -49,7 +51,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
             ? <span style={{ fontSize: 16 }}>{['🥇','🥈','🥉'][rank-1]}</span>
             : <span style={{ ...PX(7), color: rankColor }}>#{rank}</span>
           }
-          <span style={{ ...ORB, fontSize: 8, color: 'var(--gold-bright)' }}>PROFIL GRACZA</span>
+          <span style={{ ...ORB, fontSize: 8, color: 'var(--gold-bright)' }}>{t.leaderboard.profileTitle}</span>
         </div>
         <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
       </div>
@@ -84,27 +86,27 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
 
       {/* stats */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>STATYSTYKI BOJOWE</p>
-        <StatBar label="ATK" value={atk} max={maxStat * 1.2} color="#ff2d78" />
-        <StatBar label="OBR" value={def} max={maxStat * 1.2} color="#00f5ff" />
-        <StatBar label="HP" value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{t.leaderboard.combatStats}</p>
+        <StatBar label={t.leaderboard.atk} value={atk} max={maxStat * 1.2} color="#ff2d78" />
+        <StatBar label={t.leaderboard.def} value={def} max={maxStat * 1.2} color="#00f5ff" />
+        <StatBar label={t.leaderboard.hp} value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
       </div>
 
       {/* pvp */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>STATYSTYKI PVP</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{t.leaderboard.pvpStats}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#00ff88' }}>{wins}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WYGRANE</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.wins}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#ff2d78' }}>{losses}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>PRZEGRANE</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.losses}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#ffd700' }}>{winRate}%</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>WIN RATE</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.winRate}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#c084fc' }}>{rating}</p>
@@ -118,6 +120,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
 
 export default function LeaderboardPanel() {
   const user = useAuthStore(s => s.user);
+  const t = useT();
 
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,13 +149,13 @@ export default function LeaderboardPanel() {
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>👑 RANKING</p>
-        <button onClick={fetchLeaderboard} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻ ODSWIEZ</button>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.leaderboard.title}</p>
+        <button onClick={fetchLeaderboard} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>{t.leaderboard.refresh}</button>
       </div>
 
       {myRank > 0 && (
         <div style={{ background: 'rgba(28,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ ...PX(5), color: 'var(--text-dim)' }}>TWOJE MIEJSCE</p>
+          <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.leaderboard.yourPlace}</p>
           <p style={{ ...PX(10), color: 'var(--gold-bright)' }}>#{myRank}</p>
         </div>
       )}
@@ -165,9 +168,9 @@ export default function LeaderboardPanel() {
         />
       )}
 
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Ladowanie...</p>}
-      {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
-      {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Brak graczy. Badz pierwszy!</p>}
+      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.loading}</p>}
+      {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{t.leaderboard.error}</p>}
+      {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.noPlayers}</p>}
 
       {!loading && entries.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -234,7 +237,7 @@ export default function LeaderboardPanel() {
         </div>
       )}
 
-      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>Top 50 · zapis co 30s</p>
+      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{t.leaderboard.top50}</p>
     </div>
   );
 }

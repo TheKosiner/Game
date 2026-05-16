@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
+import { useT } from '../hooks/useT';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -39,6 +40,16 @@ function mainBonus(item: Item): { label: string; value: string; color: string } 
 }
 
 function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {
+  const t = useT();
+  const rarityLabel: Record<string, string> = {
+    common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
+    rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
+  };
+  const statNames: Record<string, string> = {
+    strength: t.equipment.statStrength, dexterity: t.equipment.statDexterity,
+    intelligence: t.equipment.statIntelligence, vitality: t.equipment.statVitality,
+    magic: t.equipment.statMagic, magicResistance: t.equipment.statMagRes,
+  };
   const rc = RARITY_COLORS[item.rarity];
   const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
   return (
@@ -58,7 +69,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 4 }}>{item.name}</p>
           <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
-            {RARITY_LABEL[item.rarity]}
+            {rarityLabel[item.rarity]}
           </span>
           {(item as any).ranged && (
             <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 5px', marginLeft: 4 }}>
@@ -70,22 +81,22 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>STATYSTYKI</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>{t.equipment.stat}</p>
         {statEntries.map(([k, v]) => (
           <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{STAT_NAMES[k] ?? k}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{statNames[k] ?? k}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>+{v as number}</span>
           </div>
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{(item as any).magicDamage ? '🔮 Obrażenia mag.' : '⚔ Atak'}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{(item as any).magicDamage ? '🔮 Obrażenia mag.' : t.equipment.atk}</span>
             <span style={{ ...ORB, fontSize: 10, color: (item as any).magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
         {item.defenseBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>🛡 Obrona</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{t.equipment.def}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
@@ -100,13 +111,18 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
       </div>
 
       <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '7px' }}>
-        ✕ ZDEJMIJ PRZEDMIOT
+        {t.equipment.unequip}
       </button>
     </div>
   );
 }
 
 function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () => void }) {
+  const t = useT();
+  const rarityLabel: Record<string, string> = {
+    common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
+    rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
+  };
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
   const bonus = item ? mainBonus(item) : null;
   const ps = item ? primaryStat(item) : null;
@@ -139,7 +155,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
               <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
-                {RARITY_LABEL[item.rarity]}
+                {rarityLabel[item.rarity]}
               </span>
               {(item as any).ranged && (
                 <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
@@ -165,7 +181,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <span style={{ fontSize: 28, opacity: 0.1 }}>⚔</span>
-          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>BROŃ</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.equipment.slotWeapon}</span>
         </div>
       )}
     </div>
@@ -220,15 +236,15 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
   );
 }
 
-const SIDE_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
-  { slot: 'helmet', label: 'Hełm',      icon: '⛑' },
-  { slot: 'armor',  label: 'Zbroja',    icon: '🛡' },
-  { slot: 'ring',   label: 'Pierścień', icon: '💍' },
-  { slot: 'boots',  label: 'Buty',      icon: '👢' },
-  { slot: 'amulet', label: 'Amulet',    icon: '💿' },
-];
-
 export default function EquipmentPanel() {
+  const t = useT();
+  const SIDE_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
+    { slot: 'helmet', label: t.equipment.slotHelmet, icon: '⛑' },
+    { slot: 'armor',  label: t.equipment.slotArmor,  icon: '🛡' },
+    { slot: 'ring',   label: t.equipment.slotRing,   icon: '💍' },
+    { slot: 'boots',  label: t.equipment.slotBoots,  icon: '👢' },
+    { slot: 'amulet', label: t.equipment.slotAmulet, icon: '💿' },
+  ];
   const equipment   = useGameStore(s => s.hero.equipment);
   const unequipItem = useGameStore(s => s.unequipItem);
   const [selectedSlot, setSelectedSlot] = useState<ItemSlot | null>(null);
@@ -237,7 +253,7 @@ export default function EquipmentPanel() {
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)' }}>
-        ⚔ EKWIPUNEK
+        {t.equipment.title}
       </p>
 
       {selectedItem && selectedSlot ? (

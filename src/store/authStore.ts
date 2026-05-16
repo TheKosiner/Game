@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, runTransaction } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
+import { getT } from '../hooks/useT';
 
 export interface AuthUser {
   uid: string;
@@ -61,20 +62,21 @@ function toAuthUser(user: User, username: string): AuthUser {
 }
 
 function getErrorMessage(e: unknown): string {
+  const t = getT();
   if (typeof e === 'object' && e !== null && 'code' in e) {
     const code = (e as { code: string }).code;
     const messages: Record<string, string> = {
-      'auth/user-not-found': 'Nie znaleziono konta',
-      'auth/wrong-password': 'Błędne hasło',
-      'auth/email-already-in-use': 'Email już zajęty',
-      'auth/weak-password': 'Hasło za słabe (min. 6 znaków)',
-      'auth/invalid-email': 'Nieprawidłowy email',
-      'auth/invalid-credential': 'Nieprawidłowe dane logowania',
-      'auth/too-many-requests': 'Zbyt wiele prób — spróbuj później',
+      'auth/user-not-found': t.auth.errUserNotFound,
+      'auth/wrong-password': t.auth.errWrongPassword,
+      'auth/email-already-in-use': t.auth.errEmailInUse,
+      'auth/weak-password': t.auth.errWeakPassword,
+      'auth/invalid-email': t.auth.errInvalidEmail,
+      'auth/invalid-credential': t.auth.errInvalidCredential,
+      'auth/too-many-requests': t.auth.errTooManyRequests,
     };
-    return messages[code] ?? `Błąd: ${code}`;
+    return messages[code] ?? t.auth.errCode(code);
   }
-  return 'Błąd połączenia';
+  return t.auth.errConnection;
 }
 
 // Holds ref to Firebase User for resend — not stored in Zustand (non-serializable)
@@ -130,7 +132,8 @@ export const useAuthStore = create<AuthState>((set) => {
       set({ error: null });
 
       if (isDisposableEmail(email)) {
-        set({ error: 'Tymczasowe adresy email są niedozwolone' });
+        const t = getT();
+        set({ error: t.auth.errDisposableEmail });
         return;
       }
 
@@ -159,7 +162,8 @@ export const useAuthStore = create<AuthState>((set) => {
           // Roll back: delete the auth account so email can be reused
           await cred.user.delete().catch(() => {});
           if (txErr instanceof Error && txErr.message === 'username-taken') {
-            set({ error: 'Ten nick jest już zajęty' });
+            const t = getT();
+            set({ error: t.auth.errUsernameTaken });
           } else {
             set({ error: getErrorMessage(txErr) });
           }
@@ -206,7 +210,8 @@ export const useAuthStore = create<AuthState>((set) => {
           const username = await fetchUsername(currentUser.uid);
           set({ user: toAuthUser(currentUser, username), needsVerification: false });
         } else {
-          set({ error: 'Email nie został jeszcze zweryfikowany — sprawdź skrzynkę i kliknij link' });
+          const t = getT();
+          set({ error: t.auth.errNotVerified });
         }
       } catch (e) {
         set({ error: getErrorMessage(e) });

@@ -3,17 +3,18 @@ import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
+import { useT } from '../hooks/useT';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
-const VARIANTS = [
+const VARIANTS_BASE = [
   {
     key: 'xp',
-    label: 'ZLECENIE XP',
+    labelKey: 'typeXp' as const,
+    descKey: 'typeXpDesc' as const,
     badge: '⚡',
-    desc: 'Duze doswiadczenie, mala zaplate.',
     xpMult: 1.8, goldMult: 0.3,
     color: '#4488ff',
     bg: 'linear-gradient(135deg, rgba(20,30,60,0.97), rgba(10,18,50,0.99))',
@@ -22,9 +23,9 @@ const VARIANTS = [
   },
   {
     key: 'bal',
-    label: 'KONTRAKT',
+    labelKey: 'typeContract' as const,
+    descKey: 'typeContractDesc' as const,
     badge: '⚖',
-    desc: 'Standardowe wynagrodzenie.',
     xpMult: 1.0, goldMult: 1.0,
     color: '#aaaaaa',
     bg: 'linear-gradient(135deg, rgba(20,20,25,0.97), rgba(12,12,18,0.99))',
@@ -33,16 +34,16 @@ const VARIANTS = [
   },
   {
     key: 'gold',
-    label: 'MISJA LUPOW',
+    labelKey: 'typeLoot' as const,
+    descKey: 'typeLootDesc' as const,
     badge: '🪙',
-    desc: 'Wysoka zaplata, mniej doswiadczenia.',
     xpMult: 0.3, goldMult: 1.8,
     color: '#ffd700',
     bg: 'linear-gradient(135deg, rgba(40,28,5,0.97), rgba(28,18,3,0.99))',
     border: 'rgba(255,215,0,0.3)',
     glow: 'rgba(255,215,0,0.07)',
   },
-] as const;
+];
 
 function formatTime(ms: number): string {
   if (ms <= 0) return 'Gotowe!';
@@ -55,6 +56,7 @@ function formatTime(ms: number): string {
 }
 
 export default function QuestPanel() {
+  const t = useT();
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest   = useGameStore(s => s.startQuest);
@@ -84,15 +86,15 @@ export default function QuestPanel() {
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>ZADANIA</p>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.quests.title}</p>
         <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
-          {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} dzis
+          {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} {t.quests.today}
         </p>
       </div>
 
       {limitReached && !activeQuest && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 10, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>Dzienny limit zadan wyczerpany!</p>
+          <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>{t.quests.limitReached}</p>
         </div>
       )}
 
@@ -124,7 +126,7 @@ export default function QuestPanel() {
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: canCollect ? 10 : 0 }}>
             <p style={{ ...MONO, fontSize: 10, color: canCollect ? '#6aaa30' : 'var(--text-dim)' }}>
-              {canCollect ? 'Gotowe do odbioru!' : formatTime(remaining)}
+              {canCollect ? t.quests.readyToCollect : formatTime(remaining)}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
               <span style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
@@ -134,19 +136,19 @@ export default function QuestPanel() {
 
           {canCollect && (
             <button onClick={collectQuest} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
-              Odbierz nagrode!
+              {t.quests.collect}
             </button>
           )}
 
           {!canCollect && !confirmAbandon && (
             <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, marginTop: 4, opacity: 0.7 }}>
-              ✕ Zrezygnuj z zadania
+              {t.quests.cancel}
             </button>
           )}
           {!canCollect && confirmAbandon && (
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 6 }}>Anuluj</button>
-              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 6 }}>✕ Porzuć zadanie</button>
+              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancelConfirm}</button>
+              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancel}</button>
             </div>
           )}
         </div>
@@ -154,7 +156,7 @@ export default function QuestPanel() {
 
       {isResting && !activeQuest && (
         <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: '#5070a0' }}>Odpoczywasz - wróc gdy odzyskasz sily</p>
+          <p style={{ ...PX(6), color: '#5070a0' }}>{t.quests.resting}</p>
         </div>
       )}
 
@@ -162,7 +164,7 @@ export default function QuestPanel() {
         <>
           {!base ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
-              Brak zadan dla twojego poziomu.
+              {t.quests.noQuests}
             </p>
           ) : (
             <>
@@ -177,7 +179,7 @@ export default function QuestPanel() {
 
               {/* 3 variant cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {VARIANTS.map(v => {
+                {VARIANTS_BASE.map(v => {
                   const duration = scaledQuestDuration(base.durationMs, hero.level);
                   const xp   = Math.round(base.xpReward * v.xpMult);
                   const gold = Math.round(base.goldReward * v.goldMult);
@@ -191,8 +193,8 @@ export default function QuestPanel() {
                     }}>
                       <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 4 }}>{v.label}</p>
-                        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{v.desc}</p>
+                        <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
+                        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
                         <div style={{ display: 'flex', gap: 12 }}>
                           <span style={{ ...ORB, fontSize: 8, color: '#4488ff' }}>+{xp} XP</span>
                           <span style={{ ...ORB, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
@@ -204,7 +206,7 @@ export default function QuestPanel() {
                         className="btn btn-primary"
                         style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
-                        START
+                        {t.quests.start}
                       </button>
                     </div>
                   );

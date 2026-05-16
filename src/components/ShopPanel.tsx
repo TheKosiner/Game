@@ -4,6 +4,7 @@ import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { generateShopItems } from '../data/items';
 import ItemIcon from './ItemIcon';
 import type { Item, Stats } from '../types';
+import { useT } from '../hooks/useT';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -29,15 +30,6 @@ const RARITY_LABEL: Record<string, string> = {
   legendary: 'LEGENDARNY',
 };
 
-const SLOT_LABEL: Record<string, string> = {
-  weapon: 'Broń', armor: 'Zbroja', helmet: 'Hełm',
-  boots: 'Buty', ring: 'Pierścień', amulet: 'Amulet',
-};
-
-const STAT_LABELS: Record<keyof Stats, string> = {
-  strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Celność',
-  vitality: 'Żywotność', magic: 'Magia', magicResistance: 'Odporność',
-};
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -84,6 +76,15 @@ function StatDeltaRow({ label, oldVal, newVal }: { label: string; oldVal: number
 }
 
 function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item | undefined }) {
+  const t = useT();
+  const STAT_LABELS: Record<string, string> = {
+    strength: t.shop.statStrength,
+    dexterity: t.shop.statDexterity,
+    intelligence: t.shop.statIntelligence,
+    vitality: t.shop.statVitality,
+    magic: t.shop.statMagic,
+    magicResistance: t.shop.statMagRes,
+  };
   const shopColor  = RARITY_COLORS[shopItem.rarity];
   const eqColor    = equipped ? RARITY_COLORS[equipped.rarity] : '#475569';
 
@@ -106,18 +107,18 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
       {/* Header: equipped vs shop */}
       <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ flex: 1, padding: '7px 8px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>MASZ</p>
+          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareEquipped}</p>
           {equipped ? (
             <>
               <p style={{ ...MONO, fontSize: 7, color: eqColor, marginBottom: 1 }}>{equipped.name}</p>
               <p style={{ ...MONO, fontSize: 6, color: '#475569' }}>Poz. {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
             </>
           ) : (
-            <p style={{ ...MONO, fontSize: 7, color: '#334155' }}>Nic nie założono</p>
+            <p style={{ ...MONO, fontSize: 7, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
           )}
         </div>
         <div style={{ flex: 1, padding: '7px 8px' }}>
-          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>SKLEP</p>
+          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareShop}</p>
           <p style={{ ...MONO, fontSize: 7, color: shopColor, marginBottom: 1 }}>{shopItem.name}</p>
           <p style={{ ...MONO, fontSize: 6, color: '#475569' }}>Poz. {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
         </div>
@@ -125,15 +126,15 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
 
       {/* Column labels */}
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ ...PX(4), color: '#334155', flex: 1, paddingLeft: 8, paddingTop: 4, paddingBottom: 4 }}>STAT</span>
-        <span style={{ ...PX(4), color: '#475569', width: 32, textAlign: 'right', paddingRight: 6, paddingTop: 4, paddingBottom: 4 }}>MASZ</span>
-        <span style={{ ...PX(4), color: '#475569', width: 48, textAlign: 'center', paddingTop: 4, paddingBottom: 4 }}>DELTA</span>
-        <span style={{ ...PX(4), color: '#475569', width: 32, paddingLeft: 6, paddingTop: 4, paddingBottom: 4 }}>NOWY</span>
+        <span style={{ ...PX(4), color: '#334155', flex: 1, paddingLeft: 8, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareStat}</span>
+        <span style={{ ...PX(4), color: '#475569', width: 32, textAlign: 'right', paddingRight: 6, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareYours}</span>
+        <span style={{ ...PX(4), color: '#475569', width: 48, textAlign: 'center', paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareDelta}</span>
+        <span style={{ ...PX(4), color: '#475569', width: 32, paddingLeft: 6, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareNew}</span>
       </div>
 
       {/* Stat rows */}
-      {(shopAtk > 0 || eqAtk > 0) && <StatDeltaRow label="⚔ Atak" oldVal={eqAtk} newVal={shopAtk} />}
-      {(shopDef > 0 || eqDef > 0) && <StatDeltaRow label="🛡 Obrona" oldVal={eqDef} newVal={shopDef} />}
+      {(shopAtk > 0 || eqAtk > 0) && <StatDeltaRow label={t.shop.compareAtk} oldVal={eqAtk} newVal={shopAtk} />}
+      {(shopDef > 0 || eqDef > 0) && <StatDeltaRow label={t.shop.compareDef} oldVal={eqDef} newVal={shopDef} />}
       {allStats.map(k => (
         <StatDeltaRow
           key={k}
@@ -149,12 +150,22 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
 // ── Main panel ───────────────────────────────────────────────────────────────
 
 export default function ShopPanel() {
+  const t = useT();
   const hero = useGameStore(s => s.hero);
   const buyShopItem = useGameStore(s => s.buyShopItem);
   const refreshShop = useGameStore(s => s.refreshShop);
   const shopSeed = useGameStore(s => s.shopSeed);
   const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
   const shopPurchased = useGameStore(s => s.shopPurchased);
+
+  const SLOT_LABEL: Record<string, string> = {
+    weapon: t.shop.slotWeapon,
+    armor: t.shop.slotArmor,
+    helmet: t.shop.slotHelmet,
+    boots: t.shop.slotBoots,
+    ring: t.shop.slotRing,
+    amulet: t.shop.slotAmulet,
+  };
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -168,12 +179,12 @@ export default function ShopPanel() {
     e.stopPropagation();
     const success = buyShopItem(item, price, slotIndex);
     if (success) {
-      setNotification({ text: `Kupiono: ${item.name}`, ok: true });
+      setNotification({ text: t.shop.bought(item.name), ok: true });
       setSelectedIdx(null);
     } else if (hero.gold < price) {
-      setNotification({ text: 'Za mało złota!', ok: false });
+      setNotification({ text: t.shop.notEnoughGold, ok: false });
     } else {
-      setNotification({ text: 'Plecak pełny!', ok: false });
+      setNotification({ text: t.shop.backpackFull, ok: false });
     }
     setTimeout(() => setNotification(null), 2500);
   }
@@ -187,8 +198,8 @@ export default function ShopPanel() {
           <p style={{ fontSize: 10, marginBottom: 2,
             background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>🛒 SKLEP</p>
-          <p style={{ color: '#475569', fontSize: 6 }}>Ekwipunek dobierany do Twojego poziomu</p>
+          }}>{t.shop.title}</p>
+          <p style={{ color: '#475569', fontSize: 6 }}>{t.shop.subtitle}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
@@ -204,7 +215,7 @@ export default function ShopPanel() {
             className="btn btn-secondary"
             style={{ fontSize: 6, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}
           >
-            🔄 Odśwież
+            {t.shop.refresh}
           </button>
         </div>
       </div>
@@ -219,7 +230,7 @@ export default function ShopPanel() {
           textAlign: 'center',
         }}>
           <p style={{ color: '#64748b', fontSize: 6 }}>
-            ⏳ Następne odświeżenie za: <CooldownTimer cooldownEnd={cooldownEnd} />
+            {t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} />
           </p>
         </div>
       )}
@@ -279,7 +290,7 @@ export default function ShopPanel() {
                     fontFamily: "'Press Start 2P', monospace",
                     letterSpacing: '0.05em',
                   }}>
-                    ★ OFERTA
+                    {t.shop.featured}
                   </div>
                 )}
 
@@ -322,7 +333,7 @@ export default function ShopPanel() {
                           border: '1px solid rgba(0,245,255,0.3)',
                           padding: '1px 3px', flexShrink: 0,
                         }}>
-                          🔫 DYSTANSOWA
+                          🔫 {t.shop.ranged}
                         </span>
                       )}
                       <span style={{
@@ -339,7 +350,7 @@ export default function ShopPanel() {
                       {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
                     </p>
                     <p style={{ color: '#64748b', fontSize: 6 }}>
-                      {statEntries.map(([k, v]) => `+${v} ${({ strength: 'Siła', dexterity: 'Zręcz', intelligence: 'Cel', vitality: 'Żyw' } as Record<string, string>)[k] ?? k}`).join('  ')}
+                      {statEntries.map(([k, v]) => `+${v} ${({ strength: t.shop.statStr, dexterity: t.shop.statDex, intelligence: t.shop.statInt, vitality: t.shop.statVit } as Record<string, string>)[k] ?? k}`).join('  ')}
                       {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
                       {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
                     </p>

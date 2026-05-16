@@ -9,6 +9,7 @@ import TerritoryPanel from './TerritoryPanel';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
+import { useT } from '../hooks/useT';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 
@@ -21,6 +22,7 @@ function formatDate(ts: number) {
 function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
   const user = useAuthStore(s => s.user);
   const hero = useGameStore(s => s.hero);
+  const t = useT();
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [desc, setDesc] = useState('');
@@ -31,47 +33,47 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
     if (!user) return;
     const trimName = name.trim();
     const trimTag = tag.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (trimName.length < 3) { setError('Nazwa min. 3 znaki'); return; }
-    if (trimTag.length < 2 || trimTag.length > 4) { setError('Tag musi mieć 2–4 znaki (A-Z, 0-9)'); return; }
+    if (trimName.length < 3) { setError(t.guild.nameError); return; }
+    if (trimTag.length < 2 || trimTag.length > 4) { setError(t.guild.tagError); return; }
     setLoading(true); setError('');
     try {
       await createGuild(user.uid, user.username, hero.name, hero.level, trimName, trimTag, desc.trim(), hero.portrait);
       onCreated();
-    } catch { setError('Błąd tworzenia gildii'); }
+    } catch { setError(t.guild.createError); }
     finally { setLoading(false); }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>⚔ GILDZIE</p>
-      <p style={{ ...PX(5), color: 'var(--text-dim)' }}>Stwórz gildię i zapraszaj sojuszników</p>
+      <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.guild.title}</p>
+      <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.guild.noGuildDesc}</p>
 
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 2 }}>✦ ZAŁÓŻ GILDIĘ</p>
+        <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 2 }}>{t.guild.createTitle}</p>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>NAZWA</p>
+          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.nameLabel}</p>
           <input
             value={name} onChange={e => setName(e.target.value)} maxLength={24}
-            placeholder="np. Wilcza Wataha"
+            placeholder={t.guild.namePlaceholder}
             style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 7, padding: '7px 8px', boxSizing: 'border-box' }}
           />
         </div>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>TAG [2–4 znaki]</p>
+          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.tagLabel}</p>
           <input
             value={tag} onChange={e => setTag(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4))} maxLength={4}
-            placeholder="WW"
+            placeholder={t.guild.tagPlaceholder}
             style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--gold-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 8, padding: '7px 8px', boxSizing: 'border-box', letterSpacing: '0.1em' }}
           />
         </div>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>OPIS (opcjonalnie)</p>
+          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.descLabel}</p>
           <textarea
             value={desc} onChange={e => setDesc(e.target.value)} maxLength={120}
-            placeholder="Jesteśmy..."
+            placeholder={t.guild.descPlaceholder}
             rows={2}
             style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-dim)', fontFamily: "'Press Start 2P', monospace", fontSize: 5, padding: '7px 8px', boxSizing: 'border-box', resize: 'none' }}
           />
@@ -80,7 +82,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
         {error && <p style={{ ...PX(5), color: 'var(--hp-bright)' }}>{error}</p>}
 
         <button onClick={handleCreate} disabled={loading} className="btn btn-primary" style={{ fontSize: 6, padding: '9px' }}>
-          {loading ? '⏳ Tworzenie...' : '⚔ Stwórz gildię'}
+          {loading ? t.guild.creating : t.guild.createBtn}
         </button>
       </div>
 
@@ -93,6 +95,7 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
 function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh: () => void }) {
   const user = useAuthStore(s => s.user);
   const hero = useGameStore(s => s.hero);
+  const t = useT();
   const [acting, setActing] = useState<string | null>(null);
 
   async function handleAccept(inv: GuildInvite) {
@@ -112,21 +115,21 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ ...PX(6), color: 'var(--gold-main)', marginBottom: 2 }}>📨 ZAPROSZENIA DO GILDII</p>
+      <p style={{ ...PX(6), color: 'var(--gold-main)', marginBottom: 2 }}>{t.guild.invitesTitle}</p>
       {invites.map(inv => (
         <div key={inv.id} style={{ background: 'var(--bg-inset)', border: '1px solid var(--gold-darker)', padding: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
             <div>
               <p style={{ ...PX(7), color: 'var(--gold-bright)', marginBottom: 3 }}>[{inv.guildTag}] {inv.guildName}</p>
-              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>od {inv.fromUsername}</p>
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.inviteFrom(inv.fromUsername)}</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => handleAccept(inv)} disabled={acting === inv.id} className="btn btn-primary" style={{ flex: 1, fontSize: 5, padding: '6px' }}>
-              ✓ Dołącz
+              {t.guild.joinBtn}
             </button>
             <button onClick={() => handleDecline(inv)} disabled={acting === inv.id} className="btn btn-secondary" style={{ flex: 1, fontSize: 5, padding: '6px' }}>
-              ✕ Odrzuć
+              {t.guild.declineBtn}
             </button>
           </div>
         </div>
@@ -139,6 +142,7 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
 
 function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) {
   const user = useAuthStore(s => s.user);
+  const t = useT();
   const [players, setPlayers] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [sent, setSent] = useState<Set<string>>(new Set());
@@ -164,11 +168,11 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
       <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', background: 'var(--bg-panel)', border: '1px solid var(--border-main)', padding: 14, maxHeight: '70vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <p style={{ ...PX(6), color: 'var(--gold-main)' }}>📨 ZAPROŚ GRACZA</p>
+          <p style={{ ...PX(6), color: 'var(--gold-main)' }}>{t.guild.inviteModalTitle}</p>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
         </div>
-        {loading && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>⏳ Ładowanie...</p>}
-        {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>Brak graczy do zaproszenia</p>}
+        {loading && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>{t.guild.creating}</p>}
+        {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>{t.guild.noPlayersToInvite}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {players.map(p => {
             const alreadySent = sent.has(p.uid);
@@ -179,7 +183,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
-                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>POZ.{p.level}</p>
+                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.levelShort}{p.level}</p>
                 </div>
                 <button
                   onClick={() => handleInvite(p)}
@@ -187,7 +191,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
                   className={alreadySent ? 'btn btn-secondary' : 'btn btn-primary'}
                   style={{ fontSize: 5, padding: '5px 8px', flexShrink: 0, opacity: alreadySent ? 0.6 : 1 }}
                 >
-                  {alreadySent ? '✓ Wysłano' : '+ Zaproś'}
+                  {alreadySent ? t.guild.inviteSent : t.guild.inviteBtn}
                 </button>
               </div>
             );
@@ -199,6 +203,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
 }
 
 function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, number> }) {
+  const t = useT();
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const isLeader = guild.leaderUid === myUid;
@@ -208,10 +213,10 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
 
   async function handleLeave() {
     if (isLeader && memberCount > 1) {
-      alert('Jesteś liderem. Przekaż przywództwo lub rozwiąż gildię.');
+      alert(t.guild.leaderWarning);
       return;
     }
-    if (!confirm(isLeader ? 'Rozwiązać gildię?' : 'Opuścić gildię?')) return;
+    if (!confirm(isLeader ? t.guild.disbandConfirm : t.guild.leaveConfirm)) return;
     setActing(true);
     try {
       if (isLeader) await disbandGuild(guild.id, myUid);
@@ -221,14 +226,14 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   }
 
   async function handleKick(uid: string, username: string) {
-    if (!confirm(`Wyrzucić ${username}?`)) return;
+    if (!confirm(t.guild.kickConfirm(username))) return;
     setActing(true);
     try { await leaveGuild(guild.id, uid); onRefresh(); }
     finally { setActing(false); }
   }
 
   async function handleTransfer(uid: string, username: string) {
-    if (!confirm(`Przekazać przywództwo graczowi ${username}?`)) return;
+    if (!confirm(t.guild.transferConfirm(username))) return;
     setActing(true);
     try { await transferLeadership(guild.id, myUid, uid); onRefresh(); }
     finally { setActing(false); }
@@ -247,10 +252,10 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
               <p style={{ ...PX(9), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)' }}>{guild.name}</p>
             </div>
             {guild.description && <p style={{ ...PX(4), color: 'var(--text-dim)', marginBottom: 4 }}>{guild.description}</p>}
-            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{memberCount} {memberCount === 1 ? 'członek' : memberCount < 5 ? 'członków' : 'członków'} · założona {formatDate(guild.createdAt)}</p>
+            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{memberCount} {memberCount === 1 ? t.guild.member1 : t.guild.memberMany} · {t.guild.founded(formatDate(guild.createdAt))}</p>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 2 }}>GILDIA XP</p>
+            <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 2 }}>{t.guild.guildXp}</p>
             <p style={{ ...PX(8), color: 'var(--gold-bright)' }}>{guild.guildXp}</p>
           </div>
         </div>
@@ -259,10 +264,10 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
       {/* Members */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ ...PX(5), color: 'var(--gold-main)' }}>⚔ CZŁONKOWIE</p>
+          <p style={{ ...PX(5), color: 'var(--gold-main)' }}>{t.guild.membersTitle}</p>
           {isLeader && (
             <button onClick={() => setShowInvite(true)} className="btn btn-primary" style={{ fontSize: 5, padding: '4px 8px' }}>
-              + Zaproś
+              {t.guild.inviteBtn}
             </button>
           )}
         </div>
@@ -286,13 +291,13 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
                   </p>
                 </div>
                 <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                  {m.heroName} · POZ.{m.level}
+                  {t.guild.heroLevel(m.heroName, m.level)}
                 </p>
               </div>
               {isLeader && !isMe && (
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                   <button onClick={() => handleTransfer(m.uid, m.username)} disabled={acting} className="btn btn-secondary" style={{ fontSize: 4, padding: '3px 5px' }} title="Przekaż przywództwo">👑</button>
-                  <button onClick={() => handleKick(m.uid, m.username)} disabled={acting} className="btn btn-danger" style={{ fontSize: 4, padding: '3px 5px' }} title="Wyrzuć">✕</button>
+                  <button onClick={() => handleKick(m.uid, m.username)} disabled={acting} className="btn btn-danger" style={{ fontSize: 4, padding: '3px 5px' }} title={t.guild.kickBtn}>✕</button>
                 </div>
               )}
             </div>
@@ -302,7 +307,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
 
       {/* Territory map */}
       <button onClick={onOpenMap} className="btn btn-primary" style={{ width: '100%', fontSize: 6, padding: '10px' }}>
-        🗺 MAPA TERYTORIÓW
+        {t.guild.territoriesBtn}
       </button>
 
       {/* Leave / disband */}
@@ -312,7 +317,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
         className="btn btn-danger"
         style={{ width: '100%', fontSize: 6, padding: '8px' }}
       >
-        {isLeader ? '💀 Rozwiąż gildię' : '🚪 Opuść gildię'}
+        {isLeader ? t.guild.disbandBtn : t.guild.leaveBtn}
       </button>
     </div>
   );
@@ -322,6 +327,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
 
 export default function GuildPanel() {
   const user = useAuthStore(s => s.user);
+  const t = useT();
 
   const [guild, setGuild] = useState<Guild | null>(null);
   const [invites, setInvites] = useState<GuildInvite[]>([]);
@@ -356,9 +362,9 @@ export default function GuildPanel() {
   if (!isFirebaseConfigured || !user) {
     return (
       <div className="card p-3">
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 10 }}>⚔ GILDIE</p>
+        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 10 }}>{t.guild.title}</p>
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 16, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: 'var(--text-muted)' }}>Wymagane konto gracza</p>
+          <p style={{ ...PX(6), color: 'var(--text-muted)' }}>{t.guild.needAccount}</p>
         </div>
       </div>
     );
@@ -367,7 +373,7 @@ export default function GuildPanel() {
   if (loading) {
     return (
       <div className="card p-3">
-        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>⏳ Ładowanie...</p>
+        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>{t.guild.creating}</p>
       </div>
     );
   }
@@ -389,7 +395,7 @@ export default function GuildPanel() {
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
           <CreateGuildForm onCreated={load} />
           <button onClick={() => setView('territory')} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, padding: '9px' }}>
-            🗺 Mapa terytoriów
+            {t.guild.territoriesBtn}
           </button>
         </div>
       )}

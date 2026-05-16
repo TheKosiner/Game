@@ -1,21 +1,11 @@
+import { useT } from '../hooks/useT';
+
 export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail';
 
 interface Props {
   active: Tab;
   onChange: (tab: Tab) => void;
 }
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'hero',    label: 'BOHATER' },
-  { id: 'dungeon',    label: 'OPERACJE' },
-  { id: 'challenge',  label: 'BOSS'     },
-  { id: 'quests',     label: 'ZADANIA'  },
-  { id: 'shop',    label: 'SKLEP'   },
-  { id: 'pvp',     label: 'ARENA'   },
-  { id: 'guild',   label: 'GILDIA'  },
-  { id: 'ranking', label: 'TOP'     },
-  { id: 'mail',    label: 'POCZTA'  },
-];
 
 const svgBase = {
   width: 18, height: 18,
@@ -105,6 +95,18 @@ function TabIcon({ id, color }: { id: Tab; color: string }) {
 }
 
 export default function BottomNav({ active, onChange }: Props) {
+  const t = useT();
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'hero',      label: t.nav.hero },
+    { id: 'dungeon',   label: t.nav.dungeon },
+    { id: 'challenge', label: t.nav.boss },
+    { id: 'quests',    label: t.nav.quests },
+    { id: 'shop',      label: t.nav.shop },
+    { id: 'pvp',       label: t.nav.arena },
+    { id: 'guild',     label: t.nav.guild },
+    { id: 'ranking',   label: t.nav.ranking },
+    { id: 'mail',      label: t.nav.mail },
+  ];
   return (
     <nav style={{
       position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,

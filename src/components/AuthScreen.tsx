@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { useT } from '../hooks/useT';
 
 type Mode = 'login' | 'register';
 
@@ -26,6 +27,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 function VerificationScreen() {
+  const t = useT();
   const pendingEmail       = useAuthStore(s => s.pendingEmail);
   const resendVerification = useAuthStore(s => s.resendVerification);
   const checkVerification  = useAuthStore(s => s.checkVerification);
@@ -55,26 +57,26 @@ function VerificationScreen() {
       <div style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ fontSize: 48, marginBottom: 8 }}>📧</p>
-          <h1 style={{ ...PX(10), color: '#fbbf24', marginBottom: 10 }}>WERYFIKACJA EMAIL</h1>
+          <h1 style={{ ...PX(10), color: '#fbbf24', marginBottom: 10 }}>{t.auth.verifyTitle}</h1>
         </div>
 
         <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ background: 'rgba(250,204,21,0.08)', border: '2px solid rgba(250,204,21,0.3)', padding: '12px 14px' }}>
             <p style={{ ...MONO, fontSize: 10, color: '#fbbf24', marginBottom: 6 }}>
-              Wysłaliśmy link weryfikacyjny na:
+              {t.auth.verifySentTo}
             </p>
             <p style={{ ...PX(8), color: '#fff', wordBreak: 'break-all' }}>{pendingEmail}</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
-              1. Kliknij link w emailu weryfikacyjnym
+              {t.auth.verifyStep1}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
-              2. Wróć tutaj i zaloguj się
+              {t.auth.verifyStep2}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: '#f59e0b', lineHeight: 1.6 }}>
-              ⚠ Sprawdź folder SPAM / Oferty — emaile weryfikacyjne często tam trafiają
+              {t.auth.verifySpam}
             </p>
           </div>
 
@@ -86,7 +88,7 @@ function VerificationScreen() {
 
           {sent && (
             <div style={{ background: 'rgba(34,197,94,0.08)', border: '2px solid rgba(34,197,94,0.3)', padding: '6px 8px' }}>
-              <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>✓ Wysłano ponownie!</p>
+              <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>{t.auth.verifyResentOk}</p>
             </div>
           )}
 
@@ -96,7 +98,7 @@ function VerificationScreen() {
             className="btn btn-primary"
             style={{ width: '100%', padding: '10px', ...PX(7) }}
           >
-            {checking ? '...' : '✓ Już zweryfikowałem — wejdź do gry'}
+            {checking ? '...' : t.auth.verifyAlready}
           </button>
 
           <button
@@ -105,7 +107,7 @@ function VerificationScreen() {
             className="btn btn-secondary"
             style={{ width: '100%', padding: '10px', ...PX(7), opacity: sent ? 0.6 : 1 }}
           >
-            {sending ? '...' : sent ? '✓ Wysłano' : '🔁 Wyślij ponownie'}
+            {sending ? '...' : sent ? t.auth.verifySentOk : t.auth.verifyResend}
           </button>
 
           <button
@@ -113,7 +115,7 @@ function VerificationScreen() {
             className="btn"
             style={{ width: '100%', padding: '8px', ...PX(6), background: 'none', border: '1px solid #334155', color: '#475569' }}
           >
-            ← Wróć do logowania
+            {t.auth.verifyBack}
           </button>
         </div>
       </div>
@@ -122,6 +124,7 @@ function VerificationScreen() {
 }
 
 export default function AuthScreen() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -164,7 +167,7 @@ export default function AuthScreen() {
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ fontSize: 40, marginBottom: 8 }}>🏰</p>
           <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
-          <p style={{ color: '#475569', fontSize: 6 }}>FAIR PLAY RPG — BEZ PAY TO WIN</p>
+          <p style={{ color: '#475569', fontSize: 6 }}>{t.app.tagline}</p>
         </div>
 
         {/* Mode tabs */}
@@ -185,7 +188,7 @@ export default function AuthScreen() {
                 cursor: 'pointer',
               }}
             >
-              {m === 'login' ? 'LOGOWANIE' : 'REJESTRACJA'}
+              {m === 'login' ? t.auth.login : t.auth.register}
             </button>
           ))}
         </div>
@@ -195,12 +198,12 @@ export default function AuthScreen() {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {mode === 'register' && (
               <div>
-                <label style={labelStyle}>NICK GRACZA</label>
+                <label style={labelStyle}>{t.auth.username}</label>
                 <input
                   type="text"
                   value={username}
                   onChange={e => setUsername(e.target.value)}
-                  placeholder="Twój nick w rankingu..."
+                  placeholder={t.auth.usernamePlaceholder}
                   maxLength={20}
                   required
                   style={inputStyle}
@@ -209,24 +212,24 @@ export default function AuthScreen() {
             )}
 
             <div>
-              <label style={labelStyle}>EMAIL</label>
+              <label style={labelStyle}>{t.auth.email}</label>
               <input
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="gracz@email.com"
+                placeholder={t.auth.emailPlaceholder}
                 required
                 style={inputStyle}
               />
             </div>
 
             <div>
-              <label style={labelStyle}>HASŁO</label>
+              <label style={labelStyle}>{t.auth.password}</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="min. 6 znaków"
+                placeholder={t.auth.passwordPlaceholder}
                 required
                 style={inputStyle}
               />
@@ -234,7 +237,7 @@ export default function AuthScreen() {
 
             {mode === 'register' && (
               <p style={{ ...MONO, fontSize: 8, color: '#475569', lineHeight: 1.5 }}>
-                ✉ Po rejestracji wyślemy link weryfikacyjny na podany adres email.
+                {t.auth.registerNote}
               </p>
             )}
 
@@ -250,17 +253,17 @@ export default function AuthScreen() {
               className="btn btn-primary"
               style={{ width: '100%', padding: '10px', fontSize: 8 }}
             >
-              {submitting ? '...' : mode === 'login' ? '▶ ZALOGUJ SIĘ' : '▶ UTWÓRZ KONTO'}
+              {submitting ? '...' : mode === 'login' ? t.auth.loginBtn : t.auth.registerBtn}
             </button>
           </form>
 
           <p style={{ color: '#334155', fontSize: 6, textAlign: 'center', marginTop: 12 }}>
-            {mode === 'login' ? 'Nie masz konta?' : 'Masz już konto?'}{' '}
+            {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}{' '}
             <button
               onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
               style={{ background: 'none', border: 'none', color: '#d97706', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer' }}
             >
-              {mode === 'login' ? 'Zarejestruj się' : 'Zaloguj się'}
+              {mode === 'login' ? t.auth.signUpLink : t.auth.signInLink}
             </button>
           </p>
         </div>

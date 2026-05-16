@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useGameStore, CHALLENGE_COOLDOWN } from '../store/gameStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import type { ChallengePower } from '../types';
+import { useT } from '../hooks/useT';
+import type { Translations } from '../i18n/en';
 import cyberGladiatorImg from '../assets/bosses/cyber-gladiator.png';
 import neonSlayerImg from '../assets/bosses/neon-slayer.png';
 import neuralPhantomImg from '../assets/bosses/neural-phantom.png';
@@ -11,16 +13,18 @@ import quantumBerserkerImg from '../assets/bosses/quantum-berserker.png';
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
-const POWER_INFO: Record<ChallengePower, { label: string; color: string; emoji: string; desc: string }> = {
-  regen:         { label: 'REGEN',     color: '#ff4444', emoji: '🔴', desc: '3% HP/runda' },
-  double_strike: { label: 'x2 CIOSY',  color: '#ff9900', emoji: '⚡', desc: 'Atakuje 2×' },
-  armor_break:   { label: 'ŁAM.OBR.',  color: '#cc44ff', emoji: '💥', desc: 'Obrona -60%' },
-  dodge:         { label: 'UNIK 25%',  color: '#00f5ff', emoji: '💨', desc: '25% szans uniknięcia' },
-  rage:          { label: 'FURIA',     color: '#ff6600', emoji: '🔥', desc: 'ATK ×1.6 <30% HP' },
-  shield:        { label: 'TARCZA',    color: '#4488ff', emoji: '🛡', desc: '25% maxHP tarczy' },
-  lifesteal:     { label: 'VAMP HP',   color: '#cc0066', emoji: '💉', desc: 'Kradnie 25% DMG' },
-  poison:        { label: 'TRUCIZNA',  color: '#44cc44', emoji: '🟢', desc: '4% HP trucizny/runda' },
-};
+function getPowerInfo(t: Translations): Record<ChallengePower, { label: string; color: string; emoji: string; desc: string }> {
+  return {
+    regen:         { label: t.challenge.regenLabel,      color: '#ff4444', emoji: '🔴', desc: t.challenge.regenDesc },
+    double_strike: { label: t.challenge.doubleLabel,     color: '#ff9900', emoji: '⚡', desc: t.challenge.doubleDesc },
+    armor_break:   { label: t.challenge.armorBreakLabel, color: '#cc44ff', emoji: '💥', desc: t.challenge.armorBreakDesc },
+    dodge:         { label: t.challenge.dodgeLabel,      color: '#00f5ff', emoji: '💨', desc: t.challenge.dodgeDesc },
+    rage:          { label: t.challenge.furyLabel,       color: '#ff6600', emoji: '🔥', desc: t.challenge.furyDesc },
+    shield:        { label: t.challenge.shieldLabel,     color: '#4488ff', emoji: '🛡', desc: t.challenge.shieldDesc },
+    lifesteal:     { label: t.challenge.vampLabel,       color: '#cc0066', emoji: '💉', desc: t.challenge.vampDesc },
+    poison:        { label: t.challenge.poisonLabel,     color: '#44cc44', emoji: '🟢', desc: t.challenge.poisonDesc },
+  };
+}
 
 function useCooldown(lastAt: number) {
   const [ms, setMs] = useState(0);
@@ -39,7 +43,8 @@ function fmtMs(ms: number) {
 }
 
 function PowerBadge({ power, active }: { power: ChallengePower; active?: boolean }) {
-  const info = POWER_INFO[power];
+  const t = useT();
+  const info = getPowerInfo(t)[power];
   return (
     <span title={info.desc} style={{
       ...MONO, fontSize: 7,
@@ -59,6 +64,7 @@ function PowerBadge({ power, active }: { power: ChallengePower; active?: boolean
 // ── Interactive Fight View ──────────────────────────────────────────────────
 
 function FightView() {
+  const t                 = useT();
   const hero              = useGameStore(s => s.hero);
   const fight             = useGameStore(s => s.challengeFight)!;
   const fightLog          = useGameStore(s => s.challengeFightLog);
@@ -176,12 +182,12 @@ function FightView() {
               <p style={{ ...ORB, fontSize: 9, color: fight.rageActive ? '#ff6600' : '#c05050' }}>{boss.name}</p>
               {fight.rageActive && (
                 <span style={{ ...MONO, fontSize: 7, color: '#ff6600', background: 'rgba(255,102,0,0.2)', border: '1px solid rgba(255,102,0,0.6)', padding: '1px 4px' }}>
-                  🔥 FURIA
+                  {t.challenge.furyActive}
                 </span>
               )}
             </div>
             <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 5 }}>
-              Poz. {boss.level} · Runda {fight.round}
+              {t.challenge.roundInfo(boss.level, fight.round)}
             </p>
             <p style={{ ...MONO, fontSize: 8, color: bossHpColor }}>
               {fight.bossHp} / {boss.maxHp} HP
@@ -271,21 +277,21 @@ function FightView() {
           style={{ flex: 2, fontSize: 8, padding: '10px' }}
           onClick={() => { setAutoFight(false); attackChallengeBoss(); }}
         >
-          ⚔ ATAKUJ
+          {t.challenge.attack}
         </button>
         <button
           className={autoFight ? 'btn btn-danger' : 'btn btn-secondary'}
           style={{ flex: 2, fontSize: 8, padding: '10px' }}
           onClick={() => setAutoFight(v => !v)}
         >
-          {autoFight ? '⏹ STOP' : '⚡ AUTO'}
+          {autoFight ? t.challenge.stop : t.challenge.auto}
         </button>
         <button
           className="btn btn-secondary"
           style={{ flex: 1, fontSize: 7, padding: '10px 6px', color: 'var(--text-muted)' }}
           onClick={() => { setAutoFight(false); fleeChallengeFight(); }}
         >
-          🚪 UCIEKAJ
+          {t.challenge.flee}
         </button>
       </div>
 
@@ -299,10 +305,10 @@ function FightView() {
       >
         {fightLog.map((line, i) => {
           const color =
-            line.includes('🏆') || line.includes('ZWYCIĘSTWO') ? '#ffd700' :
-            line.includes('💀') || line.includes('KLĘSKA') ? '#ff4444' :
+            line.includes('🏆') || line.includes('ZWYCIĘSTWO') || line.includes('VICTORY') ? '#ffd700' :
+            line.includes('💀') || line.includes('KLĘSKA') || line.includes('DEFEAT') ? '#ff4444' :
             line.includes('🔴') || line.includes('REGEN') ? '#ff4444' :
-            line.includes('🔥') || line.includes('FURIA') ? '#ff6600' :
+            line.includes('🔥') || line.includes('FURIA') || line.includes('FURY') ? '#ff6600' :
             line.includes('🛡') ? '#4488ff' :
             line.includes('💉') ? '#cc0066' :
             line.includes('🟢') || line.includes('TRUCIZNA') ? '#44cc44' :
@@ -328,15 +334,17 @@ function FightView() {
 const RARITY_COLOR: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff', epic: '#cc44ff', legendary: '#ffd700',
 };
-const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKŁY', uncommon: 'NIEZWYKŁY', rare: 'RZADKI', epic: 'EPICKI', legendary: 'LEGENDARNY',
-};
 
 function ResultView({ onDismiss }: { onDismiss: () => void }) {
+  const t = useT();
   const result = useGameStore(s => s.challengeResult)!;
   const boss = CHALLENGE_BOSSES[result.bossIdx];
   const [showLog, setShowLog] = useState(false);
 
+  const rarityLabel: Record<string, string> = {
+    common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
+    rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
+  };
   const won = result.won;
   const accentColor = won ? '#ffd700' : '#ff4444';
   const bgColor     = won ? 'rgba(255,215,0,0.05)' : 'rgba(255,68,68,0.05)';
@@ -357,7 +365,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
           color: accentColor, textShadow: `0 0 16px ${accentColor}`,
           marginBottom: 6, letterSpacing: '0.05em',
         }}>
-          {won ? 'ZWYCIĘSTWO!' : 'KLĘSKA!'}
+          {won ? t.challenge.victory : t.challenge.defeat}
         </p>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>
           {boss.emoji} {boss.name}
@@ -369,18 +377,18 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)',
         padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
       }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>NAGRODY</p>
+        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.rewards}</p>
 
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>DOŚWIADCZENIE</p>
+            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.experience}</p>
             <p style={{ ...ORB, fontSize: 13, color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.5)' }}>
               +{won ? boss.xpReward.toLocaleString() : Math.floor(boss.xpReward * 0.1).toLocaleString()}
             </p>
           </div>
           {won && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>ZŁOTO</p>
+              <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.gold}</p>
               <p style={{ ...ORB, fontSize: 13, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
                 +{boss.goldReward.toLocaleString()} 🪙
               </p>
@@ -391,7 +399,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         {/* Loot */}
         {won && result.loot.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>PRZEDMIOTY</p>
+            <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.challenge.items}</p>
             {result.loot.map((item, i) => {
               const rc = RARITY_COLOR[item.rarity];
               return (
@@ -409,11 +417,11 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
                       {item.name}
                     </p>
                     <p style={{ ...MONO, fontSize: 8, color: `${rc}99` }}>
-                      {RARITY_LABEL[item.rarity]} · Poz. {item.level}
+                      {rarityLabel[item.rarity]} · Poz. {item.level}
                     </p>
                   </div>
                   <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
-                    {RARITY_LABEL[item.rarity]}
+                    {rarityLabel[item.rarity]}
                   </span>
                 </div>
               );
@@ -423,7 +431,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
 
         {!won && (
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center' }}>
-            Powróć silniejszy — masz godzinę na przygotowanie.
+            {t.challenge.cooldown}
           </p>
         )}
       </div>
@@ -433,7 +441,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         onClick={() => setShowLog(v => !v)}
         style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', cursor: 'pointer', width: '100%' }}
       >
-        {showLog ? '▲ UKRYJ LOG WALKI' : '▼ POKAŻ LOG WALKI'}
+        {showLog ? t.challenge.hideLog : t.challenge.showLog}
       </button>
 
       {showLog && (
@@ -449,7 +457,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         style={{ width: '100%', padding: '12px', fontSize: 10 }}
         onClick={onDismiss}
       >
-        ← WRÓĆ DO WYZWAŃ
+        {t.challenge.back}
       </button>
     </div>
   );
@@ -1218,6 +1226,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
 // ── Boss Select View (one boss at a time) ────────────────────────────────────
 
 function SelectView() {
+  const t                   = useT();
   const challengeUnlocked  = useGameStore(s => s.challengeUnlocked);
   const lastChallengeAt    = useGameStore(s => s.lastChallengeAt);
   const startChallengeFight = useGameStore(s => s.startChallengeFight);
@@ -1251,7 +1260,7 @@ function SelectView() {
       {/* Progress header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ ...ORB, fontSize: 9, color: accentColor, textShadow: `0 0 10px ${accentColor}80` }}>
-          ⚡ WYZWANIE BOSSU
+          ⚡ BOSS
         </p>
         <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '2px 8px' }}>
           {bossIdx}/{CHALLENGE_BOSSES.length} 💀
@@ -1357,9 +1366,9 @@ function SelectView() {
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
             <p style={{ ...ORB, fontSize: 10, color: '#cc44ff' }}>
-              {Math.round(bossIdx / 15 * 65)}% ✨
+              {t.challenge.drop(Math.round(bossIdx / 15 * 65))}
             </p>
-            <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>szansa LEGENDARNY</p>
+            <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.challenge.dropLabel}</p>
           </div>
         </div>
       </div>
