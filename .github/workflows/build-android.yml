@@ -47,8 +47,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK platform 36
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Accept licenses and install platform
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
@@ -57,9 +59,6 @@ jobs:
         run: |
           cd android
           ./gradlew assembleDebug --no-daemon
-
-      - name: Verify APK exists
-        run: ls -la android/app/build/outputs/apk/debug/
 
       - name: Publish APK to GitHub Releases
         uses: softprops/action-gh-release@v2
