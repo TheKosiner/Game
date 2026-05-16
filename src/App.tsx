@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import './App.css';
 import logoImg from './assets/logo.png';
 import { useGameStore } from './store/gameStore';
@@ -40,6 +41,7 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>('hero');
   const [gameLoaded, setGameLoaded] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
     if (authLoading) return;
@@ -206,6 +208,27 @@ export default function App() {
           }}>↩</button>
         </div>
       </header>
+
+      {!isNative && (
+        <a
+          href="https://github.com/TheKosiner/Game/releases/download/android-latest/GlitchSoul.apk"
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: 'linear-gradient(90deg, rgba(0,245,255,0.06), rgba(157,78,221,0.06))',
+            borderBottom: '1px solid rgba(0,245,255,0.15)',
+            padding: '6px 12px',
+            textDecoration: 'none',
+          }}
+        >
+          <span style={{ fontSize: 14 }}>📱</span>
+          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: '#00f5ff' }}>
+            {lang === 'en' ? 'Download Android app' : 'Pobierz aplikację Android'}
+          </span>
+          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 8, color: 'rgba(0,245,255,0.4)' }}>↓ APK</span>
+        </a>
+      )}
 
       <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
         {tab === 'hero'    && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}

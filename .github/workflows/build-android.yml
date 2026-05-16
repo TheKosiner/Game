@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -53,9 +55,19 @@ jobs:
           cd android
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: GlitchSoul-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 30
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk GlitchSoul.apk
+
+      - name: Delete old release
+        run: gh release delete android-latest --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish release with APK
+        run: |
+          gh release create android-latest GlitchSoul.apk \
+            --title "GlitchSoul Android" \
+            --notes "Najnowsza wersja aplikacji. Pobierz i zainstaluj na telefonie z Androidem." \
+            --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
