@@ -211,7 +211,7 @@ export default function App() {
 
       {!isNative && (
         <a
-          href="https://github.com/TheKosiner/Game/releases/download/android-latest/GlitchSoul.apk"
+          href="https://github.com/TheKosiner/Game/releases/download/android-latest/app-debug.apk"
           target="_blank"
           rel="noreferrer"
           style={{
