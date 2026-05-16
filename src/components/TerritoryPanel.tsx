@@ -490,12 +490,13 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
 
     if (state?.guildId && state.guildId !== guild.id) {
       // Build defenders from stored member list, sorted weakest first
-      const rawMembers = (state.defenderMembers ?? []).length > 0
-        ? state.defenderMembers
-        : Array.from({ length: Math.max(1, state.defenderMemberCount || 1) }, (_, i) => ({
-            name: `Obrońca ${i + 1}`,
-            level: state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel,
-          }));
+      const rawMembers: TerritoryState['defenderMembers'] =
+        (state.defenderMembers ?? []).length > 0
+          ? state.defenderMembers
+          : Array.from({ length: Math.max(1, state.defenderMemberCount || 1) }, (_, i) => ({
+              name: `Obrońca ${i + 1}`,
+              level: state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel,
+            }));
 
       // Fetch real stats for defenders who have a stored UID
       const defUids = rawMembers.map(m => m.uid).filter((u): u is string => !!u);
