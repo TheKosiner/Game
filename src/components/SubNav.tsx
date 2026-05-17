@@ -7,14 +7,20 @@ interface SubNavProps<T extends string> {
   tabs: { id: T; label: string; badge?: number }[];
   active: T;
   onChange: (id: T) => void;
+  centered?: boolean;
 }
 
-function SubNavBar<T extends string>({ tabs, active, onChange }: SubNavProps<T>) {
+function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNavProps<T>) {
   return (
     <div style={{
+      position: 'sticky',
+      top: 52,          // below the sticky header (~52px tall)
+      zIndex: 35,
+      background: 'linear-gradient(180deg, #07070f 0%, #0c0c1a 100%)',
+      borderBottom: '2px solid rgba(255,45,120,0.25)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
       display: 'flex',
-      background: 'rgba(0,0,0,0.6)',
-      borderBottom: '1px solid rgba(255,45,120,0.15)',
+      justifyContent: centered ? 'center' : 'stretch',
       overflowX: 'auto',
       scrollbarWidth: 'none',
     }}>
@@ -25,31 +31,35 @@ function SubNavBar<T extends string>({ tabs, active, onChange }: SubNavProps<T>)
             key={tab.id}
             onClick={() => onChange(tab.id)}
             style={{
-              flex: '0 0 auto',
-              padding: '9px 14px',
-              background: isActive ? 'rgba(255,45,120,0.1)' : 'transparent',
+              flex: centered ? '0 0 auto' : 1,
+              minWidth: centered ? 80 : 0,
+              padding: '12px 16px',
+              background: isActive
+                ? 'linear-gradient(180deg, rgba(255,45,120,0.15) 0%, rgba(255,45,120,0.05) 100%)'
+                : 'transparent',
               border: 'none',
-              borderBottom: `2px solid ${isActive ? '#ff2d78' : 'transparent'}`,
+              borderBottom: `3px solid ${isActive ? '#ff2d78' : 'transparent'}`,
               cursor: 'pointer',
-              position: 'relative',
-              display: 'flex', alignItems: 'center', gap: 5,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              transition: 'all 0.15s',
             }}
           >
             <span style={{
-              ...ORB, fontSize: 7,
-              color: isActive ? '#ff2d78' : 'rgba(255,255,255,0.35)',
-              textShadow: isActive ? '0 0 8px rgba(255,45,120,0.5)' : 'none',
-              letterSpacing: '0.08em',
+              ...ORB, fontSize: 8,
+              color: isActive ? '#ff2d78' : 'rgba(255,255,255,0.45)',
+              textShadow: isActive ? '0 0 10px rgba(255,45,120,0.7)' : 'none',
+              letterSpacing: '0.1em',
               whiteSpace: 'nowrap',
             }}>
               {tab.label}
             </span>
             {tab.badge != null && tab.badge > 0 && (
               <span style={{
-                ...ORB, fontSize: 6,
+                ...ORB, fontSize: 7,
                 background: '#ff2d78', color: '#000',
-                borderRadius: 10, padding: '1px 5px',
-                minWidth: 16, textAlign: 'center',
+                borderRadius: 10, padding: '1px 6px',
+                minWidth: 18, textAlign: 'center',
+                lineHeight: '14px',
               }}>
                 {tab.badge}
               </span>
@@ -103,6 +113,7 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
   const t = useT();
   return (
     <SubNavBar
+      centered
       tabs={[
         { id: 'shop' as ShopSub, label: t.nav.shop },
         { id: 'gems' as ShopSub, label: t.nav.gems },
