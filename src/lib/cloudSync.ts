@@ -31,7 +31,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses, pvpRating } = useGameStore.getState();
   const { pvpLog, lastPvpFight, challengeUnlocked, lastChallengeAt } = useGameStore.getState();
-  const { shopSeed, lastShopRefresh, shopPurchased } = useGameStore.getState();
+  const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
 
   // Public leaderboard data — no saveData, no email, no private fields
@@ -69,6 +69,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     shopSeed: shopSeed ?? 0,
     lastShopRefresh: lastShopRefresh ?? 0,
     shopPurchased: shopPurchased ?? [],
+    lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
     updatedAt: savedAt,
   });
 }
@@ -147,9 +148,10 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
     lastPvpFight:      raw.lastPvpFight      ?? 0,
     challengeUnlocked: raw.challengeUnlocked ?? 0,
     lastChallengeAt:   raw.lastChallengeAt   ?? 0,
-    shopSeed:          raw.shopSeed          ?? Date.now(),
-    lastShopRefresh:   raw.lastShopRefresh   ?? 0,
-    shopPurchased:     raw.shopPurchased     ?? [],
+    shopSeed:            raw.shopSeed            ?? Date.now(),
+    lastShopRefresh:     raw.lastShopRefresh     ?? 0,
+    shopPurchased:       raw.shopPurchased       ?? [],
+    lastPassiveRegenAt:  raw.lastPassiveRegenAt  ?? Date.now(),
   });
   return true;
 }
