@@ -154,7 +154,7 @@ export default function GemsPanel() {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           {gemPortraits.map(p => {
-            const isOwned    = hero.unlockedPortraits.includes(p.index);
+            const isOwned    = (hero.unlockedPortraits ?? []).includes(p.index);
             const isEquipped = hero.portrait === p.index;
             const canAfford  = hero.gems >= (p.gemPrice ?? 0);
 
