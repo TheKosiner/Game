@@ -1,9 +1,112 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import Stripe from 'stripe';
 
 admin.initializeApp();
 
 const db = admin.firestore();
+
+// ── Gem packages ─────────────────────────────────────────────────────────────
+const GEM_PACKAGES: Record<string, { gems: number; priceUsd: number }> = {
+  '100':  { gems: 100,  priceUsd:  99 },   // $0.99
+  '550':  { gems: 550,  priceUsd: 499 },   // $4.99
+  '1200': { gems: 1200, priceUsd: 999 },   // $9.99
+};
+
+function getStripe() {
+  const key = functions.config().stripe?.secret_key;
+  if (!key) throw new functions.https.HttpsError('internal', 'Stripe not configured. Run: firebase functions:config:set stripe.secret_key=sk_...');
+  return new Stripe(key, { apiVersion: '2026-04-22.dahlia' });
+}
+
+// ── createCheckoutSession ─────────────────────────────────────────────────────
+export const createCheckoutSession = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+
+  const { packageId, originUrl } = data as { packageId: string; originUrl: string };
+  const pkg = GEM_PACKAGES[packageId];
+  if (!pkg) throw new functions.https.HttpsError('invalid-argument', 'Invalid gem package');
+
+  const stripe = getStripe();
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        unit_amount: pkg.priceUsd,
+        product_data: {
+          name: `${pkg.gems} 💎 Gems — GlitchSoul`,
+          description: `${pkg.gems} gems for use in GlitchSoul RPG`,
+        },
+      },
+      quantity: 1,
+    }],
+    metadata: { uid: context.auth.uid, gems: pkg.gems.toString() },
+    success_url: `${originUrl}?gems_success=1&gems=${pkg.gems}`,
+    cancel_url:  `${originUrl}?gems_cancelled=1`,
+  });
+
+  return { url: session.url };
+});
+
+// ── stripeWebhook ─────────────────────────────────────────────────────────────
+export const stripeWebhook = functions.https.onRequest(async (req, res) => {
+  const sig = req.headers['stripe-signature'] as string;
+  const webhookSecret = functions.config().stripe?.webhook_secret;
+
+  if (!webhookSecret) { res.status(500).send('Webhook secret not configured'); return; }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let event: any;
+  try {
+    const stripe = new Stripe(functions.config().stripe?.secret_key ?? '', { apiVersion: '2026-04-22.dahlia' });
+    event = stripe.webhooks.constructEvent((req as any).rawBody, sig, webhookSecret);
+  } catch (err: any) {
+    console.error('Stripe webhook signature error:', err.message);
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    const uid  = session.metadata?.uid;
+    const gems = parseInt(session.metadata?.gems ?? '0', 10);
+
+    if (uid && gems > 0 && session.payment_status === 'paid') {
+      await db.collection('gemCredits').add({
+        uid, gems,
+        sessionId: session.id,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        claimed: false,
+      });
+      console.log(`Queued +${gems} gems for uid=${uid}`);
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// ── claimGemCredits ───────────────────────────────────────────────────────────
+export const claimGemCredits = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+
+  const uid = context.auth.uid;
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(
+      db.collection('gemCredits').where('uid', '==', uid).where('claimed', '==', false)
+    );
+    if (snap.empty) return { gems: 0 };
+
+    let total = 0;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+    snap.docs.forEach(d => {
+      total += (d.data().gems as number) ?? 0;
+      tx.update(d.ref, { claimed: true, claimedAt: now });
+    });
+    return { gems: total };
+  });
+});
 
 interface PvpRequest {
   attackerId: string;

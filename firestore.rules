@@ -92,5 +92,11 @@ service cloud.firestore {
         && request.resource.data.fromUid == request.auth.uid;
     }
 
+    // Stripe gem credits — written only by Cloud Functions (admin SDK bypasses rules)
+    // Clients may read their own unclaimed credits
+    match /gemCredits/{creditId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
   }
 }

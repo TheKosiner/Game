@@ -425,6 +425,9 @@ export const en = {
     comingSoon: 'COMING SOON',
     notEnoughForHeal: 'Not enough gems (need 30 💎)',
     notEnoughForSkip: (cost: number) => `Not enough gems (need ${cost} 💎)`,
+    purchaseSuccess: 'gems added to your account!',
+    purchaseCancelled: 'Purchase cancelled.',
+    claimedLog: (n: number) => `💎 +${n} gems from purchase added!`,
   },
   combat: {
     restingWait: "You're resting! Wait until you recover.",

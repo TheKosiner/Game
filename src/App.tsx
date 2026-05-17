@@ -8,6 +8,7 @@ import { useT } from './hooks/useT';
 import { useLangStore } from './store/langStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
 import { isFirebaseConfigured } from './lib/firebase';
+import { claimGemCredits } from './lib/gemShop';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -34,6 +35,8 @@ export default function App() {
   const initHero = useGameStore(s => s.initHero);
   const checkDailyReset = useGameStore(s => s.checkDailyReset);
   const tickPassiveRegen = useGameStore(s => s.tickPassiveRegen);
+  const addGems = useGameStore(s => s.addGems);
+  const addCombatLog = useGameStore(s => s.addCombatLog);
   const challengeResult = useGameStore(s => s.challengeResult);
 
   const user = useAuthStore(s => s.user);
@@ -96,6 +99,18 @@ export default function App() {
     if (user && gameLoaded && challengeResult)
       syncToCloud(user.uid, user.username).catch(() => {});
   }, [challengeResult]);
+
+  // Claim any pending gem credits from Stripe purchases
+  useEffect(() => {
+    if (!user || !gameLoaded) return;
+    claimGemCredits().then(gems => {
+      if (gems > 0) {
+        addGems(gems);
+        addCombatLog(t.gems.claimedLog(gems), 'system');
+        saveGame();
+      }
+    }).catch(() => {});
+  }, [user?.uid, gameLoaded]);
 
   if (authLoading || !gameLoaded) {
     return (

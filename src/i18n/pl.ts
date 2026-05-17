@@ -427,6 +427,9 @@ export const pl: Translations = {
     comingSoon: 'WKRÓTCE',
     notEnoughForHeal: 'Za mało gemów (potrzeba 30 💎)',
     notEnoughForSkip: (cost: number) => `Za mało gemów (potrzeba ${cost} 💎)`,
+    purchaseSuccess: 'gemów dodano do konta!',
+    purchaseCancelled: 'Zakup anulowany.',
+    claimedLog: (n: number) => `💎 +${n} gemów z zakupu dodano!`,
   },
   combat: {
     restingWait: 'Odpoczywasz po walce! Poczekaj aż wrócą siły.',

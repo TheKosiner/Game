@@ -1,6 +1,7 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getFunctions, type Functions } from 'firebase/functions';
 
 export const isFirebaseConfigured = !!(
   import.meta.env.VITE_FIREBASE_API_KEY &&
@@ -9,6 +10,7 @@ export const isFirebaseConfigured = !!(
 
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _functions: Functions | null = null;
 
 if (isFirebaseConfigured) {
   try {
@@ -22,6 +24,7 @@ if (isFirebaseConfigured) {
     });
     _auth = getAuth(app);
     _db = getFirestore(app);
+    _functions = getFunctions(app, 'us-central1');
   } catch (e) {
     console.warn('Firebase init failed:', e);
   }
@@ -29,3 +32,4 @@ if (isFirebaseConfigured) {
 
 export const auth = _auth;
 export const db = _db;
+export const functions = _functions;
