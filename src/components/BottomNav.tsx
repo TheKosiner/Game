@@ -68,7 +68,7 @@ export default function BottomNav({ active, onChange }: Props) {
 
   return (
     <nav style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 50,
+      flexShrink: 0,
       background: 'linear-gradient(0deg, #040408 0%, #0a0a14 100%)',
       borderTop: '1px solid rgba(255,45,120,0.3)',
       boxShadow: '0 -4px 24px rgba(255,45,120,0.08)',

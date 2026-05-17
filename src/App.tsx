@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
 import logoImg from './assets/logo.png';
@@ -57,8 +57,9 @@ export default function App() {
   function switchSocial(t: SocialSub) { setSocialSub(t); }
   function switchShop(t: ShopSub) { setShopSub(t); }
 
-  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
-  useEffect(() => { window.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -171,13 +172,14 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* CYBERPUNK TOP BAR */}
       <header style={{
         background: 'linear-gradient(180deg, #080810 0%, #0a0a18 100%)',
         borderBottom: '1px solid rgba(255,45,120,0.3)',
-        position: 'sticky', top: 0, zIndex: 40,
+        flexShrink: 0,
+        zIndex: 40,
         padding: '8px 12px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
@@ -253,6 +255,7 @@ export default function App() {
           target="_blank"
           rel="noreferrer"
           style={{
+            flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             background: 'linear-gradient(90deg, rgba(0,245,255,0.06), rgba(157,78,221,0.06))',
             borderBottom: '1px solid rgba(0,245,255,0.15)',
@@ -268,29 +271,31 @@ export default function App() {
         </a>
       )}
 
-      {tab === 'play' && (
-        <PlaySubNav active={playSub} onChange={switchPlay} />
-      )}
-      {tab === 'social' && (
-        <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} />
-      )}
-      {tab === 'shop' && (
-        <ShopSubNav active={shopSub} onChange={switchShop} />
-      )}
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        {tab === 'play' && (
+          <PlaySubNav active={playSub} onChange={switchPlay} />
+        )}
+        {tab === 'social' && (
+          <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} />
+        )}
+        {tab === 'shop' && (
+          <ShopSubNav active={shopSub} onChange={switchShop} />
+        )}
 
-      <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {tab === 'hero'   && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
-        {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
-        {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
-        {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
-        {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
-        {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
-        {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}
-        {tab === 'social' && socialSub === 'guild'   && <GuildPanel />}
-        {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
-        {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
-        {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
-      </main>
+        <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {tab === 'hero'   && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
+          {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+          {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+          {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+          {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
+          {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
+          {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}
+          {tab === 'social' && socialSub === 'guild'   && <GuildPanel />}
+          {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+          {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+          {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+        </main>
+      </div>
 
       <BottomNav active={tab} onChange={switchTab} />
     </div>

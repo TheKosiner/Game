@@ -14,7 +14,7 @@ function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNa
   return (
     <div style={{
       position: 'sticky',
-      top: 52,          // below the sticky header (~52px tall)
+      top: 0,
       zIndex: 35,
       background: 'linear-gradient(180deg, #07070f 0%, #0c0c1a 100%)',
       borderBottom: '2px solid rgba(255,45,120,0.25)',
