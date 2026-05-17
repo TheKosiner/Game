@@ -44,6 +44,12 @@ export const en = {
     errDisposableEmail: 'Temporary email addresses are not allowed',
     errUsernameTaken: 'This username is already taken',
     errNotVerified: 'Email not yet verified — check your inbox and click the link',
+    resetTitle: 'RESET PASSWORD',
+    resetDesc: 'Enter your email and we\'ll send you a reset link.',
+    resetBtn: '▶ SEND RESET LINK',
+    resetSent: '✓ Reset link sent! Check your inbox.',
+    resetBack: '← Back to login',
+    forgotPassword: 'Forgot password?',
   },
   nav: {
     hero: 'HERO',

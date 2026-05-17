@@ -46,6 +46,12 @@ export const pl: Translations = {
     errDisposableEmail: 'Tymczasowe adresy email są niedozwolone',
     errUsernameTaken: 'Ten nick jest już zajęty',
     errNotVerified: 'Email nie został jeszcze zweryfikowany — sprawdź skrzynkę i kliknij link',
+    resetTitle: 'RESET HASŁA',
+    resetDesc: 'Podaj email, a wyślemy Ci link do zresetowania hasła.',
+    resetBtn: '▶ WYŚLIJ LINK',
+    resetSent: '✓ Link wysłany! Sprawdź skrzynkę.',
+    resetBack: '← Powrót do logowania',
+    forgotPassword: 'Nie pamiętasz hasła?',
   },
   nav: {
     hero: 'BOHATER',

@@ -3,6 +3,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendEmailVerification,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   type User,
@@ -27,6 +28,7 @@ interface AuthState {
   register: (email: string, password: string, username: string) => Promise<void>;
   resendVerification: () => Promise<void>;
   checkVerification: () => Promise<void>;
+  resetPassword: (email: string) => Promise<boolean>;
   logout: () => Promise<void>;
   clearError: () => void;
 }
@@ -215,6 +217,18 @@ export const useAuthStore = create<AuthState>((set) => {
         }
       } catch (e) {
         set({ error: getErrorMessage(e) });
+      }
+    },
+
+    resetPassword: async (email) => {
+      if (!auth) return false;
+      set({ error: null });
+      try {
+        await sendPasswordResetEmail(auth, email);
+        return true;
+      } catch (e) {
+        set({ error: getErrorMessage(e) });
+        return false;
       }
     },
 
