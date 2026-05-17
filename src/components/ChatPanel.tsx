@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { onSnapshot, addDoc, collection, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
+import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { portraitSrc } from '../data/portraits';
 
@@ -30,6 +31,7 @@ function timeAgo(ts: number): string {
 
 export default function ChatPanel() {
   const user = useAuthStore(s => s.user);
+  const portrait = useGameStore(s => s.hero.portrait);
   const t = useT();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState('');
@@ -64,7 +66,7 @@ export default function ChatPanel() {
       await addDoc(collection(db, 'globalChat'), {
         uid: user.uid,
         username: user.username,
-        portrait: undefined,
+        portrait,
         text: text.trim().slice(0, 200),
         createdAt: Date.now(),
       });
