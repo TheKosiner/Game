@@ -134,6 +134,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     hairColor,
     clothingColor,
     portrait,
+    unlockedPortraits: [],
     lastRespecAt: null,
   };
 }
@@ -205,12 +206,74 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = leveled ? newMaxHp - maxHp : 0;
     set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints } });
-    if (leveled) { const t = getT(); get().addCombatLog(t.combat.levelUp(level), 'system'); }
+    if (leveled) {
+      const t = getT();
+      get().addCombatLog(t.combat.levelUp(level), 'system');
+      get().addGems(3);
+      get().addCombatLog(t.gems.levelUpLog(3), 'system');
+    }
   },
 
   addGold: (amount) => {
     const { hero } = get();
     set({ hero: { ...hero, gold: hero.gold + amount } });
+  },
+
+  addGems: (amount) => {
+    const { hero } = get();
+    set({ hero: { ...hero, gems: hero.gems + amount } });
+  },
+
+  gemHeal: () => {
+    const { hero } = get();
+    const COST = 30;
+    if (hero.gems < COST || hero.hp >= hero.maxHp) return false;
+    const t = getT();
+    set({ hero: { ...hero, gems: hero.gems - COST, hp: hero.maxHp } });
+    get().addCombatLog(t.gems.healLog, 'system');
+    get().saveGame();
+    return true;
+  },
+
+  gemSpeedupQuest: () => {
+    const { hero, activeQuest } = get();
+    if (!activeQuest) return false;
+    const now = Date.now();
+    const remaining = Math.max(0, activeQuest.endsAt - now);
+    if (remaining <= 0) return false;
+    const slots = Math.ceil(remaining / (30 * 60 * 1000));
+    const cost = slots * 5;
+    if (hero.gems < cost) return false;
+    const t = getT();
+    set({ hero: { ...hero, gems: hero.gems - cost }, activeQuest: { ...activeQuest, endsAt: now } });
+    get().addCombatLog(t.gems.questSpeedupLog(cost), 'system');
+    get().saveGame();
+    return true;
+  },
+
+  gemSpeedupRest: () => {
+    const { hero } = get();
+    if (!hero.voluntaryRestUntil || Date.now() >= hero.voluntaryRestUntil) return false;
+    const now = Date.now();
+    const remaining = Math.max(0, hero.voluntaryRestUntil - now);
+    const slots = Math.ceil(remaining / (15 * 60 * 1000));
+    const cost = slots * 5;
+    if (hero.gems < cost) return false;
+    const healAmount = Math.min(hero.voluntaryRestHp ?? 0, hero.maxHp - hero.hp);
+    const t = getT();
+    set({ hero: { ...hero, gems: hero.gems - cost, hp: hero.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
+    get().addCombatLog(t.gems.restSpeedupLog(cost), 'system');
+    get().saveGame();
+    return true;
+  },
+
+  gemBuyPortrait: (portraitIndex, price) => {
+    const { hero } = get();
+    if (hero.gems < price) return false;
+    if (hero.unlockedPortraits.includes(portraitIndex)) return false;
+    set({ hero: { ...hero, gems: hero.gems - price, unlockedPortraits: [...hero.unlockedPortraits, portraitIndex], portrait: portraitIndex } });
+    get().saveGame();
+    return true;
   },
 
   equipItem: (item: Item, invIdx?: number) => {
@@ -627,14 +690,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   checkDailyReset: () => {
     const { hero } = get();
     if (!isSameDay(hero.lastDailyReset)) {
+      const DAILY_GEMS = 5;
       set({
         hero: {
           ...hero,
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
           lastDailyReset: Date.now(),
+          gems: hero.gems + DAILY_GEMS,
         },
       });
+      const t = getT();
+      get().addCombatLog(t.gems.dailyLog(DAILY_GEMS), 'system');
     }
     // Apply voluntary rest recovery if time is up
     if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
@@ -922,7 +989,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           skinTone: save.hero.skinTone ?? 1,
           hairColor: save.hero.hairColor ?? 2,
           clothingColor: save.hero.clothingColor ?? 0,
-          portrait: (save.hero.portrait ?? 0) as 0 | 1,
+          portrait: save.hero.portrait ?? 0,
+          unlockedPortraits: save.hero.unlockedPortraits ?? [],
           lastRespecAt: save.hero.lastRespecAt ?? null,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;

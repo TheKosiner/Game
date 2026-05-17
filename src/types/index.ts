@@ -63,6 +63,7 @@ export interface Hero {
   hairColor: number;
   clothingColor: number;
   portrait: number;
+  unlockedPortraits: number[];
   lastRespecAt: number | null;
 }
 
@@ -220,6 +221,11 @@ export interface GameState {
   respecStats: () => void;
   addXp: (amount: number) => void;
   addGold: (amount: number) => void;
+  addGems: (amount: number) => void;
+  gemHeal: () => boolean;
+  gemSpeedupQuest: () => boolean;
+  gemSpeedupRest: () => boolean;
+  gemBuyPortrait: (portraitIndex: number, price: number) => boolean;
   equipItem: (item: Item, invIdx?: number) => void;
   unequipItem: (slot: ItemSlot) => void;
   sellItem: (item: Item, invIdx?: number) => void;

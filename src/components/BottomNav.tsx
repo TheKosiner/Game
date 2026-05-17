@@ -1,6 +1,6 @@
 import { useT } from '../hooks/useT';
 
-export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail';
+export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'gems' | 'pvp' | 'guild' | 'ranking' | 'mail';
 
 interface Props {
   active: Tab;
@@ -84,6 +84,15 @@ function TabIcon({ id, color }: { id: Tab; color: string }) {
         <line x1="5.5" y1="15" x2="12.5" y2="15"/>
       </svg>
     );
+    case 'gems': return (
+      <svg {...p}>
+        {/* gem */}
+        <polygon points="9,2 14,7 9,16 4,7" strokeLinejoin="miter"/>
+        <line x1="4" y1="7" x2="14" y2="7"/>
+        <line x1="6" y1="7" x2="9" y2="2"/>
+        <line x1="12" y1="7" x2="9" y2="2"/>
+      </svg>
+    );
     case 'mail': return (
       <svg {...p}>
         {/* envelope */}
@@ -102,6 +111,7 @@ export default function BottomNav({ active, onChange }: Props) {
     { id: 'challenge', label: t.nav.boss },
     { id: 'quests',    label: t.nav.quests },
     { id: 'shop',      label: t.nav.shop },
+    { id: 'gems',      label: t.nav.gems },
     { id: 'pvp',       label: t.nav.arena },
     { id: 'guild',     label: t.nav.guild },
     { id: 'ranking',   label: t.nav.ranking },

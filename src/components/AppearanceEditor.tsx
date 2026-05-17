@@ -38,7 +38,7 @@ export default function AppearanceEditor({ onClose }: Props) {
           <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-            {PORTRAIT_LIST.filter(p => !p.hidden).map(p => (
+            {PORTRAIT_LIST.filter(p => !p.hidden && (!p.gemPrice || hero.unlockedPortraits.includes(p.index) || hero.portrait === p.index)).map(p => (
               <button
                 key={p.index}
                 onClick={() => setPortrait(p.index)}

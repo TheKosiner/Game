@@ -47,8 +47,11 @@ function NeonBar({ pct, color, height = 10 }: { pct: number; color: string; glow
   );
 }
 
-function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
-  endsAt: number; restHp: number; startAt: number; cancelRest: () => void;
+function RestTimer({ endsAt, restHp, startAt, cancelRest, gemSpeedupRest, gems }: {
+  endsAt: number; restHp: number; startAt: number;
+  cancelRest: () => void;
+  gemSpeedupRest: () => boolean;
+  gems: number;
 }) {
   const t = useT();
   const [remaining, setRemaining] = useState(Math.max(0, endsAt - Date.now()));
@@ -67,6 +70,8 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
   const elapsed = totalDuration - remaining;
   const earnedNow = Math.floor(restHp * Math.min(elapsed, totalDuration) / totalDuration);
   const progressPct = Math.min(100, (elapsed / totalDuration) * 100);
+  const skipCost = Math.ceil(remaining / (15 * 60 * 1000)) * 5;
+  const canSkip = gems >= skipCost && remaining > 0;
 
   return (
     <div style={{
@@ -86,9 +91,24 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest }: {
             {t.hero.restingRecover(earnedNow, restHp)}
           </p>
         </div>
-        <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
-          {t.hero.restStop}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+          <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px' }}>
+            {t.hero.restStop}
+          </button>
+          <button
+            onClick={gemSpeedupRest}
+            disabled={!canSkip}
+            style={{
+              ...MONO, fontSize: 8, padding: '4px 8px',
+              background: canSkip ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
+              border: `1px solid ${canSkip ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              color: canSkip ? '#00e5ff' : 'var(--text-dim)',
+              cursor: canSkip ? 'pointer' : 'not-allowed',
+            }}
+          >
+            {t.gems.speedupRestBtn(skipCost)}
+          </button>
+        </div>
       </div>
       <NeonBar pct={progressPct} color="#00f5ff" height={6} />
     </div>
@@ -258,6 +278,8 @@ export default function HeroCard() {
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
   const cancelRest     = useGameStore(s => s.cancelRest);
+  const gemHeal        = useGameStore(s => s.gemHeal);
+  const gemSpeedupRest = useGameStore(s => s.gemSpeedupRest);
   const startBegging   = useGameStore(s => s.startBegging);
   const cancelBegging  = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
@@ -349,9 +371,27 @@ export default function HeroCard() {
           </div>
 
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
               <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>{t.hero.vitality}</span>
-              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
+                {hero.hp < hero.maxHp && (
+                  <button
+                    onClick={gemHeal}
+                    disabled={hero.gems < 30}
+                    style={{
+                      ...MONO, fontSize: 8, padding: '1px 5px',
+                      background: hero.gems >= 30 ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
+                      border: `1px solid ${hero.gems >= 30 ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                      color: hero.gems >= 30 ? '#00e5ff' : 'var(--text-dim)',
+                      cursor: hero.gems >= 30 ? 'pointer' : 'not-allowed',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {t.gems.healBtn(30)}
+                  </button>
+                )}
+              </div>
             </div>
             <NeonBar pct={hpPct} color="#ff2d78" />
           </div>
@@ -370,7 +410,7 @@ export default function HeroCard() {
 
       {/* REST */}
       {isResting
-        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} />
+        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} gemSpeedupRest={gemSpeedupRest} gems={hero.gems} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} blocked={!!restBlockReason} blockedReason={restBlockReason} />
       }
 

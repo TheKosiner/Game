@@ -59,9 +59,10 @@ export default function QuestPanel() {
   const t = useT();
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
-  const startQuest   = useGameStore(s => s.startQuest);
-  const collectQuest = useGameStore(s => s.collectQuest);
-  const abandonQuest = useGameStore(s => s.abandonQuest);
+  const startQuest      = useGameStore(s => s.startQuest);
+  const collectQuest    = useGameStore(s => s.collectQuest);
+  const abandonQuest    = useGameStore(s => s.abandonQuest);
+  const gemSpeedupQuest = useGameStore(s => s.gemSpeedupQuest);
   const [now, setNow] = useState(Date.now());
   const [confirmAbandon, setConfirmAbandon] = useState(false);
 
@@ -139,6 +140,28 @@ export default function QuestPanel() {
               {t.quests.collect}
             </button>
           )}
+
+          {!canCollect && (() => {
+            const skipCost = Math.ceil(remaining / (30 * 60 * 1000)) * 5;
+            const canSkip  = hero.gems >= skipCost;
+            return (
+              <button
+                onClick={gemSpeedupQuest}
+                disabled={!canSkip}
+                style={{
+                  width: '100%', fontSize: 7, padding: '7px',
+                  background: canSkip ? 'rgba(0,229,255,0.1)' : 'rgba(0,0,0,0.3)',
+                  border: `1px solid ${canSkip ? 'rgba(0,229,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
+                  color: canSkip ? '#00e5ff' : 'var(--text-dim)',
+                  cursor: canSkip ? 'pointer' : 'not-allowed',
+                  fontFamily: "'Orbitron', monospace", fontWeight: 700,
+                  marginTop: 4,
+                }}
+              >
+                {t.gems.speedupQuestBtn(skipCost)}
+              </button>
+            );
+          })()}
 
           {!canCollect && !confirmAbandon && (
             <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, marginTop: 4, opacity: 0.7 }}>

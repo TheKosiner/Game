@@ -21,6 +21,7 @@ import PvpPanel from './components/PvpPanel';
 import GuildPanel from './components/GuildPanel';
 import MailPanel from './components/MailPanel';
 import ChallengePanel from './components/ChallengePanel';
+import GemsPanel from './components/GemsPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 import { PORTRAIT_OVERRIDES } from './data/portraits';
 
@@ -171,6 +172,14 @@ export default function App() {
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
           }}>🪙 {hero.gold}</span>
           <span style={{
+            fontFamily: "'Share Tech Mono', monospace",
+            color: '#00e5ff', fontSize: 12,
+            background: 'rgba(0,229,255,0.08)',
+            border: '1px solid rgba(0,229,255,0.25)',
+            padding: '3px 8px',
+            textShadow: '0 0 8px rgba(0,229,255,0.5)',
+          }}>💎 {hero.gems}</span>
+          <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00f5ff', fontSize: 9,
             fontWeight: 700,
@@ -236,6 +245,7 @@ export default function App() {
         {tab === 'challenge'  && <ChallengePanel />}
         {tab === 'quests'     && <QuestPanel />}
         {tab === 'shop'    && <ShopPanel />}
+        {tab === 'gems'    && <GemsPanel />}
         {tab === 'pvp'     && <PvpPanel />}
         {tab === 'guild'   && <GuildPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
