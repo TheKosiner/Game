@@ -52,10 +52,13 @@ export default function App() {
   const [gameLoaded, setGameLoaded] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
 
-  function switchTab(t: MainTab) { setTab(t); window.scrollTo(0, 0); }
-  function switchPlay(t: PlaySub) { setPlaySub(t); window.scrollTo(0, 0); }
-  function switchSocial(t: SocialSub) { setSocialSub(t); window.scrollTo(0, 0); }
-  function switchShop(t: ShopSub) { setShopSub(t); window.scrollTo(0, 0); }
+  function switchTab(t: MainTab) { setTab(t); }
+  function switchPlay(t: PlaySub) { setPlaySub(t); }
+  function switchSocial(t: SocialSub) { setSocialSub(t); }
+  function switchShop(t: ShopSub) { setShopSub(t); }
+
+  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { window.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
