@@ -51,6 +51,11 @@ export default function App() {
   const [shopSub, setShopSub]     = useState<ShopSub>('shop');
   const [gameLoaded, setGameLoaded] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
+
+  function switchTab(t: MainTab) { setTab(t); window.scrollTo(0, 0); }
+  function switchPlay(t: PlaySub) { setPlaySub(t); window.scrollTo(0, 0); }
+  function switchSocial(t: SocialSub) { setSocialSub(t); window.scrollTo(0, 0); }
+  function switchShop(t: ShopSub) { setShopSub(t); window.scrollTo(0, 0); }
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -261,13 +266,13 @@ export default function App() {
       )}
 
       {tab === 'play' && (
-        <PlaySubNav active={playSub} onChange={setPlaySub} />
+        <PlaySubNav active={playSub} onChange={switchPlay} />
       )}
       {tab === 'social' && (
-        <SocialSubNav active={socialSub} onChange={setSocialSub} mailBadge={mailUnread} />
+        <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} />
       )}
       {tab === 'shop' && (
-        <ShopSubNav active={shopSub} onChange={setShopSub} />
+        <ShopSubNav active={shopSub} onChange={switchShop} />
       )}
 
       <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -284,7 +289,7 @@ export default function App() {
         {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
       </main>
 
-      <BottomNav active={tab} onChange={setTab} />
+      <BottomNav active={tab} onChange={switchTab} />
     </div>
   );
 }
