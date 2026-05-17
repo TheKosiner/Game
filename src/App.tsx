@@ -163,7 +163,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 80 }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100dvh', paddingBottom: 'calc(80px + env(safe-area-inset-bottom, 0px))' }}>
 
       {/* CYBERPUNK TOP BAR */}
       <header style={{

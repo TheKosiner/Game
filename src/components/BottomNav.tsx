@@ -72,6 +72,7 @@ export default function BottomNav({ active, onChange }: Props) {
       background: 'linear-gradient(0deg, #040408 0%, #0a0a14 100%)',
       borderTop: '1px solid rgba(255,45,120,0.3)',
       boxShadow: '0 -4px 24px rgba(255,45,120,0.08)',
+      paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       <div style={{ display: 'flex', maxWidth: 480, margin: '0 auto' }}>
         {TABS.map(tab => {
