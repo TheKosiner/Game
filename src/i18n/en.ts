@@ -53,6 +53,8 @@ export const en = {
   },
   nav: {
     hero: 'HERO',
+    play: 'PLAY',
+    social: 'SOCIAL',
     dungeon: 'OPS',
     boss: 'BOSS',
     quests: 'QUESTS',

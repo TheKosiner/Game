@@ -307,7 +307,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-export default function MailPanel() {
+export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: number) => void }) {
   const user = useAuthStore(s => s.user);
   const hero = useGameStore(s => s.hero);
   const t = useT();
@@ -328,6 +328,7 @@ export default function MailPanel() {
     setMessages(msgs);
     setInvites(invs);
     setLoading(false);
+    onUnreadChange?.(msgs.filter(m => !m.read).length);
   }
 
   useEffect(() => { reload(); }, [user?.uid]);

@@ -24,7 +24,8 @@ import MailPanel from './components/MailPanel';
 import ChallengePanel from './components/ChallengePanel';
 import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
-import BottomNav, { type Tab } from './components/BottomNav';
+import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
+import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
 import { PORTRAIT_OVERRIDES } from './data/portraits';
 
 export default function App() {
@@ -44,8 +45,12 @@ export default function App() {
   const authLoading = useAuthStore(s => s.authLoading);
   const logout = useAuthStore(s => s.logout);
 
-  const [tab, setTab] = useState<Tab>('hero');
+  const [tab, setTab]         = useState<MainTab>('hero');
+  const [playSub, setPlaySub]     = useState<PlaySub>('dungeon');
+  const [socialSub, setSocialSub] = useState<SocialSub>('guild');
+  const [shopSub, setShopSub]     = useState<ShopSub>('shop');
   const [gameLoaded, setGameLoaded] = useState(false);
+  const [mailUnread, setMailUnread] = useState(0);
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -255,18 +260,28 @@ export default function App() {
         </a>
       )}
 
+      {tab === 'play' && (
+        <PlaySubNav active={playSub} onChange={setPlaySub} />
+      )}
+      {tab === 'social' && (
+        <SocialSubNav active={socialSub} onChange={setSocialSub} mailBadge={mailUnread} />
+      )}
+      {tab === 'shop' && (
+        <ShopSubNav active={shopSub} onChange={setShopSub} />
+      )}
+
       <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {tab === 'hero'    && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
-        {tab === 'dungeon'    && <DungeonPanel />}
-        {tab === 'challenge'  && <ChallengePanel />}
-        {tab === 'quests'     && <QuestPanel />}
-        {tab === 'shop'    && <ShopPanel />}
-        {tab === 'gems'    && <GemsPanel />}
-        {tab === 'pvp'     && <PvpPanel />}
-        {tab === 'guild'   && <GuildPanel />}
-        {tab === 'ranking' && <LeaderboardPanel />}
-        {tab === 'mail'    && <MailPanel />}
-        {tab === 'chat'    && <ChatPanel />}
+        {tab === 'hero'   && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
+        {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+        {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+        {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+        {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
+        {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
+        {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}
+        {tab === 'social' && socialSub === 'guild'   && <GuildPanel />}
+        {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+        {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+        {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
       </main>
 
       <BottomNav active={tab} onChange={setTab} />

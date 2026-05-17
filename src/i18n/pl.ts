@@ -55,6 +55,8 @@ export const pl: Translations = {
   },
   nav: {
     hero: 'BOHATER',
+    play: 'GRA',
+    social: 'SPOŁECZNOŚĆ',
     dungeon: 'OPERACJE',
     boss: 'BOSS',
     quests: 'ZADANIA',
