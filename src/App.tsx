@@ -23,6 +23,7 @@ import GuildPanel from './components/GuildPanel';
 import MailPanel from './components/MailPanel';
 import ChallengePanel from './components/ChallengePanel';
 import GemsPanel from './components/GemsPanel';
+import ChatPanel from './components/ChatPanel';
 import BottomNav, { type Tab } from './components/BottomNav';
 import { PORTRAIT_OVERRIDES } from './data/portraits';
 
@@ -265,6 +266,7 @@ export default function App() {
         {tab === 'guild'   && <GuildPanel />}
         {tab === 'ranking' && <LeaderboardPanel />}
         {tab === 'mail'    && <MailPanel />}
+        {tab === 'chat'    && <ChatPanel />}
       </main>
 
       <BottomNav active={tab} onChange={setTab} />

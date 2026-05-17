@@ -101,5 +101,23 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
+    // Global chat
+    match /globalChat/{msgId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text.size() <= 200;
+    }
+
+    // Guild chat (subcollection under guilds)
+    match /guilds/{guildId}/messages/{msgId} {
+      allow read: if isAuthenticated()
+        && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members;
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members
+        && request.resource.data.text.size() <= 200;
+    }
+
   }
 }

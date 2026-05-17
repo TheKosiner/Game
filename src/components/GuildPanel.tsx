@@ -6,6 +6,7 @@ import {
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
 import TerritoryPanel from './TerritoryPanel';
+import GuildChat from './GuildChat';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
@@ -206,6 +207,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   const t = useT();
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
+  const [guildTab, setGuildTab] = useState<'info' | 'chat'>('info');
   const isLeader = guild.leaderUid === myUid;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
     .sort((a, b) => (a.role === 'leader' ? -1 : b.role === 'leader' ? 1 : b.level - a.level));
@@ -242,6 +244,33 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {showInvite && <InviteModal guild={guild} onClose={() => setShowInvite(false)} />}
+
+      {/* INFO / CHAT tabs */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {(['info', 'chat'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setGuildTab(tab)}
+            className={guildTab === tab ? 'btn btn-primary' : 'btn btn-secondary'}
+            style={{ flex: 1, fontSize: 6, padding: '7px' }}
+          >
+            {tab === 'info' ? 'INFO' : '💬 CHAT'}
+          </button>
+        ))}
+      </div>
+
+      {/* CHAT view */}
+      {guildTab === 'chat' && (
+        <GuildChat
+          guildId={guild.id}
+          currentUid={myUid}
+          username={members.find(m => m.uid === myUid)?.username ?? ''}
+          portrait={members.find(m => m.uid === myUid)?.portrait ?? 0}
+        />
+      )}
+
+      {/* INFO view */}
+      {guildTab === 'info' && <>
 
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, rgba(28,20,6,0.97), rgba(20,14,4,0.99))', border: '1px solid var(--gold-darker)', padding: 12 }}>
@@ -319,6 +348,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
       >
         {isLeader ? t.guild.disbandBtn : t.guild.leaveBtn}
       </button>
+      </>}
     </div>
   );
 }

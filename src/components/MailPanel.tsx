@@ -81,10 +81,11 @@ function InviteCard({ invite, onAccept, onDecline }: {
 
 // ── Message card ─────────────────────────────────────────────────────────────
 
-function MessageCard({ msg, onDelete, onMarkRead }: {
+function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
   msg: MailMessage;
   onDelete: () => void;
   onMarkRead: () => void;
+  onReply?: () => void;
 }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
@@ -135,13 +136,24 @@ function MessageCard({ msg, onDelete, onMarkRead }: {
               {msg.body}
             </p>
           </div>
-          <button
-            onClick={e => { e.stopPropagation(); onDelete(); }}
-            className="btn btn-secondary"
-            style={{ fontSize: 6, padding: '4px 10px' }}
-          >
-            {t.mail.deleteBtn}
-          </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {onReply && (
+              <button
+                onClick={e => { e.stopPropagation(); onReply(); }}
+                className="btn btn-primary"
+                style={{ fontSize: 6, padding: '4px 10px' }}
+              >
+                {t.mail.replyBtn}
+              </button>
+            )}
+            <button
+              onClick={e => { e.stopPropagation(); onDelete(); }}
+              className="btn btn-secondary"
+              style={{ fontSize: 6, padding: '4px 10px' }}
+            >
+              {t.mail.deleteBtn}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -150,13 +162,15 @@ function MessageCard({ msg, onDelete, onMarkRead }: {
 
 // ── Compose ──────────────────────────────────────────────────────────────────
 
-function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) {
+function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSent: () => void; initialRecipient?: { uid: string; username: string } }) {
   const user = useAuthStore(s => s.user);
   const t = useT();
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<LeaderboardEntry[]>([]);
   const [filtered, setFiltered] = useState<LeaderboardEntry[]>([]);
-  const [recipient, setRecipient] = useState<LeaderboardEntry | null>(null);
+  const [recipient, setRecipient] = useState<LeaderboardEntry | null>(
+    initialRecipient ? { uid: initialRecipient.uid, username: initialRecipient.username, heroName: '', level: 0, xp: 0, gold: 0, updatedAt: 0 } : null
+  );
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
@@ -211,7 +225,7 @@ function ComposePanel({ myUid, onSent }: { myUid: string; onSent: () => void }) 
           }}>
             <div>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
-              <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>
+              {recipient.heroName && <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>}
             </div>
             <button onClick={() => { setRecipient(null); setSearch(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
@@ -303,6 +317,7 @@ export default function MailPanel() {
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteResult, setInviteResult] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<{ uid: string; username: string } | null>(null);
 
   async function reload() {
     if (!user) return;
@@ -432,6 +447,7 @@ export default function MailPanel() {
                     msg={msg}
                     onDelete={() => handleDeleteMsg(msg)}
                     onMarkRead={() => handleMarkRead(msg)}
+                    onReply={() => { setReplyTo({ uid: msg.fromUid, username: msg.fromUsername }); setView('compose'); }}
                   />
                 ))}
               </>
@@ -439,7 +455,7 @@ export default function MailPanel() {
           </div>
         )
       ) : (
-        <ComposePanel myUid={user.uid} onSent={() => { setView('inbox'); reload(); }} />
+        <ComposePanel myUid={user.uid} onSent={() => { setView('inbox'); setReplyTo(null); reload(); }} initialRecipient={replyTo ?? undefined} />
       )}
     </div>
   );

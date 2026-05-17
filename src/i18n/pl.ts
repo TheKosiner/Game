@@ -64,6 +64,7 @@ export const pl: Translations = {
     guild: 'GILDIA',
     ranking: 'TOP',
     mail: 'POCZTA',
+    chat: 'CHAT',
   },
   creation: {
     subtitle: 'Stwórz postać i zacznij przygodę',
@@ -396,6 +397,7 @@ export const pl: Translations = {
     declineBtn: '✕ Odrzuć',
     newBadge: 'NOWA',
     deleteBtn: '🗑 Usuń',
+    replyBtn: 'ODPOWIEDZ',
     composeTitle: '✏ NAPISZ WIADOMOŚĆ',
     sentOk: '✓ Wiadomość wysłana!',
     recipientLabel: 'Odbiorca',
@@ -436,6 +438,15 @@ export const pl: Translations = {
     purchaseSuccess: 'gemów dodano do konta!',
     purchaseCancelled: 'Zakup anulowany.',
     claimedLog: (n: number) => `💎 +${n} gemów z zakupu dodano!`,
+  },
+  chat: {
+    title: '💬 GLOBALNY CZAT',
+    placeholder: 'Wiadomość...',
+    send: 'WYŚLIJ',
+    rateLimit: 'Poczekaj chwilę przed wysłaniem kolejnej wiadomości.',
+    notLoggedIn: 'Zaloguj się żeby pisać na czacie.',
+    guildTitle: '💬 CZAT GILDII',
+    guildPlaceholder: 'Wiadomość do gildii...',
   },
   combat: {
     restingWait: 'Odpoczywasz po walce! Poczekaj aż wrócą siły.',

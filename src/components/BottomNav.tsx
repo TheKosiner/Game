@@ -1,6 +1,6 @@
 import { useT } from '../hooks/useT';
 
-export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'gems' | 'pvp' | 'guild' | 'ranking' | 'mail';
+export type Tab = 'hero' | 'dungeon' | 'challenge' | 'quests' | 'shop' | 'pvp' | 'guild' | 'ranking' | 'mail' | 'chat' | 'gems';
 
 interface Props {
   active: Tab;
@@ -100,6 +100,14 @@ function TabIcon({ id, color }: { id: Tab; color: string }) {
         <polyline points="2,4 9,11 16,4"/>
       </svg>
     );
+    case 'chat': return (
+      <svg {...p}>
+        {/* chat bubble */}
+        <path d="M2 3H16Q17 3 17 4V12Q17 13 16 13H10L6 16V13H2Q1 13 1 12V4Q1 3 2 3Z"/>
+        <line x1="5" y1="7" x2="13" y2="7"/>
+        <line x1="5" y1="10" x2="10" y2="10"/>
+      </svg>
+    );
   }
 }
 
@@ -111,11 +119,12 @@ export default function BottomNav({ active, onChange }: Props) {
     { id: 'challenge', label: t.nav.boss },
     { id: 'quests',    label: t.nav.quests },
     { id: 'shop',      label: t.nav.shop },
-    { id: 'gems',      label: t.nav.gems },
     { id: 'pvp',       label: t.nav.arena },
     { id: 'guild',     label: t.nav.guild },
     { id: 'ranking',   label: t.nav.ranking },
     { id: 'mail',      label: t.nav.mail },
+    { id: 'chat',      label: t.nav.chat },
+    { id: 'gems',      label: t.nav.gems },
   ];
   return (
     <nav style={{

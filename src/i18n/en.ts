@@ -62,6 +62,7 @@ export const en = {
     guild: 'GUILD',
     ranking: 'TOP',
     mail: 'MAIL',
+    chat: 'CHAT',
   },
   creation: {
     subtitle: 'Create your character and start the adventure',
@@ -394,6 +395,7 @@ export const en = {
     declineBtn: '✕ Decline',
     newBadge: 'NEW',
     deleteBtn: '🗑 Delete',
+    replyBtn: 'REPLY',
     composeTitle: '✏ WRITE MESSAGE',
     sentOk: '✓ Message sent!',
     recipientLabel: 'Recipient',
@@ -434,6 +436,15 @@ export const en = {
     purchaseSuccess: 'gems added to your account!',
     purchaseCancelled: 'Purchase cancelled.',
     claimedLog: (n: number) => `💎 +${n} gems from purchase added!`,
+  },
+  chat: {
+    title: '💬 GLOBAL CHAT',
+    placeholder: 'Message...',
+    send: 'SEND',
+    rateLimit: 'Wait a moment before sending again.',
+    notLoggedIn: 'Log in to chat.',
+    guildTitle: '💬 GUILD CHAT',
+    guildPlaceholder: 'Guild message...',
   },
   combat: {
     restingWait: "You're resting! Wait until you recover.",
