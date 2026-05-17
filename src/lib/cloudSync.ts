@@ -682,10 +682,10 @@ export async function getMyMail(uid: string): Promise<MailMessage[]> {
   const snap = await getDocs(query(
     collection(db, 'mail'),
     where('toUid', '==', uid),
-    orderBy('createdAt', 'desc'),
     limit(50),
   ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as MailMessage));
+  const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() } as MailMessage));
+  return msgs.sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export async function markMailRead(mailId: string): Promise<void> {
