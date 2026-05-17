@@ -66,7 +66,7 @@ export default function ChatPanel() {
       await addDoc(collection(db, 'globalChat'), {
         uid: user.uid,
         username: user.username,
-        portrait,
+        portrait: portrait ?? null,
         text: text.trim().slice(0, 200),
         createdAt: Date.now(),
       });
