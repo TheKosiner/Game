@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useT } from '../hooks/useT';
 
+import logoImg from '../assets/logo.png';
+
 type Mode = 'login' | 'register' | 'reset';
 
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
@@ -171,7 +173,10 @@ export default function AuthScreen() {
       <div style={{ width: '100%', maxWidth: 380 }}>
         {/* Title */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <p style={{ fontSize: 40, marginBottom: 8 }}>🏰</p>
+          <img src={logoImg} alt="GlitchSoul" style={{
+            width: 100, height: 'auto', marginBottom: 4,
+            filter: 'drop-shadow(0 0 16px rgba(140,60,255,0.8)) drop-shadow(0 0 32px rgba(0,200,255,0.3))',
+          }} />
           <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
           <p style={{ color: '#475569', fontSize: 6 }}>{t.app.tagline}</p>
         </div>
