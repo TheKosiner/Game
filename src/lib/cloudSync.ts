@@ -323,10 +323,11 @@ export async function inviteToGuild(
   toUsername: string,
 ): Promise<void> {
   if (!db) return;
-  // Avoid duplicate invites
+  // Avoid duplicate invites — filter by fromUid so the query is allowed by security rules
   const existing = await getDocs(query(
     collection(db, 'guildInvites'),
     where('guildId', '==', guildId),
+    where('fromUid', '==', fromUid),
     where('toUid', '==', toUid),
   ));
   if (!existing.empty) return;
