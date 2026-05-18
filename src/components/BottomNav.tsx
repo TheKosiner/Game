@@ -11,6 +11,7 @@ export type Tab = MainTab;
 interface Props {
   active: MainTab;
   onChange: (tab: MainTab) => void;
+  badges?: Partial<Record<MainTab, boolean>>;
 }
 
 const svgBase = {
@@ -56,7 +57,7 @@ function TabIcon({ id, color }: { id: MainTab; color: string }) {
   }
 }
 
-export default function BottomNav({ active, onChange }: Props) {
+export default function BottomNav({ active, onChange, badges }: Props) {
   const t = useT();
 
   const TABS: { id: MainTab; label: string }[] = [
@@ -102,6 +103,13 @@ export default function BottomNav({ active, onChange }: Props) {
                   position: 'absolute', top: 0, left: '15%', right: '15%', height: 2,
                   background: 'linear-gradient(90deg, transparent, #ff2d78, transparent)',
                   filter: 'blur(4px)',
+                }} />
+              )}
+              {badges?.[tab.id] && !isActive && (
+                <span style={{
+                  position: 'absolute', top: 8, right: '50%', transform: 'translateX(14px)',
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: '#ff2d78', boxShadow: '0 0 8px #ff2d78',
                 }} />
               )}
               <span style={{

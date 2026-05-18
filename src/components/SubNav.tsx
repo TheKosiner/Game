@@ -71,14 +71,14 @@ function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNa
   );
 }
 
-export function PlaySubNav({ active, onChange }: { active: PlaySub; onChange: (t: PlaySub) => void }) {
+export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; onChange: (t: PlaySub) => void; questBadge?: boolean }) {
   const t = useT();
   return (
     <SubNavBar
       tabs={[
         { id: 'dungeon'   as PlaySub, label: t.nav.dungeon },
         { id: 'challenge' as PlaySub, label: t.nav.boss },
-        { id: 'quests'    as PlaySub, label: t.nav.quests },
+        { id: 'quests'    as PlaySub, label: t.nav.quests, badge: questBadge ? 1 : 0 },
       ]}
       active={active}
       onChange={onChange}
@@ -87,11 +87,12 @@ export function PlaySubNav({ active, onChange }: { active: PlaySub; onChange: (t
 }
 
 export function SocialSubNav({
-  active, onChange, mailBadge,
+  active, onChange, mailBadge, chatBadge,
 }: {
   active: SocialSub;
   onChange: (t: SocialSub) => void;
   mailBadge?: number;
+  chatBadge?: boolean;
 }) {
   const t = useT();
   return (
@@ -100,7 +101,7 @@ export function SocialSubNav({
         { id: 'guild'   as SocialSub, label: t.nav.guild },
         { id: 'pvp'     as SocialSub, label: t.nav.arena },
         { id: 'ranking' as SocialSub, label: t.nav.ranking },
-        { id: 'chat'    as SocialSub, label: t.nav.chat },
+        { id: 'chat'    as SocialSub, label: t.nav.chat, badge: chatBadge ? 1 : 0 },
         { id: 'mail'    as SocialSub, label: t.nav.mail, badge: mailBadge },
       ]}
       active={active}

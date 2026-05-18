@@ -7,9 +7,10 @@ import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
 import { useLangStore } from './store/langStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
-import { isFirebaseConfigured } from './lib/firebase';
+import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
+import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -45,16 +46,34 @@ export default function App() {
   const authLoading = useAuthStore(s => s.authLoading);
   const logout = useAuthStore(s => s.logout);
 
+  const activeQuest = useGameStore(s => s.activeQuest);
+
   const [tab, setTab]         = useState<MainTab>('hero');
   const [playSub, setPlaySub]     = useState<PlaySub>('dungeon');
   const [socialSub, setSocialSub] = useState<SocialSub>('guild');
   const [shopSub, setShopSub]     = useState<ShopSub>('shop');
   const [gameLoaded, setGameLoaded] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
+  const [chatHasNew, setChatHasNew] = useState(false);
+  const [nowTick, setNowTick] = useState(Date.now());
+  const lastChatViewedAt = useRef(Date.now());
+
+  // Quest is ready when timer expired and user isn't already on quests sub-tab
+  const questReady = activeQuest !== null && nowTick >= activeQuest.endsAt;
+  const questBadge = questReady && !(tab === 'play' && playSub === 'quests');
 
   function switchTab(t: MainTab) { setTab(t); }
-  function switchPlay(t: PlaySub) { setPlaySub(t); }
-  function switchSocial(t: SocialSub) { setSocialSub(t); }
+  function switchPlay(t: PlaySub) {
+    setPlaySub(t);
+    if (t === 'quests') { /* badge clears via questBadge derivation */ }
+  }
+  function switchSocial(t: SocialSub) {
+    setSocialSub(t);
+    if (t === 'chat') {
+      lastChatViewedAt.current = Date.now();
+      setChatHasNew(false);
+    }
+  }
   function switchShop(t: ShopSub) { setShopSub(t); }
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -137,6 +156,35 @@ export default function App() {
     if (user && gameLoaded && challengeResult)
       syncToCloud(user.uid, user.username).catch(() => {});
   }, [challengeResult]);
+
+  // Tick every 5 s for quest-ready detection
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Listen for new global chat messages
+  useEffect(() => {
+    if (!isFirebaseConfigured || !db || !user) return;
+    const q = query(collection(db, 'globalChat'), orderBy('createdAt', 'desc'), limit(1));
+    const unsub = onSnapshot(q, snap => {
+      const latest = snap.docs[0]?.data();
+      if (!latest) return;
+      if (latest.createdAt > lastChatViewedAt.current) {
+        lastChatViewedAt.current = latest.createdAt;
+        setChatHasNew(true);
+      }
+    });
+    return unsub;
+  }, [user?.uid]);
+
+  // Clear chat badge when user is already on chat tab
+  useEffect(() => {
+    if (tab === 'social' && socialSub === 'chat') {
+      lastChatViewedAt.current = Date.now();
+      setChatHasNew(false);
+    }
+  }, [tab, socialSub]);
 
   // Claim any pending gem credits from Stripe purchases
   useEffect(() => {
@@ -296,10 +344,10 @@ export default function App() {
 
       <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {tab === 'play' && (
-          <PlaySubNav active={playSub} onChange={switchPlay} />
+          <PlaySubNav active={playSub} onChange={switchPlay} questBadge={questBadge} />
         )}
         {tab === 'social' && (
-          <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} />
+          <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} chatBadge={chatHasNew} />
         )}
         {tab === 'shop' && (
           <ShopSubNav active={shopSub} onChange={switchShop} />
@@ -320,7 +368,7 @@ export default function App() {
         </main>
       </div>
 
-      <BottomNav active={tab} onChange={switchTab} />
+      <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
     </div>
   );
 }
