@@ -468,18 +468,12 @@ export default function HeroCard() {
         backgroundImage: 'url(/hero-bg.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundColor: 'transparent',
         position: 'relative',
         overflow: 'hidden',
         zIndex: 9997,
       }}>
-        {/* dark overlay so text stays readable */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(2,4,16,0.72)',
-          pointerEvents: 'none',
-        }} />
-
-        {/* content sits above the overlay */}
+        {/* content sits above the photo */}
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
         {/* Name + level + gold */}
