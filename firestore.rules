@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-17
+// Last deployed: 2026-05-18
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -11,29 +11,61 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    // Delta validation for game saves — blocks localStorage inflation attacks
+    // Note: Cloud Functions use admin SDK and bypass these rules (intentional)
+    function validSaveUpdate(old, nw) {
+      return
+        // Level: max +5 per write (multiple level-ups in one session)
+        nw.hero.level <= old.hero.level + 5
+        // PvP wins/losses: only increase, max +1 per write (15-min cooldown enforced by CF)
+        && nw.pvpWins   >= old.pvpWins
+        && nw.pvpWins   <= old.pvpWins + 1
+        && nw.pvpLosses >= old.pvpLosses
+        && nw.pvpLosses <= old.pvpLosses + 1
+        // PvP rating: bounded change per write (+25 win / -15 loss, with small margin)
+        && nw.pvpRating <= old.pvpRating + 30
+        && nw.pvpRating >= old.pvpRating - 20
+        // Challenge: only goes up, max +1 per write (one boss at a time)
+        && nw.challengeUnlocked >= old.challengeUnlocked
+        && nw.challengeUnlocked <= old.challengeUnlocked + 1;
+    }
+
+    // Delta validation for leaderboard profiles
+    function validPlayerUpdate(old, nw) {
+      return
+        nw.level      <= old.level + 5
+        && nw.pvpWins   >= old.pvpWins
+        && nw.pvpWins   <= old.pvpWins + 1
+        && nw.pvpLosses >= old.pvpLosses
+        && nw.pvpLosses <= old.pvpLosses + 1
+        && nw.pvpRating <= old.pvpRating + 30
+        && nw.pvpRating >= old.pvpRating - 20;
+    }
+
     // User profiles (private)
     match /users/{userId} {
       allow read, write: if isOwner(userId);
     }
 
-    // Game saves (private)
+    // Game saves (private) — with delta validation on update
     match /saves/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read:   if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && validSaveUpdate(resource.data, request.resource.data);
     }
 
-    // Public leaderboard profiles
-    // Owner can write anything; any authenticated user may update only
-    // guildId/guildTag (needed when guild leader disbands or kicks members)
+    // Public leaderboard profiles — with delta validation on update
     match /players/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && validPlayerUpdate(resource.data, request.resource.data);
+      // Any authenticated user may update only guildId/guildTag (guild kick/disband)
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['guildId', 'guildTag']);
     }
 
     // Username uniqueness registry
-    // Doc id = lowercased username; must contain caller's uid on create
     match /usernames/{username} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
@@ -48,7 +80,6 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members;
-      // Territory siege: attacker sets lastLostAt on defending guild (not a member)
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt']);
       allow delete: if isAuthenticated()
@@ -69,7 +100,6 @@ service cloud.firestore {
     }
 
     // PvP fight history
-    // Write requires caller to be the attacker (prevents forged fight records)
     match /pvpHistory/{fightId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
@@ -77,8 +107,6 @@ service cloud.firestore {
     }
 
     // Guild territories
-    // Any guild member can participate in a siege (damage, join, capture)
-    // Client-side logic + validatePlayerUpdate Cloud Function guard abuse
     match /territories/{territoryId} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated();
@@ -96,7 +124,6 @@ service cloud.firestore {
     }
 
     // Stripe gem credits — written only by Cloud Functions (admin SDK bypasses rules)
-    // Clients may read their own unclaimed credits
     match /gemCredits/{creditId} {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
@@ -109,7 +136,7 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 200;
     }
 
-    // Guild chat (subcollection under guilds)
+    // Guild chat
     match /guilds/{guildId}/messages/{msgId} {
       allow read: if isAuthenticated()
         && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members;

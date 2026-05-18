@@ -111,12 +111,6 @@ export const claimGemCredits = functions.https.onCall(async (_data, context) => 
 interface PvpRequest {
   attackerId: string;
   defenderId: string;
-  attackerStats: {
-    attack: number;
-    defense: number;
-    maxHp: number;
-    level: number;
-  };
 }
 
 interface PvpResult {
@@ -156,41 +150,37 @@ export const performPvp = functions.https.onCall(async (data: PvpRequest, contex
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
 
-  const { attackerId, defenderId, attackerStats } = data;
+  const { attackerId, defenderId } = data;
 
   if (context.auth.uid !== attackerId) {
     throw new functions.https.HttpsError('permission-denied', 'Can only fight as yourself');
   }
 
-  const attackerDoc = await db.collection('players').doc(attackerId).get();
-  if (!attackerDoc.exists) {
-    throw new functions.https.HttpsError('not-found', 'Attacker not found');
-  }
+  // Read BOTH players from Firestore — never trust client-provided stats
+  const [attackerDoc, defenderDoc] = await Promise.all([
+    db.collection('players').doc(attackerId).get(),
+    db.collection('players').doc(defenderId).get(),
+  ]);
+
+  if (!attackerDoc.exists) throw new functions.https.HttpsError('not-found', 'Attacker not found');
+  if (!defenderDoc.exists) throw new functions.https.HttpsError('not-found', 'Defender not found');
 
   const attackerData = attackerDoc.data()!;
-  const lastPvpFight = attackerData.lastPvpFight || 0;
-
-  if (Date.now() - lastPvpFight < PVP_COOLDOWN_MS) {
-    throw new functions.https.HttpsError(
-      'failed-precondition',
-      'PvP cooldown active'
-    );
-  }
-
-  const defenderDoc = await db.collection('players').doc(defenderId).get();
-  if (!defenderDoc.exists) {
-    throw new functions.https.HttpsError('not-found', 'Defender not found');
-  }
-
   const defenderData = defenderDoc.data()!;
 
+  const lastPvpFight = attackerData.lastPvpFight || 0;
+  if (Date.now() - lastPvpFight < PVP_COOLDOWN_MS) {
+    throw new functions.https.HttpsError('failed-precondition', 'PvP cooldown active');
+  }
+
+  // Use Firestore stats for both sides — client cannot inflate them
   const won = simulatePvp(
-    attackerStats.attack,
-    attackerStats.defense,
-    attackerStats.maxHp,
-    defenderData.attack || 10,
+    attackerData.attack  || 10,
+    attackerData.defense || 5,
+    attackerData.maxHp   || 100,
+    defenderData.attack  || 10,
     defenderData.defense || 5,
-    defenderData.maxHp || 100
+    defenderData.maxHp   || 100
   );
 
   const xpGained = won ? Math.max(20, defenderData.level * 20) : 8;
@@ -291,6 +281,38 @@ export const collectQuestServer = functions.https.onCall(async (_data, context) 
       xpReward:   activeQuest.quest?.xpReward   ?? 0,
       goldReward: activeQuest.quest?.goldReward  ?? 0,
     };
+  });
+});
+
+// ── collectBeggingServer ──────────────────────────────────────────────────────
+// Server validates begging timer — client cannot skip it by moving clock forward
+export const collectBeggingServer = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  const uid = context.auth.uid;
+
+  return db.runTransaction(async tx => {
+    const saveRef = db.doc(`saves/${uid}`);
+    const snap = await tx.get(saveRef);
+    if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+
+    const hero = snap.data()!.hero ?? {};
+    if (!hero.beggingUntil) throw new functions.https.HttpsError('failed-precondition', 'Not begging');
+
+    const now = Date.now();
+    if (now < hero.beggingUntil) throw new functions.https.HttpsError('failed-precondition', 'Begging not finished yet');
+
+    // Cap reward to what was promised at start — prevent localStorage tampering
+    const maxGold = Math.floor(10 * (5 + (hero.level ?? 1) * 2) * 1.2); // max possible reward
+    const reward = Math.min(hero.beggingReward ?? 0, maxGold);
+
+    tx.update(saveRef, {
+      'hero.beggingUntil': null,
+      'hero.beggingReward': null,
+      'hero.beggingStartAt': null,
+      updatedAt: now,
+    });
+
+    return { valid: true, goldReward: reward };
   });
 });
 

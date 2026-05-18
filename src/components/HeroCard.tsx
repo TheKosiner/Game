@@ -5,6 +5,8 @@ import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistanc
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
+import { useAuthStore } from '../store/authStore';
+import { collectBeggingServer } from '../lib/serverActions';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -283,7 +285,20 @@ export default function HeroCard() {
   const startBegging   = useGameStore(s => s.startBegging);
   const cancelBegging  = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
+  const user = useAuthStore(s => s.user);
   const inCombat       = useGameStore(s => s.inCombat);
+
+  async function handleCollectBegging() {
+    if (user) {
+      try {
+        await collectBeggingServer();
+      } catch (err: any) {
+        if (err?.code === 'functions/failed-precondition') return;
+        // fallback to local on network/deploy errors
+      }
+    }
+    collectBegging();
+  }
   const activeQuest    = useGameStore(s => s.activeQuest);
   const currentDungeon = useGameStore(s => s.currentDungeon);
   const [, forceUpdate] = useState(0);
@@ -418,7 +433,7 @@ export default function HeroCard() {
       {isBegging
         ? <BeggingTimer endsAt={hero.beggingUntil!} reward={hero.beggingReward ?? 0} startAt={hero.beggingStartAt ?? hero.beggingUntil!} cancelBegging={cancelBegging} />
         : beggingDone
-          ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={collectBegging} />
+          ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={handleCollectBegging} />
           : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
       }
 

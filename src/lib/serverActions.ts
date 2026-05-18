@@ -14,9 +14,21 @@ interface QuestCollectResult {
   goldReward: number;
 }
 
+interface BeggingCollectResult {
+  valid: boolean;
+  goldReward: number;
+}
+
 export async function claimDailyRewardServer(): Promise<DailyRewardResult> {
   if (!functions) return { claimed: false };
   const fn = httpsCallable<Record<string, never>, DailyRewardResult>(functions, 'claimDailyReward');
+  const result = await fn({});
+  return result.data;
+}
+
+export async function collectBeggingServer(): Promise<BeggingCollectResult> {
+  if (!functions) throw new Error('Firebase not configured');
+  const fn = httpsCallable<Record<string, never>, BeggingCollectResult>(functions, 'collectBeggingServer');
   const result = await fn({});
   return result.data;
 }
