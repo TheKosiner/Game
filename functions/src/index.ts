@@ -219,6 +219,81 @@ export const performPvp = functions.https.onCall(async (data: PvpRequest, contex
   return result;
 });
 
+// ── claimDailyReward ──────────────────────────────────────────────────────────
+// Server validates the day using server time — immune to client clock manipulation
+function isSameDaySrv(ts: number, now: number): boolean {
+  const a = new Date(ts);
+  const b = new Date(now);
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth()    === b.getMonth()    &&
+         a.getDate()     === b.getDate();
+}
+
+export const claimDailyReward = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  const uid = context.auth.uid;
+
+  return db.runTransaction(async tx => {
+    const saveRef = db.doc(`saves/${uid}`);
+    const snap = await tx.get(saveRef);
+    if (!snap.exists) return { claimed: false };
+
+    const hero = snap.data()!.hero ?? {};
+    const lastDailyReset: number = hero.lastDailyReset ?? 0;
+    const now = Date.now(); // server-side — client cannot influence this
+
+    // Future timestamp means clock was manipulated — fix it silently
+    if (lastDailyReset > now) {
+      tx.update(saveRef, { 'hero.lastDailyReset': now });
+      return { claimed: false };
+    }
+
+    if (isSameDaySrv(lastDailyReset, now)) return { claimed: false };
+
+    const DAILY_GEMS = 5;
+    const newGems = (hero.gems ?? 0) + DAILY_GEMS;
+
+    tx.update(saveRef, {
+      'hero.lastDailyReset': now,
+      'hero.dungeonRunsToday': 0,
+      'hero.questsCompletedToday': 0,
+      'hero.gems': newGems,
+      updatedAt: now,
+    });
+
+    return { claimed: true, gemsAdded: DAILY_GEMS, gems: newGems, lastDailyReset: now };
+  });
+});
+
+// ── collectQuestServer ────────────────────────────────────────────────────────
+// Server validates quest completion time — client cannot skip timers by moving clock
+export const collectQuestServer = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  const uid = context.auth.uid;
+
+  return db.runTransaction(async tx => {
+    const saveRef = db.doc(`saves/${uid}`);
+    const snap = await tx.get(saveRef);
+    if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+
+    const activeQuest = snap.data()!.activeQuest;
+    if (!activeQuest) throw new functions.https.HttpsError('failed-precondition', 'No active quest');
+
+    const now = Date.now(); // server time
+    if (now < activeQuest.endsAt) {
+      throw new functions.https.HttpsError('failed-precondition', 'Quest not finished yet');
+    }
+
+    tx.update(saveRef, { activeQuest: null, updatedAt: now });
+
+    return {
+      valid: true,
+      xpReward:   activeQuest.quest?.xpReward   ?? 0,
+      goldReward: activeQuest.quest?.goldReward  ?? 0,
+    };
+  });
+});
+
 export const validatePlayerUpdate = functions.firestore
   .document('players/{uid}')
   .onUpdate(async (change, context) => {

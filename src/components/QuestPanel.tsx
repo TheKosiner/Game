@@ -4,6 +4,8 @@ import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
+import { useAuthStore } from '../store/authStore';
+import { collectQuestServer } from '../lib/serverActions';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -63,8 +65,26 @@ export default function QuestPanel() {
   const collectQuest    = useGameStore(s => s.collectQuest);
   const abandonQuest    = useGameStore(s => s.abandonQuest);
   const gemSpeedupQuest = useGameStore(s => s.gemSpeedupQuest);
+  const user = useAuthStore(s => s.user);
   const [now, setNow] = useState(Date.now());
   const [confirmAbandon, setConfirmAbandon] = useState(false);
+  const [collecting, setCollecting] = useState(false);
+
+  async function handleCollect() {
+    if (collecting) return;
+    setCollecting(true);
+    try {
+      if (user) {
+        // Server validates the timer — clock manipulation blocked
+        await collectQuestServer();
+      }
+      collectQuest();
+    } catch {
+      // Server rejected (quest not done yet or no active quest)
+    } finally {
+      setCollecting(false);
+    }
+  }
 
   const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
                     (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
@@ -136,8 +156,8 @@ export default function QuestPanel() {
           </div>
 
           {canCollect && (
-            <button onClick={collectQuest} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
-              {t.quests.collect}
+            <button onClick={handleCollect} disabled={collecting} className="btn btn-primary" style={{ width: '100%', fontSize: 7, opacity: collecting ? 0.6 : 1 }}>
+              {collecting ? '...' : t.quests.collect}
             </button>
           )}
 

@@ -9,6 +9,7 @@ import { useLangStore } from './store/langStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
 import { isFirebaseConfigured } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
+import { claimDailyRewardServer } from './lib/serverActions';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -93,15 +94,35 @@ export default function App() {
 
   useEffect(() => {
     if (!gameLoaded) return;
-    checkDailyReset();
+    // Guests use local daily reset; logged-in players use server-validated CF below
+    if (!user) checkDailyReset();
     tickPassiveRegen();
     const id = setInterval(() => {
-      checkDailyReset();
+      if (!user) checkDailyReset();
       tickPassiveRegen();
       saveGame();
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
     }, 30_000);
     return () => clearInterval(id);
+  }, [gameLoaded, user?.uid]);
+
+  // Server-validated daily reward — immune to client clock manipulation
+  useEffect(() => {
+    if (!gameLoaded || !user) return;
+    claimDailyRewardServer().then(result => {
+      if (!result.claimed) return;
+      useGameStore.setState(s => ({
+        hero: {
+          ...s.hero,
+          gems: result.gems ?? s.hero.gems,
+          dungeonRunsToday: 0,
+          questsCompletedToday: 0,
+          lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
+        },
+      }));
+      addCombatLog(t.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+      saveGame();
+    }).catch(() => {});
   }, [gameLoaded, user?.uid]);
 
   useEffect(() => {
