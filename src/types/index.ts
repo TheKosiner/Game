@@ -67,6 +67,7 @@ export interface Hero {
   portrait: number;
   unlockedPortraits: number[];
   lastRespecAt: number | null;
+  completedDungeons: string[];
 }
 
 export interface Enemy {

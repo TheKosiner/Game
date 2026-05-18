@@ -104,6 +104,20 @@ function scaledQuestDuration(durationMs: number, level: number): number {
   return Math.floor(durationMs * (1 + (level - 1) * 0.05));
 }
 
+// Infer completed dungeons from hero level for save migration (dungeons unlock ~5 levels below minLevel)
+const DUNGEON_LEVELS: [string, number][] = [
+  ['forest', 1], ['cave', 5], ['castle', 12], ['westland', 20],
+  ['dragon_lair', 28], ['neon_undercity', 35], ['zero_zone', 40], ['ghost_network', 55],
+];
+function inferCompletedDungeons(level: number): string[] {
+  const completed: string[] = [];
+  for (let i = 0; i < DUNGEON_LEVELS.length - 1; i++) {
+    const [id, minLvl] = DUNGEON_LEVELS[i];
+    if (level >= minLvl + 5) completed.push(id);
+  }
+  return completed;
+}
+
 function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0, portrait: 0 | 1 = 0): Hero {
   const stats: Stats = { strength: 4, dexterity: 4, intelligence: 4, vitality: 4, magic: 4, magicResistance: 4 };
   const maxHp = getHeroMaxHp(stats, 1);
@@ -136,6 +150,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     portrait,
     unlockedPortraits: [],
     lastRespecAt: null,
+    completedDungeons: [],
   };
 }
 
@@ -409,6 +424,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance, mode, diff, set, get);
+        if (diff !== 'easy') {
+          const freshHero = get().hero;
+          if (!freshHero.completedDungeons.includes(currentDungeon.id)) {
+            set({ hero: { ...freshHero, completedDungeons: [...freshHero.completedDungeons, currentDungeon.id] } });
+          }
+        }
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
@@ -485,6 +506,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance2, mode2, diff2, set, get);
+        if (diff2 !== 'easy') {
+          const freshHero2 = get().hero;
+          if (!freshHero2.completedDungeons.includes(currentDungeon.id)) {
+            set({ hero: { ...freshHero2, completedDungeons: [...freshHero2.completedDungeons, currentDungeon.id] } });
+          }
+        }
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
@@ -1011,6 +1038,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           portrait: save.hero.portrait ?? 0,
           unlockedPortraits: save.hero.unlockedPortraits ?? [],
           lastRespecAt: save.hero.lastRespecAt ?? null,
+          completedDungeons: save.hero.completedDungeons ?? inferCompletedDungeons(save.hero.level ?? 1),
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({

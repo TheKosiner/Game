@@ -75,6 +75,24 @@ export const ALL_ENEMIES: Enemy[] = [
   // Strefa 6: Neon Undercity (magia)
   { id: 'void_dragon',        name: 'Smok Próżni',               emoji: '🐉',  level: 38, hp: 1150, maxHp: 1150, attack: 60,  defense: 35, xpReward: 940,  goldReward: 680, lootTable: [], magicAttack: 165, magicResistance: 88 },
   { id: 'arcane_omega',       name: 'Arkanowa Jednostka Omega',  emoji: '🌀',  level: 44, hp: 1800, maxHp: 1800, attack: 80,  defense: 45, xpReward: 1450, goldReward: 1050,lootTable: [], magicAttack: 210, magicResistance: 105 },
+
+  // ── Strefa Zero (lvl 40–52) ───────────────────────────────────────────────
+  { id: 'spec_ops_soldier',   name: 'Żołnierz Spec Ops',         emoji: '🪖',  level: 40, hp: 1300, maxHp: 1300, attack: 185, defense: 80, xpReward: 1200, goldReward: 880, lootTable: [] },
+  { id: 'bio_hazard_unit',    name: 'Jednostka Biohazard',        emoji: '☣️', level: 42, hp: 1500, maxHp: 1500, attack: 200, defense: 85, xpReward: 1350, goldReward: 990, lootTable: [] },
+  { id: 'nano_berserker',     name: 'Nano-Berserk',               emoji: '💢',  level: 44, hp: 1700, maxHp: 1700, attack: 220, defense: 90, xpReward: 1500, goldReward: 1100,lootTable: [] },
+  { id: 'plasma_guard',       name: 'Strażnik Plazmowy',          emoji: '🔆',  level: 46, hp: 1900, maxHp: 1900, attack: 240, defense: 95, xpReward: 1650, goldReward: 1200,lootTable: [] },
+  { id: 'apex_predator',      name: 'Drapieżnik Apex',            emoji: '🦅',  level: 48, hp: 2200, maxHp: 2200, attack: 260, defense: 100,xpReward: 1850, goldReward: 1400,lootTable: [] },
+  { id: 'zero_commander',     name: 'Komandant Strefy Zero',      emoji: '⭐',  level: 52, hp: 2800, maxHp: 2800, attack: 300, defense: 115,xpReward: 2200, goldReward: 1700,lootTable: [] },
+  { id: 'psi_storm',          name: 'Burza Psi',                  emoji: '🌪️', level: 43, hp: 1400, maxHp: 1400, attack: 50,  defense: 60, xpReward: 1380, goldReward: 1000,lootTable: [], magicAttack: 290, magicResistance: 120 },
+
+  // ── Sieć Widm (lvl 55–70) ────────────────────────────────────────────────
+  { id: 'digital_phantom',    name: 'Cyfrowy Fantom',             emoji: '👁️', level: 55, hp: 3200, maxHp: 3200, attack: 340, defense: 125,xpReward: 2600, goldReward: 2000,lootTable: [] },
+  { id: 'quantum_assassin',   name: 'Kwantowy Zabójca',           emoji: '⚔️', level: 58, hp: 3600, maxHp: 3600, attack: 375, defense: 130,xpReward: 2900, goldReward: 2250,lootTable: [] },
+  { id: 'network_titan',      name: 'Tytan Sieci',                emoji: '🗼',  level: 62, hp: 4200, maxHp: 4200, attack: 420, defense: 140,xpReward: 3400, goldReward: 2700,lootTable: [] },
+  { id: 'code_reaper',        name: 'Żniwiarz Kodu',              emoji: '💀',  level: 65, hp: 5000, maxHp: 5000, attack: 480, defense: 152,xpReward: 4000, goldReward: 3200,lootTable: [] },
+  { id: 'ghost_overlord',     name: 'Władca Widm',                emoji: '👑',  level: 70, hp: 6500, maxHp: 6500, attack: 560, defense: 170,xpReward: 5200, goldReward: 4200,lootTable: [] },
+  { id: 'void_weaver',        name: 'Tkacz Próżni',               emoji: '🕸️', level: 60, hp: 3800, maxHp: 3800, attack: 80,  defense: 100,xpReward: 3100, goldReward: 2450,lootTable: [], magicAttack: 450, magicResistance: 175 },
+  { id: 'arcane_ghost',       name: 'Arkaiczny Duch',             emoji: '👻',  level: 68, hp: 5500, maxHp: 5500, attack: 100, defense: 130,xpReward: 4600, goldReward: 3700,lootTable: [], magicAttack: 600, magicResistance: 220 },
 ];
 
 export function getEnemyById(id: string): Enemy | undefined {

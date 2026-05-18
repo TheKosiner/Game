@@ -21,6 +21,8 @@ const NODE_POS: Record<string, { x: number; y: number }> = {
   westland:       { x: 46, y: 16 },
   dragon_lair:    { x: 80, y: 8  },
   neon_undercity: { x: 88, y: 30 },
+  zero_zone:      { x: 75, y: 52 },
+  ghost_network:  { x: 55, y: 65 },
 };
 const CONNECTIONS: [string, string][] = [
   ['forest', 'cave'],
@@ -28,6 +30,8 @@ const CONNECTIONS: [string, string][] = [
   ['castle', 'westland'],
   ['westland', 'dragon_lair'],
   ['dragon_lair', 'neon_undercity'],
+  ['neon_undercity', 'zero_zone'],
+  ['zero_zone', 'ghost_network'],
 ];
 
 type DifficultyOption = { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string };
@@ -169,6 +173,47 @@ function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?:
         <line x1="-2.5" y1="2" x2="2.5" y2="2" stroke={color} strokeWidth="0.5" opacity="0.7"/>
         <line x1="-3.5" y1="1" x2="-3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
         <line x1="3.5" y1="1" x2="3.5" y2="3" stroke={color} strokeWidth="0.4" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'zero_zone') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* crosshair outer ring */}
+        <circle cx="0" cy="0" r="4.5" fill="none" stroke={color} strokeWidth="0.9" opacity="0.9"/>
+        {/* crosshair inner ring */}
+        <circle cx="0" cy="0" r="2.2" fill="none" stroke={color} strokeWidth="0.6" opacity="0.7"/>
+        {/* crosshair lines */}
+        <line x1="-5.5" y1="0" x2="-2.8" y2="0" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+        <line x1="2.8" y1="0" x2="5.5" y2="0" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+        <line x1="0" y1="-5.5" x2="0" y2="-2.8" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+        <line x1="0" y1="2.8" x2="0" y2="5.5" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+        {/* center dot */}
+        <circle cx="0" cy="0" r="0.8" fill={color} opacity="0.95"/>
+        {/* tick marks */}
+        <line x1="-4.5" y1="-1" x2="-4.5" y2="1" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+        <line x1="4.5" y1="-1" x2="4.5" y2="1" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'ghost_network') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* ghost body */}
+        <path d="M -3.5 4 L -3.5 -1 Q -3.5 -5.5 0 -5.5 Q 3.5 -5.5 3.5 -1 L 3.5 4 L 2 2.5 L 0.5 4 L -1 2.5 L -2.5 4 Z" fill={color} opacity="0.85"/>
+        {/* ghost eyes */}
+        <ellipse cx="-1.3" cy="-1.5" rx="1" ry="1.1" fill="#000" opacity="0.7"/>
+        <ellipse cx="1.3" cy="-1.5" rx="1" ry="1.1" fill="#000" opacity="0.7"/>
+        {/* ghost eye glow */}
+        <circle cx="-1.3" cy="-1.5" r="0.4" fill={color} opacity="0.5"/>
+        <circle cx="1.3" cy="-1.5" r="0.4" fill={color} opacity="0.5"/>
+        {/* network lines */}
+        <line x1="-4.5" y1="-3" x2="-3.5" y2="-2" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+        <line x1="4.5" y1="-3" x2="3.5" y2="-2" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+        <circle cx="-4.8" cy="-3.4" r="0.5" fill={color} opacity="0.6"/>
+        <circle cx="4.8" cy="-3.4" r="0.5" fill={color} opacity="0.6"/>
       </svg>
     );
   }
@@ -355,8 +400,42 @@ function MapIcon({ id, cx, cy, color }: { id: string; cx: number; cy: number; co
     </g>
   );
 
+  if (id === 'zero_zone') return (
+    <g transform={transform}>
+      <circle cx="0" cy="0" r="4.5" fill="none" stroke={color} strokeWidth="0.9" opacity="0.9"/>
+      <circle cx="0" cy="0" r="2.2" fill="none" stroke={color} strokeWidth="0.6" opacity="0.7"/>
+      <line x1="-5.5" y1="0" x2="-2.8" y2="0" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+      <line x1="2.8" y1="0" x2="5.5" y2="0" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+      <line x1="0" y1="-5.5" x2="0" y2="-2.8" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+      <line x1="0" y1="2.8" x2="0" y2="5.5" stroke={color} strokeWidth="0.7" opacity="0.9"/>
+      <circle cx="0" cy="0" r="0.8" fill={color} opacity="0.95"/>
+      <line x1="-4.5" y1="-1" x2="-4.5" y2="1" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      <line x1="4.5" y1="-1" x2="4.5" y2="1" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+    </g>
+  );
+
+  if (id === 'ghost_network') return (
+    <g transform={transform}>
+      <path d="M -3.5 4 L -3.5 -1 Q -3.5 -5.5 0 -5.5 Q 3.5 -5.5 3.5 -1 L 3.5 4 L 2 2.5 L 0.5 4 L -1 2.5 L -2.5 4 Z" fill={color} opacity="0.85"/>
+      <ellipse cx="-1.3" cy="-1.5" rx="1" ry="1.1" fill="#000" opacity="0.7"/>
+      <ellipse cx="1.3" cy="-1.5" rx="1" ry="1.1" fill="#000" opacity="0.7"/>
+      <circle cx="-1.3" cy="-1.5" r="0.4" fill={color} opacity="0.5"/>
+      <circle cx="1.3" cy="-1.5" r="0.4" fill={color} opacity="0.5"/>
+      <line x1="-4.5" y1="-3" x2="-3.5" y2="-2" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      <line x1="4.5" y1="-3" x2="3.5" y2="-2" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      <circle cx="-4.8" cy="-3.4" r="0.5" fill={color} opacity="0.6"/>
+      <circle cx="4.8" cy="-3.4" r="0.5" fill={color} opacity="0.6"/>
+    </g>
+  );
+
   // fallback
   return <circle cx={cx} cy={cy} r="4" fill={color} opacity="0.8"/>;
+}
+
+function isDungeonUnlocked(_dungeon: Dungeon, index: number, completedDungeons: string[]): boolean {
+  if (index === 0) return true;
+  const prev = ALL_DUNGEONS[index - 1];
+  return completedDungeons.includes(prev.id);
 }
 
 function DungeonList() {
@@ -367,13 +446,19 @@ function DungeonList() {
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
-  const defaultDungeon = ALL_DUNGEONS.length > 0 ? ALL_DUNGEONS[ALL_DUNGEONS.length - 1] : null;
+  const completedDungeons = hero.completedDungeons ?? [];
+  const lastUnlocked = ALL_DUNGEONS.reduce<Dungeon | null>((acc, d, i) =>
+    isDungeonUnlocked(d, i, completedDungeons) ? d : acc, null);
+  const defaultDungeon = lastUnlocked ?? (ALL_DUNGEONS.length > 0 ? ALL_DUNGEONS[0] : null);
 
   const [selectedDungeon, setSelectedDungeon] = useState<Dungeon | null>(defaultDungeon);
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
 
-  const blocked = isResting || limitReached;
-  const chosen = selectedDungeon ?? defaultDungeon;
+  const chosenDungeon = selectedDungeon ?? defaultDungeon;
+  const chosenIdx = chosenDungeon ? ALL_DUNGEONS.findIndex(d => d.id === chosenDungeon.id) : -1;
+  const chosenIsUnlocked = chosenDungeon ? isDungeonUnlocked(chosenDungeon, chosenIdx, completedDungeons) : true;
+  const blocked = isResting || limitReached || !chosenIsUnlocked;
+  const chosen = chosenDungeon;
 
   const DIFFICULTY_OPTIONS: DifficultyOption[] = [
     { key: 'easy',   label: t.dungeon.diffEasy,   badge: '🌿', desc: t.dungeon.diffEasyDesc,   color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
@@ -515,11 +600,12 @@ function DungeonList() {
           })}
 
           {/* Nodes */}
-          {ALL_DUNGEONS.map(d => {
+          {ALL_DUNGEONS.map((d, idx) => {
             const pos = NODE_POS[d.id];
             if (!pos) return null;
             const isChosen = chosen?.id === d.id;
-            const col = isChosen ? '#ff2d78' : '#ffc83a';
+            const isUnlocked = isDungeonUnlocked(d, idx, completedDungeons);
+            const col = isChosen ? '#ff2d78' : isUnlocked ? '#ffc83a' : '#555577';
             return (
               <g key={d.id}
                 onClick={() => setSelectedDungeon(d)}
@@ -527,8 +613,8 @@ function DungeonList() {
               >
                 {/* outer glow ring */}
                 <circle cx={pos.x} cy={pos.y} r={6.5} fill="none"
-                  stroke={isChosen ? '#ff2d78' : '#ffc83a'} strokeWidth="0.4" opacity={isChosen ? 0.8 : 0.4}
-                  style={{ animation: `mapPulse ${isChosen ? 1.6 : 2.8}s ease-out infinite`, transformOrigin: `${pos.x}px ${pos.y}px` }}
+                  stroke={isChosen ? '#ff2d78' : isUnlocked ? '#ffc83a' : '#555577'} strokeWidth="0.4" opacity={isChosen ? 0.8 : isUnlocked ? 0.4 : 0.25}
+                  style={{ animation: isUnlocked ? `mapPulse ${isChosen ? 1.6 : 2.8}s ease-out infinite` : 'none', transformOrigin: `${pos.x}px ${pos.y}px` }}
                 />
                 {/* selected halo */}
                 {isChosen && (
@@ -537,23 +623,33 @@ function DungeonList() {
                 {/* hexagonal background */}
                 <polygon
                   points={hexPoints(pos.x, pos.y, 5.2)}
-                  fill={isChosen ? 'rgba(255,45,120,0.2)' : 'rgba(255,200,58,0.1)'}
-                  stroke={isChosen ? '#ff2d78' : '#ffc83a'}
+                  fill={isChosen ? 'rgba(255,45,120,0.2)' : isUnlocked ? 'rgba(255,200,58,0.1)' : 'rgba(40,40,60,0.3)'}
+                  stroke={col}
                   strokeWidth={isChosen ? 0.9 : 0.6}
-                  filter={isChosen ? 'url(#glow-pink)' : 'url(#glow-gold)'}
+                  filter={isChosen ? 'url(#glow-pink)' : isUnlocked ? 'url(#glow-gold)' : 'none'}
+                  opacity={isUnlocked ? 1 : 0.55}
                 />
                 {/* location icon inline (no foreignObject) */}
-                <MapIcon id={d.id} cx={pos.x} cy={pos.y} color={col} />
+                <g opacity={isUnlocked ? 1 : 0.35}>
+                  <MapIcon id={d.id} cx={pos.x} cy={pos.y} color={col} />
+                </g>
+                {/* lock icon for locked dungeons */}
+                {!isUnlocked && (
+                  <g transform={`translate(${pos.x + 3.2},${pos.y - 3.2})`}>
+                    <circle cx="0" cy="0" r="2.2" fill="rgba(10,5,20,0.85)" stroke="#555577" strokeWidth="0.5"/>
+                    <text textAnchor="middle" dominantBaseline="central" fontSize="2.5" style={{ pointerEvents: 'none' }}>🔒</text>
+                  </g>
+                )}
                 {/* name */}
                 <text x={pos.x} y={pos.y + 8.5} textAnchor="middle"
-                  fill={isChosen ? '#ff2d78' : '#e2e8f0'}
+                  fill={isChosen ? '#ff2d78' : isUnlocked ? '#e2e8f0' : '#555577'}
                   fontSize="1.8" fontFamily="'Share Tech Mono',monospace" letterSpacing="0.1"
                   style={{ pointerEvents: 'none' }}>
                   {d.name.length > 16 ? d.name.slice(0, 14) + '…' : d.name}
                 </text>
                 {/* level */}
                 <text x={pos.x} y={pos.y - 7.5} textAnchor="middle"
-                  fill={isChosen ? '#ff8ab0' : '#ffc83a'}
+                  fill={isChosen ? '#ff8ab0' : isUnlocked ? '#ffc83a' : '#555577'}
                   fontSize="1.7" fontFamily="'VT323',monospace"
                   style={{ pointerEvents: 'none' }}>
                   {t.dungeon.level}{d.minLevel}
@@ -625,6 +721,22 @@ function DungeonList() {
             </p>
           </div>
 
+          {/* Locked dungeon notice */}
+          {!chosenIsUnlocked && chosenIdx > 0 && (
+            <div style={{
+              background: 'rgba(40,20,60,0.6)', border: '1px solid rgba(85,85,119,0.5)',
+              padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 10,
+            }}>
+              <span style={{ fontSize: 20 }}>🔒</span>
+              <div>
+                <p style={{ ...ORB, fontSize: 7, color: '#8888aa', marginBottom: 3 }}>LOKACJA ZABLOKOWANA</p>
+                <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
+                  Ukończ <span style={{ color: '#ffc83a' }}>{ALL_DUNGEONS[chosenIdx - 1].name}</span> na poziomie Normal lub Hard
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Mode cards */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {DUNGEON_VARIANTS.map(v => (
@@ -645,7 +757,7 @@ function DungeonList() {
                   className="btn btn-primary"
                   style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
                 >
-                  {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
+                  {!chosenIsUnlocked ? '🔒' : isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
                 </button>
               </div>
             ))}

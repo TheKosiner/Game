@@ -55,4 +55,22 @@ export const ALL_DUNGEONS: Dungeon[] = [
     floors: 15,
     enemies: ['shadow_agent', 'neon_predator', 'cyber_demon', 'quantum_ghost', 'neon_dragon', 'omega_unit', 'void_dragon', 'arcane_omega'],
   },
+  {
+    id: 'zero_zone',
+    name: 'Strefa Zero',
+    emoji: '🔬',
+    minLevel: 40,
+    description: 'Tajny kompleks militarny za zasięgiem sieci. Bioinżynieria, prototypowe mechy i elita spec-ops — tylko najlepsi wychodzą żywi.',
+    floors: 14,
+    enemies: ['spec_ops_soldier', 'bio_hazard_unit', 'nano_berserker', 'plasma_guard', 'apex_predator', 'psi_storm', 'zero_commander'],
+  },
+  {
+    id: 'ghost_network',
+    name: 'Sieć Widm',
+    emoji: '🌐',
+    minLevel: 55,
+    description: 'Wirtualna przestrzeń poza systemem i prawem. Legendarni hakerzy upadli próbując ją przeniknąć. Tu rządzą duchy danych.',
+    floors: 16,
+    enemies: ['digital_phantom', 'quantum_assassin', 'network_titan', 'code_reaper', 'void_weaver', 'ghost_overlord', 'arcane_ghost'],
+  },
 ];
