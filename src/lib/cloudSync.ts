@@ -108,6 +108,7 @@ function migrateHeroFromRaw(raw: any) {
     inventory: (raw.inventory ?? []).map(migrateItem),
     clothingColor: raw.clothingColor ?? 0,
     lastRespecAt: raw.lastRespecAt ?? null,
+    completedDungeons: raw.completedDungeons ?? [],
   };
 }
 

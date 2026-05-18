@@ -424,11 +424,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance, mode, diff, set, get);
-        if (diff !== 'easy') {
-          const freshHero = get().hero;
-          if (!freshHero.completedDungeons.includes(currentDungeon.id)) {
-            set({ hero: { ...freshHero, completedDungeons: [...freshHero.completedDungeons, currentDungeon.id] } });
-          }
+        const freshHero = get().hero;
+        const prevCompleted = freshHero.completedDungeons ?? [];
+        if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
+          set({ hero: { ...freshHero, completedDungeons: [...prevCompleted, currentDungeon.id] } });
         }
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {
@@ -506,11 +505,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(get().hero.level, dropChance2, mode2, diff2, set, get);
-        if (diff2 !== 'easy') {
-          const freshHero2 = get().hero;
-          if (!freshHero2.completedDungeons.includes(currentDungeon.id)) {
-            set({ hero: { ...freshHero2, completedDungeons: [...freshHero2.completedDungeons, currentDungeon.id] } });
-          }
+        const freshHero2 = get().hero;
+        const prevCompleted2 = freshHero2.completedDungeons ?? [];
+        if (diff2 !== 'easy' && !prevCompleted2.includes(currentDungeon.id)) {
+          set({ hero: { ...freshHero2, completedDungeons: [...prevCompleted2, currentDungeon.id] } });
         }
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
       } else {

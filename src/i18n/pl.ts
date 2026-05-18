@@ -461,7 +461,7 @@ export const pl: Translations = {
     critical: '(KRYTYCZNY!)',
     defeated: (enemy: string) => `Pokonałeś ${enemy}!`,
     rewards: (xp: number, gold: number) => `+${xp} XP, +${gold} złota`,
-    dungeonComplete: (dungeon: string) => `Ukończyłeś loch "${dungeon}"! Brawo!`,
+    dungeonComplete: (dungeon: string) => `Ukończyłeś operację "${dungeon}"! Brawo!`,
     floorEnemy: (floor: number, enemy: string) => `Piętro ${floor}: ${enemy} atakuje!`,
     enemyDamage: (enemy: string, dmg: number) => `${enemy} zadaje ci ${dmg} obrażeń`,
     crit: '💥 KRYT!',
