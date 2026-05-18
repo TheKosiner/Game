@@ -338,10 +338,14 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
 
   async function handleAcceptInvite(invite: GuildInvite) {
     if (!user) return;
-    await acceptInvite(invite.id, invite.guildId, user.uid, user.username, hero.name, hero.level);
-    setInviteResult(t.mail.joinedGuild(invite.guildTag, invite.guildName));
-    setTimeout(() => setInviteResult(null), 3000);
-    await reload();
+    try {
+      await acceptInvite(invite.id, invite.guildId, user.uid, user.username, hero.name, hero.level, hero.portrait);
+      setInviteResult(t.mail.joinedGuild(invite.guildTag, invite.guildName));
+      setTimeout(() => setInviteResult(null), 3000);
+      await reload();
+    } catch (e) {
+      console.error('acceptInvite failed', e);
+    }
   }
 
   async function handleDeclineInvite(invite: GuildInvite) {
