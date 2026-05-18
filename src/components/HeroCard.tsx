@@ -425,9 +425,10 @@ export default function HeroCard() {
   const unequipItem    = useGameStore(s => s.unequipItem);
   const [, forceUpdate] = useState(0);
   const [editingAppearance, setEditingAppearance] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<ItemSlot | null>(null);
+  type EquipSlotKey = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet';
+  const [selectedSlot, setSelectedSlot] = useState<EquipSlotKey | null>(null);
 
-  function toggleSlot(slot: ItemSlot) {
+  function toggleSlot(slot: EquipSlotKey) {
     setSelectedSlot(prev => prev === slot ? null : slot);
   }
 
@@ -525,7 +526,7 @@ export default function HeroCard() {
           <ItemDetailPanel
             item={hero.equipment[selectedSlot]!}
             onClose={() => setSelectedSlot(null)}
-            onUnequip={() => { unequipItem(selectedSlot); setSelectedSlot(null); }}
+            onUnequip={() => { unequipItem(selectedSlot as ItemSlot); setSelectedSlot(null); }}
           />
         )}
 
