@@ -474,7 +474,13 @@ export default function HeroCard() {
         zIndex: 9997,
       }}>
         {/* content sits above the photo */}
-        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{
+          position: 'relative', display: 'flex', flexDirection: 'column', gap: 10,
+          background: 'rgba(4, 6, 20, 0.52)',
+          borderRadius: 4,
+          padding: 8,
+          margin: -4,
+        }}>
 
         {/* Name + level + gold */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
