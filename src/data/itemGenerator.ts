@@ -1,5 +1,6 @@
 import type { Item, ItemSlot, Rarity, Stats } from '../types';
-import { ITEM_NAMES_EN } from './itemNames';
+import { ITEM_NAMES_EN, } from './itemNames';
+import { MEDKIT } from './items';
 import type { Lang } from '../store/langStore';
 
 export function getItemName(item: Item, lang: Lang): string {
@@ -259,5 +260,6 @@ export function generateShopItems(
     const price = Math.round(item.goldValue * (1.2 + rng() * 0.6));
     result.push({ item, price, featured });
   }
+  result.push({ item: MEDKIT, price: 120, featured: false });
   return result;
 }

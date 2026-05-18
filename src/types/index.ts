@@ -25,6 +25,8 @@ export interface Item {
   level: number;
   goldValue: number;
   emoji: string;
+  healPercent?: number;
+  color?: string;
 }
 
 export interface Equipment {

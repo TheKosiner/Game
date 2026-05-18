@@ -532,7 +532,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const hero = get().hero;
     if (item.slot !== 'consumable') return;
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
-    const healAmount = Math.round(hero.maxHp * 1);
+    const healAmount = Math.round(hero.maxHp * (item.healPercent ?? 1));
     const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
     const t = getT();
     set({ hero: { ...hero, hp: newHp, inventory: newInventory } });

@@ -28,7 +28,7 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
     strength: t.inventory.statStr, dexterity: t.inventory.statDex,
     intelligence: t.inventory.statInt, vitality: t.inventory.statVit,
   };
-  const rc = RARITY_COLORS[item.rarity];
+  const rc = item.color ?? RARITY_COLORS[item.rarity];
   const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
   return (
     <div style={{
@@ -58,10 +58,15 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
           {slotLabel[item.slot] ?? item.slot} · Poz. {item.level}
         </p>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>
-          {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
-          {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
-          {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
+        <p style={{ ...MONO, fontSize: 10, color: item.slot === 'consumable' ? rc : 'var(--text-main)' }}>
+          {item.slot === 'consumable'
+            ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
+            : <>
+                {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
+                {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
+                {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
+              </>
+          }
         </p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>

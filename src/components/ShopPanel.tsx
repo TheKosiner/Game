@@ -168,6 +168,7 @@ export default function ShopPanel() {
     boots: t.shop.slotBoots,
     ring: t.shop.slotRing,
     amulet: t.shop.slotAmulet,
+    consumable: t.inventory.slotConsumable,
   };
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
@@ -258,9 +259,9 @@ export default function ShopPanel() {
         {shopItems.map(({ item, price, featured }, idx) => {
           if (shopPurchased.includes(idx)) return null;
           const canAfford = hero.gold >= price;
-          const rarityColor = RARITY_COLORS[item.rarity];
-          const glowBg = RARITY_GLOW[item.rarity];
-          const isRare = item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary';
+          const rarityColor = item.color ?? RARITY_COLORS[item.rarity];
+          const glowBg = item.color ? `${item.color}22` : RARITY_GLOW[item.rarity];
+          const isRare = item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary' || !!item.color;
           const isSelected = selectedIdx === idx;
           const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
           const equipped = item.slot !== 'consumable' ? hero.equipment[item.slot as keyof typeof hero.equipment] : undefined;
@@ -352,10 +353,15 @@ export default function ShopPanel() {
                     <p style={{ color: '#475569', fontSize: 6, marginBottom: 3 }}>
                       {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
                     </p>
-                    <p style={{ color: '#64748b', fontSize: 6 }}>
-                      {statEntries.map(([k, v]) => `+${v} ${({ strength: t.shop.statStr, dexterity: t.shop.statDex, intelligence: t.shop.statInt, vitality: t.shop.statVit } as Record<string, string>)[k] ?? k}`).join('  ')}
-                      {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
-                      {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
+                    <p style={{ color: item.slot === 'consumable' ? rarityColor : '#64748b', fontSize: 6 }}>
+                      {item.slot === 'consumable'
+                        ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
+                        : <>
+                            {statEntries.map(([k, v]) => `+${v} ${({ strength: t.shop.statStr, dexterity: t.shop.statDex, intelligence: t.shop.statInt, vitality: t.shop.statVit } as Record<string, string>)[k] ?? k}`).join('  ')}
+                            {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
+                            {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
+                          </>
+                      }
                     </p>
                   </div>
 
@@ -387,7 +393,7 @@ export default function ShopPanel() {
               </div>
 
               {/* Inline comparison panel */}
-              {isSelected && (
+              {isSelected && item.slot !== 'consumable' && (
                 <ComparePanel shopItem={item} equipped={equipped as Item | undefined} />
               )}
             </div>

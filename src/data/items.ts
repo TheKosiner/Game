@@ -1,5 +1,19 @@
 import type { Item } from '../types';
 
+export const MEDKIT: Item = {
+  id: 'medkit_standard',
+  name: 'Apteczka Polowa',
+  nameEn: 'Field Medkit',
+  slot: 'consumable',
+  rarity: 'uncommon',
+  stats: {},
+  level: 1,
+  goldValue: 60,
+  emoji: '🩹',
+  healPercent: 0.5,
+  color: '#00d4b0',
+};
+
 export const ALL_ITEMS: Item[] = [
   // ── Weapons: Energy Blades (Ostrza Energetyczne) ─────────────────────────
   { id: 'blade_vibro',      name: 'Wibro-Kling',                slot: 'weapon', rarity: 'common',    stats: { strength: 1 },                         attackBonus: 4,  level: 1,  goldValue: 22,    emoji: '⚡' },

@@ -38,6 +38,7 @@ function getCategory(item: Item): string {
   if (id.startsWith('boots_')) return 'boots';
   if (id.startsWith('implant_') || id.startsWith('chip_') || id.startsWith('ring_')) return 'chip';
   if (id.startsWith('core_') || id.startsWith('pendant_') || id.startsWith('amulet_') || id.startsWith('amplifier_') || id.startsWith('signal_') || id.startsWith('data_')) return 'amulet';
+  if (id.startsWith('medkit_')) return 'medkit';
   switch (item.slot) {
     case 'weapon': return 'sword';
     case 'armor': return 'vest';
@@ -544,6 +545,32 @@ function IconAmulet({ c }: { c: Colors }) {
   );
 }
 
+function IconMedkit() {
+  const bg   = '#003d33';
+  const body = '#00a88a';
+  const light= '#00d4b0';
+  const cross= '#80ffe8';
+  const glow = '#00ffcc';
+  return (
+    <>
+      {/* case body */}
+      <rect x="8" y="10" width="32" height="28" rx="4" fill={bg} />
+      <rect x="9" y="11" width="30" height="26" rx="3" fill={body} />
+      {/* cross vertical */}
+      <rect x="20" y="16" width="8" height="16" rx="2" fill={cross} />
+      {/* cross horizontal */}
+      <rect x="15" y="21" width="18" height="6" rx="2" fill={cross} />
+      {/* glow center */}
+      <circle cx="24" cy="24" r="4" fill={glow} opacity="0.35" />
+      {/* top latch */}
+      <rect x="19" y="7" width="10" height="5" rx="2" fill={light} />
+      <rect x="20" y="8" width="8" height="3" rx="1" fill={bg} opacity="0.6" />
+      {/* highlight stripe */}
+      <rect x="10" y="12" width="3" height="22" rx="1.5" fill={light} opacity="0.25" />
+    </>
+  );
+}
+
 const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
   sword:   (c) => <IconSword c={c} />,
   cannon:  (c) => <IconCannon c={c} />,
@@ -565,6 +592,7 @@ const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
   boots:   (c) => <IconBoots c={c} />,
   chip:    (c) => <IconChip c={c} />,
   amulet:  (c) => <IconAmulet c={c} />,
+  medkit:  (_c) => <IconMedkit />,
 };
 
 interface Props {
