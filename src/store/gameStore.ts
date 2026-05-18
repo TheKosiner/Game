@@ -182,7 +182,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     const now = Date.now();
     const DAY = 24 * 60 * 60 * 1000;
-    if (hero.lastRespecAt !== null && now - hero.lastRespecAt < DAY) return;
+    const lastRespecAt = (hero.lastRespecAt ?? 0) > now ? now : (hero.lastRespecAt ?? 0);
+    if (lastRespecAt !== 0 && now - lastRespecAt < DAY) return;
     const totalPoints = hero.stats.strength + hero.stats.dexterity + hero.stats.intelligence + hero.stats.vitality + hero.stats.magic + hero.stats.magicResistance;
     const resetStats: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
     const newMaxHp = getHeroMaxHp(resetStats, hero.level, hero.equipment);
@@ -556,17 +557,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   refreshShop: () => {
-    const { lastShopRefresh } = get();
+    let { lastShopRefresh } = get();
     const now = Date.now();
+    if (lastShopRefresh > now) { lastShopRefresh = now; set({ lastShopRefresh: now }); }
     if (now - lastShopRefresh < SHOP_REFRESH_COOLDOWN) return;
     set({ shopSeed: now, lastShopRefresh: now, shopPurchased: [] });
     get().saveGame();
   },
 
   performPvp: (opponent: PvpOpponent): PvpResult | null => {
-    const { hero, lastPvpFight, pvpWins, pvpLosses, pvpRating, pvpLog, inCombat } = get();
+    const { hero, pvpWins, pvpLosses, pvpRating, pvpLog, inCombat } = get();
+    let { lastPvpFight } = get();
     if (inCombat) return null;
     const now = Date.now();
+    // Sanitize future timestamp (clock set backward exploit)
+    if (lastPvpFight > now) { lastPvpFight = now; set({ lastPvpFight: now }); }
     if (now - lastPvpFight < PVP_COOLDOWN) return null;
     const heroAtk = getHeroAttack(hero);
     const heroDef = getHeroDefense(hero);
@@ -689,6 +694,12 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   checkDailyReset: () => {
     const { hero } = get();
+    const now = Date.now();
+    // lastDailyReset in the future = clock was set backward — fix it, no reward
+    if (hero.lastDailyReset > now) {
+      set({ hero: { ...hero, lastDailyReset: now } });
+      return;
+    }
     if (!isSameDay(hero.lastDailyReset)) {
       const DAILY_GEMS = 5;
       set({
@@ -696,7 +707,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...hero,
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
-          lastDailyReset: Date.now(),
+          lastDailyReset: now,
           gems: hero.gems + DAILY_GEMS,
         },
       });
@@ -715,22 +726,30 @@ export const useGameStore = create<GameState>((set, get) => ({
   tickPassiveRegen: () => {
     const { hero, lastPassiveRegenAt } = get();
     const now = Date.now();
+    // If timestamp is in the future the clock was manipulated — reset and skip
+    if (lastPassiveRegenAt > now) {
+      set({ lastPassiveRegenAt: now });
+      return;
+    }
     const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
                       (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
     if (isResting || hero.hp >= hero.maxHp) {
       set({ lastPassiveRegenAt: now });
       return;
     }
-    const elapsed = now - lastPassiveRegenAt;
+    // Cap elapsed to 7 days max to prevent instant-regen via clock tricks
+    const elapsed = Math.min(now - lastPassiveRegenAt, 7 * 24 * 60 * 60 * 1000);
     const gain = Math.floor(elapsed * (hero.maxHp * 0.004) / 60000);
     if (gain < 1) return;
     set({ hero: { ...hero, hp: Math.min(hero.maxHp, hero.hp + gain) }, lastPassiveRegenAt: now });
   },
 
   startChallengeFight: (bossIdx: number) => {
-    const { inCombat, lastChallengeAt, challengeUnlocked } = get();
+    const { inCombat, challengeUnlocked } = get();
+    let { lastChallengeAt } = get();
     if (inCombat) return;
     const now = Date.now();
+    if (lastChallengeAt > now) { lastChallengeAt = now; set({ lastChallengeAt: now }); }
     if (now - lastChallengeAt < CHALLENGE_COOLDOWN) return;
     if (bossIdx > challengeUnlocked) return;
     const boss = CHALLENGE_BOSSES[bossIdx];
