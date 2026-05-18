@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-18 v3
+// Last deployed: 2026-05-18 v4
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -40,6 +40,31 @@ service cloud.firestore {
             && nw.hero.lastDailyReset <= request.time.toMillis() + 10000);
     }
 
+    // Voluntary rest: voluntaryRestUntil can only be cleared after server time passes it
+    function validRestClear(old, nw) {
+      return old.hero.voluntaryRestUntil == null
+        || nw.hero.voluntaryRestUntil != null
+        // cancelled early — no full reward (voluntaryRestHp must decrease or stay null)
+        || (nw.hero.voluntaryRestHp == null && nw.hero.voluntaryRestStartAt == null
+            && request.time.toMillis() < old.hero.voluntaryRestUntil)
+        // completed: server time must be past the rest end
+        || request.time.toMillis() >= old.hero.voluntaryRestUntil;
+    }
+
+    // Challenge cooldown: lastChallengeAt can only increase after 1 h from server's view
+    function validChallengeCooldown(old, nw) {
+      let COOLDOWN_MS = 3600000; // 1 hour
+      return nw.lastChallengeAt <= old.lastChallengeAt
+        || old.lastChallengeAt == 0
+        || request.time.toMillis() - old.lastChallengeAt >= COOLDOWN_MS;
+    }
+
+    // updatedAt must be ≈ server time — blocks writes where clock was advanced >60 s
+    function validTimestamp(nw) {
+      return nw.updatedAt <= request.time.toMillis() + 60000
+        && nw.updatedAt >= request.time.toMillis() - 300000;
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
@@ -56,10 +81,13 @@ service cloud.firestore {
         // Challenge unlock: only increases, max +1 per write
         && nw.challengeUnlocked >= old.challengeUnlocked
         && nw.challengeUnlocked <= old.challengeUnlocked + 1
-        // Time-based: server validates these timers
+        // Time-based: server validates all timers (blocks clock-manipulation cheats)
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)
-        && validDailyReset(old, nw);
+        && validDailyReset(old, nw)
+        && validRestClear(old, nw)
+        && validChallengeCooldown(old, nw)
+        && validTimestamp(nw);
     }
 
     function validPlayerUpdate(old, nw) {

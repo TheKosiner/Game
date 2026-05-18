@@ -34,7 +34,35 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
 
-  // Public leaderboard data — no saveData, no email, no private fields
+  // Private save data FIRST — Firestore rules validate time-based fields here.
+  // If the write is rejected (clock manipulation detected), reload authoritative state.
+  try {
+    await setDoc(doc(db, 'saves', uid), {
+      hero: heroClean,
+      activeQuest,
+      pvpWins: pvpWins ?? 0,
+      pvpLosses: pvpLosses ?? 0,
+      pvpRating: pvpRating ?? 1000,
+      pvpLog: pvpLog ?? [],
+      lastPvpFight: lastPvpFight ?? 0,
+      challengeUnlocked: challengeUnlocked ?? 0,
+      lastChallengeAt: lastChallengeAt ?? 0,
+      shopSeed: shopSeed ?? 0,
+      lastShopRefresh: lastShopRefresh ?? 0,
+      shopPurchased: shopPurchased ?? [],
+      lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
+      updatedAt: savedAt,
+    });
+  } catch (err: any) {
+    if (err?.code === 'permission-denied') {
+      // Server rejected the save — clock was advanced or another rule violation.
+      // Pull authoritative state from cloud to revert the local cheat.
+      try { await loadFromCloud(uid, true); } catch {}
+    }
+    return;
+  }
+
+  // Leaderboard update — only reached when save was accepted
   await setDoc(doc(db, 'players', uid), {
     username,
     heroName: hero.name,
@@ -54,24 +82,6 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     pvpRating: pvpRating ?? 1000,
     updatedAt: savedAt,
   }, { merge: true });
-
-  // Private save data — only owner can read
-  await setDoc(doc(db, 'saves', uid), {
-    hero: heroClean,
-    activeQuest,
-    pvpWins: pvpWins ?? 0,
-    pvpLosses: pvpLosses ?? 0,
-    pvpRating: pvpRating ?? 1000,
-    pvpLog: pvpLog ?? [],
-    lastPvpFight: lastPvpFight ?? 0,
-    challengeUnlocked: challengeUnlocked ?? 0,
-    lastChallengeAt: lastChallengeAt ?? 0,
-    shopSeed: shopSeed ?? 0,
-    lastShopRefresh: lastShopRefresh ?? 0,
-    shopPurchased: shopPurchased ?? [],
-    lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
-    updatedAt: savedAt,
-  });
 }
 
 function migrateHeroFromRaw(raw: any) {
@@ -101,8 +111,9 @@ function migrateHeroFromRaw(raw: any) {
   };
 }
 
-/** true = loaded from cloud, false = local is newer (use loadGame), null = no save exists (new account) */
-export async function loadFromCloud(uid: string): Promise<boolean | null> {
+/** true = loaded from cloud, false = local is newer (use loadGame), null = no save exists (new account).
+ *  Pass force=true to bypass local timestamp check (used when Firestore rejected a cheated save). */
+export async function loadFromCloud(uid: string, force = false): Promise<boolean | null> {
   if (!db) return null;
 
   // Read from private saves collection
@@ -120,12 +131,15 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
     ? (saveSnap.data().updatedAt ?? 0)
     : (legacySnap?.data()?.updatedAt ?? 0);
 
-  // Prefer localStorage only if it belongs to this user and is newer
+  // Prefer localStorage only if it belongs to this user and is newer.
+  // Skip this check when force=true (called after a rejected save to revert a cheat).
   try {
-    const localRaw = localStorage.getItem('glitchsoul_save');
-    if (localRaw) {
-      const localSave = JSON.parse(localRaw);
-      if (localSave.uid === uid && (localSave.lastSaved ?? 0) > cloudTs) return false;
+    if (!force) {
+      const localRaw = localStorage.getItem('glitchsoul_save');
+      if (localRaw) {
+        const localSave = JSON.parse(localRaw);
+        if (localSave.uid === uid && (localSave.lastSaved ?? 0) > cloudTs) return false;
+      }
     }
   } catch { /* ignore */ }
 
