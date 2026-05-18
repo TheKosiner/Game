@@ -7,6 +7,8 @@ import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
 import { collectBeggingServer } from '../lib/serverActions';
+import ItemIcon from './ItemIcon';
+import type { Item } from '../types';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -45,6 +47,38 @@ function NeonBar({ pct, color, height = 10 }: { pct: number; color: string; glow
       }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.2)' }} />
       </div>
+    </div>
+  );
+}
+
+const RARITY_COLOR: Record<string, string> = {
+  common: '#94a3b8', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b',
+};
+const SLOT_ICON: Record<string, string> = {
+  weapon: '⚔', armor: '🦺', helmet: '⛑', boots: '👟', ring: '💉', amulet: '📿',
+};
+
+function EquipSlot({ item, slot, label, size = 50 }: { item?: Item; slot: string; label: string; size?: number }) {
+  const color = item ? (item.color ?? RARITY_COLOR[item.rarity] ?? '#888') : 'rgba(100,116,139,0.3)';
+  return (
+    <div style={{
+      width: size, height: size, flexShrink: 0,
+      background: item ? `${color}10` : 'rgba(0,0,0,0.35)',
+      border: `1px solid ${item ? color + '55' : 'rgba(100,116,139,0.2)'}`,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      gap: 1,
+      boxShadow: item ? `0 0 8px ${color}22` : 'none',
+    }}>
+      {item
+        ? <ItemIcon item={item} size={size - 16} />
+        : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
+      }
+      <span style={{
+        ...MONO, fontSize: 7, color: item ? color : 'rgba(100,116,139,0.35)',
+        whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: size - 4, textAlign: 'center',
+      }}>
+        {label}
+      </span>
     </div>
   );
 }
@@ -335,91 +369,104 @@ export default function HeroCard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
       {/* HERO PANEL */}
-      <div className="card p-3" style={{ display: 'flex', gap: 10, alignItems: 'stretch' }}>
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-        {/* Portrait */}
-        <div style={{ width: 112, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{
-            width: 112, height: 112, overflow: 'hidden', flexShrink: 0,
-            border: '2px solid rgba(255,45,120,0.4)',
-            boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
-          }}>
-            <img
-              src={portraitSrc(hero.portrait)}
-              alt="portret"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          </div>
-          <button onClick={() => setEditingAppearance(true)} style={{
-            background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)',
-            color: 'rgba(255,45,120,0.7)', cursor: 'pointer', width: '100%',
-            padding: '5px 0', ...MONO, fontSize: 10,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-          }}>
-            {t.hero.appearance}
-          </button>
-        </div>
-
-        {/* Stats column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
-          <div>
-            <p style={{ ...ORB, fontSize: 14, color: '#ffffff', textShadow: '0 0 12px rgba(255,255,255,0.25)', marginBottom: 2, wordBreak: 'break-all' }}>
-              {hero.name}
-            </p>
-            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.app.level(hero.level)}</p>
-          </div>
-
-          <div style={{ display: 'flex', gap: 4 }}>
-            <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? t.hero.magic : t.hero.attack} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
-            <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
-            <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
-            <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
-          </div>
-
+        {/* Name + level + gold */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <p style={{ ...ORB, fontSize: 14, color: '#ffffff', textShadow: '0 0 12px rgba(255,255,255,0.25)', flex: 1, wordBreak: 'break-all' }}>
+            {hero.name}
+          </p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.app.level(hero.level)}</p>
           <div style={{
             background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
-            padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: 6, alignSelf: 'flex-start',
-            boxShadow: '0 0 10px rgba(255,215,0,0.08)',
+            padding: '3px 7px', display: 'inline-flex', alignItems: 'center', gap: 4,
           }}>
-            <span style={{ fontSize: 13 }}>🪙</span>
+            <span style={{ fontSize: 12 }}>🪙</span>
             <span style={{ ...ORB, fontSize: 11, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.6)' }}>{hero.gold}</span>
           </div>
+        </div>
 
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>{t.hero.vitality}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
-                {hero.hp < hero.maxHp && (
-                  <button
-                    onClick={gemHeal}
-                    disabled={hero.gems < 30}
-                    style={{
-                      ...MONO, fontSize: 8, padding: '1px 5px',
-                      background: hero.gems >= 30 ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
-                      border: `1px solid ${hero.gems >= 30 ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                      color: hero.gems >= 30 ? '#00e5ff' : 'var(--text-dim)',
-                      cursor: hero.gems >= 30 ? 'pointer' : 'not-allowed',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.gems.healBtn(30)}
-                  </button>
-                )}
-              </div>
-            </div>
-            <NeonBar pct={hpPct} color="#ff2d78" />
+        {/* ── Paper doll ── */}
+        <div style={{ display: 'flex', gap: 6, alignItems: 'stretch', justifyContent: 'center' }}>
+
+          {/* Left: armor + ring */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: 4 }}>
+            <EquipSlot item={hero.equipment.armor}  slot="armor"  label={t.inventory.slotArmor} />
+            <EquipSlot item={hero.equipment.ring}   slot="ring"   label={t.inventory.slotRing} />
           </div>
 
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>{t.hero.experience}</span>
-              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.xp}/{hero.xpToNext}</span>
+          {/* Center: helmet → portrait → weapon */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+            <EquipSlot item={hero.equipment.helmet} slot="helmet" label={t.inventory.slotHelmet} />
+            <div style={{
+              width: 96, height: 96, overflow: 'hidden', flexShrink: 0, position: 'relative',
+              border: '2px solid rgba(255,45,120,0.4)',
+              boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
+            }}>
+              <img src={portraitSrc(hero.portrait)} alt="portret"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <button onClick={() => setEditingAppearance(true)} style={{
+                position: 'absolute', bottom: 0, right: 0,
+                background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,45,120,0.3)',
+                color: 'rgba(255,45,120,0.8)', cursor: 'pointer',
+                padding: '2px 5px', ...MONO, fontSize: 8, lineHeight: 1,
+              }}>✏</button>
             </div>
-            <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
+            <EquipSlot item={hero.equipment.weapon} slot="weapon" label={t.inventory.slotWeapon} size={96} />
+          </div>
+
+          {/* Right: amulet + boots */}
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: 4 }}>
+            <EquipSlot item={hero.equipment.amulet} slot="amulet" label={t.inventory.slotAmulet} />
+            <EquipSlot item={hero.equipment.boots}  slot="boots"  label={t.inventory.slotBoots} />
           </div>
 
         </div>
+
+        {/* Main stats */}
+        <div style={{ display: 'flex', gap: 4 }}>
+          <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? t.hero.magic : t.hero.attack} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
+          <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
+          <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
+          <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
+        </div>
+
+        {/* HP bar */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>{t.hero.vitality}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
+              {hero.hp < hero.maxHp && (
+                <button
+                  onClick={gemHeal}
+                  disabled={hero.gems < 30}
+                  style={{
+                    ...MONO, fontSize: 8, padding: '1px 5px',
+                    background: hero.gems >= 30 ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
+                    border: `1px solid ${hero.gems >= 30 ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                    color: hero.gems >= 30 ? '#00e5ff' : 'var(--text-dim)',
+                    cursor: hero.gems >= 30 ? 'pointer' : 'not-allowed',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.gems.healBtn(30)}
+                </button>
+              )}
+            </div>
+          </div>
+          <NeonBar pct={hpPct} color="#ff2d78" />
+        </div>
+
+        {/* XP bar */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>{t.hero.experience}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.xp}/{hero.xpToNext}</span>
+          </div>
+          <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
+        </div>
+
       </div>
 
       {editingAppearance && <AppearanceEditor onClose={() => setEditingAppearance(false)} />}
