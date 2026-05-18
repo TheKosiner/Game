@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild,
+  getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
   getLeaderboard,
   type Guild, type GuildInvite, type LeaderboardEntry,
@@ -149,8 +149,12 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   const [sent, setSent] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    getLeaderboard().then(list => {
+    Promise.all([
+      getLeaderboard(),
+      getGuildSentInvites(guild.id, user?.uid ?? ''),
+    ]).then(([list, alreadyInvited]) => {
       setPlayers(list.filter(p => p.uid !== user?.uid && !guild.members[p.uid]));
+      setSent(new Set(alreadyInvited));
       setLoading(false);
     });
   }, []);

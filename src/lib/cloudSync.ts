@@ -303,6 +303,16 @@ export async function getMyGuildId(uid: string): Promise<string | null> {
   return (snap.data().guildId as string) ?? null;
 }
 
+export async function getGuildSentInvites(guildId: string, fromUid: string): Promise<string[]> {
+  if (!db) return [];
+  const snap = await getDocs(query(
+    collection(db, 'guildInvites'),
+    where('guildId', '==', guildId),
+    where('fromUid', '==', fromUid),
+  ));
+  return snap.docs.map(d => d.data().toUid as string);
+}
+
 export async function inviteToGuild(
   guildId: string,
   guildName: string,
