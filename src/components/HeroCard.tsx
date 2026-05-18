@@ -470,6 +470,7 @@ export default function HeroCard() {
         backgroundPosition: 'center',
         position: 'relative',
         overflow: 'hidden',
+        zIndex: 9997,
       }}>
         {/* dark overlay so text stays readable */}
         <div style={{
