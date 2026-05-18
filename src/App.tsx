@@ -13,7 +13,6 @@ import { claimDailyRewardServer } from './lib/serverActions';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
-import EquipmentPanel from './components/EquipmentPanel';
 import InventoryPanel from './components/InventoryPanel';
 import DungeonPanel from './components/DungeonPanel';
 import QuestPanel from './components/QuestPanel';
@@ -307,7 +306,7 @@ export default function App() {
         )}
 
         <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {tab === 'hero'   && <><HeroCard /><EquipmentPanel /><InventoryPanel /></>}
+          {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}

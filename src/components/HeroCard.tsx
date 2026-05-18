@@ -8,7 +8,9 @@ import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
 import { collectBeggingServer } from '../lib/serverActions';
 import ItemIcon from './ItemIcon';
-import type { Item } from '../types';
+import type { Item, ItemSlot } from '../types';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
@@ -58,17 +60,23 @@ const SLOT_ICON: Record<string, string> = {
   weapon: '⚔', armor: '🦺', helmet: '⛑', boots: '👟', ring: '💉', amulet: '📿',
 };
 
-function EquipSlot({ item, slot, label, size = 50 }: { item?: Item; slot: string; label: string; size?: number }) {
+function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
+  item?: Item; slot: string; label: string; size?: number; selected?: boolean; onClick?: () => void;
+}) {
   const color = item ? (item.color ?? RARITY_COLOR[item.rarity] ?? '#888') : 'rgba(100,116,139,0.3)';
   return (
-    <div style={{
-      width: size, height: size, flexShrink: 0,
-      background: item ? `${color}10` : 'rgba(0,0,0,0.35)',
-      border: `1px solid ${item ? color + '55' : 'rgba(100,116,139,0.2)'}`,
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      gap: 1,
-      boxShadow: item ? `0 0 8px ${color}22` : 'none',
-    }}>
+    <div
+      onClick={item ? onClick : undefined}
+      style={{
+        width: size, height: size, flexShrink: 0,
+        background: selected ? `${color}22` : item ? `${color}10` : 'rgba(0,0,0,0.35)',
+        border: `1px solid ${selected ? color + 'bb' : item ? color + '55' : 'rgba(100,116,139,0.2)'}`,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        gap: 1, cursor: item ? 'pointer' : 'default',
+        boxShadow: selected ? `0 0 14px ${color}44` : item ? `0 0 8px ${color}22` : 'none',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+      }}
+    >
       {item
         ? <ItemIcon item={item} size={size - 16} />
         : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
@@ -79,6 +87,85 @@ function EquipSlot({ item, slot, label, size = 50 }: { item?: Item; slot: string
       }}>
         {label}
       </span>
+    </div>
+  );
+}
+
+function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: () => void; onUnequip: () => void }) {
+  const t    = useT();
+  const lang = useLangStore(s => s.lang);
+  const rc   = item.color ?? RARITY_COLOR[item.rarity] ?? '#888';
+  const rarityLabel: Record<string, string> = {
+    common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
+    rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
+  };
+  const statNames: Record<string, string> = {
+    strength: t.equipment.statStrength, dexterity: t.equipment.statDexterity,
+    intelligence: t.equipment.statIntelligence, vitality: t.equipment.statVitality,
+    magic: t.equipment.statMagic, magicResistance: t.equipment.statMagRes,
+  };
+  const statEntries = Object.entries(item.stats).filter(([, v]) => (v as number) > 0);
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, rgba(10,10,20,0.98), rgba(5,5,15,0.99))`,
+      border: `1px solid ${rc}55`, padding: '10px 12px',
+      boxShadow: `0 0 20px ${rc}18`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <div style={{
+          background: 'rgba(0,0,0,0.6)', border: `1px solid ${rc}44`, padding: 6, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <ItemIcon item={item} size={48} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 3 }}>{getItemName(item, lang)}</p>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
+              {rarityLabel[item.rarity]}
+            </span>
+            {item.ranged && (
+              <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
+                🔫 DYST
+              </span>
+            )}
+          </div>
+        </div>
+        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}>✕</button>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
+        {statEntries.map(([k, v]) => (
+          <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{statNames[k] ?? k}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>+{v as number}</span>
+          </div>
+        ))}
+        {item.attackBonus ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? '🔮 Obrażenia mag.' : t.equipment.atk}</span>
+            <span style={{ ...ORB, fontSize: 10, color: item.magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
+          </div>
+        ) : null}
+        {item.defenseBonus ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{t.equipment.def}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
+          </div>
+        ) : null}
+        {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Brak bonusów</p>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Min. poz. {item.level}</span>
+        <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>{item.goldValue}🪙</span>
+      </div>
+
+      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '6px' }}>
+        {t.equipment.unequip}
+      </button>
     </div>
   );
 }
@@ -335,8 +422,14 @@ export default function HeroCard() {
   }
   const activeQuest    = useGameStore(s => s.activeQuest);
   const currentDungeon = useGameStore(s => s.currentDungeon);
+  const unequipItem    = useGameStore(s => s.unequipItem);
   const [, forceUpdate] = useState(0);
   const [editingAppearance, setEditingAppearance] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<ItemSlot | null>(null);
+
+  function toggleSlot(slot: ItemSlot) {
+    setSelectedSlot(prev => prev === slot ? null : slot);
+  }
 
   useEffect(() => {
     const id = setInterval(() => forceUpdate(n => n + 1), 1000);
@@ -391,37 +484,50 @@ export default function HeroCard() {
 
           {/* Left: armor + ring */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: 4 }}>
-            <EquipSlot item={hero.equipment.armor}  slot="armor"  label={t.inventory.slotArmor} />
-            <EquipSlot item={hero.equipment.ring}   slot="ring"   label={t.inventory.slotRing} />
+            <EquipSlot item={hero.equipment.armor}  slot="armor"  label={t.inventory.slotArmor}  selected={selectedSlot === 'armor'}  onClick={() => toggleSlot('armor')} />
+            <EquipSlot item={hero.equipment.ring}   slot="ring"   label={t.inventory.slotRing}   selected={selectedSlot === 'ring'}   onClick={() => toggleSlot('ring')} />
           </div>
 
           {/* Center: helmet → portrait → weapon */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-            <EquipSlot item={hero.equipment.helmet} slot="helmet" label={t.inventory.slotHelmet} />
+            <EquipSlot item={hero.equipment.helmet} slot="helmet" label={t.inventory.slotHelmet} selected={selectedSlot === 'helmet'} onClick={() => toggleSlot('helmet')} />
             <div style={{
-              width: 96, height: 96, overflow: 'hidden', flexShrink: 0, position: 'relative',
+              width: 96, height: 96, overflow: 'hidden', flexShrink: 0,
               border: '2px solid rgba(255,45,120,0.4)',
               boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
             }}>
               <img src={portraitSrc(hero.portrait)} alt="portret"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              <button onClick={() => setEditingAppearance(true)} style={{
-                position: 'absolute', bottom: 0, right: 0,
-                background: 'rgba(0,0,0,0.72)', border: '1px solid rgba(255,45,120,0.3)',
-                color: 'rgba(255,45,120,0.8)', cursor: 'pointer',
-                padding: '2px 5px', ...MONO, fontSize: 8, lineHeight: 1,
-              }}>✏</button>
             </div>
-            <EquipSlot item={hero.equipment.weapon} slot="weapon" label={t.inventory.slotWeapon} size={96} />
+            <EquipSlot item={hero.equipment.weapon} slot="weapon" label={t.inventory.slotWeapon} size={96} selected={selectedSlot === 'weapon'} onClick={() => toggleSlot('weapon')} />
           </div>
 
           {/* Right: amulet + boots */}
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: 4 }}>
-            <EquipSlot item={hero.equipment.amulet} slot="amulet" label={t.inventory.slotAmulet} />
-            <EquipSlot item={hero.equipment.boots}  slot="boots"  label={t.inventory.slotBoots} />
+            <EquipSlot item={hero.equipment.amulet} slot="amulet" label={t.inventory.slotAmulet} selected={selectedSlot === 'amulet'} onClick={() => toggleSlot('amulet')} />
+            <EquipSlot item={hero.equipment.boots}  slot="boots"  label={t.inventory.slotBoots}  selected={selectedSlot === 'boots'}  onClick={() => toggleSlot('boots')} />
           </div>
 
         </div>
+
+        {/* Appearance button */}
+        <button onClick={() => setEditingAppearance(true)} style={{
+          background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.2)',
+          color: 'rgba(255,45,120,0.7)', cursor: 'pointer', width: '100%',
+          padding: '5px 0', ...MONO, fontSize: 9,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+        }}>
+          ✏ {t.hero.appearance}
+        </button>
+
+        {/* Selected item detail */}
+        {selectedSlot && hero.equipment[selectedSlot] && (
+          <ItemDetailPanel
+            item={hero.equipment[selectedSlot]!}
+            onClose={() => setSelectedSlot(null)}
+            onUnequip={() => { unequipItem(selectedSlot); setSelectedSlot(null); }}
+          />
+        )}
 
         {/* Main stats */}
         <div style={{ display: 'flex', gap: 4 }}>
