@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
-import { ALL_QUESTS } from '../data/quests';
+import { ALL_QUESTS, RANDOM_QUEST_NAMES } from '../data/quests';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
@@ -75,6 +75,15 @@ export default function QuestPanel() {
   const [now, setNow] = useState(Date.now());
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const [collecting, setCollecting] = useState(false);
+  const [questDisplayName, setQuestDisplayName] = useState(
+    () => RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]
+  );
+
+  useEffect(() => {
+    if (!activeQuest) {
+      setQuestDisplayName(RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]);
+    }
+  }, [activeQuest]);
 
   async function handleCollect() {
     if (collecting) return;
@@ -230,7 +239,7 @@ export default function QuestPanel() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <span style={{ fontSize: 20 }}>{base.emoji}</span>
                 <div>
-                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{base.name}</p>
+                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{questDisplayName}</p>
                   <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{base.description}</p>
                 </div>
               </div>
@@ -260,7 +269,7 @@ export default function QuestPanel() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold } as Quest)}
+                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName } as Quest)}
                         className="btn btn-primary"
                         style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
