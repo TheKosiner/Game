@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-18
+// Last deployed: 2026-05-18 v3
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -56,6 +56,9 @@ service cloud.firestore {
         // Challenge unlock: only increases, max +1 per write
         && nw.challengeUnlocked >= old.challengeUnlocked
         && nw.challengeUnlocked <= old.challengeUnlocked + 1
+        // Energy: must stay in valid range (0–100)
+        && nw.hero.energy >= 0
+        && nw.hero.energy <= 100
         // Time-based: server validates these timers
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)

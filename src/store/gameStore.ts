@@ -14,6 +14,9 @@ const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 10;
+export const MAX_ENERGY = 100;
+export const ENERGY_PER_DUNGEON = 10;
+export const ENERGY_PER_QUEST = 5;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
 export const CHALLENGE_COOLDOWN = 60 * 60 * 1000;
@@ -136,6 +139,8 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     portrait,
     unlockedPortraits: [],
     lastRespecAt: null,
+    energy: MAX_ENERGY,
+    maxEnergy: MAX_ENERGY,
   };
 }
 
@@ -160,6 +165,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   pvpRating: 1000,
   pvpLog: [],
   lastPassiveRegenAt: Date.now(),
+  lastEnergyRegenAt: Date.now(),
   challengeUnlocked: 0,
   lastChallengeAt: 0,
   challengeResult: null,
@@ -169,7 +175,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
-    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpRating: 1000, pvpLog: [], lastPassiveRegenAt: Date.now() });
+    set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpRating: 1000, pvpLog: [], lastPassiveRegenAt: Date.now(), lastEnergyRegenAt: Date.now() });
     if (!skipSave) get().saveGame();
   },
 
@@ -268,6 +274,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
+  gemRefillEnergy: () => {
+    const { hero } = get();
+    const COST = 20;
+    if (hero.gems < COST || (hero.energy ?? MAX_ENERGY) >= (hero.maxEnergy ?? MAX_ENERGY)) return false;
+    const t = getT();
+    set({ hero: { ...hero, gems: hero.gems - COST, energy: hero.maxEnergy ?? MAX_ENERGY } });
+    get().addCombatLog(t.gems.energyRefillLog, 'system');
+    get().saveGame();
+    return true;
+  },
+
   gemBuyPortrait: (portraitIndex, price) => {
     const { hero } = get();
     if (hero.gems < price) return false;
@@ -343,6 +360,10 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(t.combat.dungeonLimit(MAX_DAILY_DUNGEONS), 'system');
       return;
     }
+    if ((hero.energy ?? MAX_ENERGY) < ENERGY_PER_DUNGEON) {
+      get().addCombatLog(t.combat.noEnergy(ENERGY_PER_DUNGEON), 'system');
+      return;
+    }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
@@ -363,7 +384,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentEnemy: { ...enemy },
       inCombat: true,
       combatLog: [],
-      hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
+      hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1, energy: Math.max(0, (hero.energy ?? MAX_ENERGY) - ENERGY_PER_DUNGEON) },
     });
     get().addCombatLog(t.combat.entering(dungeon.name), 'system');
     get().addCombatLog(t.combat.encounter(`${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`), 'system');
@@ -506,9 +527,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) {
       return;
     }
+    if ((hero.energy ?? MAX_ENERGY) < ENERGY_PER_QUEST) {
+      return;
+    }
     const now = Date.now();
     const duration = scaledQuestDuration(quest.durationMs, hero.level);
-    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration } });
+    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration }, hero: { ...hero, energy: Math.max(0, (hero.energy ?? MAX_ENERGY) - ENERGY_PER_QUEST) } });
     get().saveGame();
   },
 
@@ -724,24 +748,42 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   tickPassiveRegen: () => {
-    const { hero, lastPassiveRegenAt } = get();
+    const { hero, lastPassiveRegenAt, lastEnergyRegenAt } = get();
     const now = Date.now();
-    // If timestamp is in the future the clock was manipulated — reset and skip
+    // If timestamps are in the future the clock was manipulated — reset and skip
     if (lastPassiveRegenAt > now) {
-      set({ lastPassiveRegenAt: now });
+      set({ lastPassiveRegenAt: now, lastEnergyRegenAt: now });
       return;
     }
     const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
                       (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
-    if (isResting || hero.hp >= hero.maxHp) {
-      set({ lastPassiveRegenAt: now });
-      return;
+
+    // HP regen: passive only when NOT actively resting (rest system handles it separately)
+    let newHp = hero.hp;
+    if (!isResting && hero.hp < hero.maxHp) {
+      const elapsed = Math.min(now - lastPassiveRegenAt, 7 * 24 * 60 * 60 * 1000);
+      const gain = Math.floor(elapsed * (hero.maxHp * 0.004) / 60000);
+      if (gain >= 1) newHp = Math.min(hero.maxHp, hero.hp + gain);
     }
-    // Cap elapsed to 7 days max to prevent instant-regen via clock tricks
-    const elapsed = Math.min(now - lastPassiveRegenAt, 7 * 24 * 60 * 60 * 1000);
-    const gain = Math.floor(elapsed * (hero.maxHp * 0.004) / 60000);
-    if (gain < 1) return;
-    set({ hero: { ...hero, hp: Math.min(hero.maxHp, hero.hp + gain) }, lastPassiveRegenAt: now });
+
+    // Energy regen: always active, 2× rate during rest (1 per 6 min → 10/hr normally)
+    const currentEnergy = hero.energy ?? MAX_ENERGY;
+    const maxEnergy = hero.maxEnergy ?? MAX_ENERGY;
+    let newEnergy = currentEnergy;
+    if (currentEnergy < maxEnergy) {
+      const energyElapsed = Math.min(now - (lastEnergyRegenAt ?? lastPassiveRegenAt), 7 * 24 * 60 * 60 * 1000);
+      const multiplier = isResting ? 2 : 1;
+      const energyGain = Math.floor(energyElapsed * multiplier / (6 * 60 * 1000));
+      if (energyGain >= 1) newEnergy = Math.min(maxEnergy, currentEnergy + energyGain);
+    }
+
+    const hpChanged = newHp !== hero.hp;
+    const energyChanged = newEnergy !== currentEnergy;
+    set({
+      ...(hpChanged || energyChanged ? { hero: { ...hero, hp: newHp, energy: newEnergy } } : {}),
+      lastPassiveRegenAt: now,
+      lastEnergyRegenAt: now,
+    });
   },
 
   startChallengeFight: (bossIdx: number) => {
@@ -938,6 +980,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       pvpRating: state.pvpRating,
       pvpLog: state.pvpLog,
       lastPassiveRegenAt: state.lastPassiveRegenAt,
+      lastEnergyRegenAt: state.lastEnergyRegenAt,
       challengeUnlocked: state.challengeUnlocked,
       lastChallengeAt: state.lastChallengeAt,
     };
@@ -1011,6 +1054,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           portrait: save.hero.portrait ?? 0,
           unlockedPortraits: save.hero.unlockedPortraits ?? [],
           lastRespecAt: save.hero.lastRespecAt ?? null,
+          energy: save.hero.energy ?? MAX_ENERGY,
+          maxEnergy: save.hero.maxEnergy ?? MAX_ENERGY,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
@@ -1026,6 +1071,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           pvpRating: save.pvpRating ?? 1000,
           pvpLog: save.pvpLog ?? [],
           lastPassiveRegenAt: save.lastPassiveRegenAt ?? Date.now(),
+          lastEnergyRegenAt: save.lastEnergyRegenAt ?? Date.now(),
           challengeUnlocked: save.challengeUnlocked ?? 0,
           lastChallengeAt: save.lastChallengeAt ?? 0,
         });

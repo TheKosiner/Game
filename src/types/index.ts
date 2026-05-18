@@ -65,6 +65,8 @@ export interface Hero {
   portrait: number;
   unlockedPortraits: number[];
   lastRespecAt: number | null;
+  energy: number;
+  maxEnergy: number;
 }
 
 export interface Enemy {
@@ -208,6 +210,7 @@ export interface GameState {
   pvpRating: number;
   pvpLog: PvpResult[];
   lastPassiveRegenAt: number;
+  lastEnergyRegenAt: number;
   challengeUnlocked: number;
   lastChallengeAt: number;
   challengeResult: ChallengeResult | null;
@@ -249,6 +252,7 @@ export interface GameState {
   abandonQuest: () => void;
   useItem: (item: Item, invIdx: number) => void;
   tickPassiveRegen: () => void;
+  gemRefillEnergy: () => boolean;
   startBegging: (hours: number) => void;
   cancelBegging: () => void;
   collectBegging: () => void;
