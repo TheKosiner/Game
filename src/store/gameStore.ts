@@ -101,7 +101,8 @@ function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): I
 }
 
 function scaledQuestDuration(durationMs: number, level: number): number {
-  return Math.floor(durationMs * (1 + (level - 1) * 0.05));
+  const MAX_MS = 20 * 60 * 1000;
+  return Math.min(MAX_MS, Math.floor(durationMs * (1 + (level - 1) * 0.05)));
 }
 
 // Infer completed dungeons from hero level for save migration (dungeons unlock ~5 levels below minLevel)
