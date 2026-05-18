@@ -8,5 +8,5 @@ export const ALL_QUESTS: Quest[] = [
   { id: 'ruins',        name: 'Eksploracja Serwera', description: 'Zbadaj stary serwer korporacyjny i wydobądź cenne dane.',         durationMs: 300_000,   xpReward: 250,  goldReward: 200,  minLevel: 7,  emoji: '💻' },
   { id: 'monster_hunt', name: 'Polowanie na Drona',  description: 'Znajdź i zniszcz drona terroryzującego dzielnicę.',              durationMs: 600_000,   xpReward: 500,  goldReward: 400,  minLevel: 10, emoji: '🎯' },
   { id: 'necromancer',  name: 'Zbuntowane AI',       description: 'Zneutralizuj zbuntowane AI i jego armię androidów.',              durationMs: 900_000,   xpReward: 850,  goldReward: 700,  minLevel: 15, emoji: '👾' },
-  { id: 'dragon_egg',   name: 'Rdzeń Danych',        description: 'Odzyskaj skradziony rdzeń danych z siedziby korporacji.',        durationMs: 1_800_000, xpReward: 1600, goldReward: 1400, minLevel: 20, emoji: '💾' },
+  { id: 'dragon_egg',   name: 'Rdzeń Danych',        description: 'Odzyskaj skradziony rdzeń danych z siedziby korporacji.',        durationMs: 1_200_000, xpReward: 1200, goldReward: 1050, minLevel: 20, emoji: '💾' },
 ];
