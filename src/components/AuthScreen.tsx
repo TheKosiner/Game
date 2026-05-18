@@ -174,8 +174,8 @@ export default function AuthScreen() {
         {/* Title */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <img src={logoImg} alt="GlitchSoul" style={{
-            width: 100, height: 'auto', marginBottom: 4,
-            filter: 'drop-shadow(0 0 16px rgba(140,60,255,0.8)) drop-shadow(0 0 32px rgba(0,200,255,0.3))',
+            width: 160, height: 'auto', display: 'block', margin: '0 auto 8px',
+            filter: 'drop-shadow(0 0 20px rgba(140,60,255,0.9)) drop-shadow(0 0 40px rgba(0,200,255,0.4))',
           }} />
           <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
           <p style={{ color: '#475569', fontSize: 6 }}>{t.app.tagline}</p>
