@@ -326,6 +326,17 @@ export async function inviteToGuild(
     toUid, toUsername,
     createdAt: Date.now(),
   });
+  // Send a mail notification so the recipient sees the unread badge
+  await addDoc(collection(db, 'mail'), {
+    fromUid,
+    fromUsername,
+    toUid,
+    toUsername,
+    body: `[GUILD INVITE] ${fromUsername} invites you to join guild [${guildTag}] ${guildName}. Open your Mail → accept or decline the invitation.`,
+    createdAt: Date.now(),
+    read: false,
+    isGuildInviteNotification: true,
+  });
 }
 
 export async function getMyInvites(uid: string): Promise<GuildInvite[]> {

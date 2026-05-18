@@ -418,6 +418,7 @@ export default function HeroCard() {
             </div>
             <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
           </div>
+
         </div>
       </div>
 

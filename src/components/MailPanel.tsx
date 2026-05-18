@@ -328,7 +328,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
     setMessages(msgs);
     setInvites(invs);
     setLoading(false);
-    onUnreadChange?.(msgs.filter(m => !m.read).length);
+    onUnreadChange?.(msgs.filter(m => !m.read).length + invs.length);
   }
 
   useEffect(() => { reload(); }, [user?.uid]);
