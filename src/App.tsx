@@ -106,7 +106,7 @@ export default function App() {
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
 
-  // Server-validated daily reward — immune to client clock manipulation
+  // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
   useEffect(() => {
     if (!gameLoaded || !user) return;
     claimDailyRewardServer().then(result => {
@@ -122,7 +122,10 @@ export default function App() {
       }));
       addCombatLog(t.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       saveGame();
-    }).catch(() => {});
+    }).catch(() => {
+      // CF not deployed (Spark plan) — fall back to local daily reset
+      checkDailyReset();
+    });
   }, [gameLoaded, user?.uid]);
 
   useEffect(() => {
