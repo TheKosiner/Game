@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_QUESTS, ENERGY_PER_QUEST, scaledQuestDuration } from '../store/gameStore';
+import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS } from '../data/quests';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
@@ -115,7 +115,6 @@ export default function QuestPanel() {
     ? Math.min(100, ((now - activeQuest.startedAt) / (activeQuest.endsAt - activeQuest.startedAt)) * 100)
     : 0;
   const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
-  const noEnergy = (hero.energy ?? 100) < ENERGY_PER_QUEST;
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -217,13 +216,6 @@ export default function QuestPanel() {
         </div>
       )}
 
-      {noEnergy && !activeQuest && !limitReached && !isResting && (
-        <div style={{ background: 'rgba(20,10,0,0.95)', border: '1px solid rgba(255,149,0,0.3)', padding: '8px 12px', textAlign: 'center' }}>
-          <p style={{ ...MONO, fontSize: 10, color: '#ff9500' }}>{t.hero.energyLow(ENERGY_PER_QUEST)}</p>
-          <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,149,0,0.5)', marginTop: 3 }}>{t.hero.energyRegen}</p>
-        </div>
-      )}
-
       {!activeQuest && !limitReached && !isResting && (
         <>
           {!base ? (
@@ -268,8 +260,7 @@ export default function QuestPanel() {
                       <button
                         onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold } as Quest)}
                         className="btn btn-primary"
-                        disabled={noEnergy}
-                        style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border, opacity: noEnergy ? 0.5 : 1, cursor: noEnergy ? 'not-allowed' : 'pointer' }}
+                        style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
                         {t.quests.start}
                       </button>

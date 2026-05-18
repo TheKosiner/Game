@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS, MAX_ENERGY, ENERGY_PER_DUNGEON, ENERGY_PER_QUEST } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
@@ -280,9 +280,8 @@ export default function HeroCard() {
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
   const cancelRest     = useGameStore(s => s.cancelRest);
-  const gemHeal         = useGameStore(s => s.gemHeal);
-  const gemSpeedupRest  = useGameStore(s => s.gemSpeedupRest);
-  const gemRefillEnergy = useGameStore(s => s.gemRefillEnergy);
+  const gemHeal        = useGameStore(s => s.gemHeal);
+  const gemSpeedupRest = useGameStore(s => s.gemSpeedupRest);
   const startBegging   = useGameStore(s => s.startBegging);
   const cancelBegging  = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
@@ -420,35 +419,6 @@ export default function HeroCard() {
             <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
           </div>
 
-          {/* Energy bar */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ff9500' }}>{t.hero.energy}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.energy ?? MAX_ENERGY}/{hero.maxEnergy ?? MAX_ENERGY}</span>
-                {(hero.energy ?? MAX_ENERGY) < (hero.maxEnergy ?? MAX_ENERGY) && (
-                  <button
-                    onClick={gemRefillEnergy}
-                    disabled={hero.gems < 20}
-                    style={{
-                      ...MONO, fontSize: 8, padding: '1px 5px',
-                      background: hero.gems >= 20 ? 'rgba(255,149,0,0.12)' : 'rgba(0,0,0,0.3)',
-                      border: `1px solid ${hero.gems >= 20 ? 'rgba(255,149,0,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                      color: hero.gems >= 20 ? '#ff9500' : 'var(--text-dim)',
-                      cursor: hero.gems >= 20 ? 'pointer' : 'not-allowed',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {t.gems.energyRefillBtn(20)}
-                  </button>
-                )}
-              </div>
-            </div>
-            <NeonBar pct={((hero.energy ?? MAX_ENERGY) / (hero.maxEnergy ?? MAX_ENERGY)) * 100} color="#ff9500" height={8} />
-            {(hero.energy ?? MAX_ENERGY) < (hero.maxEnergy ?? MAX_ENERGY) && (
-              <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,149,0,0.45)', marginTop: 2 }}>{t.hero.energyRegen}</p>
-            )}
-          </div>
         </div>
       </div>
 

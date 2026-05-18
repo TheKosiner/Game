@@ -31,7 +31,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses, pvpRating } = useGameStore.getState();
   const { pvpLog, lastPvpFight, challengeUnlocked, lastChallengeAt } = useGameStore.getState();
-  const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt, lastEnergyRegenAt } = useGameStore.getState();
+  const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
 
   // Public leaderboard data — no saveData, no email, no private fields
@@ -70,7 +70,6 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     lastShopRefresh: lastShopRefresh ?? 0,
     shopPurchased: shopPurchased ?? [],
     lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
-    lastEnergyRegenAt: lastEnergyRegenAt ?? Date.now(),
     updatedAt: savedAt,
   });
 }
@@ -99,8 +98,6 @@ function migrateHeroFromRaw(raw: any) {
     inventory: (raw.inventory ?? []).map(migrateItem),
     clothingColor: raw.clothingColor ?? 0,
     lastRespecAt: raw.lastRespecAt ?? null,
-    energy: raw.energy ?? 100,
-    maxEnergy: raw.maxEnergy ?? 100,
   };
 }
 
@@ -155,7 +152,6 @@ export async function loadFromCloud(uid: string): Promise<boolean | null> {
     lastShopRefresh:     raw.lastShopRefresh     ?? 0,
     shopPurchased:       raw.shopPurchased       ?? [],
     lastPassiveRegenAt:  raw.lastPassiveRegenAt  ?? Date.now(),
-    lastEnergyRegenAt:   raw.lastEnergyRegenAt   ?? Date.now(),
   });
   return true;
 }
