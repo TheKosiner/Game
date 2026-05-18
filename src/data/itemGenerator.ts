@@ -260,6 +260,6 @@ export function generateShopItems(
     const price = Math.round(item.goldValue * (1.2 + rng() * 0.6));
     result.push({ item, price, featured });
   }
-  result.push({ item: MEDKIT, price: 120, featured: false });
+  result.push({ item: MEDKIT, price: heroLevel * 100, featured: false });
   return result;
 }
