@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import guildBgSrc from '../assets/guild-bg.png';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
@@ -248,18 +247,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   }
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', gap: 10,
-      position: 'relative',
-      backgroundImage: `url(${guildBgSrc})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center top',
-      borderRadius: 4,
-      overflow: 'hidden',
-    }}>
-      {/* dark overlay so UI stays readable */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,6,12,0.78)', zIndex: 0, pointerEvents: 'none' }} />
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {showInvite && <InviteModal guild={guild} onClose={() => setShowInvite(false)} />}
 
       {/* INFO / BOSS / CHAT tabs */}
@@ -374,7 +362,6 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
         {isLeader ? t.guild.disbandBtn : t.guild.leaveBtn}
       </button>
       </>}
-      </div>
     </div>
   );
 }
