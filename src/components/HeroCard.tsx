@@ -638,10 +638,10 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>{t.hero.statsTitle}</p>
         {([
+          { attr: 'vitality',       icon: '♥',  name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
           { attr: 'strength',       icon: '💪', name: t.hero.statStrength,   desc: t.hero.statStrDesc,    note: t.hero.statStrNote,    color: '#ff2d78' },
           { attr: 'dexterity',      icon: '🏃', name: t.hero.statDexterity,  desc: t.hero.statDexDesc,    note: t.hero.statDexNote,    color: '#00f5ff' },
           { attr: 'intelligence',   icon: '🎯', name: t.hero.statAccuracy,   desc: t.hero.statAccDesc,    note: t.hero.statAccNote,    color: '#9d4edd' },
-          { attr: 'vitality',       icon: '♥',  name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
           { attr: 'magic',          icon: '🔮', name: t.hero.statMagic,      desc: t.hero.statMagDesc,    note: t.hero.statMagNote,    color: '#cc44ff' },
           { attr: 'magicResistance',icon: '✨', name: t.hero.statMagRes,     desc: t.hero.statMagResDesc, note: t.hero.statMagResNote, color: '#00ff88' },
         ] as { attr: 'strength'|'dexterity'|'intelligence'|'vitality'|'magic'|'magicResistance'; icon: string; name: string; desc: string; note: string; color: string }[]).map(({ attr, icon, name, desc, note, color }) => {
@@ -655,6 +655,11 @@ export default function HeroCard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ fontSize: 12 }}>{icon}</span>
                   <span style={{ ...MONO, fontSize: 11, color }}>{name}</span>
+                  {attr === 'vitality' && (
+                    <span style={{ ...ORB, fontSize: 10, color: '#ff4444', opacity: 0.85, marginLeft: 4 }}>
+                      ❤ {hero.maxHp} HP
+                    </span>
+                  )}
                 </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
                 <p style={{ ...MONO, fontSize: 9, color, opacity: 0.6, marginTop: 1 }}>{note}</p>
