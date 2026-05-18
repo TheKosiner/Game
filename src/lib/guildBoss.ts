@@ -171,8 +171,8 @@ export async function claimBossReward(
       tx.update(ref, { [`participants.${uid}.rewardClaimed`]: true });
     });
 
-    const isLegendary = Math.random() < 0.15;
-    const item = generateItem(hero.level, isLegendary ? 'legendary' : 'epic');
+    const legendaryChance = bossIdx / 15 * 0.65;
+    const item = generateItem(hero.level, Math.random() < legendaryChance ? 'legendary' : 'epic');
 
     const store = useGameStore.getState();
     store.addXp(xp);

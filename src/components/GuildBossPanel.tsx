@@ -260,7 +260,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
         <div style={{ display: 'flex', gap: 12 }}>
           <span style={{ ...MONO, fontSize: 9, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
           <span style={{ ...MONO, fontSize: 9, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
-          <span style={{ ...MONO, fontSize: 9, color: '#cc44ff' }}>80% Epicki / 20% Legen.</span>
+          <span style={{ ...MONO, fontSize: 9, color: '#cc44ff' }}>Epicki / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
         </div>
       </div>
 
