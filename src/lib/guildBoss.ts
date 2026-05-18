@@ -6,7 +6,17 @@ import { GUILD_BOSSES } from '../data/guildBosses';
 import { generateItem } from '../data/itemGenerator';
 import type { Hero, Item } from '../types';
 
-export const BOSS_DURATION_MS = 24 * 60 * 60 * 1000;
+function nextMidnight(): number {
+  const d = new Date();
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
+
+function midnightAfter(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
 
 export interface BossParticipant {
   username: string;
@@ -63,8 +73,8 @@ export async function ensureBossActive(guildId: string): Promise<void> {
     return;
   }
 
-  // Defeated → wait 24h from defeat then spawn next
-  if (data.defeated && data.defeatedAt && now > data.defeatedAt + BOSS_DURATION_MS) {
+  // Defeated → spawn next boss at midnight after defeat
+  if (data.defeated && data.defeatedAt && now > midnightAfter(data.defeatedAt)) {
     await spawnBoss(guildId, (data.bossIdx + 1) % GUILD_BOSSES.length);
   }
 }
@@ -78,7 +88,7 @@ async function spawnBoss(guildId: string, bossIdx: number): Promise<void> {
     currentHp: boss.hp,
     maxHp: boss.hp,
     startedAt: now,
-    endsAt: now + BOSS_DURATION_MS,
+    endsAt: nextMidnight(),
     defeated: false,
     participants: {},
   });

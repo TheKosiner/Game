@@ -4,9 +4,15 @@ import { useAuthStore } from '../store/authStore';
 import { GUILD_BOSSES } from '../data/guildBosses';
 import {
   subscribeToBoss, ensureBossActive, attackGuildBoss, claimBossReward,
-  calcGuildBossDamage, BOSS_DURATION_MS,
+  calcGuildBossDamage,
   type GuildBossState,
 } from '../lib/guildBoss';
+
+function midnightAfter(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
 import { generateItem } from '../data/itemGenerator';
 import { syncToCloud } from '../lib/cloudSync';
 
@@ -86,7 +92,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
 
   // Next reset time
   const nextResetLabel = boss.defeated && boss.defeatedAt
-    ? `Następny boss za: ${fmtTime(boss.defeatedAt + BOSS_DURATION_MS - now)}`
+    ? `Następny boss o północy: ${fmtTime(midnightAfter(boss.defeatedAt) - now)}`
     : isExpired ? 'Reset za chwilę...'
     : null;
 
