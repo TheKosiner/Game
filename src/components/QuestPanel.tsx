@@ -107,7 +107,9 @@ export default function QuestPanel() {
     return () => clearInterval(id);
   }, []);
 
-  const base = ALL_QUESTS.length > 0 ? ALL_QUESTS[ALL_QUESTS.length - 1] : null;
+  const eligible = ALL_QUESTS.filter(q => q.minLevel <= hero.level);
+  const base = eligible.length > 0 ? eligible[eligible.length - 1] : ALL_QUESTS[0];
+  const levelRewardMult = 1 + (hero.level - 1) * 0.08;
 
   const remaining  = activeQuest ? activeQuest.endsAt - now : 0;
   const canCollect = activeQuest && now >= activeQuest.endsAt;
@@ -237,8 +239,8 @@ export default function QuestPanel() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {VARIANTS_BASE.map(v => {
                   const duration = scaledQuestDuration(base.durationMs, hero.level);
-                  const xp   = Math.round(base.xpReward * v.xpMult);
-                  const gold = Math.round(base.goldReward * v.goldMult);
+                  const xp   = Math.round(base.xpReward * v.xpMult * levelRewardMult);
+                  const gold = Math.round(base.goldReward * v.goldMult * levelRewardMult);
                   return (
                     <div key={v.key} style={{
                       background: v.bg,

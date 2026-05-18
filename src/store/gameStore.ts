@@ -3,6 +3,7 @@ import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item,
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { generateItem, getItemName } from '../data/itemGenerator';
+import { RANDOM_QUEST_NAMES } from '../data/quests';
 import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -529,12 +530,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   startQuest: (quest: Quest) => {
     const { hero, activeQuest } = get();
     if (activeQuest) return;
-    if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) {
-      return;
-    }
+    if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) return;
     const now = Date.now();
     const duration = scaledQuestDuration(quest.durationMs, hero.level);
-    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration } });
+    const randomName = RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)];
+    set({ activeQuest: { quest: { ...quest, name: randomName }, startedAt: now, endsAt: now + duration } });
     get().saveGame();
   },
 

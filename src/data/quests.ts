@@ -1,5 +1,16 @@
 import type { Quest } from '../types';
 
+export const RANDOM_QUEST_NAMES: string[] = [
+  'Operacja Neon', 'Infiltracja Sektora', 'Przechwycenie Danych', 'Sabotaż Korporacji',
+  'Ekstrakcja Agenta', 'Czarna Operacja', 'Eliminacja Celu', 'Misja Widmo',
+  'Ghost Protocol', 'Przejęcie Konwoju', 'Ochrona Węzła', 'Zniszczenie Bazy',
+  'Odzysk Protokołu', 'Atak Zero', 'Alarm Sektorowy', 'Polowanie na Agenta',
+  'Przełamanie Firewall', 'Zamknięcie Węzła', 'Odcięcie Zasilania', 'Likwidacja Świadka',
+  'Wykradanie Blueprintów', 'Deszyfrowanie Pliku', 'Zasadzka na Konwój', 'Czyszczenie Sektora',
+  'Atak na Serwer', 'Misja Matrixa', 'Zlecenie Korporacji', 'Strzeżony Transport',
+  'Wycieczka w Mrok', 'Operacja Widmo', 'Czerwony Alarm', 'Projekt Zero',
+];
+
 export const ALL_QUESTS: Quest[] = [
   { id: 'patrol',       name: 'Patrol Sektora',      description: 'Obejdź sektor i upewnij się, że jest bezpieczny.',               durationMs: 60_000,    xpReward: 35,   goldReward: 25,   minLevel: 1,  emoji: '🏚️' },
   { id: 'herbs',        name: 'Odzysk Nanoleków',    description: 'Zbierz nanoleki z porzuconych laboratoriów w okolicy.',           durationMs: 90_000,    xpReward: 50,   goldReward: 30,   minLevel: 1,  emoji: '💉' },
