@@ -209,5 +209,13 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 200;
     }
 
+    // Guild boss
+    match /guilds/{guildId}/boss/{doc} {
+      allow read: if isAuthenticated()
+        && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members;
+      allow write: if isAuthenticated()
+        && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members;
+    }
+
   }
 }

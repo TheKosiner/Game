@@ -7,6 +7,7 @@ import {
 } from '../lib/cloudSync';
 import TerritoryPanel from './TerritoryPanel';
 import GuildChat from './GuildChat';
+import GuildBossPanel from './GuildBossPanel';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
@@ -211,7 +212,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   const t = useT();
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
-  const [guildTab, setGuildTab] = useState<'info' | 'chat'>('info');
+  const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat'>('info');
   const isLeader = guild.leaderUid === myUid;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
     .sort((a, b) => (a.role === 'leader' ? -1 : b.role === 'leader' ? 1 : b.level - a.level));
@@ -249,16 +250,16 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {showInvite && <InviteModal guild={guild} onClose={() => setShowInvite(false)} />}
 
-      {/* INFO / CHAT tabs */}
+      {/* INFO / BOSS / CHAT tabs */}
       <div style={{ display: 'flex', gap: 6 }}>
-        {(['info', 'chat'] as const).map(tab => (
+        {(['info', 'boss', 'chat'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setGuildTab(tab)}
             className={guildTab === tab ? 'btn btn-primary' : 'btn btn-secondary'}
             style={{ flex: 1, fontSize: 6, padding: '7px' }}
           >
-            {tab === 'info' ? 'INFO' : '💬 CHAT'}
+            {tab === 'info' ? 'INFO' : tab === 'boss' ? '💀 BOSS' : '💬 CHAT'}
           </button>
         ))}
       </div>
@@ -270,6 +271,14 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
           currentUid={myUid}
           username={members.find(m => m.uid === myUid)?.username ?? ''}
           portrait={members.find(m => m.uid === myUid)?.portrait ?? 0}
+        />
+      )}
+
+      {/* BOSS view */}
+      {guildTab === 'boss' && (
+        <GuildBossPanel
+          guildId={guild.id}
+          username={members.find(m => m.uid === myUid)?.username ?? ''}
         />
       )}
 
