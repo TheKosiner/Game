@@ -6,6 +6,7 @@ import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
 import { collectQuestServer } from '../lib/serverActions';
+import { syncToCloud } from '../lib/cloudSync';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -62,6 +63,11 @@ export default function QuestPanel() {
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest      = useGameStore(s => s.startQuest);
+  const handleStartQuest = (quest: Quest) => {
+    startQuest(quest);
+    // Sync immediately so the CF has the activeQuest data when collecting
+    if (user) syncToCloud(user.uid, user.username).catch(() => {});
+  };
   const collectQuest    = useGameStore(s => s.collectQuest);
   const abandonQuest    = useGameStore(s => s.abandonQuest);
   const gemSpeedupQuest = useGameStore(s => s.gemSpeedupQuest);
@@ -75,12 +81,19 @@ export default function QuestPanel() {
     setCollecting(true);
     try {
       if (user) {
-        // Server validates the timer — clock manipulation blocked
-        await collectQuestServer();
+        try {
+          await collectQuestServer();
+        } catch (err: any) {
+          // CF explicitly said quest isn't done yet — respect that
+          if (err?.code === 'functions/failed-precondition') {
+            setCollecting(false);
+            return;
+          }
+          // Any other error (not deployed, network, quest not in Firestore yet) —
+          // fall back to local time check so the game still works
+        }
       }
       collectQuest();
-    } catch {
-      // Server rejected (quest not done yet or no active quest)
     } finally {
       setCollecting(false);
     }
@@ -245,7 +258,7 @@ export default function QuestPanel() {
                         </div>
                       </div>
                       <button
-                        onClick={() => startQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold } as Quest)}
+                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold } as Quest)}
                         className="btn btn-primary"
                         style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
