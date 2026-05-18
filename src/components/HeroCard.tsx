@@ -465,14 +465,21 @@ export default function HeroCard() {
       {/* HERO PANEL */}
       <div className="card p-3" style={{
         display: 'flex', flexDirection: 'column', gap: 10,
-        backgroundImage: 'url(/hero-bg.png)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundColor: 'transparent',
+        backgroundColor: 'rgba(4,6,20,0.95)',
         position: 'relative',
         overflow: 'hidden',
         zIndex: 9997,
       }}>
+        {/* Background image — fixed square ratio, always same crop */}
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0,
+          aspectRatio: '1 / 1',
+          backgroundImage: 'url(/hero-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          zIndex: 0,
+        }} />
         {/* content sits above the photo */}
         <div style={{
           position: 'relative', display: 'flex', flexDirection: 'column', gap: 10,
