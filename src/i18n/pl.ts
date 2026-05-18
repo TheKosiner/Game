@@ -104,7 +104,7 @@ export const pl: Translations = {
     beggingMax: '10h max',
     beggingStartBtn: '▶ ZACZNIJ ZBIERAĆ ZŁOM',
     dailyLimit: '◈ DZIENNY LIMIT',
-    dungeons: '⚔ Lochy',
+    dungeons: '⚔ Operacje',
     quests: '📜 Zadania',
     statsTitle: '◈ STATYSTYKI',
     statStrength: 'Siła',

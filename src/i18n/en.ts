@@ -102,7 +102,7 @@ export const en = {
     beggingMax: '10h max',
     beggingStartBtn: '▶ START SCRAPPING',
     dailyLimit: '◈ DAILY LIMIT',
-    dungeons: '⚔ Dungeons',
+    dungeons: '⚔ Operations',
     quests: '📜 Quests',
     statsTitle: '◈ STATS',
     statStrength: 'Strength',
