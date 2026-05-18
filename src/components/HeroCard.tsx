@@ -463,7 +463,23 @@ export default function HeroCard() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
       {/* HERO PANEL */}
-      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div className="card p-3" style={{
+        display: 'flex', flexDirection: 'column', gap: 10,
+        backgroundImage: 'url(/hero-bg.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* dark overlay so text stays readable */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(2,4,16,0.72)',
+          pointerEvents: 'none',
+        }} />
+
+        {/* content sits above the overlay */}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 10 }}>
 
         {/* Name + level + gold */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -574,6 +590,7 @@ export default function HeroCard() {
           <NeonBar pct={(hero.xp / hero.xpToNext) * 100} color="#ffd700" />
         </div>
 
+        </div>{/* end content wrapper */}
       </div>
 
       {editingAppearance && <AppearanceEditor onClose={() => setEditingAppearance(false)} />}
