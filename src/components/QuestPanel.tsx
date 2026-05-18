@@ -153,7 +153,6 @@ export default function QuestPanel() {
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-            <span style={{ fontSize: 24 }}>{activeQuest.quest.emoji}</span>
             <div style={{ flex: 1 }}>
               <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>{activeQuest.quest.name}</p>
               <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
