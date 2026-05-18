@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { ALL_QUESTS, RANDOM_QUEST_NAMES } from '../data/quests';
+import logoSrc from '../assets/logo.png';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
@@ -237,7 +238,7 @@ export default function QuestPanel() {
             <>
               {/* Base quest info */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-                <span style={{ fontSize: 20 }}>{base.emoji}</span>
+                <img src={logoSrc} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(255,45,120,0.5))' }} />
                 <div>
                   <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{questDisplayName}</p>
                   <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{base.description}</p>
