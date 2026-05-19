@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 
 import logoImg from '../assets/logo.png';
 
@@ -57,6 +58,7 @@ function VerificationScreen() {
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: '#0f0e17' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
+        <LangToggle />
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ fontSize: 48, marginBottom: 8 }}>📧</p>
           <h1 style={{ ...PX(10), color: '#fbbf24', marginBottom: 10 }}>{t.auth.verifyTitle}</h1>
@@ -125,6 +127,32 @@ function VerificationScreen() {
   );
 }
 
+function LangToggle() {
+  const lang    = useLangStore(s => s.lang);
+  const setLang = useLangStore(s => s.setLang);
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 4 }}>
+      {(['pl', 'en'] as const).map(l => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          style={{
+            background: lang === l ? 'rgba(217,119,6,0.15)' : 'transparent',
+            border: `1px solid ${lang === l ? '#d97706' : '#334155'}`,
+            color: lang === l ? '#fbbf24' : '#475569',
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 7,
+            padding: '4px 8px',
+            cursor: 'pointer',
+          }}
+        >
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function AuthScreen() {
   const t = useT();
   const [mode, setMode] = useState<Mode>('login');
@@ -171,6 +199,7 @@ export default function AuthScreen() {
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: '#0f0e17' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
+        <LangToggle />
         {/* Title */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <img src={logoImg} alt="GlitchSoul" style={{
