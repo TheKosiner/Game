@@ -447,6 +447,7 @@ export const pl: Translations = {
     send: 'WYŚLIJ',
     rateLimit: 'Poczekaj chwilę przed wysłaniem kolejnej wiadomości.',
     notLoggedIn: 'Zaloguj się żeby pisać na czacie.',
+    empty: 'Brak wiadomości. Napisz jako pierwszy!',
     guildTitle: '💬 CZAT GILDII',
     guildPlaceholder: 'Wiadomość do gildii...',
   },

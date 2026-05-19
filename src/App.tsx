@@ -27,7 +27,7 @@ import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
 import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
 import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
-import { PORTRAIT_OVERRIDES } from './data/portraits';
+import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 
 export default function App() {
   const t = useT();
@@ -57,6 +57,8 @@ export default function App() {
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
   const lastChatViewedAt = useRef(Date.now());
+  const tRef = useRef(t);
+  useEffect(() => { tRef.current = t; });
 
   // Quest is ready when timer expired and user isn't already on quests sub-tab
   const questReady = activeQuest !== null && nowTick >= activeQuest.endsAt;
@@ -105,21 +107,21 @@ export default function App() {
   useEffect(() => {
     if (!gameLoaded || !user) return;
     const overrideIdx = PORTRAIT_OVERRIDES[user.username];
-    if (overrideIdx !== undefined) {
+    if (overrideIdx !== undefined && PORTRAIT_LIST.some(p => p.index === overrideIdx)) {
       useGameStore.setState(s => ({ hero: { ...s.hero, portrait: overrideIdx } }));
     }
   }, [gameLoaded, user?.username]);
 
   useEffect(() => {
     if (!gameLoaded) return;
-    // Guests use local daily reset; logged-in players use server-validated CF below
     if (!user) checkDailyReset();
     tickPassiveRegen();
     const id = setInterval(() => {
-      if (!user) checkDailyReset();
+      const currentUser = useAuthStore.getState().user;
+      if (!currentUser) checkDailyReset();
       tickPassiveRegen();
       saveGame();
-      if (user) syncToCloud(user.uid, user.username).catch(() => {});
+      if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
     }, 30_000);
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
@@ -138,7 +140,7 @@ export default function App() {
           lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
         },
       }));
-      addCombatLog(t.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+      addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       saveGame();
     }).catch(() => {
       // CF not deployed (Spark plan) — fall back to local daily reset
@@ -192,7 +194,7 @@ export default function App() {
     claimGemCredits().then(gems => {
       if (gems > 0) {
         addGems(gems);
-        addCombatLog(t.gems.claimedLog(gems), 'system');
+        addCombatLog(tRef.current.gems.claimedLog(gems), 'system');
         saveGame();
       }
     }).catch(() => {});
@@ -285,7 +287,7 @@ export default function App() {
           }}>💎 {hero.gems}</span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
-            color: '#00f5ff', fontSize: 9,
+            color: '#00f5ff', fontSize: 10,
             fontWeight: 700,
             background: 'rgba(0,245,255,0.08)',
             border: '1px solid rgba(0,245,255,0.25)',
@@ -297,28 +299,46 @@ export default function App() {
               <span style={{ fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', fontSize: 10 }}>
                 {user.username}
               </span>
-              <button onClick={() => setLang('pl')} style={{
-                fontFamily: "'Orbitron', monospace",
-                color: lang === 'pl' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 8,
-                background: 'none', border: 'none', cursor: 'pointer',
-              }}>PL</button>
-              <button onClick={() => setLang('en')} style={{
-                fontFamily: "'Orbitron', monospace",
-                color: lang === 'en' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 8,
-                background: 'none', border: 'none', cursor: 'pointer',
-              }}>EN</button>
-              <button onClick={() => logout()} style={{
-                fontFamily: "'Orbitron', monospace",
-                color: 'rgba(255,45,120,0.6)', fontSize: 8,
-                background: 'none', border: 'none', cursor: 'pointer',
-                textShadow: '0 0 6px rgba(255,45,120,0.3)',
-              }}>{t.app.logout}</button>
+              <button
+                onClick={() => setLang('pl')}
+                aria-label="Język Polski"
+                aria-pressed={lang === 'pl'}
+                style={{
+                  fontFamily: "'Orbitron', monospace",
+                  color: lang === 'pl' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 10,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                }}
+              >PL</button>
+              <button
+                onClick={() => setLang('en')}
+                aria-label="English language"
+                aria-pressed={lang === 'en'}
+                style={{
+                  fontFamily: "'Orbitron', monospace",
+                  color: lang === 'en' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 10,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                }}
+              >EN</button>
+              <button
+                onClick={() => logout()}
+                aria-label={t.app.logout}
+                style={{
+                  fontFamily: "'Orbitron', monospace",
+                  color: 'rgba(255,45,120,0.6)', fontSize: 10,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  textShadow: '0 0 6px rgba(255,45,120,0.3)',
+                }}
+              >{t.app.logout}</button>
             </>
           )}
-          <button onClick={handleReset} style={{
-            color: 'rgba(255,45,120,0.4)', fontSize: 14,
-            background: 'none', border: 'none', cursor: 'pointer',
-          }}>↩</button>
+          <button
+            onClick={handleReset}
+            aria-label={lang === 'en' ? 'Reset game' : 'Resetuj grę'}
+            style={{
+              color: 'rgba(255,45,120,0.4)', fontSize: 14,
+              background: 'none', border: 'none', cursor: 'pointer',
+            }}
+          >↩</button>
         </div>
       </header>
 
@@ -337,10 +357,10 @@ export default function App() {
           }}
         >
           <span style={{ fontSize: 14 }}>📱</span>
-          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: '#00f5ff' }}>
+          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00f5ff' }}>
             {lang === 'en' ? 'Download Android app' : 'Pobierz aplikację Android'}
           </span>
-          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 8, color: 'rgba(0,245,255,0.4)' }}>↓ APK</span>
+          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.4)' }}>↓ APK</span>
         </a>
       )}
 

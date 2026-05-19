@@ -445,6 +445,7 @@ export const en = {
     send: 'SEND',
     rateLimit: 'Wait a moment before sending again.',
     notLoggedIn: 'Log in to chat.',
+    empty: 'No messages yet. Say hello!',
     guildTitle: '💬 GUILD CHAT',
     guildPlaceholder: 'Guild message...',
   },
