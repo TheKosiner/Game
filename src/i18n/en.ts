@@ -340,6 +340,7 @@ export const en = {
     tagError: 'Tag must be 2–4 characters (A-Z, 0-9)',
     createError: 'Error creating guild',
     creating: '⏳ Creating...',
+    loading: 'Loading...',
     createBtn: '⚔ Create guild',
     invitesTitle: '📨 GUILD INVITATIONS',
     inviteFrom: (u: string) => `from ${u}`,

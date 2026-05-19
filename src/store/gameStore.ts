@@ -382,7 +382,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
     });
     get().addCombatLog(t.combat.entering(dungeon.name), 'system');
-    get().addCombatLog(t.combat.encounter(`${enemy.emoji} ${enemy.name} (Poz. ${enemy.level})`), 'system');
+    get().addCombatLog(t.combat.encounter(`${enemy.emoji} ${enemy.name} (${getLang() === 'en' ? 'LVL.' : 'Poz.'} ${enemy.level})`), 'system');
     get().addCombatLog(t.combat.dungeonsToday(hero.dungeonRunsToday + 1, MAX_DAILY_DUNGEONS), 'system');
   },
 

@@ -190,7 +190,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
           <p style={{ ...PX(6), color: 'var(--gold-main)' }}>{t.guild.inviteModalTitle}</p>
           <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
         </div>
-        {loading && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>{t.guild.creating}</p>}
+        {loading && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>{t.guild.loading}</p>}
         {!loading && players.length === 0 && <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>{t.guild.noPlayersToInvite}</p>}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {players.map(p => {
@@ -198,7 +198,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
                 <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
-                  <img src={portraitSrc(resolvePortrait(p.portrait, p.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={portraitSrc(resolvePortrait(p.portrait, p.username))} alt={p.username} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...PX(6), color: 'var(--text-bright)', marginBottom: 1 }}>{p.username}</p>
@@ -227,6 +227,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat'>('info');
+  const [leaderWarn, setLeaderWarn] = useState(false);
   const isLeader = guild.leaderUid === myUid;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
     .sort((a, b) => (a.role === 'leader' ? -1 : b.role === 'leader' ? 1 : b.level - a.level));
@@ -234,7 +235,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
 
   async function handleLeave() {
     if (isLeader && memberCount > 1) {
-      alert(t.guild.leaderWarning);
+      setLeaderWarn(true);
       return;
     }
     if (!confirm(isLeader ? t.guild.disbandConfirm : t.guild.leaveConfirm)) return;
@@ -263,6 +264,13 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {showInvite && <InviteModal guild={guild} onClose={() => setShowInvite(false)} />}
+
+      {leaderWarn && (
+        <div style={{ background: 'rgba(40,10,10,0.8)', border: '1px solid rgba(200,50,50,0.5)', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ ...PX(4), color: '#f87171' }}>{t.guild.leaderWarning}</p>
+          <button onClick={() => setLeaderWarn(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
+        </div>
+      )}
 
       {/* INFO / BOSS / CHAT tabs */}
       <div style={{ display: 'flex', gap: 6 }}>
@@ -430,7 +438,7 @@ export default function GuildPanel() {
   if (loading) {
     return (
       <div className="card p-3">
-        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>{t.guild.creating}</p>
+        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 24 }}>{t.guild.loading}</p>
       </div>
     );
   }

@@ -8,6 +8,7 @@ import {
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 
 import { PX, MONO } from '../utils/styles';
 
@@ -167,6 +168,7 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
 function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSent: () => void; initialRecipient?: { uid: string; username: string } }) {
   const user = useAuthStore(s => s.user);
   const t = useT();
+  const lang = useLangStore(s => s.lang);
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<LeaderboardEntry[]>([]);
   const [filtered, setFiltered] = useState<LeaderboardEntry[]>([]);
@@ -227,7 +229,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
           }}>
             <div>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
-              {recipient.heroName && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>}
+              {recipient.heroName && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{recipient.heroName} · {lang === 'en' ? 'LVL.' : 'Poz.'}{recipient.level}</p>}
             </div>
             <button onClick={() => { setRecipient(null); setSearch(''); }} aria-label="Clear recipient" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
@@ -267,7 +269,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)' }}>{p.username}</span>
-                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{p.heroName} · Poz.{p.level}</span>
+                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{p.heroName} · {lang === 'en' ? 'LVL.' : 'Poz.'}{p.level}</span>
                   </div>
                 ))}
               </div>
@@ -349,7 +351,6 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
       setTimeout(() => setInviteResult(null), 3000);
       await reload();
     } catch (e) {
-      console.error('acceptInvite failed', e);
     }
   }
 
