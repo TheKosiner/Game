@@ -435,7 +435,7 @@ export default function HeroCard() {
   }
 
   useEffect(() => {
-    const id = setInterval(() => forceUpdate(n => n + 1), 1000);
+    const id = setInterval(() => forceUpdate(n => n + 1), 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -523,7 +523,7 @@ export default function HeroCard() {
               border: '2px solid rgba(255,45,120,0.4)',
               boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
             }}>
-              <img src={portraitSrc(hero.portrait)} alt="portret"
+              <img src={portraitSrc(hero.portrait)} alt={hero.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </div>
             <EquipSlot item={hero.equipment.weapon} slot="weapon" label={t.inventory.slotWeapon} size={96} selected={selectedSlot === 'weapon'} onClick={() => toggleSlot('weapon')} />
@@ -538,7 +538,7 @@ export default function HeroCard() {
         </div>
 
         {/* Appearance button */}
-        <button onClick={() => setEditingAppearance(true)} style={{
+        <button onClick={() => setEditingAppearance(true)} aria-label={t.hero.appearance} style={{
           background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.2)',
           color: 'rgba(255,45,120,0.7)', cursor: 'pointer', width: '100%',
           padding: '5px 0', ...MONO, fontSize: 10,

@@ -94,7 +94,7 @@ export default function ChatPanel() {
       }}>
         {messages.length === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', margin: 'auto' }}>
-            —
+            {t.chat.empty}
           </p>
         )}
         {messages.map(msg => {
