@@ -1,17 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
-import { ALL_QUESTS, RANDOM_QUEST_NAMES } from '../data/quests';
+import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
 import logoSrc from '../assets/logo.png';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 import { useAuthStore } from '../store/authStore';
 import { collectQuestServer } from '../lib/serverActions';
 import { syncToCloud } from '../lib/cloudSync';
-
-const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { PX, MONO, ORB } from '../utils/styles';
 
 const VARIANTS_BASE = [
   {
@@ -61,6 +59,8 @@ function formatTime(ms: number): string {
 
 export default function QuestPanel() {
   const t = useT();
+  const lang = useLangStore(s => s.lang);
+  const isEn = lang === 'en';
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest      = useGameStore(s => s.startQuest);
@@ -79,10 +79,15 @@ export default function QuestPanel() {
   const [questDisplayName, setQuestDisplayName] = useState(
     () => RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]
   );
+  const [questDisplayNameEn, setQuestDisplayNameEn] = useState(
+    () => RANDOM_QUEST_NAMES_EN[Math.floor(Math.random() * RANDOM_QUEST_NAMES_EN.length)]
+  );
 
   useEffect(() => {
     if (!activeQuest) {
-      setQuestDisplayName(RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]);
+      const idx = Math.floor(Math.random() * RANDOM_QUEST_NAMES.length);
+      setQuestDisplayName(RANDOM_QUEST_NAMES[idx]);
+      setQuestDisplayNameEn(RANDOM_QUEST_NAMES_EN[idx]);
     }
   }, [activeQuest]);
 
@@ -154,8 +159,12 @@ export default function QuestPanel() {
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>{activeQuest.quest.name}</p>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
+              <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', marginBottom: 3 }}>
+                {isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name}
+              </p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
+                {isEn ? (activeQuest.quest.descEn ?? activeQuest.quest.description) : activeQuest.quest.description}
+              </p>
             </div>
           </div>
 
@@ -174,13 +183,13 @@ export default function QuestPanel() {
               {canCollect ? t.quests.readyToCollect : formatTime(remaining)}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
-              <span style={{ ...ORB, fontSize: 9, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
+              <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
+              <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
             </div>
           </div>
 
           {canCollect && (
-            <button onClick={handleCollect} disabled={collecting} className="btn btn-primary" style={{ width: '100%', fontSize: 7, opacity: collecting ? 0.6 : 1 }}>
+            <button onClick={handleCollect} disabled={collecting} className="btn btn-primary" style={{ width: '100%', fontSize: 10, opacity: collecting ? 0.6 : 1 }}>
               {collecting ? '...' : t.quests.collect}
             </button>
           )}
@@ -193,7 +202,7 @@ export default function QuestPanel() {
                 onClick={gemSpeedupQuest}
                 disabled={!canSkip}
                 style={{
-                  width: '100%', fontSize: 7, padding: '7px',
+                  width: '100%', fontSize: 10, padding: '7px',
                   background: canSkip ? 'rgba(0,229,255,0.1)' : 'rgba(0,0,0,0.3)',
                   border: `1px solid ${canSkip ? 'rgba(0,229,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
                   color: canSkip ? '#00e5ff' : 'var(--text-dim)',
@@ -208,14 +217,14 @@ export default function QuestPanel() {
           })()}
 
           {!canCollect && !confirmAbandon && (
-            <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, marginTop: 4, opacity: 0.7 }}>
+            <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, marginTop: 4, opacity: 0.7 }}>
               {t.quests.cancel}
             </button>
           )}
           {!canCollect && confirmAbandon && (
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancelConfirm}</button>
-              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancel}</button>
+              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancelConfirm}</button>
+              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancel}</button>
             </div>
           )}
         </div>
@@ -239,8 +248,8 @@ export default function QuestPanel() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <img src={logoSrc} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(255,45,120,0.5))' }} />
                 <div>
-                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{questDisplayName}</p>
-                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{base.description}</p>
+                  <p style={{ ...ORB, fontSize: 10, color: 'var(--text-bright)', marginBottom: 2 }}>{isEn ? questDisplayNameEn : questDisplayName}</p>
+                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? (base.descEn ?? base.description) : base.description}</p>
                 </div>
               </div>
 
@@ -260,18 +269,18 @@ export default function QuestPanel() {
                     }}>
                       <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
-                        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
+                        <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
+                        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
                         <div style={{ display: 'flex', gap: 12 }}>
-                          <span style={{ ...ORB, fontSize: 8, color: '#4488ff' }}>+{xp} XP</span>
-                          <span style={{ ...ORB, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
-                          <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{xp} XP</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#c8a020' }}>+{gold}🪙</span>
+                          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
                         </div>
                       </div>
                       <button
-                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName } as Quest)}
+                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName, nameEn: questDisplayNameEn } as Quest)}
                         className="btn btn-primary"
-                        style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
+                        style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
                         {t.quests.start}
                       </button>

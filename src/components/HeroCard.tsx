@@ -11,9 +11,7 @@ import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { MONO, ORB } from '../utils/styles';
 
 function StatBox({ icon, value, label, color }: {
   icon: string; value: number | string; label: string; color: string; glow?: string;
@@ -29,7 +27,7 @@ function StatBox({ icon, value, label, color }: {
     }}>
       <span style={{ fontSize: 10, marginBottom: 2 }}>{icon}</span>
       <span style={{ ...ORB, fontSize: 14, color, textShadow: `0 0 10px ${color}` }}>{value}</span>
-      <span style={{ ...MONO, fontSize: 9, color: `${color}99`, marginTop: 1 }}>{label}</span>
+      <span style={{ ...MONO, fontSize: 10, color: `${color}99`, marginTop: 1 }}>{label}</span>
     </div>
   );
 }
@@ -67,6 +65,9 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
   return (
     <div
       onClick={item ? onClick : undefined}
+      role={item ? 'button' : undefined}
+      tabIndex={item ? 0 : undefined}
+      onKeyDown={item ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); } : undefined}
       style={{
         width: size, height: size, flexShrink: 0,
         background: selected ? `${color}22` : item ? `${color}10` : 'rgba(0,0,0,0.35)',
@@ -82,7 +83,7 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
         : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
       }
       <span style={{
-        ...MONO, fontSize: 7, color: item ? color : 'rgba(100,116,139,0.35)',
+        ...MONO, fontSize: 10, color: item ? color : 'rgba(100,116,139,0.35)',
         whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: size - 4, textAlign: 'center',
       }}>
         {label}
@@ -121,17 +122,17 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 3 }}>{getItemName(item, lang)}</p>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
+            <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
               {rarityLabel[item.rarity]}
             </span>
             {item.ranged && (
-              <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
-                🔫 DYST
+              <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
+                🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
               </span>
             )}
           </div>
         </div>
-        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}>✕</button>
+        <button aria-label="Close" onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}>✕</button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
@@ -143,7 +144,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? '🔮 Obrażenia mag.' : t.equipment.atk}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? (lang === 'en' ? '🔮 Magic Dmg.' : '🔮 Obrażenia mag.') : t.equipment.atk}</span>
             <span style={{ ...ORB, fontSize: 10, color: item.magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
@@ -154,16 +155,16 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Brak bonusów</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No bonuses' : 'Brak bonusów'}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Min. poz. {item.level}</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</span>
         <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>{item.goldValue}🪙</span>
       </div>
 
-      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '6px' }}>
+      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '6px' }}>
         {t.equipment.unequip}
       </button>
     </div>
@@ -207,7 +208,7 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest, gemSpeedupRest, gems }
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 20, filter: 'drop-shadow(0 0 6px #ff6600)' }}>🔥</span>
         <div style={{ flex: 1 }}>
-          <p style={{ ...ORB, fontSize: 9, color: '#00f5ff', textShadow: '0 0 10px #00f5ff', marginBottom: 3 }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#00f5ff', textShadow: '0 0 10px #00f5ff', marginBottom: 3 }}>
             {t.hero.restingActive(`${mins}:${secs.toString().padStart(2, '0')}`)}
           </p>
           <p style={{ ...MONO, fontSize: 11, color: '#00ff88' }}>
@@ -215,14 +216,14 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest, gemSpeedupRest, gems }
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-          <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px' }}>
+          <button onClick={cancelRest} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>
             {t.hero.restStop}
           </button>
           <button
             onClick={gemSpeedupRest}
             disabled={!canSkip}
             style={{
-              ...MONO, fontSize: 8, padding: '4px 8px',
+              ...MONO, fontSize: 10, padding: '4px 8px',
               background: canSkip ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
               border: `1px solid ${canSkip ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
               color: canSkip ? '#00e5ff' : 'var(--text-dim)',
@@ -273,8 +274,8 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.hero.restTitle}</p>
-        <p style={{ ...ORB, fontSize: 9, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>{t.hero.restPreview(healPreview, clamped)}</p>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restTitle}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>{t.hero.restPreview(healPreview, clamped)}</p>
       </div>
       <input type="range" min={1} max={maxMinutes} value={clamped}
         onChange={e => setMinutes(Number(e.target.value))} disabled={inCombat} />
@@ -282,7 +283,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restRate(hpPerMin)}</span>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restMax(maxMinutes)}</span>
       </div>
-      <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
+      <button onClick={() => onRest(clamped)} disabled={inCombat} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '8px' }}>
         {t.hero.restStart}
       </button>
     </div>
@@ -323,12 +324,12 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 20 }}>🙏</span>
         <div style={{ flex: 1 }}>
-          <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
             {t.hero.beggingActive(timeStr)}
           </p>
           <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>{t.hero.beggingProgress(earnedNow, reward)}</p>
         </div>
-        <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 8, padding: '4px 8px', flexShrink: 0 }}>
+        <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px', flexShrink: 0 }}>
           {t.hero.restStop}
         </button>
       </div>
@@ -346,10 +347,10 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
       boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
-      <p style={{ ...ORB, fontSize: 9, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
+      <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
         {t.hero.beggingDoneMsg(reward)}
       </p>
-      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 8, padding: '8px' }}>
+      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 10, padding: '8px' }}>
         {t.hero.beggingPickup}
       </button>
     </div>
@@ -376,8 +377,8 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.hero.beggingTitle}</p>
-        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{t.hero.beggingHours(hours)}</p>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingTitle}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{t.hero.beggingHours(hours)}</p>
       </div>
       <input type="range" min={1} max={10} value={hours}
         onChange={e => setHours(Number(e.target.value))} disabled={inCombat} />
@@ -386,7 +387,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMax}</span>
       </div>
       <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{
-        width: '100%', fontSize: 8, padding: '8px',
+        width: '100%', fontSize: 10, padding: '8px',
         borderColor: 'rgba(157,78,221,0.4)', color: '#9d4edd', textShadow: '0 0 6px #9d4edd',
       }}>
         {t.hero.beggingStartBtn}
@@ -397,6 +398,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
 
 export default function HeroCard() {
   const t              = useT();
+  const lang           = useLangStore(s => s.lang);
   const hero           = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
@@ -446,8 +448,8 @@ export default function HeroCard() {
   const hasQuest    = activeQuest !== null;
   const inDungeon   = currentDungeon !== null || inCombat;
 
-  const restBlockReason    = isBegging ? 'postać zbiera złom' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
-  const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
+  const restBlockReason    = isBegging ? (lang === 'en' ? 'character is scavenging' : 'postać zbiera złom') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
+  const beggingBlockReason = isResting ? (lang === 'en' ? 'character is resting' : 'postać odpoczywa') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
 
   const displayHp  = hero.hp + earnedRestHp;
   const hpPct      = (displayHp / hero.maxHp) * 100;
@@ -539,7 +541,7 @@ export default function HeroCard() {
         <button onClick={() => setEditingAppearance(true)} style={{
           background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.2)',
           color: 'rgba(255,45,120,0.7)', cursor: 'pointer', width: '100%',
-          padding: '5px 0', ...MONO, fontSize: 9,
+          padding: '5px 0', ...MONO, fontSize: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
         }}>
           ✏ {t.hero.appearance}
@@ -573,7 +575,7 @@ export default function HeroCard() {
                   onClick={gemHeal}
                   disabled={hero.gems < 30}
                   style={{
-                    ...MONO, fontSize: 8, padding: '1px 5px',
+                    ...MONO, fontSize: 10, padding: '1px 5px',
                     background: hero.gems >= 30 ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
                     border: `1px solid ${hero.gems >= 30 ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
                     color: hero.gems >= 30 ? '#00e5ff' : 'var(--text-dim)',
@@ -619,7 +621,7 @@ export default function HeroCard() {
 
       {/* DZIENNY LIMIT */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>{t.hero.dailyLimit}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>{t.hero.dailyLimit}</p>
         {[
           { label: t.hero.dungeons, cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
           { label: t.hero.quests,   cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
@@ -627,7 +629,7 @@ export default function HeroCard() {
           <div key={label}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{label}</span>
-              <span style={{ ...ORB, fontSize: 9, color, textShadow: `0 0 6px ${color}` }}>{cur}/{max}</span>
+              <span style={{ ...ORB, fontSize: 10, color, textShadow: `0 0 6px ${color}` }}>{cur}/{max}</span>
             </div>
             <NeonBar pct={pct} color={color} height={8} />
           </div>
@@ -636,7 +638,7 @@ export default function HeroCard() {
 
       {/* STATYSTYKI */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>{t.hero.statsTitle}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>{t.hero.statsTitle}</p>
         {([
           { attr: 'vitality',       icon: '♥',  name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
           { attr: 'strength',       icon: '💪', name: t.hero.statStrength,   desc: t.hero.statStrDesc,    note: t.hero.statStrNote,    color: '#ff2d78' },
@@ -662,7 +664,7 @@ export default function HeroCard() {
                   )}
                 </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
-                <p style={{ ...MONO, fontSize: 9, color, opacity: 0.6, marginTop: 1 }}>{note}</p>
+                <p style={{ ...MONO, fontSize: 10, color, opacity: 0.6, marginTop: 1 }}>{note}</p>
               </div>
               <span style={{ ...ORB, fontSize: 13, color, textShadow: `0 0 8px ${color}`, minWidth: 28, textAlign: 'right' }}>{base + eq}</span>
               {eq > 0 && <span style={{ ...MONO, fontSize: 10, color: '#00ff88', minWidth: 26 }}>+{eq}♦</span>}
@@ -670,7 +672,7 @@ export default function HeroCard() {
                 onClick={() => upgradeAttribute(attr)}
                 disabled={!canAfford}
                 className="btn btn-primary"
-                style={{ fontSize: 7, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
+                style={{ fontSize: 10, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
               >
                 🪙{cost}
               </button>

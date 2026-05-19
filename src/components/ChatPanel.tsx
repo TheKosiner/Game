@@ -5,9 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { portraitSrc } from '../data/portraits';
-
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+import { PX, MONO } from '../utils/styles';
 
 interface ChatMessage {
   id: string;
@@ -121,7 +119,7 @@ export default function ChatPanel() {
                   width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                   background: isOwn ? 'rgba(255,45,120,0.3)' : 'rgba(0,200,255,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 9, color: isOwn ? '#ff2d78' : '#00c8ff',
+                  fontSize: 10, color: isOwn ? '#ff2d78' : '#00c8ff',
                   border: `1px solid ${isOwn ? 'rgba(255,45,120,0.4)' : 'rgba(0,200,255,0.3)'}`,
                   fontFamily: "'Share Tech Mono', monospace",
                 }}>
@@ -141,7 +139,7 @@ export default function ChatPanel() {
                   {msg.text}
                 </span>
               </div>
-              <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
                 {timeAgo(msg.createdAt)}
               </span>
             </div>
@@ -152,7 +150,7 @@ export default function ChatPanel() {
 
       {/* Rate limit message */}
       {rateLimitMsg && (
-        <p style={{ ...MONO, fontSize: 9, color: '#ff2d78', textAlign: 'center' }}>{rateLimitMsg}</p>
+        <p style={{ ...MONO, fontSize: 10, color: '#ff2d78', textAlign: 'center' }}>{rateLimitMsg}</p>
       )}
 
       {/* Input */}
@@ -179,7 +177,7 @@ export default function ChatPanel() {
             onClick={handleSend}
             disabled={sending || !text.trim()}
             className="btn btn-primary"
-            style={{ fontSize: 6, padding: '8px 12px', flexShrink: 0, opacity: !text.trim() ? 0.5 : 1 }}
+            style={{ fontSize: 10, padding: '8px 12px', flexShrink: 0, opacity: !text.trim() ? 0.5 : 1 }}
           >
             {t.chat.send}
           </button>

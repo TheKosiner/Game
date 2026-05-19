@@ -120,7 +120,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
               </span>
               <span style={{
                 fontFamily: "'Orbitron', monospace",
-                fontSize: '8px',
+                fontSize: '11px',
                 fontWeight: isActive ? 700 : 400,
                 letterSpacing: '0.05em',
                 color,

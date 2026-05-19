@@ -4,11 +4,9 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 
 import logoImg from '../assets/logo.png';
+import { PX, MONO } from '../utils/styles';
 
 type Mode = 'login' | 'register' | 'reset';
-
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -17,7 +15,7 @@ const inputStyle: React.CSSProperties = {
   padding: '8px 10px',
   color: '#e2e8f0',
   fontFamily: "'Press Start 2P', monospace",
-  fontSize: 8,
+  fontSize: 10,
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -73,26 +71,26 @@ function VerificationScreen() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#94a3b8', lineHeight: 1.6 }}>
               {t.auth.verifyStep1}
             </p>
-            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#94a3b8', lineHeight: 1.6 }}>
               {t.auth.verifyStep2}
             </p>
-            <p style={{ ...MONO, fontSize: 9, color: '#f59e0b', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', lineHeight: 1.6 }}>
               {t.auth.verifySpam}
             </p>
           </div>
 
           {error && (
             <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-              <p style={{ color: '#f87171', ...MONO, fontSize: 9 }}>⚠ {error}</p>
+              <p style={{ color: '#f87171', ...MONO, fontSize: 10 }}>⚠ {error}</p>
             </div>
           )}
 
           {sent && (
             <div style={{ background: 'rgba(34,197,94,0.08)', border: '2px solid rgba(34,197,94,0.3)', padding: '6px 8px' }}>
-              <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>{t.auth.verifyResentOk}</p>
+              <p style={{ color: '#4ade80', ...MONO, fontSize: 10 }}>{t.auth.verifyResentOk}</p>
             </div>
           )}
 
@@ -141,7 +139,7 @@ function LangToggle() {
             border: `1px solid ${lang === l ? '#d97706' : '#334155'}`,
             color: lang === l ? '#fbbf24' : '#475569',
             fontFamily: "'Press Start 2P', monospace",
-            fontSize: 7,
+            fontSize: 10,
             padding: '4px 8px',
             cursor: 'pointer',
           }}
@@ -207,7 +205,7 @@ export default function AuthScreen() {
             filter: 'drop-shadow(0 0 20px rgba(140,60,255,0.9)) drop-shadow(0 0 40px rgba(0,200,255,0.4))',
           }} />
           <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
-          <p style={{ color: '#475569', fontSize: 6 }}>{t.app.tagline}</p>
+          <p style={{ color: '#475569', fontSize: 10 }}>{t.app.tagline}</p>
         </div>
 
         {/* Mode tabs — hidden on reset screen */}
@@ -225,7 +223,7 @@ export default function AuthScreen() {
                   borderBottom: mode === m ? '2px solid #d97706' : '2px solid transparent',
                   color: mode === m ? '#fbbf24' : '#475569',
                   fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 7,
+                  fontSize: 10,
                   cursor: 'pointer',
                 }}
               >
@@ -262,8 +260,9 @@ export default function AuthScreen() {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {mode === 'register' && (
                 <div>
-                  <label style={labelStyle}>{t.auth.username}</label>
+                  <label htmlFor="auth-username" style={labelStyle}>{t.auth.username}</label>
                   <input
+                    id="auth-username"
                     type="text"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
@@ -276,8 +275,9 @@ export default function AuthScreen() {
               )}
 
               <div>
-                <label style={labelStyle}>{t.auth.email}</label>
+                <label htmlFor="auth-email" style={labelStyle}>{t.auth.email}</label>
                 <input
+                  id="auth-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -289,8 +289,9 @@ export default function AuthScreen() {
 
               {mode !== 'reset' && (
                 <div>
-                  <label style={labelStyle}>{t.auth.password}</label>
+                  <label htmlFor="auth-password" style={labelStyle}>{t.auth.password}</label>
                   <input
+                    id="auth-password"
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
@@ -302,20 +303,20 @@ export default function AuthScreen() {
               )}
 
               {mode === 'reset' && (
-                <p style={{ ...MONO, fontSize: 9, color: '#64748b', lineHeight: 1.5 }}>
+                <p style={{ ...MONO, fontSize: 10, color: '#64748b', lineHeight: 1.5 }}>
                   {t.auth.resetDesc}
                 </p>
               )}
 
               {mode === 'register' && (
-                <p style={{ ...MONO, fontSize: 8, color: '#475569', lineHeight: 1.5 }}>
+                <p style={{ ...MONO, fontSize: 10, color: '#475569', lineHeight: 1.5 }}>
                   {t.auth.registerNote}
                 </p>
               )}
 
               {error && (
                 <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-                  <p style={{ color: '#f87171', fontSize: 7 }}>⚠ {error}</p>
+                  <p style={{ color: '#f87171', fontSize: 10 }}>⚠ {error}</p>
                 </div>
               )}
 
@@ -323,7 +324,7 @@ export default function AuthScreen() {
                 type="submit"
                 disabled={submitting}
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '10px', fontSize: 8 }}
+                style={{ width: '100%', padding: '10px', fontSize: 10 }}
               >
                 {submitting ? '...' : mode === 'login' ? t.auth.loginBtn : mode === 'register' ? t.auth.registerBtn : t.auth.resetBtn}
               </button>
@@ -332,7 +333,7 @@ export default function AuthScreen() {
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer', padding: '4px' }}
+                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer', padding: '4px' }}
                 >
                   {t.auth.resetBack}
                 </button>
@@ -342,11 +343,11 @@ export default function AuthScreen() {
 
           {mode !== 'reset' && !resetSent && (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <p style={{ color: '#334155', fontSize: 6, textAlign: 'center' }}>
+              <p style={{ color: '#334155', fontSize: 10, textAlign: 'center' }}>
                 {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}{' '}
                 <button
                   onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                  style={{ background: 'none', border: 'none', color: '#d97706', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#d97706', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer' }}
                 >
                   {mode === 'login' ? t.auth.signUpLink : t.auth.signInLink}
                 </button>
@@ -354,7 +355,7 @@ export default function AuthScreen() {
               {mode === 'login' && (
                 <button
                   onClick={() => switchMode('reset')}
-                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer' }}
                 >
                   {t.auth.forgotPassword}
                 </button>

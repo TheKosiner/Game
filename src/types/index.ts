@@ -112,6 +112,7 @@ export interface ChallengeBoss {
   goldReward: number;
   minLevel: number;
   description: string;
+  descriptionEn?: string;
 }
 
 export interface ChallengeResult {
@@ -151,7 +152,9 @@ export interface CombatLog {
 export interface Quest {
   id: string;
   name: string;
+  nameEn?: string;
   description: string;
+  descEn?: string;
   durationMs: number;
   xpReward: number;
   goldReward: number;
