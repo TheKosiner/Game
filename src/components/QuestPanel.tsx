@@ -9,10 +9,7 @@ import { useLangStore } from '../store/langStore';
 import { useAuthStore } from '../store/authStore';
 import { collectQuestServer } from '../lib/serverActions';
 import { syncToCloud } from '../lib/cloudSync';
-
-const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { PX, MONO, ORB } from '../utils/styles';
 
 const VARIANTS_BASE = [
   {
@@ -192,7 +189,7 @@ export default function QuestPanel() {
           </div>
 
           {canCollect && (
-            <button onClick={handleCollect} disabled={collecting} className="btn btn-primary" style={{ width: '100%', fontSize: 7, opacity: collecting ? 0.6 : 1 }}>
+            <button onClick={handleCollect} disabled={collecting} className="btn btn-primary" style={{ width: '100%', fontSize: 10, opacity: collecting ? 0.6 : 1 }}>
               {collecting ? '...' : t.quests.collect}
             </button>
           )}
@@ -205,7 +202,7 @@ export default function QuestPanel() {
                 onClick={gemSpeedupQuest}
                 disabled={!canSkip}
                 style={{
-                  width: '100%', fontSize: 7, padding: '7px',
+                  width: '100%', fontSize: 10, padding: '7px',
                   background: canSkip ? 'rgba(0,229,255,0.1)' : 'rgba(0,0,0,0.3)',
                   border: `1px solid ${canSkip ? 'rgba(0,229,255,0.35)' : 'rgba(255,255,255,0.08)'}`,
                   color: canSkip ? '#00e5ff' : 'var(--text-dim)',
@@ -220,14 +217,14 @@ export default function QuestPanel() {
           })()}
 
           {!canCollect && !confirmAbandon && (
-            <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 6, marginTop: 4, opacity: 0.7 }}>
+            <button onClick={() => setConfirmAbandon(true)} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, marginTop: 4, opacity: 0.7 }}>
               {t.quests.cancel}
             </button>
           )}
           {!canCollect && confirmAbandon && (
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancelConfirm}</button>
-              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 6 }}>{t.quests.cancel}</button>
+              <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancelConfirm}</button>
+              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancel}</button>
             </div>
           )}
         </div>
@@ -283,7 +280,7 @@ export default function QuestPanel() {
                       <button
                         onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName, nameEn: questDisplayNameEn } as Quest)}
                         className="btn btn-primary"
-                        style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
+                        style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >
                         {t.quests.start}
                       </button>

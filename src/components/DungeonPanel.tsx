@@ -6,10 +6,7 @@ import type { Dungeon } from '../types';
 import EnemyIcon from './EnemyIcon';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-
-const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { PX, MONO, ORB } from '../utils/styles';
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
 type DungeonMode = 'xp' | 'balanced' | 'loot';
@@ -266,7 +263,7 @@ function EnemyBattleCard() {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
           <EnemyIcon id={enemy.id} size={64} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <p style={{ ...PX(8), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
+            <p style={{ ...PX(10), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
             <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {enemy.level}</p>
             <p style={{ ...PX(6), color: '#903040' }}>{enemy.hp} / {enemy.maxHp} HP</p>
           </div>
@@ -291,9 +288,9 @@ function EnemyBattleCard() {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 7 }}>{t.dungeon.attack}</button>
-        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 7 }}>{t.dungeon.quickFight}</button>
-        <button onClick={exitDungeon} className="btn btn-danger" style={{ padding: '8px 14px', fontSize: 8 }}>🚪</button>
+        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.attack}</button>
+        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.quickFight}</button>
+        <button onClick={exitDungeon} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}>🚪</button>
       </div>
 
       <div className="combat-log">
@@ -479,7 +476,7 @@ function DungeonList() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.dungeon.title}</p>
+        <p style={{ ...PX(10), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.dungeon.title}</p>
         <p style={{ ...PX(5), color: limitReached ? 'var(--hp-bright)' : 'var(--text-dim)' }}>
           {hero.dungeonRunsToday}/{MAX_DAILY_DUNGEONS} {t.dungeon.today}
         </p>
@@ -612,6 +609,9 @@ function DungeonList() {
             return (
               <g key={d.id}
                 onClick={() => setSelectedDungeon(d)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.dispatchEvent(new MouseEvent('click', { bubbles: true })); }}
                 style={{ cursor: 'pointer' }}
               >
                 {/* outer glow ring */}
@@ -718,7 +718,7 @@ function DungeonList() {
                     transition: 'border-color 0.15s, box-shadow 0.15s',
                   }}>
                     <span style={{ fontSize: 14 }}>{d.badge}</span>
-                    <span style={{ ...ORB, fontSize: 6, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
+                    <span style={{ ...ORB, fontSize: 10, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
                   </button>
                 );
               })}
@@ -736,7 +736,7 @@ function DungeonList() {
             }}>
               <span style={{ fontSize: 20 }}>🔒</span>
               <div>
-                <p style={{ ...ORB, fontSize: 7, color: '#8888aa', marginBottom: 3 }}>{isEn ? 'LOCATION LOCKED' : 'LOKACJA ZABLOKOWANA'}</p>
+                <p style={{ ...ORB, fontSize: 10, color: '#8888aa', marginBottom: 3 }}>{isEn ? 'LOCATION LOCKED' : 'LOKACJA ZABLOKOWANA'}</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
                   {isEn ? <>Complete <span style={{ color: '#ffc83a' }}>{(ALL_DUNGEONS[chosenIdx - 1] as typeof ALL_DUNGEONS[0] & { nameEn?: string }).nameEn ?? ALL_DUNGEONS[chosenIdx - 1].name}</span> on Normal or Hard</>
                     : <>Ukończ <span style={{ color: '#ffc83a' }}>{ALL_DUNGEONS[chosenIdx - 1].name}</span> na poziomie Normal lub Hard</>}
@@ -763,7 +763,7 @@ function DungeonList() {
                   onClick={() => enterDungeon(chosen, v.key, difficulty)}
                   disabled={blocked}
                   className="btn btn-primary"
-                  style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
+                  style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
                 >
                   {!chosenIsUnlocked ? '🔒' : isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
                 </button>
@@ -800,10 +800,10 @@ export default function DungeonPanel() {
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 11, color: 'var(--hp-bright)', textShadow: '0 0 16px #ff000066', marginBottom: 10 }}>
             {t.dungeon.defeated}
           </p>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)', marginBottom: 6 }}>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--text-dim)', marginBottom: 6 }}>
             {defeatedAtDungeon}
           </p>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: '#5070a0', lineHeight: 1.8 }}>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: '#5070a0', lineHeight: 1.8 }}>
             {t.dungeon.mustRest}<br />{t.dungeon.recoverLife}
           </p>
         </div>
@@ -812,7 +812,7 @@ export default function DungeonPanel() {
             <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
           ))}
         </div>
-        <button onClick={clearDefeat} className="btn btn-secondary" style={{ width: '100%', fontSize: 7 }}>
+        <button onClick={clearDefeat} className="btn btn-secondary" style={{ width: '100%', fontSize: 10 }}>
           {t.dungeon.backToCity}
         </button>
       </div>
@@ -827,7 +827,7 @@ export default function DungeonPanel() {
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
             {t.dungeon.opComplete}
           </p>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 5, color: 'var(--text-dim)' }}>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--text-dim)' }}>
             {currentDungeon.name} — {currentFloor - 1} {t.dungeon.floors}
           </p>
         </div>
@@ -836,7 +836,7 @@ export default function DungeonPanel() {
             <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
           ))}
         </div>
-        <button onClick={exitDungeon} className="btn btn-primary" style={{ width: '100%', fontSize: 7 }}>
+        <button onClick={exitDungeon} className="btn btn-primary" style={{ width: '100%', fontSize: 10 }}>
           {t.dungeon.backToCity2}
         </button>
       </div>

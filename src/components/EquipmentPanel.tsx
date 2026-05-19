@@ -5,6 +5,7 @@ import type { Item, ItemSlot } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
+import { MONO, ORB } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -15,8 +16,6 @@ const STAT_NAMES: Record<string, string> = {
   intelligence: 'Celność', vitality: 'Żywotność',
   magic: 'Magia', magicResistance: 'Odp. mag.',
 };
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
 function primaryStat(item: Item): string | null {
   const entries = Object.entries(item.stats).filter(([, v]) => (v as number) > 0);
@@ -76,7 +75,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             </span>
           )}
         </div>
-        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
+        <button aria-label="Close" onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
@@ -109,7 +108,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{item.goldValue}🪙</p>
       </div>
 
-      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 8, padding: '7px' }}>
+      <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '7px' }}>
         {t.equipment.unequip}
       </button>
     </div>
@@ -128,20 +127,25 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
   const ps = item ? primaryStat(item) : null;
 
   return (
-    <div onClick={item ? onSelect : undefined} style={{
-      background: item
-        ? `linear-gradient(135deg, rgba(0,0,0,0.7), ${rc}12)`
-        : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${item ? rc + '55' : 'rgba(255,255,255,0.1)'}`,
-      borderRadius: 2,
-      padding: '10px 14px',
-      display: 'flex', alignItems: 'center', gap: 14,
-      cursor: item ? 'pointer' : 'default',
-      minHeight: 80,
-      boxShadow: item && (item.rarity === 'legendary' || item.rarity === 'epic')
-        ? `0 0 20px ${rc}28, inset 0 0 12px ${rc}08` : 'none',
-      transition: 'border-color 0.15s',
-    }}>
+    <div
+      onClick={item ? onSelect : undefined}
+      role={item ? 'button' : undefined}
+      tabIndex={item ? 0 : undefined}
+      onKeyDown={item ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); } : undefined}
+      style={{
+        background: item
+          ? `linear-gradient(135deg, rgba(0,0,0,0.7), ${rc}12)`
+          : 'rgba(255,255,255,0.03)',
+        border: `1px solid ${item ? rc + '55' : 'rgba(255,255,255,0.1)'}`,
+        borderRadius: 2,
+        padding: '10px 14px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        cursor: item ? 'pointer' : 'default',
+        minHeight: 80,
+        boxShadow: item && (item.rarity === 'legendary' || item.rarity === 'epic')
+          ? `0 0 20px ${rc}28, inset 0 0 12px ${rc}08` : 'none',
+        transition: 'border-color 0.15s',
+      }}>
       {item ? (
         <>
           <div style={{
@@ -194,20 +198,25 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
   const bonus = item ? mainBonus(item, lang) : null;
 
   return (
-    <div onClick={item ? onSelect : undefined} style={{
-      background: item
-        ? `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}08)`
-        : 'rgba(255,255,255,0.03)',
-      border: `1px solid ${item ? rc + '44' : 'rgba(255,255,255,0.08)'}`,
-      borderRadius: 2,
-      padding: '7px 9px',
-      display: 'flex', alignItems: 'center', gap: 8,
-      cursor: item ? 'pointer' : 'default',
-      minHeight: 58,
-      boxShadow: item && (item.rarity === 'legendary' || item.rarity === 'epic')
-        ? `0 0 12px ${rc}20` : 'none',
-      transition: 'border-color 0.15s',
-    }}>
+    <div
+      onClick={item ? onSelect : undefined}
+      role={item ? 'button' : undefined}
+      tabIndex={item ? 0 : undefined}
+      onKeyDown={item ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); } : undefined}
+      style={{
+        background: item
+          ? `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}08)`
+          : 'rgba(255,255,255,0.03)',
+        border: `1px solid ${item ? rc + '44' : 'rgba(255,255,255,0.08)'}`,
+        borderRadius: 2,
+        padding: '7px 9px',
+        display: 'flex', alignItems: 'center', gap: 8,
+        cursor: item ? 'pointer' : 'default',
+        minHeight: 58,
+        boxShadow: item && (item.rarity === 'legendary' || item.rarity === 'epic')
+          ? `0 0 12px ${rc}20` : 'none',
+        transition: 'border-color 0.15s',
+      }}>
       {item ? (
         <>
           <div style={{

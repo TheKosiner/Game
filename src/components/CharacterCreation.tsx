@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 
 import { PORTRAIT_LIST } from '../data/portraits';
+import { PX } from '../utils/styles';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');

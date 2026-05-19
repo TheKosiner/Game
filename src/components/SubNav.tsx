@@ -1,7 +1,6 @@
 import { useT } from '../hooks/useT';
 import type { PlaySub, SocialSub, ShopSub } from './BottomNav';
-
-const ORB = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { ORB } from '../utils/styles';
 
 interface SubNavProps<T extends string> {
   tabs: { id: T; label: string; badge?: number }[];

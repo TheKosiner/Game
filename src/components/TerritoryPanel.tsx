@@ -12,8 +12,7 @@ import { useLangStore } from '../store/langStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+import { PX, MONO } from '../utils/styles';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SIEGE_DURATION_MS = 5 * 60 * 60 * 1000; // 5h siege window
 
@@ -385,7 +384,7 @@ function SiegeCombat({
               ? (isEn ? 'Zone controlled by your guild!' : 'Strefa kontrolowana przez waszą gildię!')
               : (isEn ? `Dealt ${state.damageDealt} dmg. Return with your guild!` : `Zadałeś ${state.damageDealt} obrażeń. Wróć z resztą gildii!`)}
           </p>
-          <button onClick={onRetreat} className="btn btn-primary" style={{ marginTop: 10, fontSize: 6, padding: '8px 16px' }}>
+          <button onClick={onRetreat} className="btn btn-primary" style={{ marginTop: 10, fontSize: 10, padding: '8px 16px' }}>
             {isEn ? 'Back to map' : 'Powrót do mapy'}
           </button>
         </div>
@@ -400,7 +399,7 @@ function SiegeCombat({
           <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
             ⚡ {isEn ? 'Quick fight' : 'Szybka walka'}
           </button>
-          <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 6, padding: '10px 14px' }}>
+          <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 10, padding: '10px 14px' }}>
             {isEn ? 'Retreat' : 'Odwrót'}
           </button>
         </div>
@@ -955,7 +954,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
               <button
                 onClick={() => handleAttack(def, state)}
                 className={mySiegeActive ? 'btn btn-primary' : 'btn btn-danger'}
-                style={{ width: '100%', fontSize: 5, padding: '7px' }}
+                style={{ width: '100%', fontSize: 10, padding: '7px' }}
               >
                 {mySiegeActive
                   ? (isEn ? `⚔ Continue siege (${state.siegeCurrentHp} HP left)` : `⚔ Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`)
@@ -970,7 +969,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 onClick={() => handleClaim(def)}
                 disabled={claimingId === def.id}
                 className="btn btn-primary"
-                style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
+                style={{ width: '100%', fontSize: 10, padding: '7px', marginTop: 4 }}
               >
                 {claimingId === def.id
                   ? (isEn ? '⏳ Claiming...' : '⏳ Odbieram...')
@@ -989,7 +988,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 onClick={() => handleAbandon(def.id)}
                 disabled={abandoning === def.id}
                 className="btn btn-secondary"
-                style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
+                style={{ width: '100%', fontSize: 10, padding: '7px', marginTop: 4 }}
               >
                 🏳 {isEn ? 'Abandon zone' : 'Porzuć strefę'}
               </button>

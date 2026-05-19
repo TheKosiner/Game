@@ -11,9 +11,7 @@ import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { MONO, ORB } from '../utils/styles';
 
 function StatBox({ icon, value, label, color }: {
   icon: string; value: number | string; label: string; color: string; glow?: string;
@@ -67,6 +65,9 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
   return (
     <div
       onClick={item ? onClick : undefined}
+      role={item ? 'button' : undefined}
+      tabIndex={item ? 0 : undefined}
+      onKeyDown={item ? (e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); } : undefined}
       style={{
         width: size, height: size, flexShrink: 0,
         background: selected ? `${color}22` : item ? `${color}10` : 'rgba(0,0,0,0.35)',
@@ -82,7 +83,7 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
         : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
       }
       <span style={{
-        ...MONO, fontSize: 7, color: item ? color : 'rgba(100,116,139,0.35)',
+        ...MONO, fontSize: 10, color: item ? color : 'rgba(100,116,139,0.35)',
         whiteSpace: 'nowrap', overflow: 'hidden', maxWidth: size - 4, textAlign: 'center',
       }}>
         {label}
@@ -131,7 +132,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             )}
           </div>
         </div>
-        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}>✕</button>
+        <button aria-label="Close" onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', flexShrink: 0 }}>✕</button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 8 }}>
@@ -671,7 +672,7 @@ export default function HeroCard() {
                 onClick={() => upgradeAttribute(attr)}
                 disabled={!canAfford}
                 className="btn btn-primary"
-                style={{ fontSize: 7, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
+                style={{ fontSize: 10, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
               >
                 🪙{cost}
               </button>

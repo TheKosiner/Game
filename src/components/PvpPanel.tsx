@@ -8,9 +8,7 @@ import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 
-const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { PX, MONO, ORB } from '../utils/styles';
 const REROLL_COOLDOWN = 15 * 60 * 1000;
 
 // Module-level cache — survives tab navigation (component unmount/remount)
@@ -266,7 +264,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           <button
             onClick={() => { if (autoFight) onToggleAuto(); onExit(); }}
             className="btn btn-secondary"
-            style={{ flex: 1, fontSize: 7, padding: '10px 6px', color: 'var(--text-muted)' }}
+            style={{ flex: 1, fontSize: 10, padding: '10px 6px', color: 'var(--text-muted)' }}
           >
             {t.challenge.flee}
           </button>
@@ -359,11 +357,11 @@ function ArenaCard({ entry, canFight, onChallenge }: {
           {entry.heroName}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
-          <span style={{ ...ORB, fontSize: 7, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 5px' }}>
+          <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 5px' }}>
             {t.app.level(entry.level)}
           </span>
           {entry.guildTag && (
-            <span style={{ ...MONO, fontSize: 7, color: '#00cc66', background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.25)', padding: '2px 5px' }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.25)', padding: '2px 5px' }}>
               [{entry.guildTag}]
             </span>
           )}
@@ -378,21 +376,21 @@ function ArenaCard({ entry, canFight, onChallenge }: {
 
       <div style={{ background: 'rgba(180,140,255,0.07)', border: '1px solid rgba(180,140,255,0.25)', padding: '4px 8px', textAlign: 'center' }}>
         <p style={{ ...ORB, fontSize: 11, color: '#c084fc' }}>{rating}</p>
-        <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.pvp.rating}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.rating}</p>
       </div>
 
       <div style={{ display: 'flex', gap: 4 }}>
         <div style={{ flex: 1, background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.15)', padding: '3px 0', textAlign: 'center' }}>
           <p style={{ ...ORB, fontSize: 9, color: '#00ff88' }}>{wins}</p>
-          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.pvp.win}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.win}</p>
         </div>
         <div style={{ flex: 1, background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.15)', padding: '3px 0', textAlign: 'center' }}>
           <p style={{ ...ORB, fontSize: 9, color: '#ff2d78' }}>{losses}</p>
-          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.pvp.loss}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.loss}</p>
         </div>
         <div style={{ flex: 1, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)', padding: '3px 0', textAlign: 'center' }}>
           <p style={{ ...ORB, fontSize: 9, color: '#ffd700' }}>{winRate}%</p>
-          <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.pvp.winRate}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.winRate}</p>
         </div>
       </div>
 
@@ -400,7 +398,7 @@ function ArenaCard({ entry, canFight, onChallenge }: {
         onClick={() => onChallenge(entry)}
         disabled={!canFight}
         className={canFight ? 'btn btn-danger' : 'btn btn-secondary'}
-        style={{ width: '100%', fontSize: 7, padding: '9px 4px', marginTop: 'auto', opacity: canFight ? 1 : 0.5 }}
+        style={{ width: '100%', fontSize: 10, padding: '9px 4px', marginTop: 'auto', opacity: canFight ? 1 : 0.5 }}
       >
         {t.pvp.fight}
       </button>
@@ -472,7 +470,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.pvp.title}</p>
-        <button onClick={fetchAll} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>↻</button>
+        <button onClick={fetchAll} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>↻</button>
       </div>
 
       <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -522,7 +520,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
             onClick={reroll}
             disabled={!canReroll}
             className="btn btn-secondary"
-            style={{ width: '100%', fontSize: 6, padding: '7px', opacity: canReroll ? 1 : 0.5 }}
+            style={{ width: '100%', fontSize: 10, padding: '7px', opacity: canReroll ? 1 : 0.5 }}
           >
             {canReroll
               ? t.pvp.reroll

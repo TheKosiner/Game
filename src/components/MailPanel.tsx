@@ -9,8 +9,7 @@ import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+import { PX, MONO } from '../utils/styles';
 
 function timeAgo(ts: number): string {
   const d = Date.now() - ts;
@@ -62,7 +61,7 @@ function InviteCard({ invite, onAccept, onDecline }: {
           onClick={() => handle(onAccept)}
           disabled={busy}
           className="btn btn-primary"
-          style={{ flex: 1, fontSize: 6, padding: '6px' }}
+          style={{ flex: 1, fontSize: 10, padding: '6px' }}
         >
           {t.mail.acceptBtn}
         </button>
@@ -70,7 +69,7 @@ function InviteCard({ invite, onAccept, onDecline }: {
           onClick={() => handle(onDecline)}
           disabled={busy}
           className="btn btn-secondary"
-          style={{ flex: 1, fontSize: 6, padding: '6px' }}
+          style={{ flex: 1, fontSize: 10, padding: '6px' }}
         >
           {t.mail.declineBtn}
         </button>
@@ -105,7 +104,10 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
       boxShadow: msg.read ? 'none' : '0 0 12px rgba(0,200,255,0.06)',
     }}>
       <div
+        role="button"
+        tabIndex={0}
         onClick={toggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
         style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}
       >
         <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>
@@ -141,7 +143,7 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
               <button
                 onClick={e => { e.stopPropagation(); onReply(); }}
                 className="btn btn-primary"
-                style={{ fontSize: 6, padding: '4px 10px' }}
+                style={{ fontSize: 10, padding: '4px 10px' }}
               >
                 {t.mail.replyBtn}
               </button>
@@ -149,7 +151,7 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
             <button
               onClick={e => { e.stopPropagation(); onDelete(); }}
               className="btn btn-secondary"
-              style={{ fontSize: 6, padding: '4px 10px' }}
+              style={{ fontSize: 10, padding: '4px 10px' }}
             >
               {t.mail.deleteBtn}
             </button>
@@ -227,7 +229,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
               {recipient.heroName && <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>}
             </div>
-            <button onClick={() => { setRecipient(null); setSearch(''); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
+            <button onClick={() => { setRecipient(null); setSearch(''); }} aria-label="Clear recipient" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
         ) : (
           <div>
@@ -252,7 +254,10 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
                 {filtered.map(p => (
                   <div
                     key={p.uid}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => { setRecipient(p); setSearch(''); setFiltered([]); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                     style={{
                       padding: '8px 10px', cursor: 'pointer',
                       borderBottom: '1px solid var(--border-dark)',
@@ -390,7 +395,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
             </span>
           )}
         </div>
-        <button onClick={reload} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>⟳</button>
+        <button onClick={reload} aria-label="Refresh mail" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>⟳</button>
       </div>
 
       {/* Tabs */}
@@ -400,7 +405,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
             key={v}
             onClick={() => setView(v)}
             className={view === v ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ flex: 1, fontSize: 6, padding: '7px' }}
+            style={{ flex: 1, fontSize: 10, padding: '7px' }}
           >
             {v === 'inbox'
               ? `${t.mail.inboxTab}${totalCount > 0 ? ` (${totalCount})` : ''}`

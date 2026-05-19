@@ -11,9 +11,7 @@ import neonSlayerImg from '../assets/bosses/neon-slayer.png';
 import neuralPhantomImg from '../assets/bosses/neural-phantom.png';
 import ironWarlordImg from '../assets/bosses/iron-warlord.png';
 import quantumBerserkerImg from '../assets/bosses/quantum-berserker.png';
-
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { MONO, ORB } from '../utils/styles';
 
 function getPowerInfo(t: Translations): Record<ChallengePower, { label: string; color: string; emoji: string; desc: string }> {
   return {
@@ -1349,7 +1347,7 @@ function SelectView() {
             {boss!.powers.map(p => (
               <div key={p} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <PowerBadge power={p} />
-                <span style={{ ...MONO, fontSize: 6, color: 'var(--text-muted)' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>
                   {getPowerInfo(t)[p].desc}
                 </span>
               </div>

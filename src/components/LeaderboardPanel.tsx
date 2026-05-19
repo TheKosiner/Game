@@ -5,9 +5,7 @@ import { portraitSrc, resolvePortrait } from '../data/portraits';
 import { useT } from '../hooks/useT';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
+import { PX, MONO, ORB } from '../utils/styles';
 
 function StatBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
@@ -53,7 +51,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
           }
           <span style={{ ...ORB, fontSize: 8, color: 'var(--gold-bright)' }}>{t.leaderboard.profileTitle}</span>
         </div>
-        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
+        <button onClick={onClose} aria-label="Close" style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
       </div>
 
       {/* portrait + identity */}
@@ -150,7 +148,7 @@ export default function LeaderboardPanel() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.leaderboard.title}</p>
-        <button onClick={fetchLeaderboard} className="btn btn-secondary" style={{ fontSize: 5, padding: '4px 8px' }}>{t.leaderboard.refresh}</button>
+        <button onClick={fetchLeaderboard} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>{t.leaderboard.refresh}</button>
       </div>
 
       {myRank > 0 && (
@@ -183,7 +181,10 @@ export default function LeaderboardPanel() {
             return (
               <div
                 key={entry.uid}
+                role="button"
+                tabIndex={0}
                 onClick={() => selectEntry(entry, rank)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                 style={{
                   background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
                   border: `1px solid ${isSelected ? 'rgba(255,215,0,0.4)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,

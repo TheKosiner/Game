@@ -4,9 +4,7 @@ import { useT } from '../hooks/useT';
 import { PORTRAIT_LIST } from '../data/portraits';
 import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
-
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+import { MONO, ORB } from '../utils/styles';
 
 const GEM_PACKAGES = [
   { id: '100',  gems: 100,  price: '$0.99' },
@@ -62,7 +60,7 @@ export default function GemsPanel() {
           <span style={{ ...MONO, fontSize: 11, color: flashMsg.ok ? '#00e564' : '#ff2d78' }}>
             {flashMsg.text}
           </span>
-          <button onClick={() => setFlashMsg(null)} style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+          <button onClick={() => setFlashMsg(null)} aria-label="Dismiss message" style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14 }}>✕</button>
         </div>
       )}
 
@@ -208,7 +206,7 @@ export default function GemsPanel() {
                       useGameStore.getState().saveGame();
                     }}
                     className="btn btn-secondary"
-                    style={{ width: '100%', fontSize: 6, padding: '4px 0' }}
+                    style={{ width: '100%', fontSize: 10, padding: '4px 0' }}
                   >
                     {t.gems.portraitOwned}
                   </button>
@@ -217,7 +215,7 @@ export default function GemsPanel() {
                     onClick={() => gemBuyPortrait(p.index, p.gemPrice!)}
                     disabled={!canAfford}
                     className="btn btn-primary"
-                    style={{ width: '100%', fontSize: 6, padding: '4px 0', opacity: canAfford ? 1 : 0.4 }}
+                    style={{ width: '100%', fontSize: 10, padding: '4px 0', opacity: canAfford ? 1 : 0.4 }}
                   >
                     {t.gems.portraitBuy(p.gemPrice!)}
                   </button>

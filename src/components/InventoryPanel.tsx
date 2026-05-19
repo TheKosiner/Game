@@ -4,13 +4,12 @@ import type { Item } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
+import { MONO, ORB } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
 function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () => void; onSell: () => void; onUse?: () => void }) {
   const t    = useT();
@@ -47,11 +46,11 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-          <span style={{ ...MONO, fontSize: 7, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
             {slotLabel[item.slot] ?? item.slot.toUpperCase()}
           </span>
           <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{getItemName(item, lang)}</p>
-          <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
+          <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
             {rarityLabel[item.rarity]}
           </span>
         </div>
@@ -71,10 +70,10 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
         {item.slot === 'consumable'
-          ? <button onClick={onUse} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>{t.inventory.use}</button>
-          : <button onClick={onEquip} className="btn btn-primary" style={{ fontSize: 7, padding: '5px 8px' }}>{t.inventory.equip}</button>
+          ? <button onClick={onUse} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.use}</button>
+          : <button onClick={onEquip} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
         }
-        <button onClick={onSell} className="btn btn-secondary" style={{ fontSize: 7, padding: '5px 8px' }}>🪙{item.goldValue}</button>
+        <button onClick={onSell} className="btn btn-secondary" style={{ padding: '5px 8px' }}>🪙{item.goldValue}</button>
       </div>
     </div>
   );

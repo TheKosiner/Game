@@ -7,6 +7,7 @@ import type { Item, Stats } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
+import { PX, MONO, ORB } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -33,9 +34,6 @@ const RARITY_LABEL: Record<string, string> = {
 };
 
 
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
-const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 
 function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
   const [remaining, setRemaining] = useState(Math.max(0, cooldownEnd - Date.now()));
@@ -67,12 +65,12 @@ function StatDeltaRow({ label, oldVal, newVal }: { label: string; oldVal: number
   const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-      <span style={{ ...MONO, fontSize: 7, color: '#64748b', flex: 1, paddingLeft: 8, paddingTop: 3, paddingBottom: 3 }}>{label}</span>
-      <span style={{ ...ORB, fontSize: 7, color: '#94a3b8', width: 32, textAlign: 'right', paddingRight: 6 }}>{oldVal || '—'}</span>
+      <span style={{ ...MONO, fontSize: 10, color: '#64748b', flex: 1, paddingLeft: 8, paddingTop: 3, paddingBottom: 3 }}>{label}</span>
+      <span style={{ ...ORB, fontSize: 10, color: '#94a3b8', width: 32, textAlign: 'right', paddingRight: 6 }}>{oldVal || '—'}</span>
       <span style={{ ...ORB, fontSize: 8, color, width: 48, textAlign: 'center' }}>
         {delta !== 0 ? `${delta > 0 ? '+' : ''}${delta} ${arrow}` : '='}
       </span>
-      <span style={{ ...ORB, fontSize: 7, color, width: 32, textAlign: 'left', paddingLeft: 6 }}>{newVal || '—'}</span>
+      <span style={{ ...ORB, fontSize: 10, color, width: 32, textAlign: 'left', paddingLeft: 6 }}>{newVal || '—'}</span>
     </div>
   );
 }
@@ -112,17 +110,17 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
           <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareEquipped}</p>
           {equipped ? (
             <>
-              <p style={{ ...MONO, fontSize: 7, color: eqColor, marginBottom: 1 }}>{equipped.name}</p>
-              <p style={{ ...MONO, fontSize: 6, color: '#475569' }}>Poz. {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
+              <p style={{ ...MONO, fontSize: 10, color: eqColor, marginBottom: 1 }}>{equipped.name}</p>
+              <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>Poz. {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
             </>
           ) : (
-            <p style={{ ...MONO, fontSize: 7, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
+            <p style={{ ...MONO, fontSize: 10, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
           )}
         </div>
         <div style={{ flex: 1, padding: '7px 8px' }}>
           <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareShop}</p>
-          <p style={{ ...MONO, fontSize: 7, color: shopColor, marginBottom: 1 }}>{shopItem.name}</p>
-          <p style={{ ...MONO, fontSize: 6, color: '#475569' }}>Poz. {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
+          <p style={{ ...MONO, fontSize: 10, color: shopColor, marginBottom: 1 }}>{shopItem.name}</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>Poz. {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
         </div>
       </div>
 
@@ -203,7 +201,7 @@ export default function ShopPanel() {
             background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>{t.shop.title}</p>
-          <p style={{ color: '#475569', fontSize: 6 }}>{t.shop.subtitle}</p>
+          <p style={{ color: '#475569', fontSize: 10 }}>{t.shop.subtitle}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
@@ -217,7 +215,7 @@ export default function ShopPanel() {
             onClick={refreshShop}
             disabled={!canRefresh}
             className="btn btn-secondary"
-            style={{ fontSize: 6, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}
+            style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}
           >
             {t.shop.refresh}
           </button>
@@ -233,7 +231,7 @@ export default function ShopPanel() {
           padding: '6px 10px',
           textAlign: 'center',
         }}>
-          <p style={{ color: '#64748b', fontSize: 6 }}>
+          <p style={{ color: '#64748b', fontSize: 10 }}>
             {t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} />
           </p>
         </div>
@@ -248,7 +246,7 @@ export default function ShopPanel() {
           padding: '7px 12px',
           textAlign: 'center',
           color: notification.ok ? '#4ade80' : '#f87171',
-          fontSize: 7,
+          fontSize: 10,
         }}>
           {notification.text}
         </div>
@@ -270,6 +268,9 @@ export default function ShopPanel() {
             <div key={`${item.id}-${idx}`}>
               <div
                 onClick={() => setSelectedIdx(isSelected ? null : idx)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                 style={{
                   background: isRare
                     ? `linear-gradient(135deg, ${glowBg}, rgba(5,8,20,0.95))`
@@ -288,7 +289,7 @@ export default function ShopPanel() {
                     position: 'absolute', top: -1, right: 8,
                     background: rarityColor,
                     color: '#000',
-                    fontSize: 5,
+                    fontSize: 10,
                     padding: '2px 5px',
                     borderRadius: '0 0 3px 3px',
                     fontFamily: "'Press Start 2P', monospace",
@@ -317,7 +318,7 @@ export default function ShopPanel() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                       <span style={{
                         fontFamily: "'Share Tech Mono', monospace",
-                        fontSize: 5,
+                        fontSize: 10,
                         color: 'var(--text-muted)',
                         background: 'rgba(255,255,255,0.06)',
                         border: '1px solid rgba(255,255,255,0.12)',
@@ -326,13 +327,13 @@ export default function ShopPanel() {
                       }}>
                         {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
                       </span>
-                      <p style={{ color: rarityColor, fontSize: 7, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
+                      <p style={{ color: rarityColor, fontSize: 10, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
                         {getItemName(item, lang)}
                       </p>
                       {item.ranged && (
                         <span style={{
                           fontFamily: "'Share Tech Mono', monospace",
-                          fontSize: 5, color: '#00f5ff',
+                          fontSize: 10, color: '#00f5ff',
                           background: 'rgba(0,245,255,0.08)',
                           border: '1px solid rgba(0,245,255,0.3)',
                           padding: '1px 3px', flexShrink: 0,
@@ -341,7 +342,7 @@ export default function ShopPanel() {
                         </span>
                       )}
                       <span style={{
-                        color: rarityColor, fontSize: 5,
+                        color: rarityColor, fontSize: 10,
                         background: rarityColor + '18',
                         border: `1px solid ${rarityColor}44`,
                         borderRadius: 2,
@@ -350,10 +351,10 @@ export default function ShopPanel() {
                         {RARITY_LABEL[item.rarity]}
                       </span>
                     </div>
-                    <p style={{ color: '#475569', fontSize: 6, marginBottom: 3 }}>
+                    <p style={{ color: '#475569', fontSize: 10, marginBottom: 3 }}>
                       {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
                     </p>
-                    <p style={{ color: item.slot === 'consumable' ? rarityColor : '#64748b', fontSize: 6 }}>
+                    <p style={{ color: item.slot === 'consumable' ? rarityColor : '#64748b', fontSize: 10 }}>
                       {item.slot === 'consumable'
                         ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
                         : <>
@@ -378,7 +379,7 @@ export default function ShopPanel() {
                       padding: '6px 8px',
                       color: canAfford ? rarityColor : '#475569',
                       fontFamily: "'Press Start 2P', monospace",
-                      fontSize: 6,
+                      fontSize: 10,
                       cursor: canAfford ? 'pointer' : 'not-allowed',
                       flexShrink: 0,
                       textAlign: 'center',

@@ -2,8 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
 import { PORTRAIT_LIST } from '../data/portraits';
-
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+import { PX } from '../utils/styles';
 
 interface Props { onClose: () => void; }
 
@@ -62,8 +61,8 @@ export default function AppearanceEditor({ onClose }: Props) {
           </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-secondary" style={{ flex: 1, padding: '10px 0', fontSize: 6 }} onClick={onClose}>ANULUJ</button>
-            <button className="btn btn-primary"   style={{ flex: 2, padding: '10px 0', fontSize: 6 }} onClick={handleSave}>ZAPISZ</button>
+            <button className="btn btn-secondary" style={{ flex: 1, padding: '10px 0', fontSize: 10 }} onClick={onClose}>ANULUJ</button>
+            <button className="btn btn-primary"   style={{ flex: 2, padding: '10px 0', fontSize: 10 }} onClick={handleSave}>ZAPISZ</button>
           </div>
         </div>
       </div>

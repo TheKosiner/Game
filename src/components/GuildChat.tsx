@@ -3,9 +3,7 @@ import { onSnapshot, addDoc, collection, query, orderBy, limit } from 'firebase/
 import { db } from '../lib/firebase';
 import { useT } from '../hooks/useT';
 import { portraitSrc } from '../data/portraits';
-
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
+import { PX, MONO } from '../utils/styles';
 
 interface ChatMessage {
   id: string;
@@ -183,7 +181,7 @@ export default function GuildChat({ guildId, currentUid, username, portrait }: P
           onClick={handleSend}
           disabled={sending || !text.trim()}
           className="btn btn-primary"
-          style={{ fontSize: 6, padding: '8px 12px', flexShrink: 0, opacity: !text.trim() ? 0.5 : 1 }}
+          style={{ fontSize: 10, padding: '8px 12px', flexShrink: 0, opacity: !text.trim() ? 0.5 : 1 }}
         >
           {t.chat.send}
         </button>

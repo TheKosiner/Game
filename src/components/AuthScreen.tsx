@@ -4,11 +4,9 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 
 import logoImg from '../assets/logo.png';
+import { PX, MONO } from '../utils/styles';
 
 type Mode = 'login' | 'register' | 'reset';
-
-const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
@@ -207,7 +205,7 @@ export default function AuthScreen() {
             filter: 'drop-shadow(0 0 20px rgba(140,60,255,0.9)) drop-shadow(0 0 40px rgba(0,200,255,0.4))',
           }} />
           <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
-          <p style={{ color: '#475569', fontSize: 6 }}>{t.app.tagline}</p>
+          <p style={{ color: '#475569', fontSize: 10 }}>{t.app.tagline}</p>
         </div>
 
         {/* Mode tabs — hidden on reset screen */}
@@ -332,7 +330,7 @@ export default function AuthScreen() {
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer', padding: '4px' }}
+                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer', padding: '4px' }}
                 >
                   {t.auth.resetBack}
                 </button>
@@ -342,11 +340,11 @@ export default function AuthScreen() {
 
           {mode !== 'reset' && !resetSent && (
             <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <p style={{ color: '#334155', fontSize: 6, textAlign: 'center' }}>
+              <p style={{ color: '#334155', fontSize: 10, textAlign: 'center' }}>
                 {mode === 'login' ? t.auth.noAccount : t.auth.hasAccount}{' '}
                 <button
                   onClick={() => switchMode(mode === 'login' ? 'register' : 'login')}
-                  style={{ background: 'none', border: 'none', color: '#d97706', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#d97706', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer' }}
                 >
                   {mode === 'login' ? t.auth.signUpLink : t.auth.signInLink}
                 </button>
@@ -354,7 +352,7 @@ export default function AuthScreen() {
               {mode === 'login' && (
                 <button
                   onClick={() => switchMode('reset')}
-                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 6, cursor: 'pointer' }}
+                  style={{ background: 'none', border: 'none', color: '#475569', fontFamily: "'Press Start 2P', monospace", fontSize: 10, cursor: 'pointer' }}
                 >
                   {t.auth.forgotPassword}
                 </button>

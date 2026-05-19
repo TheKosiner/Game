@@ -11,8 +11,7 @@ import {
 import { generateItem } from '../data/itemGenerator';
 import { syncToCloud } from '../lib/cloudSync';
 
-const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
-const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
+import { MONO, ORB } from '../utils/styles';
 
 function fmtNum(n: number): string {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
@@ -252,14 +251,14 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
 
         {/* Status badge */}
         {boss.defeated && (
-          <span style={{ ...ORB, fontSize: 7, background: 'rgba(68,200,68,0.15)',
+          <span style={{ ...ORB, fontSize: 10, background: 'rgba(68,200,68,0.15)',
             border: '1px solid rgba(68,200,68,0.4)', color: '#44cc44',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
             ✅ {isEn ? 'DEFEATED' : 'POKONANY'}
           </span>
         )}
         {isExpired && !boss.defeated && (
-          <span style={{ ...ORB, fontSize: 7, background: 'rgba(200,120,20,0.15)',
+          <span style={{ ...ORB, fontSize: 10, background: 'rgba(200,120,20,0.15)',
             border: '1px solid rgba(200,120,20,0.4)', color: '#e08030',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
             ⏰ {isEn ? 'EXPIRED' : 'CZAS MINĄŁ'}
@@ -271,7 +270,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       {!boss.defeated && !isExpired && (
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>{isEn ? 'YOUR ATTACK TODAY' : 'TWÓJ ATAK DZIŚ'}</span>
+            <span style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? 'YOUR ATTACK TODAY' : 'TWÓJ ATAK DZIŚ'}</span>
             <span style={{ ...MONO, fontSize: 10, color: alreadyAttackedToday ? '#44cc44' : 'var(--text-dim)' }}>
               {alreadyAttackedToday ? `✅ ${fmtNum(myDamage)} dmg` : `~${fmtNum(estimatedDmg)} dmg`}
             </span>
@@ -280,7 +279,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             onClick={handleAttack}
             disabled={attacking || alreadyAttackedToday}
             className="btn btn-danger"
-            style={{ width: '100%', fontSize: 7, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
+            style={{ width: '100%', fontSize: 10, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
               opacity: alreadyAttackedToday ? 0.5 : 1 }}>
             {attacking ? '...' : alreadyAttackedToday
               ? (isEn ? '⚔ ALREADY ATTACKED TODAY' : '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ')
@@ -304,7 +303,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             {isEn ? `Your contribution: ${fmtNum(myDamage)} dmg` : `Twój udział: ${fmtNum(myDamage)} obrażeń`}
           </p>
           <button onClick={handleClaim} disabled={claiming} className="btn btn-primary"
-            style={{ width: '100%', fontSize: 7, borderColor: 'rgba(68,200,68,0.5)', background: 'rgba(68,200,68,0.15)' }}>
+            style={{ width: '100%', fontSize: 10, borderColor: 'rgba(68,200,68,0.5)', background: 'rgba(68,200,68,0.15)' }}>
             {claiming ? '...' : (isEn ? '🎁 CLAIM REWARD' : '🎁 ODBIERZ NAGRODĘ')}
           </button>
         </div>
@@ -333,7 +332,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
 
       {/* Rewards info */}
       <div style={{ background: 'rgba(150,80,255,0.05)', border: '1px solid rgba(150,80,255,0.15)', padding: '8px 12px' }}>
-        <p style={{ ...ORB, fontSize: 6, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
         <div style={{ display: 'flex', gap: 12 }}>
           <span style={{ ...MONO, fontSize: 9, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
           <span style={{ ...MONO, fontSize: 9, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
@@ -344,7 +343,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       {/* Combat log */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-          <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>{isEn ? 'COMBAT LOG' : 'LOG WALKI'}</p>
+          <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? 'COMBAT LOG' : 'LOG WALKI'}</p>
           <span style={{ ...MONO, fontSize: 9, color: '#888' }}>
             {isEn ? 'total' : 'łącznie'}: {fmtNum(totalDmg)} dmg · {participants.length} {isEn ? 'players' : 'graczy'}
           </span>
@@ -384,7 +383,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
 
       {/* Participants leaderboard */}
       <div>
-        <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)', marginBottom: 6 }}>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)', marginBottom: 6 }}>
           {isEn ? 'DAMAGE RANKING' : 'RANKING OBRAŻEŃ'} ({participants.length})
         </p>
         {participants.length === 0 && (
