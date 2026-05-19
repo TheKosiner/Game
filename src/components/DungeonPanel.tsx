@@ -5,6 +5,7 @@ import { ALL_DUNGEONS } from '../data/dungeons';
 import type { Dungeon } from '../types';
 import EnemyIcon from './EnemyIcon';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 
 const PX   = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
@@ -440,6 +441,8 @@ function isDungeonUnlocked(_dungeon: Dungeon, index: number, completedDungeons: 
 
 function DungeonList() {
   const t = useT();
+  const lang = useLangStore(s => s.lang);
+  const isEn = lang === 'en';
   const hero         = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
   const isResting    = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
@@ -645,7 +648,7 @@ function DungeonList() {
                   fill={isChosen ? '#ff2d78' : isUnlocked ? '#e2e8f0' : '#555577'}
                   fontSize="1.8" fontFamily="'Share Tech Mono',monospace" letterSpacing="0.1"
                   style={{ pointerEvents: 'none' }}>
-                  {d.name.length > 16 ? d.name.slice(0, 14) + '…' : d.name}
+                  {(() => { const n = isEn ? (d as typeof d & { nameEn?: string }).nameEn ?? d.name : d.name; return n.length > 16 ? n.slice(0, 14) + '…' : n; })()}
                 </text>
                 {/* level */}
                 <text x={pos.x} y={pos.y - 7.5} textAnchor="middle"
@@ -685,8 +688,12 @@ function DungeonList() {
               <LocationIcon id={chosen.id} size={48} color="#ff2d78" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>{chosen.name}</p>
-              <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>{chosen.description}</p>
+              <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>
+                {isEn ? (chosen as typeof chosen & { nameEn?: string }).nameEn ?? chosen.name : chosen.name}
+              </p>
+              <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>
+                {isEn ? (chosen as typeof chosen & { descEn?: string }).descEn ?? chosen.description : chosen.description}
+              </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{chosen.floors} {t.dungeon.floors}</span>
                 <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>{t.dungeon.level}{chosen.minLevel}</span>
@@ -729,9 +736,10 @@ function DungeonList() {
             }}>
               <span style={{ fontSize: 20 }}>🔒</span>
               <div>
-                <p style={{ ...ORB, fontSize: 7, color: '#8888aa', marginBottom: 3 }}>LOKACJA ZABLOKOWANA</p>
+                <p style={{ ...ORB, fontSize: 7, color: '#8888aa', marginBottom: 3 }}>{isEn ? 'LOCATION LOCKED' : 'LOKACJA ZABLOKOWANA'}</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
-                  Ukończ <span style={{ color: '#ffc83a' }}>{ALL_DUNGEONS[chosenIdx - 1].name}</span> na poziomie Normal lub Hard
+                  {isEn ? <>Complete <span style={{ color: '#ffc83a' }}>{(ALL_DUNGEONS[chosenIdx - 1] as typeof ALL_DUNGEONS[0] & { nameEn?: string }).nameEn ?? ALL_DUNGEONS[chosenIdx - 1].name}</span> on Normal or Hard</>
+                    : <>Ukończ <span style={{ color: '#ffc83a' }}>{ALL_DUNGEONS[chosenIdx - 1].name}</span> na poziomie Normal lub Hard</>}
                 </p>
               </div>
             </div>

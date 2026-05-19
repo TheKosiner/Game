@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
+import { useLangStore } from '../store/langStore';
 import { GUILD_BOSSES } from '../data/guildBosses';
 import {
   subscribeToBoss, ensureBossActive, attackGuildBoss, claimBossReward,
@@ -20,8 +21,8 @@ function fmtNum(n: number): string {
   return String(n);
 }
 
-function fmtTime(ms: number): string {
-  if (ms <= 0) return 'CZAS MINĄŁ';
+function fmtTime(ms: number, expired: string): string {
+  if (ms <= 0) return expired;
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
   const h = Math.floor(m / 60);
@@ -34,19 +35,23 @@ function midnightAfter(ts: number): number {
   return d.getTime();
 }
 
-function buildLog(boss: GuildBossState, myUid: string): string[] {
+function buildLog(boss: GuildBossState, myUid: string, isEn: boolean): string[] {
   return Object.entries(boss.participants)
     .sort((a, b) => a[1].attackedAt - b[1].attackedAt)
     .map(([uid, p]) => {
       const pct = boss.maxHp > 0 ? ((p.damage / boss.maxHp) * 100).toFixed(2) : '0.00';
-      const tag = uid === myUid ? ' (ty)' : '';
-      return `⚔ ${p.heroName}${tag} [${p.username}] zadał ${fmtNum(p.damage)} dmg — ${pct}% HP bossa`;
+      const tag = uid === myUid ? (isEn ? ' (you)' : ' (ty)') : '';
+      return isEn
+        ? `⚔ ${p.heroName}${tag} [${p.username}] dealt ${fmtNum(p.damage)} dmg — ${pct}% boss HP`
+        : `⚔ ${p.heroName}${tag} [${p.username}] zadał ${fmtNum(p.damage)} dmg — ${pct}% HP bossa`;
     });
 }
 
 export default function GuildBossPanel({ guildId, username }: { guildId: string; username: string }) {
   const hero = useGameStore(s => s.hero);
   const user = useAuthStore(s => s.user);
+  const lang = useLangStore(s => s.lang);
+  const isEn = lang === 'en';
   const [boss, setBoss] = useState<GuildBossState | null | 'loading'>('loading');
   const [now, setNow] = useState(Date.now());
   const [attacking, setAttacking] = useState(false);
@@ -74,7 +79,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
     ensureBossActive(guildId).catch(() => {});
     const unsub = subscribeToBoss(guildId, b => {
       setBoss(b);
-      if (b && user) setLog(buildLog(b, user.uid));
+      if (b && user) setLog(buildLog(b, user.uid, isEn));
     });
     return unsub;
   }, [guildId]);
@@ -87,7 +92,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   if (boss === 'loading') {
     return (
       <div style={{ textAlign: 'center', padding: 24 }}>
-        <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>Ładowanie bossa...</p>
+        <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>{isEn ? 'Loading boss...' : 'Ładowanie bossa...'}</p>
       </div>
     );
   }
@@ -95,7 +100,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   if (!boss) {
     return (
       <div style={{ textAlign: 'center', padding: 24 }}>
-        <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>Brak aktywnego bossa.</p>
+        <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>{isEn ? 'No active boss.' : 'Brak aktywnego bossa.'}</p>
       </div>
     );
   }
@@ -115,9 +120,12 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
   const nextResetLabel = boss.defeated && boss.defeatedAt
-    ? `Następny boss o północy: ${fmtTime(midnightAfter(boss.defeatedAt) - now)}`
-    : isExpired ? 'Reset za chwilę...'
-    : null;
+    ? (isEn
+        ? `Next boss at midnight: ${fmtTime(midnightAfter(boss.defeatedAt) - now, 'EXPIRED')}`
+        : `Następny boss o północy: ${fmtTime(midnightAfter(boss.defeatedAt) - now, 'CZAS MINĄŁ')}`)
+    : isExpired
+      ? (isEn ? 'Resetting soon...' : 'Reset za chwilę...')
+      : null;
 
   const hpColor = hpPct > 60 ? '#44cc44' : hpPct > 30 ? '#ff9900' : '#ff4444';
 
@@ -212,7 +220,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             {bossData.name}
           </p>
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
-            {bossData.description}
+            {isEn ? (bossData.descriptionEn ?? bossData.description) : bossData.description}
           </p>
 
           {/* HP bar */}
@@ -233,7 +241,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             </span>
             {!boss.defeated && !isExpired && (
               <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
-                ⏱ {fmtTime(timeLeft)}
+                ⏱ {fmtTime(timeLeft, isEn ? 'EXPIRED' : 'CZAS MINĄŁ')}
               </span>
             )}
             {nextResetLabel && (
@@ -247,14 +255,14 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           <span style={{ ...ORB, fontSize: 7, background: 'rgba(68,200,68,0.15)',
             border: '1px solid rgba(68,200,68,0.4)', color: '#44cc44',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
-            ✅ POKONANY
+            ✅ {isEn ? 'DEFEATED' : 'POKONANY'}
           </span>
         )}
         {isExpired && !boss.defeated && (
           <span style={{ ...ORB, fontSize: 7, background: 'rgba(200,120,20,0.15)',
             border: '1px solid rgba(200,120,20,0.4)', color: '#e08030',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
-            ⏰ CZAS MINĄŁ
+            ⏰ {isEn ? 'EXPIRED' : 'CZAS MINĄŁ'}
           </span>
         )}
       </div>
@@ -263,7 +271,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       {!boss.defeated && !isExpired && (
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
+            <span style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>{isEn ? 'YOUR ATTACK TODAY' : 'TWÓJ ATAK DZIŚ'}</span>
             <span style={{ ...MONO, fontSize: 10, color: alreadyAttackedToday ? '#44cc44' : 'var(--text-dim)' }}>
               {alreadyAttackedToday ? `✅ ${fmtNum(myDamage)} dmg` : `~${fmtNum(estimatedDmg)} dmg`}
             </span>
@@ -274,7 +282,9 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             className="btn btn-danger"
             style={{ width: '100%', fontSize: 7, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
               opacity: alreadyAttackedToday ? 0.5 : 1 }}>
-            {attacking ? '...' : alreadyAttackedToday ? '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ' : '⚔ ATAKUJ BOSSA'}
+            {attacking ? '...' : alreadyAttackedToday
+              ? (isEn ? '⚔ ALREADY ATTACKED TODAY' : '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ')
+              : (isEn ? '⚔ ATTACK BOSS' : '⚔ ATAKUJ BOSSA')}
           </button>
         </div>
       )}
@@ -287,13 +297,15 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           padding: '12px', textAlign: 'center',
           boxShadow: '0 0 16px rgba(68,200,68,0.1)',
         }}>
-          <p style={{ ...ORB, fontSize: 8, color: '#44cc44', marginBottom: 6 }}>🏆 BOSS POKONANY — NAGRODA CZEKA!</p>
+          <p style={{ ...ORB, fontSize: 8, color: '#44cc44', marginBottom: 6 }}>
+            {isEn ? '🏆 BOSS DEFEATED — REWARD AWAITS!' : '🏆 BOSS POKONANY — NAGRODA CZEKA!'}
+          </p>
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 10 }}>
-            Twój udział: {fmtNum(myDamage)} obrażeń
+            {isEn ? `Your contribution: ${fmtNum(myDamage)} dmg` : `Twój udział: ${fmtNum(myDamage)} obrażeń`}
           </p>
           <button onClick={handleClaim} disabled={claiming} className="btn btn-primary"
             style={{ width: '100%', fontSize: 7, borderColor: 'rgba(68,200,68,0.5)', background: 'rgba(68,200,68,0.15)' }}>
-            {claiming ? '...' : '🎁 ODBIERZ NAGRODĘ'}
+            {claiming ? '...' : (isEn ? '🎁 CLAIM REWARD' : '🎁 ODBIERZ NAGRODĘ')}
           </button>
         </div>
       )}
@@ -306,33 +318,35 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           padding: 12, textAlign: 'center',
           boxShadow: '0 0 20px rgba(150,80,255,0.1)',
         }}>
-          <p style={{ ...ORB, fontSize: 8, color: '#cc88ff', marginBottom: 8 }}>✨ NAGRODY ODEBRANE</p>
+          <p style={{ ...ORB, fontSize: 8, color: '#cc88ff', marginBottom: 8 }}>✨ {isEn ? 'REWARDS CLAIMED' : 'NAGRODY ODEBRANE'}</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 6 }}>
             <span style={{ ...ORB, fontSize: 9, color: '#4488ff' }}>+{fmtNum(claimResult.xp)} XP</span>
             <span style={{ ...ORB, fontSize: 9, color: '#ffd700' }}>+{fmtNum(claimResult.gold)} 🪙</span>
           </div>
           <p style={{ ...MONO, fontSize: 10, color: claimResult.item.rarity === 'legendary' ? '#ffd700' : '#cc44ff' }}>
-            {claimResult.item.rarity === 'legendary' ? '✨ LEGENDARNY' : '💜 EPICKI'}: {claimResult.item.emoji} {claimResult.item.name}
+            {claimResult.item.rarity === 'legendary'
+              ? (isEn ? '✨ LEGENDARY' : '✨ LEGENDARNY')
+              : (isEn ? '💜 EPIC' : '💜 EPICKI')}: {claimResult.item.emoji} {claimResult.item.name}
           </p>
         </div>
       )}
 
       {/* Rewards info */}
       <div style={{ background: 'rgba(150,80,255,0.05)', border: '1px solid rgba(150,80,255,0.15)', padding: '8px 12px' }}>
-        <p style={{ ...ORB, fontSize: 6, color: '#9955cc', marginBottom: 5 }}>NAGRODY ZA POKONANIE</p>
+        <p style={{ ...ORB, fontSize: 6, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
         <div style={{ display: 'flex', gap: 12 }}>
           <span style={{ ...MONO, fontSize: 9, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
           <span style={{ ...MONO, fontSize: 9, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
-          <span style={{ ...MONO, fontSize: 9, color: '#cc44ff' }}>Epicki / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
+          <span style={{ ...MONO, fontSize: 9, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
         </div>
       </div>
 
       {/* Combat log */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-          <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>LOG WALKI</p>
+          <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>{isEn ? 'COMBAT LOG' : 'LOG WALKI'}</p>
           <span style={{ ...MONO, fontSize: 9, color: '#888' }}>
-            łącznie: {fmtNum(totalDmg)} dmg · {participants.length} graczy
+            {isEn ? 'total' : 'łącznie'}: {fmtNum(totalDmg)} dmg · {participants.length} {isEn ? 'players' : 'graczy'}
           </span>
         </div>
         <div
@@ -344,11 +358,11 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
         >
           {log.length === 0 ? (
             <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-              Nikt jeszcze nie zaatakował.
+              {isEn ? 'No one has attacked yet.' : 'Nikt jeszcze nie zaatakował.'}
             </p>
           ) : (
             log.map((line, i) => {
-              const isMe = line.includes('(ty)');
+              const isMe = line.includes('(ty)') || line.includes('(you)');
               const isVictory = line.includes('🏆');
               return (
                 <p key={i} style={{
@@ -362,7 +376,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           )}
           {boss.defeated && (
             <p style={{ ...ORB, fontSize: 8, color: '#ffd700', marginTop: 6, textAlign: 'center' }}>
-              🏆 BOSS POKONANY!
+              🏆 {isEn ? 'BOSS DEFEATED!' : 'BOSS POKONANY!'}
             </p>
           )}
         </div>
@@ -371,11 +385,11 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       {/* Participants leaderboard */}
       <div>
         <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)', marginBottom: 6 }}>
-          RANKING OBRAŻEŃ ({participants.length})
+          {isEn ? 'DAMAGE RANKING' : 'RANKING OBRAŻEŃ'} ({participants.length})
         </p>
         {participants.length === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-            Nikt jeszcze nie zaatakował.
+            {isEn ? 'No one has attacked yet.' : 'Nikt jeszcze nie zaatakował.'}
           </p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -396,7 +410,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                     <span style={{ ...MONO, fontSize: 9, color: isMe ? '#ff2d78' : 'var(--text-bright)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.heroName} {isMe ? '(ty)' : ''}
+                      {p.heroName} {isMe ? (isEn ? '(you)' : '(ty)') : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
                       {fmtNum(p.damage)} ({pct.toFixed(2)}%)
