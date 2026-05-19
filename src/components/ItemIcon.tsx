@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Item, Rarity } from '../types';
+import cannonFusionSrc from '../assets/cannon_fusion.png';
 
 interface Colors {
   primary: string;
@@ -643,8 +644,26 @@ interface Props {
   style?: React.CSSProperties;
 }
 
+const ITEM_IMAGE_MAP: Partial<Record<string, string>> = {
+  cannon_fusion: cannonFusionSrc,
+};
+
 export default function ItemIcon({ item, size, scale, style }: Props) {
   const px = size ?? (scale ? scale * 12 : 48);
+
+  const customSrc = ITEM_IMAGE_MAP[item.id];
+  if (customSrc) {
+    return (
+      <img
+        src={customSrc}
+        width={px}
+        height={px}
+        style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
+        alt={item.name}
+      />
+    );
+  }
+
   const colors = RARITY_COLORS[item.rarity] ?? RARITY_COLORS.common;
   const category = getCategory(item);
   const render = ICON_MAP[category] ?? ICON_MAP.sword;
