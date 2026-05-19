@@ -473,28 +473,32 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
         <button onClick={fetchAll} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>↻</button>
       </div>
 
-      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...PX(10), color: '#6aaa30' }}>{pvpWins}</p>
-            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.pvp.wins}</p>
+      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...ORB, fontSize: 13, color: '#6aaa30' }}>{pvpWins}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.wins}</p>
+            </div>
+            <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...ORB, fontSize: 13, color: 'var(--hp-bright)' }}>{pvpLosses}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.losses}</p>
+            </div>
+            <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ ...ORB, fontSize: 13, color: '#c084fc' }}>{pvpRating}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.rating}</p>
+            </div>
           </div>
-          <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...PX(10), color: 'var(--hp-bright)' }}>{pvpLosses}</p>
-            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.pvp.losses}</p>
-          </div>
-          <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...PX(10), color: '#c084fc' }}>{pvpRating}</p>
-            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.pvp.rating}</p>
-          </div>
+          {myRank > 0 && (
+            <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', flexShrink: 0 }}>{t.pvp.rank(myRank)}</p>
+          )}
         </div>
-        <div style={{ textAlign: 'right' }}>
-          {myRank > 0 && <p style={{ ...PX(4), color: 'var(--gold-bright)', marginBottom: 3 }}>{t.pvp.rank(myRank)}</p>}
+        <div style={{ textAlign: 'center' }}>
           {canFight
-            ? <p style={{ ...PX(5), color: '#6aaa30' }}>{t.pvp.ready}</p>
-            : <p style={{ ...PX(5), color: 'var(--text-dim)' }}>⏳ <CooldownTimer end={cooldownEnd} /></p>
+            ? <p style={{ ...MONO, fontSize: 11, color: '#6aaa30' }}>{t.pvp.ready}</p>
+            : <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>⏳ <CooldownTimer end={cooldownEnd} /></p>
           }
         </div>
       </div>
