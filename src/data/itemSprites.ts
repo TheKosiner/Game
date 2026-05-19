@@ -71,6 +71,22 @@ const SPRITES: Record<string, string[][]> = {
     '............',
   ]),
 
+  // Heavy fusion cannon "Sun" — dark body, orange glow lines, central fusion orb
+  cannon_fusion: parse([
+    '............',
+    '.kkkkkkkkk..',
+    'kgkgkgkDDkk.',
+    'kyyyyyykDDk.',
+    'kkkkkYYkDDk.',
+    'kkkkYYYkDDk.',
+    'kkkkkYYkDDk.',
+    'kyyyyyykDDk.',
+    'kgkgkgkDDkk.',
+    '.kkkkkkkkk..',
+    '.......kDDk.',
+    '.......kkkk.',
+  ]),
+
   // Long-barrel sniper with scope
   sniper_rifle: parse([
     '............',
@@ -333,6 +349,7 @@ export function getItemSprite(item: Item): string[][] {
   let key: string;
 
   if      (id.startsWith('blade_'))                                            key = 'energy_blade';
+  else if (id === 'cannon_fusion')                                             key = 'cannon_fusion';
   else if (id.startsWith('cannon_'))                                           key = 'gun';
   else if (id.startsWith('baton_') || id.startsWith('hammer_'))               key = 'baton';
   else if (id.startsWith('pike_') || id.startsWith('lance_') || id.startsWith('railgun_')) key = 'railgun';
