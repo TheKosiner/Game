@@ -55,8 +55,9 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
         <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 2 }}>{t.guild.createTitle}</p>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.nameLabel}</p>
+          <label htmlFor="guild-name" style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>{t.guild.nameLabel}</label>
           <input
+            id="guild-name"
             value={name} onChange={e => setName(e.target.value)} maxLength={24}
             placeholder={t.guild.namePlaceholder}
             style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 10, padding: '7px 8px', boxSizing: 'border-box' }}
@@ -64,8 +65,9 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
         </div>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.tagLabel}</p>
+          <label htmlFor="guild-tag" style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>{t.guild.tagLabel}</label>
           <input
+            id="guild-tag"
             value={tag} onChange={e => setTag(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4))} maxLength={4}
             placeholder={t.guild.tagPlaceholder}
             style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--gold-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 10, padding: '7px 8px', boxSizing: 'border-box', letterSpacing: '0.1em' }}
@@ -73,8 +75,9 @@ function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
         </div>
 
         <div>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.descLabel}</p>
+          <label htmlFor="guild-desc" style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4, display: 'block' }}>{t.guild.descLabel}</label>
           <textarea
+            id="guild-desc"
             value={desc} onChange={e => setDesc(e.target.value)} maxLength={120}
             placeholder={t.guild.descPlaceholder}
             rows={2}
@@ -151,6 +154,12 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   const [sent, setSent] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
+  useEffect(() => {
     Promise.all([
       getLeaderboard(),
       getGuildSentInvites(guild.id, user?.uid ?? ''),
@@ -170,8 +179,11 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-end' }}
-      onClick={onClose}>
+    <div
+      role="dialog" aria-modal="true" aria-label={t.guild.inviteModalTitle}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'flex-end' }}
+      onClick={onClose}
+    >
       <div style={{ width: '100%', maxWidth: 480, margin: '0 auto', background: 'var(--bg-panel)', border: '1px solid var(--border-main)', padding: 14, maxHeight: '70vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 
 import { PORTRAIT_LIST } from '../data/portraits';
@@ -9,6 +9,14 @@ interface Props { onClose: () => void; }
 export default function AppearanceEditor({ onClose }: Props) {
   const hero = useGameStore(s => s.hero);
   const [portrait, setPortrait] = useState(hero.portrait ?? 0);
+  const saveRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    saveRef.current?.focus();
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
 
   function handleSave() {
     useGameStore.setState(s => ({ hero: { ...s.hero, portrait } }));
@@ -17,12 +25,17 @@ export default function AppearanceEditor({ onClose }: Props) {
   }
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 10000,
-      background: 'rgba(0,0,0,0.88)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 16,
-    }}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Appearance editor"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 10000,
+        background: 'rgba(0,0,0,0.88)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}
+    >
       <div style={{ width: '100%', maxWidth: 360 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
@@ -41,6 +54,8 @@ export default function AppearanceEditor({ onClose }: Props) {
               <button
                 key={p.index}
                 onClick={() => setPortrait(p.index)}
+                aria-pressed={portrait === p.index}
+                aria-label={p.label}
                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}
               >
                 <div style={{
@@ -62,7 +77,7 @@ export default function AppearanceEditor({ onClose }: Props) {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-secondary" style={{ flex: 1, padding: '10px 0', fontSize: 10 }} onClick={onClose}>ANULUJ</button>
-            <button className="btn btn-primary"   style={{ flex: 2, padding: '10px 0', fontSize: 10 }} onClick={handleSave}>ZAPISZ</button>
+            <button ref={saveRef} className="btn btn-primary" style={{ flex: 2, padding: '10px 0', fontSize: 10 }} onClick={handleSave}>ZAPISZ</button>
           </div>
         </div>
       </div>

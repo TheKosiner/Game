@@ -449,6 +449,17 @@ input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
 /* ============================================================
    UTILITY
 ============================================================ */
+/* Visually hidden but readable by screen readers (WCAG) */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .df-gold { color: var(--gold) !important; text-shadow: 0 0 8px var(--gold-dim); }
 .df-pink  { color: var(--pink) !important; text-shadow: 0 0 8px var(--pink-dim); }
 .df-cyan  { color: var(--cyan) !important; text-shadow: 0 0 8px var(--cyan-dim); }

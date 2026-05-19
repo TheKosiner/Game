@@ -127,7 +127,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             </span>
             {item.ranged && (
               <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
-                🔫 DYST
+                🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
               </span>
             )}
           </div>

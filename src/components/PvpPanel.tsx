@@ -167,7 +167,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
             >
               <img
                 src={portraitSrc(combat.oppPortrait)}
-                alt="oponent"
+                alt={combat.opponent.heroName}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
             </div>
@@ -220,7 +220,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
-            <img src={portraitSrc(hero.portrait)} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            <img src={portraitSrc(hero.portrait)} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
           <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', flex: 1 }}>{hero.name}</span>
           <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>

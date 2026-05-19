@@ -139,7 +139,15 @@ function CityMap({
           const filterId = ownedByMe ? 'tglow-g' : ownedByEnemy ? 'tglow-r' : 'tglow-y';
 
           return (
-            <g key={def.id} onClick={() => onFocus(def.id)} style={{ cursor: 'pointer' }}>
+            <g
+              key={def.id}
+              onClick={() => onFocus(def.id)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${isEn ? (def.nameEn ?? def.name) : def.name}${ownedByMe ? ' (your guild)' : ownedByEnemy ? ` (${state.guildTag})` : locked ? ' (locked)' : ''}`}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFocus(def.id); } }}
+              style={{ cursor: locked ? 'default' : 'pointer', outline: 'none' }}
+            >
               {/* Outer pulse ring */}
               {!locked && (
                 <circle cx={pos.x} cy={pos.y} r={5} fill="none" stroke={color} strokeWidth="0.5" opacity={0}

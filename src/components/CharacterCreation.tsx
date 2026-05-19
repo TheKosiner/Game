@@ -42,8 +42,9 @@ export default function CharacterCreation() {
 
           {/* Name */}
           <div>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 6, letterSpacing: '0.1em' }}>{t.creation.nameLabel}</p>
+            <label htmlFor="hero-name" style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 6, letterSpacing: '0.1em', display: 'block' }}>{t.creation.nameLabel}</label>
             <input
+              id="hero-name"
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}

@@ -260,8 +260,9 @@ export default function AuthScreen() {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {mode === 'register' && (
                 <div>
-                  <label style={labelStyle}>{t.auth.username}</label>
+                  <label htmlFor="auth-username" style={labelStyle}>{t.auth.username}</label>
                   <input
+                    id="auth-username"
                     type="text"
                     value={username}
                     onChange={e => setUsername(e.target.value)}
@@ -274,8 +275,9 @@ export default function AuthScreen() {
               )}
 
               <div>
-                <label style={labelStyle}>{t.auth.email}</label>
+                <label htmlFor="auth-email" style={labelStyle}>{t.auth.email}</label>
                 <input
+                  id="auth-email"
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -287,8 +289,9 @@ export default function AuthScreen() {
 
               {mode !== 'reset' && (
                 <div>
-                  <label style={labelStyle}>{t.auth.password}</label>
+                  <label htmlFor="auth-password" style={labelStyle}>{t.auth.password}</label>
                   <input
+                    id="auth-password"
                     type="password"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
