@@ -8,10 +8,15 @@ interface LangState {
   setLang: (lang: Lang) => void;
 }
 
+function detectLang(): Lang {
+  const nav = navigator.language?.toLowerCase() ?? '';
+  return nav.startsWith('pl') ? 'pl' : 'en';
+}
+
 export const useLangStore = create<LangState>()(
   persist(
     (set) => ({
-      lang: 'pl',
+      lang: detectLang(),
       setLang: (lang) => set({ lang }),
     }),
     { name: 'glitchsoul_lang' }
