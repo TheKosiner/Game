@@ -644,20 +644,20 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-const ITEM_IMAGE_MAP: Partial<Record<string, string>> = {
-  cannon_fusion: cannonFusionSrc,
+const ITEM_IMAGE_MAP: Partial<Record<string, { src: string; w: number; h: number }>> = {
+  cannon_fusion: { src: cannonFusionSrc, w: 2.4, h: 1 },
 };
 
 export default function ItemIcon({ item, size, scale, style }: Props) {
   const px = size ?? (scale ? scale * 12 : 48);
 
-  const customSrc = ITEM_IMAGE_MAP[item.id];
-  if (customSrc) {
+  const custom = ITEM_IMAGE_MAP[item.id];
+  if (custom) {
     return (
       <img
-        src={customSrc}
-        width={px}
-        height={px}
+        src={custom.src}
+        width={Math.round(px * custom.w)}
+        height={Math.round(px * custom.h)}
         style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
         alt={item.name}
       />
