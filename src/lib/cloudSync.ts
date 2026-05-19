@@ -358,7 +358,7 @@ export async function inviteToGuild(
     fromUsername,
     toUid,
     toUsername,
-    body: `[GUILD INVITE] ${fromUsername} invites you to join guild [${guildTag}] ${guildName}. Open your Mail → accept or decline the invitation.`,
+    body: `[GUILD INVITE] ${fromUsername} invites you to join guild [${guildTag}] ${guildName}. Open your Mail → accept or decline the invitation.\n[ZAPROSZENIE DO GILDII] ${fromUsername} zaprasza Cię do gildii [${guildTag}] ${guildName}. Otwórz Pocztę → zaakceptuj lub odrzuć zaproszenie.`,
     createdAt: Date.now(),
     read: false,
     isGuildInviteNotification: true,

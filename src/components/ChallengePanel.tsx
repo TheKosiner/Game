@@ -418,7 +418,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
                       {getItemName(item, lang)}
                     </p>
                     <p style={{ ...MONO, fontSize: 10, color: `${rc}99` }}>
-                      {rarityLabel[item.rarity]} · Poz. {item.level}
+                      {rarityLabel[item.rarity]} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
                     </p>
                   </div>
                   <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
@@ -1303,7 +1303,7 @@ function SelectView() {
             background: 'rgba(0,0,0,0.8)', border: `1px solid ${accentColor}55`,
             padding: '2px 6px',
           }}>
-            POZ. {boss!.level}
+            {lang === 'en' ? 'LVL.' : 'POZ.'} {boss!.level}
           </div>
         </div>
 

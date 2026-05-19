@@ -199,7 +199,7 @@ function CityMap({
         {/* Bottom credit */}
         <text x="50" y="99" textAnchor="middle"
           fill="rgba(255,45,120,0.2)" fontSize="2.5" fontFamily="monospace">
-          GlitchSoul · MAPA STREF KONTROLI
+          GlitchSoul · {isEn ? 'CONTROL ZONES MAP' : 'MAPA STREF KONTROLI'}
         </text>
       </svg>
 
@@ -441,6 +441,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   const [abandoning,  setAbandoning]  = useState<string | null>(null);
   const [focused,     setFocused]     = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
+  const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
   async function reloadTerritories() {
     const t = await getTerritories();
@@ -467,7 +468,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     if (!guild) return;
 
     if (myOwnedCount >= 1 && state?.guildId !== guild.id) {
-      alert(isEn
+      setAlertMsg(isEn
         ? 'Your guild can only hold one zone at a time. You must lose it or have it retaken first.'
         : 'Twoja gildia może posiadać tylko jedną strefę na raz. Najpierw ją stracisz lub zostanie odbita.');
       return;
@@ -476,14 +477,14 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     const now = Date.now();
     if (guild.lastCaptureAt && now - guild.lastCaptureAt < DAY_MS) {
       const left = DAY_MS - (now - guild.lastCaptureAt);
-      alert(isEn
+      setAlertMsg(isEn
         ? `Your guild can capture another zone in ${formatCountdown(left)}. (Limit: 1 capture per day)`
         : `Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
       return;
     }
     if (guild.lastLostAt && now - guild.lastLostAt < DAY_MS) {
       const left = DAY_MS - (now - guild.lastLostAt);
-      alert(isEn
+      setAlertMsg(isEn
         ? `Your guild lost a zone and needs to recover. You can attack in ${formatCountdown(left)}.`
         : `Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
       return;
@@ -493,7 +494,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     const siegeExpired = isMyActiveSiege && state?.siegeStartedAt != null && Date.now() - state.siegeStartedAt >= SIEGE_DURATION_MS;
 
     if (isMyActiveSiege && !siegeExpired && myUid && (state?.siegeAttackers ?? []).includes(myUid)) {
-      alert(isEn
+      setAlertMsg(isEn
         ? 'You already attacked in this siege. Each player can attack only once per siege.'
         : 'Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
       return;
@@ -550,14 +551,14 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     const result = await initOrJoinSiege(def.id, guild.id, guild.tag, siegeMaxHp);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
-      alert(isEn
+      setAlertMsg(isEn
         ? `Another siege is underway: [${result.byTag}]. Ends in ${formatCountdown(Math.max(0, remaining))}.`
         : `Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
       return;
     }
 
     if (myUid && result.attackers.includes(myUid)) {
-      alert(isEn
+      setAlertMsg(isEn
         ? 'You already attacked in this siege. Each player can attack only once per siege.'
         : 'Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
       return;
@@ -746,7 +747,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   if (committing) {
     return (
       <div style={{ textAlign: 'center', padding: 30 }}>
-        <p style={{ ...PX(6), color: 'var(--gold-main)' }}>⏳ Zapisywanie obrażeń...</p>
+        <p style={{ ...PX(6), color: 'var(--gold-main)' }}>⏳ {isEn ? 'Saving damage...' : 'Zapisywanie obrażeń...'}</p>
       </div>
     );
   }
@@ -816,6 +817,13 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
           </div>
         );
       })()}
+
+      {alertMsg && (
+        <div style={{ background: 'rgba(40,10,10,0.85)', border: '1px solid rgba(220,60,60,0.5)', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>{alertMsg}</p>
+          <button onClick={() => setAlertMsg(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer', flexShrink: 0, marginLeft: 8 }}>✕</button>
+        </div>
+      )}
 
       {loading && (
         <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ {isEn ? 'Loading...' : 'Ładowanie...'}</p>

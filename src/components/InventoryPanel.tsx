@@ -55,7 +55,7 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
           </span>
         </div>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
-          {slotLabel[item.slot] ?? item.slot} · Poz. {item.level}
+          {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
         </p>
         <p style={{ ...MONO, fontSize: 10, color: item.slot === 'consumable' ? rc : 'var(--text-main)' }}>
           {item.slot === 'consumable'

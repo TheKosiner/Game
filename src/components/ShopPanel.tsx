@@ -77,6 +77,7 @@ function StatDeltaRow({ label, oldVal, newVal }: { label: string; oldVal: number
 
 function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item | undefined }) {
   const t = useT();
+  const lang = useLangStore(s => s.lang);
   const STAT_LABELS: Record<string, string> = {
     strength: t.shop.statStrength,
     dexterity: t.shop.statDexterity,
@@ -111,7 +112,7 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
           {equipped ? (
             <>
               <p style={{ ...MONO, fontSize: 10, color: eqColor, marginBottom: 1 }}>{equipped.name}</p>
-              <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>Poz. {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
+              <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lang === 'en' ? 'LVL.' : 'Poz.'} {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
             </>
           ) : (
             <p style={{ ...MONO, fontSize: 10, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
@@ -120,7 +121,7 @@ function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item |
         <div style={{ flex: 1, padding: '7px 8px' }}>
           <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareShop}</p>
           <p style={{ ...MONO, fontSize: 10, color: shopColor, marginBottom: 1 }}>{shopItem.name}</p>
-          <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>Poz. {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lang === 'en' ? 'LVL.' : 'Poz.'} {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
         </div>
       </div>
 
@@ -352,7 +353,7 @@ export default function ShopPanel() {
                       </span>
                     </div>
                     <p style={{ color: '#475569', fontSize: 10, marginBottom: 3 }}>
-                      {SLOT_LABEL[item.slot] ?? item.slot} · Poz. {item.level}
+                      {SLOT_LABEL[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
                     </p>
                     <p style={{ color: item.slot === 'consumable' ? rarityColor : '#64748b', fontSize: 10 }}>
                       {item.slot === 'consumable'

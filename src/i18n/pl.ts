@@ -342,6 +342,7 @@ export const pl: Translations = {
     tagError: 'Tag musi mieć 2–4 znaki (A-Z, 0-9)',
     createError: 'Błąd tworzenia gildii',
     creating: '⏳ Tworzenie...',
+    loading: 'Ładowanie...',
     createBtn: '⚔ Stwórz gildię',
     invitesTitle: '📨 ZAPROSZENIA DO GILDII',
     inviteFrom: (u: string) => `od ${u}`,
