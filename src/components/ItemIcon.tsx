@@ -22,6 +22,7 @@ function getCategory(item: Item): string {
   if (id.startsWith('wand_')) return 'wand';
   if (id.startsWith('orb_')) return 'orb';
   if (id.startsWith('blade_')) return 'sword';
+  if (id === 'cannon_fusion') return 'fusion_cannon';
   if (id.startsWith('cannon_')) return 'cannon';
   if (id.startsWith('baton_') || id.startsWith('mace_') || id.startsWith('hammer_') || id.startsWith('maul_')) return 'hammer';
   if (id.startsWith('pike_') || id.startsWith('lance_')) return 'lance';
@@ -95,6 +96,45 @@ function IconCannon({ c }: { c: Colors }) {
       <rect x="13" y="33" width="6" height="8" rx="1" fill={c.primary} opacity="0.5" />
       {/* logo panel */}
       <rect x="10" y="19" width="6" height="4" rx="1" fill={c.light} opacity="0.3" />
+    </>
+  );
+}
+
+function IconFusionCannon({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* thick dark body */}
+      <rect x="6" y="14" width="30" height="20" rx="3" fill={c.dark} />
+      <rect x="8" y="16" width="26" height="16" rx="2" fill="#0D1117" />
+      {/* orange accent lines running along the full length */}
+      <rect x="9" y="17" width="24" height="2.5" rx="1" fill={c.glow} opacity="0.9" />
+      <rect x="9" y="28.5" width="24" height="2.5" rx="1" fill={c.glow} opacity="0.9" />
+      {/* fusion orb — the SUN core */}
+      <circle cx="22" cy="24" r="7.5" fill={c.dark} />
+      <circle cx="22" cy="24" r="6.5" fill={c.primary} opacity="0.35" />
+      <circle cx="22" cy="24" r="5" fill={c.glow} opacity="0.55" />
+      <circle cx="22" cy="24" r="3.5" fill={c.light} opacity="0.85" />
+      <circle cx="22" cy="24" r="1.8" fill="white" opacity="0.95" />
+      <circle cx="22" cy="24" r="7.5" fill="none" stroke={c.glow} strokeWidth="1.5" opacity="0.45" />
+      {/* 3-barrel cluster pointing right */}
+      <rect x="36" y="13" width="10" height="5" rx="1.5" fill={c.dark} />
+      <rect x="36" y="20" width="10" height="6" rx="1.5" fill={c.dark} />
+      <rect x="36" y="29" width="10" height="5" rx="1.5" fill={c.dark} />
+      <rect x="37" y="14" width="8" height="3" rx="1" fill="#1A1A2A" />
+      <rect x="37" y="21" width="8" height="4" rx="1" fill="#1A1A2A" />
+      <rect x="37" y="30" width="8" height="3" rx="1" fill="#1A1A2A" />
+      {/* muzzle glow */}
+      <circle cx="45" cy="15.5" r="2.5" fill={c.glow} opacity="0.95" />
+      <circle cx="45" cy="23" r="3" fill={c.glow} opacity="0.95" />
+      <circle cx="45" cy="31.5" r="2.5" fill={c.glow} opacity="0.95" />
+      {/* heat vent details */}
+      <rect x="29" y="14" width="2" height="2" rx="0.5" fill={c.primary} opacity="0.6" />
+      <rect x="32" y="14" width="2" height="2" rx="0.5" fill={c.primary} opacity="0.6" />
+      <rect x="29" y="32" width="2" height="2" rx="0.5" fill={c.primary} opacity="0.6" />
+      <rect x="32" y="32" width="2" height="2" rx="0.5" fill={c.primary} opacity="0.6" />
+      {/* grip/stock — back left */}
+      <rect x="4" y="24" width="6" height="14" rx="2" fill={c.dark} />
+      <rect x="5" y="25" width="4" height="12" rx="1" fill={c.primary} opacity="0.35" />
     </>
   );
 }
@@ -572,8 +612,9 @@ function IconMedkit() {
 }
 
 const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
-  sword:   (c) => <IconSword c={c} />,
-  cannon:  (c) => <IconCannon c={c} />,
+  sword:         (c) => <IconSword c={c} />,
+  cannon:        (c) => <IconCannon c={c} />,
+  fusion_cannon: (c) => <IconFusionCannon c={c} />,
   hammer:  (c) => <IconHammer c={c} />,
   lance:   (c) => <IconLance c={c} />,
   railgun: (c) => <IconRailgun c={c} />,
