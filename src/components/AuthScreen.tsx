@@ -15,7 +15,7 @@ const inputStyle: React.CSSProperties = {
   padding: '8px 10px',
   color: '#e2e8f0',
   fontFamily: "'Press Start 2P', monospace",
-  fontSize: 8,
+  fontSize: 10,
   outline: 'none',
   boxSizing: 'border-box',
 };
@@ -71,26 +71,26 @@ function VerificationScreen() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#94a3b8', lineHeight: 1.6 }}>
               {t.auth.verifyStep1}
             </p>
-            <p style={{ ...MONO, fontSize: 9, color: '#94a3b8', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#94a3b8', lineHeight: 1.6 }}>
               {t.auth.verifyStep2}
             </p>
-            <p style={{ ...MONO, fontSize: 9, color: '#f59e0b', lineHeight: 1.6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', lineHeight: 1.6 }}>
               {t.auth.verifySpam}
             </p>
           </div>
 
           {error && (
             <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-              <p style={{ color: '#f87171', ...MONO, fontSize: 9 }}>⚠ {error}</p>
+              <p style={{ color: '#f87171', ...MONO, fontSize: 10 }}>⚠ {error}</p>
             </div>
           )}
 
           {sent && (
             <div style={{ background: 'rgba(34,197,94,0.08)', border: '2px solid rgba(34,197,94,0.3)', padding: '6px 8px' }}>
-              <p style={{ color: '#4ade80', ...MONO, fontSize: 9 }}>{t.auth.verifyResentOk}</p>
+              <p style={{ color: '#4ade80', ...MONO, fontSize: 10 }}>{t.auth.verifyResentOk}</p>
             </div>
           )}
 
@@ -139,7 +139,7 @@ function LangToggle() {
             border: `1px solid ${lang === l ? '#d97706' : '#334155'}`,
             color: lang === l ? '#fbbf24' : '#475569',
             fontFamily: "'Press Start 2P', monospace",
-            fontSize: 7,
+            fontSize: 10,
             padding: '4px 8px',
             cursor: 'pointer',
           }}
@@ -223,7 +223,7 @@ export default function AuthScreen() {
                   borderBottom: mode === m ? '2px solid #d97706' : '2px solid transparent',
                   color: mode === m ? '#fbbf24' : '#475569',
                   fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 7,
+                  fontSize: 10,
                   cursor: 'pointer',
                 }}
               >
@@ -303,20 +303,20 @@ export default function AuthScreen() {
               )}
 
               {mode === 'reset' && (
-                <p style={{ ...MONO, fontSize: 9, color: '#64748b', lineHeight: 1.5 }}>
+                <p style={{ ...MONO, fontSize: 10, color: '#64748b', lineHeight: 1.5 }}>
                   {t.auth.resetDesc}
                 </p>
               )}
 
               {mode === 'register' && (
-                <p style={{ ...MONO, fontSize: 8, color: '#475569', lineHeight: 1.5 }}>
+                <p style={{ ...MONO, fontSize: 10, color: '#475569', lineHeight: 1.5 }}>
                   {t.auth.registerNote}
                 </p>
               )}
 
               {error && (
                 <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-                  <p style={{ color: '#f87171', fontSize: 7 }}>⚠ {error}</p>
+                  <p style={{ color: '#f87171', fontSize: 10 }}>⚠ {error}</p>
                 </div>
               )}
 
@@ -324,7 +324,7 @@ export default function AuthScreen() {
                 type="submit"
                 disabled={submitting}
                 className="btn btn-primary"
-                style={{ width: '100%', padding: '10px', fontSize: 8 }}
+                style={{ width: '100%', padding: '10px', fontSize: 10 }}
               >
                 {submitting ? '...' : mode === 'login' ? t.auth.loginBtn : mode === 'register' ? t.auth.registerBtn : t.auth.resetBtn}
               </button>

@@ -670,7 +670,7 @@ function DungeonList() {
           ].map(({ col, label }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: col, boxShadow: `0 0 5px ${col}` }}/>
-              <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', letterSpacing: 1 }}>{label}</span>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', letterSpacing: 1 }}>{label}</span>
             </div>
           ))}
         </div>
@@ -688,22 +688,22 @@ function DungeonList() {
               <LocationIcon id={chosen.id} size={48} color="#ff2d78" />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>
+              <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>
                 {isEn ? (chosen as typeof chosen & { nameEn?: string }).nameEn ?? chosen.name : chosen.name}
               </p>
-              <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 3 }}>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>
                 {isEn ? (chosen as typeof chosen & { descEn?: string }).descEn ?? chosen.description : chosen.description}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{chosen.floors} {t.dungeon.floors}</span>
-                <span style={{ ...MONO, fontSize: 8, color: '#ffc83a' }}>{t.dungeon.level}{chosen.minLevel}</span>
+                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{chosen.floors} {t.dungeon.floors}</span>
+                <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>{t.dungeon.level}{chosen.minLevel}</span>
               </div>
             </div>
           </div>
 
           {/* Difficulty selector */}
           <div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>{t.dungeon.difficultyLabel}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>{t.dungeon.difficultyLabel}</p>
             <div style={{ display: 'flex', gap: 6 }}>
               {DIFFICULTY_OPTIONS.map(d => {
                 const active = difficulty === d.key;
@@ -723,7 +723,7 @@ function DungeonList() {
                 );
               })}
             </div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 5 }}>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 5 }}>
               {DIFFICULTY_OPTIONS.find(d => d.key === difficulty)?.desc}
             </p>
           </div>
@@ -737,7 +737,7 @@ function DungeonList() {
               <span style={{ fontSize: 20 }}>🔒</span>
               <div>
                 <p style={{ ...ORB, fontSize: 10, color: '#8888aa', marginBottom: 3 }}>{isEn ? 'LOCATION LOCKED' : 'LOKACJA ZABLOKOWANA'}</p>
-                <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>
                   {isEn ? <>Complete <span style={{ color: '#ffc83a' }}>{(ALL_DUNGEONS[chosenIdx - 1] as typeof ALL_DUNGEONS[0] & { nameEn?: string }).nameEn ?? ALL_DUNGEONS[chosenIdx - 1].name}</span> on Normal or Hard</>
                     : <>Ukończ <span style={{ color: '#ffc83a' }}>{ALL_DUNGEONS[chosenIdx - 1].name}</span> na poziomie Normal lub Hard</>}
                 </p>
@@ -756,8 +756,8 @@ function DungeonList() {
               }}>
                 <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
                 <div style={{ flex: 1 }}>
-                  <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 3 }}>{v.label}</p>
-                  <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{v.desc}</p>
+                  <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 3 }}>{v.label}</p>
+                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{v.desc}</p>
                 </div>
                 <button
                   onClick={() => enterDungeon(chosen, v.key, difficulty)}
@@ -824,7 +824,7 @@ export default function DungeonPanel() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
           <p style={{ fontSize: 32, marginBottom: 8 }}>🏆</p>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
             {t.dungeon.opComplete}
           </p>
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--text-dim)' }}>

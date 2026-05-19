@@ -118,10 +118,10 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
             <p style={{ ...MONO, fontSize: 11, color: msg.read ? 'var(--text-main)' : 'var(--text-bright)', fontWeight: msg.read ? 400 : 700 }}>
               {msg.fromUsername}
             </p>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{timeAgo(msg.createdAt)}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{timeAgo(msg.createdAt)}</p>
           </div>
           {!msg.read && (
-            <span style={{ ...MONO, fontSize: 8, color: '#00c8ff', background: 'rgba(0,200,255,0.12)', border: '1px solid rgba(0,200,255,0.3)', padding: '1px 5px' }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#00c8ff', background: 'rgba(0,200,255,0.12)', border: '1px solid rgba(0,200,255,0.3)', padding: '1px 5px' }}>
               {t.mail.newBadge}
             </span>
           )}
@@ -227,7 +227,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
           }}>
             <div>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
-              {recipient.heroName && <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>}
+              {recipient.heroName && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{recipient.heroName} · Poz.{recipient.level}</p>}
             </div>
             <button onClick={() => { setRecipient(null); setSearch(''); }} aria-label="Clear recipient" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
@@ -267,7 +267,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)' }}>{p.username}</span>
-                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{p.heroName} · Poz.{p.level}</span>
+                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{p.heroName} · Poz.{p.level}</span>
                   </div>
                 ))}
               </div>
@@ -293,7 +293,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
             lineHeight: 1.6,
           }}
         />
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'right', marginTop: 3 }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'right', marginTop: 3 }}>
           {body.length}/500
         </p>
       </div>
@@ -302,7 +302,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
         onClick={handleSend}
         disabled={!recipient || !body.trim() || sending || done}
         className="btn btn-primary"
-        style={{ width: '100%', fontSize: 7, padding: '10px', opacity: (!recipient || !body.trim()) ? 0.5 : 1 }}
+        style={{ width: '100%', fontSize: 10, padding: '10px', opacity: (!recipient || !body.trim()) ? 0.5 : 1 }}
       >
         {sending ? t.mail.sending : t.mail.sendBtn}
       </button>
@@ -435,7 +435,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
             {/* Guild invites first */}
             {invites.length > 0 && (
               <>
-                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{t.mail.guildInvitesHeader}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.mail.guildInvitesHeader}</p>
                 {invites.map(inv => (
                   <InviteCard
                     key={inv.id}
@@ -450,7 +450,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
             {/* Messages */}
             {messages.length > 0 && (
               <>
-                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginTop: invites.length > 0 ? 4 : 0 }}>{t.mail.messagesHeader}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: invites.length > 0 ? 4 : 0 }}>{t.mail.messagesHeader}</p>
                 {messages.map(msg => (
                   <MessageCard
                     key={msg.id}

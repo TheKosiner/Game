@@ -66,11 +66,11 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 4 }}>{getItemName(item, lang)}</p>
-          <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
+          <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
             {rarityLabel[item.rarity]}
           </span>
           {(item as any).ranged && (
-            <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 5px', marginLeft: 4 }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 5px', marginLeft: 4 }}>
               🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
             </span>
           )}
@@ -79,7 +79,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: 10 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 2 }}>{t.equipment.stat}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{t.equipment.stat}</p>
         {statEntries.map(([k, v]) => (
           <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{statNames[k] ?? k}</span>
@@ -158,11 +158,11 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-              <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
+              <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
                 {rarityLabel[item.rarity]}
               </span>
               {(item as any).ranged && (
-                <span style={{ ...MONO, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
+                <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
                   🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
                 </span>
               )}
@@ -178,7 +178,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 <span style={{ ...MONO, fontSize: 10, color: '#00ff88' }}>+{ps.split('+')[1]} {ps.split(' +')[0]}</span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>{lang === 'en' ? 'Level:' : 'Poziom:'} {item.level}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{lang === 'en' ? 'Level:' : 'Poziom:'} {item.level}</p>
           </div>
           <span style={{ color: 'var(--text-dim)', fontSize: 12, flexShrink: 0 }}>ℹ</span>
         </>
@@ -227,19 +227,19 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
             <ItemIcon item={item} size={36} />
           </div>
           <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-            <p style={{ ...MONO, fontSize: 9, color: rc, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getItemName(item, lang)}</p>
+            <p style={{ ...MONO, fontSize: 10, color: rc, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getItemName(item, lang)}</p>
             {bonus && (
-              <span style={{ ...ORB, fontSize: 9, color: bonus.color }}>
+              <span style={{ ...ORB, fontSize: 10, color: bonus.color }}>
                 {bonus.value}
               </span>
             )}
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 1 }}>poz. {item.level}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>poz. {item.level}</p>
           </div>
         </>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
           <span style={{ fontSize: 18, opacity: 0.1 }}>{icon}</span>
-          <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{label}</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{label}</span>
         </div>
       )}
     </div>
@@ -262,7 +262,7 @@ export default function EquipmentPanel() {
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <p style={{ ...ORB, fontSize: 9, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)' }}>
+      <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)' }}>
         {t.equipment.title}
       </p>
 

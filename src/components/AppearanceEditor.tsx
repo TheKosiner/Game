@@ -47,7 +47,7 @@ export default function AppearanceEditor({ onClose }: Props) {
 
         <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 9, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
+          <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'var(--text-dim)', letterSpacing: '0.1em' }}>WYBIERZ POSTAĆ</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             {PORTRAIT_LIST.filter(p => !p.hidden && (!p.gemPrice || (hero.unlockedPortraits ?? []).includes(p.index) || hero.portrait === p.index)).map(p => (
@@ -67,7 +67,7 @@ export default function AppearanceEditor({ onClose }: Props) {
                   <img src={p.src} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <span style={{
-                  fontFamily: "'Orbitron', monospace", fontWeight: 700, fontSize: 8,
+                  fontFamily: "'Orbitron', monospace", fontWeight: 700, fontSize: 10,
                   color: portrait === p.index ? '#ff2d78' : 'var(--text-dim)',
                   textShadow: portrait === p.index ? '0 0 8px rgba(255,45,120,0.5)' : 'none',
                 }}>{p.label}</span>

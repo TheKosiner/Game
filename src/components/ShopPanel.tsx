@@ -67,7 +67,7 @@ function StatDeltaRow({ label, oldVal, newVal }: { label: string; oldVal: number
     <div style={{ display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
       <span style={{ ...MONO, fontSize: 10, color: '#64748b', flex: 1, paddingLeft: 8, paddingTop: 3, paddingBottom: 3 }}>{label}</span>
       <span style={{ ...ORB, fontSize: 10, color: '#94a3b8', width: 32, textAlign: 'right', paddingRight: 6 }}>{oldVal || '—'}</span>
-      <span style={{ ...ORB, fontSize: 8, color, width: 48, textAlign: 'center' }}>
+      <span style={{ ...ORB, fontSize: 10, color, width: 48, textAlign: 'center' }}>
         {delta !== 0 ? `${delta > 0 ? '+' : ''}${delta} ${arrow}` : '='}
       </span>
       <span style={{ ...ORB, fontSize: 10, color, width: 32, textAlign: 'left', paddingLeft: 6 }}>{newVal || '—'}</span>
@@ -205,7 +205,7 @@ export default function ShopPanel() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{
-            color: '#fbbf24', fontSize: 8,
+            color: '#fbbf24', fontSize: 10,
             background: 'rgba(245,158,11,0.08)',
             border: '1px solid rgba(245,158,11,0.2)',
             borderRadius: 3,

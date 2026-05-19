@@ -159,7 +159,7 @@ export default function QuestPanel() {
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>
+              <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', marginBottom: 3 }}>
                 {isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name}
               </p>
               <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
@@ -183,8 +183,8 @@ export default function QuestPanel() {
               {canCollect ? t.quests.readyToCollect : formatTime(remaining)}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
-              <span style={{ ...ORB, fontSize: 9, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
+              <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
+              <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
             </div>
           </div>
 
@@ -248,7 +248,7 @@ export default function QuestPanel() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <img src={logoSrc} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(255,45,120,0.5))' }} />
                 <div>
-                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{isEn ? questDisplayNameEn : questDisplayName}</p>
+                  <p style={{ ...ORB, fontSize: 10, color: 'var(--text-bright)', marginBottom: 2 }}>{isEn ? questDisplayNameEn : questDisplayName}</p>
                   <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? (base.descEn ?? base.description) : base.description}</p>
                 </div>
               </div>
@@ -269,12 +269,12 @@ export default function QuestPanel() {
                     }}>
                       <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
                       <div style={{ flex: 1 }}>
-                        <p style={{ ...ORB, fontSize: 8, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
-                        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
+                        <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
+                        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
                         <div style={{ display: 'flex', gap: 12 }}>
-                          <span style={{ ...ORB, fontSize: 8, color: '#4488ff' }}>+{xp} XP</span>
-                          <span style={{ ...ORB, fontSize: 8, color: '#c8a020' }}>+{gold}🪙</span>
-                          <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{xp} XP</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#c8a020' }}>+{gold}🪙</span>
+                          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
                         </div>
                       </div>
                       <button

@@ -44,7 +44,7 @@ function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNa
             }}
           >
             <span style={{
-              ...ORB, fontSize: 8,
+              ...ORB, fontSize: 10,
               color: isActive ? '#ff2d78' : 'rgba(255,255,255,0.45)',
               textShadow: isActive ? '0 0 10px rgba(255,45,120,0.7)' : 'none',
               letterSpacing: '0.1em',
@@ -54,7 +54,7 @@ function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNa
             </span>
             {tab.badge != null && tab.badge > 0 && (
               <span style={{
-                ...ORB, fontSize: 7,
+                ...ORB, fontSize: 10,
                 background: '#ff2d78', color: '#000',
                 borderRadius: 10, padding: '1px 6px',
                 minWidth: 18, textAlign: 'center',

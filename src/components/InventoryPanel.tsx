@@ -89,7 +89,7 @@ export default function InventoryPanel() {
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 9, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>{t.inventory.title}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>{t.inventory.title}</p>
         <span style={{
           ...MONO, fontSize: 10, color: inventory.length >= 18 ? '#ff4444' : 'var(--text-dim)',
           background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.2)',

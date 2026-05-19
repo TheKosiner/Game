@@ -218,7 +218,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           }}>
             {bossData.name}
           </p>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 6 }}>
             {isEn ? (bossData.descriptionEn ?? bossData.description) : bossData.description}
           </p>
 
@@ -235,16 +235,16 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 9, color: hpColor }}>
+            <span style={{ ...MONO, fontSize: 10, color: hpColor }}>
               {fmtNum(boss.currentHp)} / {fmtNum(boss.maxHp)} HP
             </span>
             {!boss.defeated && !isExpired && (
-              <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
+              <span style={{ ...MONO, fontSize: 10, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
                 ⏱ {fmtTime(timeLeft, isEn ? 'EXPIRED' : 'CZAS MINĄŁ')}
               </span>
             )}
             {nextResetLabel && (
-              <span style={{ ...MONO, fontSize: 9, color: '#888' }}>{nextResetLabel}</span>
+              <span style={{ ...MONO, fontSize: 10, color: '#888' }}>{nextResetLabel}</span>
             )}
           </div>
         </div>
@@ -296,10 +296,10 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           padding: '12px', textAlign: 'center',
           boxShadow: '0 0 16px rgba(68,200,68,0.1)',
         }}>
-          <p style={{ ...ORB, fontSize: 8, color: '#44cc44', marginBottom: 6 }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 6 }}>
             {isEn ? '🏆 BOSS DEFEATED — REWARD AWAITS!' : '🏆 BOSS POKONANY — NAGRODA CZEKA!'}
           </p>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 10 }}>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>
             {isEn ? `Your contribution: ${fmtNum(myDamage)} dmg` : `Twój udział: ${fmtNum(myDamage)} obrażeń`}
           </p>
           <button onClick={handleClaim} disabled={claiming} className="btn btn-primary"
@@ -317,10 +317,10 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           padding: 12, textAlign: 'center',
           boxShadow: '0 0 20px rgba(150,80,255,0.1)',
         }}>
-          <p style={{ ...ORB, fontSize: 8, color: '#cc88ff', marginBottom: 8 }}>✨ {isEn ? 'REWARDS CLAIMED' : 'NAGRODY ODEBRANE'}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#cc88ff', marginBottom: 8 }}>✨ {isEn ? 'REWARDS CLAIMED' : 'NAGRODY ODEBRANE'}</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 6 }}>
-            <span style={{ ...ORB, fontSize: 9, color: '#4488ff' }}>+{fmtNum(claimResult.xp)} XP</span>
-            <span style={{ ...ORB, fontSize: 9, color: '#ffd700' }}>+{fmtNum(claimResult.gold)} 🪙</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{fmtNum(claimResult.xp)} XP</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{fmtNum(claimResult.gold)} 🪙</span>
           </div>
           <p style={{ ...MONO, fontSize: 10, color: claimResult.item.rarity === 'legendary' ? '#ffd700' : '#cc44ff' }}>
             {claimResult.item.rarity === 'legendary'
@@ -334,9 +334,9 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       <div style={{ background: 'rgba(150,80,255,0.05)', border: '1px solid rgba(150,80,255,0.15)', padding: '8px 12px' }}>
         <p style={{ ...ORB, fontSize: 10, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
         <div style={{ display: 'flex', gap: 12 }}>
-          <span style={{ ...MONO, fontSize: 9, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
-          <span style={{ ...MONO, fontSize: 9, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
-          <span style={{ ...MONO, fontSize: 9, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
         </div>
       </div>
 
@@ -344,7 +344,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
           <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? 'COMBAT LOG' : 'LOG WALKI'}</p>
-          <span style={{ ...MONO, fontSize: 9, color: '#888' }}>
+          <span style={{ ...MONO, fontSize: 10, color: '#888' }}>
             {isEn ? 'total' : 'łącznie'}: {fmtNum(totalDmg)} dmg · {participants.length} {isEn ? 'players' : 'graczy'}
           </span>
         </div>
@@ -356,7 +356,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           }}
         >
           {log.length === 0 ? (
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
               {isEn ? 'No one has attacked yet.' : 'Nikt jeszcze nie zaatakował.'}
             </p>
           ) : (
@@ -365,7 +365,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
               const isVictory = line.includes('🏆');
               return (
                 <p key={i} style={{
-                  ...MONO, fontSize: 9, lineHeight: 1.7,
+                  ...MONO, fontSize: 10, lineHeight: 1.7,
                   color: isVictory ? '#ffd700' : isMe ? '#ff2d78' : 'var(--text-dim)',
                 }}>
                   {line}
@@ -374,7 +374,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             })
           )}
           {boss.defeated && (
-            <p style={{ ...ORB, fontSize: 8, color: '#ffd700', marginTop: 6, textAlign: 'center' }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#ffd700', marginTop: 6, textAlign: 'center' }}>
               🏆 {isEn ? 'BOSS DEFEATED!' : 'BOSS POKONANY!'}
             </p>
           )}
@@ -402,16 +402,16 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                 padding: '6px 10px',
                 display: 'flex', alignItems: 'center', gap: 8,
               }}>
-                <span style={{ ...ORB, fontSize: 8, color: idx === 0 ? '#ffd700' : idx === 1 ? '#aaaaaa' : idx === 2 ? '#cd7f32' : 'var(--text-muted)', flexShrink: 0, width: 16 }}>
+                <span style={{ ...ORB, fontSize: 10, color: idx === 0 ? '#ffd700' : idx === 1 ? '#aaaaaa' : idx === 2 ? '#cd7f32' : 'var(--text-muted)', flexShrink: 0, width: 16 }}>
                   {idx + 1}.
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                    <span style={{ ...MONO, fontSize: 9, color: isMe ? '#ff2d78' : 'var(--text-bright)',
+                    <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {p.heroName} {isMe ? (isEn ? '(you)' : '(ty)') : ''}
                     </span>
-                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
+                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
                       {fmtNum(p.damage)} ({pct.toFixed(2)}%)
                     </span>
                   </div>

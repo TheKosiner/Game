@@ -72,7 +72,7 @@ export default function GemsPanel() {
         boxShadow: '0 0 20px rgba(0,229,255,0.08)',
       }}>
         <div>
-          <p style={{ ...ORB, fontSize: 9, color: '#00e5ff', textShadow: '0 0 8px rgba(0,229,255,0.6)', marginBottom: 4 }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 8px rgba(0,229,255,0.6)', marginBottom: 4 }}>
             {t.gems.title}
           </p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.gems.earnTitle}</p>
@@ -86,7 +86,7 @@ export default function GemsPanel() {
 
       {/* How to earn */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 8, color: '#00e5ff', textShadow: '0 0 6px rgba(0,229,255,0.5)', marginBottom: 2 }}>
+        <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 6px rgba(0,229,255,0.5)', marginBottom: 2 }}>
           {t.gems.earnTitle}
         </p>
         {[
@@ -106,7 +106,7 @@ export default function GemsPanel() {
         border: '1px solid rgba(157,78,221,0.2)',
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
-        <p style={{ ...ORB, fontSize: 8, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>
+        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>
           {t.gems.buyGemsTitle}
         </p>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -130,7 +130,7 @@ export default function GemsPanel() {
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
                 }}
               >
-                <p style={{ ...ORB, fontSize: 9, color: '#00e5ff', margin: 0 }}>
+                <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', margin: 0 }}>
                   {isLoading ? '⏳' : `${pkg.gems} 💎`}
                 </p>
                 <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{pkg.price}</p>
@@ -139,7 +139,7 @@ export default function GemsPanel() {
           })}
         </div>
         {!isFirebaseConfigured && (
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center' }}>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
             {t.gems.buyGemsSoon}
           </p>
         )}
@@ -147,7 +147,7 @@ export default function GemsPanel() {
 
       {/* Portrait shop */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <p style={{ ...ORB, fontSize: 8, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>
+        <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>
           {t.gems.portraitShopTitle}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
@@ -192,13 +192,13 @@ export default function GemsPanel() {
                 </div>
 
                 <span style={{
-                  ...ORB, fontSize: 7,
+                  ...ORB, fontSize: 10,
                   color: isEquipped ? '#ff2d78' : isOwned ? '#00e5ff' : 'var(--text-dim)',
                   textAlign: 'center',
                 }}>{p.label}</span>
 
                 {isEquipped ? (
-                  <span style={{ ...MONO, fontSize: 8, color: '#ff2d78' }}>{t.gems.portraitEquipped}</span>
+                  <span style={{ ...MONO, fontSize: 10, color: '#ff2d78' }}>{t.gems.portraitEquipped}</span>
                 ) : isOwned ? (
                   <button
                     onClick={() => {

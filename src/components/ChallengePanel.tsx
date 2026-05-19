@@ -47,7 +47,7 @@ function PowerBadge({ power, active }: { power: ChallengePower; active?: boolean
   const info = getPowerInfo(t)[power];
   return (
     <span title={info.desc} style={{
-      ...MONO, fontSize: 7,
+      ...MONO, fontSize: 10,
       color: info.color,
       background: active ? `${info.color}30` : `${info.color}10`,
       border: `1px solid ${active ? info.color : info.color + '44'}`,
@@ -179,17 +179,17 @@ function FightView() {
 
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-              <p style={{ ...ORB, fontSize: 9, color: fight.rageActive ? '#ff6600' : '#c05050' }}>{boss.name}</p>
+              <p style={{ ...ORB, fontSize: 10, color: fight.rageActive ? '#ff6600' : '#c05050' }}>{boss.name}</p>
               {fight.rageActive && (
-                <span style={{ ...MONO, fontSize: 7, color: '#ff6600', background: 'rgba(255,102,0,0.2)', border: '1px solid rgba(255,102,0,0.6)', padding: '1px 4px' }}>
+                <span style={{ ...MONO, fontSize: 10, color: '#ff6600', background: 'rgba(255,102,0,0.2)', border: '1px solid rgba(255,102,0,0.6)', padding: '1px 4px' }}>
                   {t.challenge.furyActive}
                 </span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 5 }}>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>
               {t.challenge.roundInfo(boss.level, fight.round)}
             </p>
-            <p style={{ ...MONO, fontSize: 8, color: bossHpColor }}>
+            <p style={{ ...MONO, fontSize: 10, color: bossHpColor }}>
               {fight.bossHp} / {boss.maxHp} HP
             </p>
           </div>
@@ -245,8 +245,8 @@ function FightView() {
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{hero.name}</span>
-          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{hero.hp} / {hero.maxHp} HP</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.name}</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{hero.hp} / {hero.maxHp} HP</span>
         </div>
         <div className="pixel-bar">
           <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%`, transition: 'width 0.3s ease' }} />
@@ -274,21 +274,21 @@ function FightView() {
       <div style={{ display: 'flex', gap: 6 }}>
         <button
           className="btn btn-primary"
-          style={{ flex: 2, fontSize: 8, padding: '10px' }}
+          style={{ flex: 2, fontSize: 10, padding: '10px' }}
           onClick={() => { setAutoFight(false); attackChallengeBoss(); }}
         >
           {t.challenge.attack}
         </button>
         <button
           className={autoFight ? 'btn btn-danger' : 'btn btn-secondary'}
-          style={{ flex: 2, fontSize: 8, padding: '10px' }}
+          style={{ flex: 2, fontSize: 10, padding: '10px' }}
           onClick={() => setAutoFight(v => !v)}
         >
           {autoFight ? t.challenge.stop : t.challenge.auto}
         </button>
         <button
           className="btn btn-secondary"
-          style={{ flex: 1, fontSize: 7, padding: '10px 6px', color: 'var(--text-muted)' }}
+          style={{ flex: 1, fontSize: 10, padding: '10px 6px', color: 'var(--text-muted)' }}
           onClick={() => { setAutoFight(false); fleeChallengeFight(); }}
         >
           {t.challenge.flee}
@@ -319,7 +319,7 @@ function FightView() {
             line.includes('🤖') || line.includes('[x2]') ? '#ff7777' :
             'var(--text-dim)';
           return (
-            <p key={i} style={{ ...MONO, fontSize: 8, color, lineHeight: 1.7, marginBottom: 0 }}>
+            <p key={i} style={{ ...MONO, fontSize: 10, color, lineHeight: 1.7, marginBottom: 0 }}>
               {line}
             </p>
           );
@@ -368,7 +368,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         }}>
           {won ? t.challenge.victory : t.challenge.defeat}
         </p>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
           {boss.emoji} {boss.name}
         </p>
       </div>
@@ -378,18 +378,18 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)',
         padding: 12, display: 'flex', flexDirection: 'column', gap: 8,
       }}>
-        <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.rewards}</p>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.rewards}</p>
 
         <div style={{ display: 'flex', gap: 16 }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.experience}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.experience}</p>
             <p style={{ ...ORB, fontSize: 13, color: '#00f5ff', textShadow: '0 0 10px rgba(0,245,255,0.5)' }}>
               +{won ? boss.xpReward.toLocaleString() : Math.floor(boss.xpReward * 0.1).toLocaleString()}
             </p>
           </div>
           {won && (
             <div style={{ textAlign: 'center' }}>
-              <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.gold}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.gold}</p>
               <p style={{ ...ORB, fontSize: 13, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
                 +{boss.goldReward.toLocaleString()} 🪙
               </p>
@@ -400,7 +400,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         {/* Loot */}
         {won && result.loot.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 4 }}>
-            <p style={{ ...ORB, fontSize: 8, color: 'var(--text-dim)' }}>{t.challenge.items}</p>
+            <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{t.challenge.items}</p>
             {result.loot.map((item, i) => {
               const rc = RARITY_COLOR[item.rarity];
               return (
@@ -417,11 +417,11 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
                     <p style={{ ...MONO, fontSize: 10, color: rc, textShadow: `0 0 6px ${rc}80`, marginBottom: 2 }}>
                       {getItemName(item, lang)}
                     </p>
-                    <p style={{ ...MONO, fontSize: 8, color: `${rc}99` }}>
+                    <p style={{ ...MONO, fontSize: 10, color: `${rc}99` }}>
                       {rarityLabel[item.rarity]} · Poz. {item.level}
                     </p>
                   </div>
-                  <span style={{ ...MONO, fontSize: 8, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
+                  <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
                     {rarityLabel[item.rarity]}
                   </span>
                 </div>
@@ -431,7 +431,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         )}
 
         {!won && (
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center' }}>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
             {t.challenge.cooldown}
           </p>
         )}
@@ -440,7 +440,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
       {/* Combat log toggle */}
       <button
         onClick={() => setShowLog(v => !v)}
-        style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', cursor: 'pointer', width: '100%' }}
+        style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', padding: '6px', cursor: 'pointer', width: '100%' }}
       >
         {showLog ? t.challenge.hideLog : t.challenge.showLog}
       </button>
@@ -448,7 +448,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
       {showLog && (
         <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.07)', padding: 8, maxHeight: 200, overflowY: 'auto' }}>
           {result.log.map((line, i) => (
-            <p key={i} style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
+            <p key={i} style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
           ))}
         </div>
       )}
@@ -1249,7 +1249,7 @@ function SelectView() {
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: '#ffd700', textShadow: '0 0 20px #ffd700', textAlign: 'center' }}>
           WSZYSCY BOSSOWIE POKONANI
         </p>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center' }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
           Jesteś legendą Neon-Warszawy.
         </p>
       </div>
@@ -1261,10 +1261,10 @@ function SelectView() {
 
       {/* Progress header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 9, color: accentColor, textShadow: `0 0 10px ${accentColor}80` }}>
+        <p style={{ ...ORB, fontSize: 10, color: accentColor, textShadow: `0 0 10px ${accentColor}80` }}>
           ⚡ BOSS
         </p>
-        <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '2px 8px' }}>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '2px 8px' }}>
           {bossIdx}/{CHALLENGE_BOSSES.length} 💀
         </span>
       </div>
@@ -1299,7 +1299,7 @@ function SelectView() {
           {/* level badge */}
           <div style={{
             position: 'absolute', top: 10, right: 10,
-            ...MONO, fontSize: 8, color: accentColor,
+            ...MONO, fontSize: 10, color: accentColor,
             background: 'rgba(0,0,0,0.8)', border: `1px solid ${accentColor}55`,
             padding: '2px 6px',
           }}>
@@ -1317,7 +1317,7 @@ function SelectView() {
         </p>
 
         {/* Description */}
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.6 }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.6 }}>
           {lang === 'en' ? (boss!.descriptionEn ?? boss!.description) : boss!.description}
         </p>
 
@@ -1327,22 +1327,22 @@ function SelectView() {
           background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)', padding: 10,
         }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 3 }}>❤ HP</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>❤ HP</p>
             <p style={{ ...ORB, fontSize: 11, color: '#ff4444' }}>{boss!.maxHp.toLocaleString()}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 3 }}>⚔ ATK</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>⚔ ATK</p>
             <p style={{ ...ORB, fontSize: 11, color: '#ff8800' }}>{boss!.attack}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 3 }}>🛡 DEF</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>🛡 DEF</p>
             <p style={{ ...ORB, fontSize: 11, color: '#4488ff' }}>{boss!.defense}</p>
           </div>
         </div>
 
         {/* Powers */}
         <div style={{ width: '100%' }}>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 6 }}>{lang === 'en' ? 'BOSS POWERS' : 'MOCE BOSSA'}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>{lang === 'en' ? 'BOSS POWERS' : 'MOCE BOSSA'}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {boss!.powers.map(p => (
               <div key={p} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -1358,19 +1358,19 @@ function SelectView() {
         {/* Rewards */}
         <div style={{ display: 'flex', gap: 20, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,215,0,0.15)', padding: '8px 16px', width: '100%', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 2 }}>XP</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>XP</p>
             <p style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{boss!.xpReward.toLocaleString()}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 2 }}>ZŁOTO</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>ZŁOTO</p>
             <p style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{boss!.goldReward.toLocaleString()} 🪙</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
             <p style={{ ...ORB, fontSize: 10, color: '#cc44ff' }}>
               {t.challenge.drop(Math.round(bossIdx / 15 * 65))}
             </p>
-            <p style={{ ...MONO, fontSize: 7, color: 'var(--text-dim)' }}>{t.challenge.dropLabel}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.challenge.dropLabel}</p>
           </div>
         </div>
       </div>
@@ -1380,7 +1380,7 @@ function SelectView() {
       {/* Cooldown / fight button */}
       {cooldownLeft > 0 ? (
         <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.25)' }}>
-          <p style={{ ...MONO, fontSize: 9, color: '#ff4444', marginBottom: 4 }}>⏱ COOLDOWN</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#ff4444', marginBottom: 4 }}>⏱ COOLDOWN</p>
           <p style={{ ...ORB, fontSize: 16, color: '#ff4444', textShadow: '0 0 10px rgba(255,68,68,0.5)' }}>
             {fmtMs(cooldownLeft)}
           </p>

@@ -22,11 +22,11 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', minWidth: 36 }}>{label}</span>
+      <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', minWidth: 36 }}>{label}</span>
       <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, boxShadow: `0 0 6px ${color}` }} />
       </div>
-      <span style={{ ...ORB, fontSize: 8, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
+      <span style={{ ...ORB, fontSize: 10, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
     </div>
   );
 }
@@ -189,11 +189,11 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           </div>
 
           <div style={{ flex: 1 }}>
-            <p style={{ ...ORB, fontSize: 9, color: '#c05050', marginBottom: 2 }}>{combat.opponent.heroName}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginBottom: 5 }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 2 }}>{combat.opponent.heroName}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>
               @{combat.opponent.username} · POZ. {combat.opponent.level}
             </p>
-            <p style={{ ...MONO, fontSize: 8, color: oppHpColor }}>
+            <p style={{ ...MONO, fontSize: 10, color: oppHpColor }}>
               {Math.max(0, combat.oppHp)} / {combat.oppMaxHp} HP
             </p>
           </div>
@@ -222,8 +222,8 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
             <img src={portraitSrc(hero.portrait)} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
-          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', flex: 1 }}>{hero.name}</span>
-          <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flex: 1 }}>{hero.name}</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
         </div>
         <div className="pixel-bar">
           <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%`, transition: 'width 0.3s ease' }} />
@@ -250,14 +250,14 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           <button
             onClick={() => { if (autoFight) onToggleAuto(); onAttack(); }}
             className="btn btn-primary"
-            style={{ flex: 2, fontSize: 8, padding: '10px' }}
+            style={{ flex: 2, fontSize: 10, padding: '10px' }}
           >
             {t.challenge.attack}
           </button>
           <button
             onClick={onToggleAuto}
             className={autoFight ? 'btn btn-danger' : 'btn btn-secondary'}
-            style={{ flex: 2, fontSize: 8, padding: '10px' }}
+            style={{ flex: 2, fontSize: 10, padding: '10px' }}
           >
             {autoFight ? t.challenge.stop : t.challenge.auto}
           </button>
@@ -286,7 +286,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
               {combat.won ? '+25' : '-15'} RANKING
             </p>
           </div>
-          <button onClick={onExit} className="btn btn-secondary" style={{ width: '100%', fontSize: 7 }}>◀ {t.pvp.title}</button>
+          <button onClick={onExit} className="btn btn-secondary" style={{ width: '100%', fontSize: 10 }}>◀ {t.pvp.title}</button>
         </>
       )}
 
@@ -299,7 +299,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
         }}
       >
         {[...combat.log].reverse().map((entry, i) => (
-          <p key={i} style={{ ...MONO, fontSize: 8, color: logColor(entry.message), lineHeight: 1.7, marginBottom: 0 }}>
+          <p key={i} style={{ ...MONO, fontSize: 10, color: logColor(entry.message), lineHeight: 1.7, marginBottom: 0 }}>
             {entry.message}
           </p>
         ))}
@@ -350,10 +350,10 @@ function ArenaCard({ entry, canFight, onChallenge }: {
       </div>
 
       <div>
-        <p style={{ ...ORB, fontSize: 9, color: '#c05050', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {entry.username}
         </p>
-        <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {entry.heroName}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
@@ -381,15 +381,15 @@ function ArenaCard({ entry, canFight, onChallenge }: {
 
       <div style={{ display: 'flex', gap: 4 }}>
         <div style={{ flex: 1, background: 'rgba(0,255,136,0.05)', border: '1px solid rgba(0,255,136,0.15)', padding: '3px 0', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 9, color: '#00ff88' }}>{wins}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>{wins}</p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.win}</p>
         </div>
         <div style={{ flex: 1, background: 'rgba(255,45,120,0.05)', border: '1px solid rgba(255,45,120,0.15)', padding: '3px 0', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 9, color: '#ff2d78' }}>{losses}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#ff2d78' }}>{losses}</p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.loss}</p>
         </div>
         <div style={{ flex: 1, background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.15)', padding: '3px 0', textAlign: 'center' }}>
-          <p style={{ ...ORB, fontSize: 9, color: '#ffd700' }}>{winRate}%</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>{winRate}%</p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.pvp.winRate}</p>
         </div>
       </div>

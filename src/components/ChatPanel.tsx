@@ -119,7 +119,7 @@ export default function ChatPanel() {
                   width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                   background: isOwn ? 'rgba(255,45,120,0.3)' : 'rgba(0,200,255,0.2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 9, color: isOwn ? '#ff2d78' : '#00c8ff',
+                  fontSize: 10, color: isOwn ? '#ff2d78' : '#00c8ff',
                   border: `1px solid ${isOwn ? 'rgba(255,45,120,0.4)' : 'rgba(0,200,255,0.3)'}`,
                   fontFamily: "'Share Tech Mono', monospace",
                 }}>
@@ -139,7 +139,7 @@ export default function ChatPanel() {
                   {msg.text}
                 </span>
               </div>
-              <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
+              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
                 {timeAgo(msg.createdAt)}
               </span>
             </div>
@@ -150,7 +150,7 @@ export default function ChatPanel() {
 
       {/* Rate limit message */}
       {rateLimitMsg && (
-        <p style={{ ...MONO, fontSize: 9, color: '#ff2d78', textAlign: 'center' }}>{rateLimitMsg}</p>
+        <p style={{ ...MONO, fontSize: 10, color: '#ff2d78', textAlign: 'center' }}>{rateLimitMsg}</p>
       )}
 
       {/* Input */}

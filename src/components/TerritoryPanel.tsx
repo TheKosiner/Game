@@ -65,10 +65,10 @@ function CityMap({
     }}>
       {/* Map title */}
       <div style={{ padding: '6px 10px', borderBottom: '1px solid rgba(255,45,120,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ ...MONO, fontSize: 9, color: 'var(--pink)', textShadow: '0 0 8px rgba(255,45,120,0.5)', letterSpacing: '0.1em' }}>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--pink)', textShadow: '0 0 8px rgba(255,45,120,0.5)', letterSpacing: '0.1em' }}>
           ◈ NEON-WARSZAWA 2087
         </span>
-        <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{isEn ? 'ZONE MAP' : 'MAPA STREF'}</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{isEn ? 'ZONE MAP' : 'MAPA STREF'}</span>
       </div>
 
       <svg viewBox="0 0 100 100" style={{ width: '100%', display: 'block' }}
@@ -213,7 +213,7 @@ function CityMap({
         ]).map(({ color, label }) => (
           <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 5px ${color}` }} />
-            <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)' }}>{label}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{label}</span>
           </div>
         ))}
       </div>
@@ -324,8 +324,8 @@ function SiegeCombat({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <p style={{ ...PX(7), color: '#e06060' }}>{cur.name}</p>
-                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>@{cur.username}</p>
-                <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{isEn ? 'LVL.' : 'POZ.'} {cur.level}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>@{cur.username}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{isEn ? 'LVL.' : 'POZ.'} {cur.level}</p>
                 <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyStartHp} HP</p>
               </div>
             </div>
@@ -358,7 +358,7 @@ function SiegeCombat({
                   <div style={{ width: 18, height: 18, overflow: 'hidden', border: `1px solid ${current ? '#e06060' : '#555'}`, flexShrink: 0 }}>
                     <img src={portraitSrc(d.portrait)} alt={d.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                  <span style={{ ...MONO, fontSize: 8, color: current ? '#e06060' : 'rgba(200,120,120,0.8)', textDecoration: beaten ? 'line-through' : 'none' }}>
+                  <span style={{ ...MONO, fontSize: 10, color: current ? '#e06060' : 'rgba(200,120,120,0.8)', textDecoration: beaten ? 'line-through' : 'none' }}>
                     {beaten ? '✓' : current ? '⚔' : '○'} {d.name} {d.level}
                   </span>
                 </div>
@@ -401,10 +401,10 @@ function SiegeCombat({
       {/* Buttons */}
       {!state.done && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onAttack} className="btn btn-danger" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
+          <button onClick={onAttack} className="btn btn-danger" style={{ flex: 1, fontSize: 10, padding: '10px' }}>
             ⚔ {isEn ? 'ATTACK' : 'ATAKUJ'}
           </button>
-          <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 7, padding: '10px' }}>
+          <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 10, padding: '10px' }}>
             ⚡ {isEn ? 'Quick fight' : 'Szybka walka'}
           </button>
           <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 10, padding: '10px 14px' }}>
@@ -782,7 +782,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       />
 
       {focused && (
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'center' }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center' }}>
           {isEn ? 'Click node again to deselect • selected:' : 'Kliknij węzeł ponownie aby odznaczyć • wybrana:'}{' '}
           <span style={{ color: 'var(--cyan)' }}>
             {(() => { const d = TERRITORY_LIST.find(t => t.id === focused); return isEn ? (d?.nameEn ?? d?.name) : d?.name; })()}
@@ -914,18 +914,18 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 <HpBar current={state.siegeCurrentHp ?? 0} max={state.siegeMaxHp} color={mySiegeActive ? '#7040c0' : '#c07020'} />
                 {mySiegeActive && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                    <p style={{ ...MONO, fontSize: 8, color: '#a080e0' }}>
+                    <p style={{ ...MONO, fontSize: 10, color: '#a080e0' }}>
                       👥 {attackerCount} {isEn ? (attackerCount === 1 ? 'player attacked' : 'players attacked') : (attackerCount === 1 ? 'gracz zaatakował' : 'graczy zaatakowało')}
                     </p>
                     {siegeTimeLeft !== null && (
-                      <p style={{ ...MONO, fontSize: 8, color: siegeTimeLeft < 30 * 60 * 1000 ? '#ff6060' : 'var(--text-muted)' }}>
+                      <p style={{ ...MONO, fontSize: 10, color: siegeTimeLeft < 30 * 60 * 1000 ? '#ff6060' : 'var(--text-muted)' }}>
                         ⏱ {formatCountdown(Math.max(0, siegeTimeLeft))}
                       </p>
                     )}
                   </div>
                 )}
                 {mySiegeActive && alreadyAttacked && (
-                  <p style={{ ...MONO, fontSize: 8, color: '#e09040', marginTop: 3 }}>
+                  <p style={{ ...MONO, fontSize: 10, color: '#e09040', marginTop: 3 }}>
                     {isEn ? '✓ Already attacked — wait for allies' : '✓ Już zaatakowałeś — czekaj na sojuszników'}
                   </p>
                 )}

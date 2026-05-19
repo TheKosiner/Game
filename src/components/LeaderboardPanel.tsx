@@ -11,11 +11,11 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
   const pct = Math.min(100, Math.round((value / Math.max(max, 1)) * 100));
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', minWidth: 36 }}>{label}</span>
+      <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', minWidth: 36 }}>{label}</span>
       <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, boxShadow: `0 0 6px ${color}` }} />
       </div>
-      <span style={{ ...ORB, fontSize: 8, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
+      <span style={{ ...ORB, fontSize: 10, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
     </div>
   );
 }
@@ -49,7 +49,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
             ? <span style={{ fontSize: 16 }}>{['🥇','🥈','🥉'][rank-1]}</span>
             : <span style={{ ...PX(7), color: rankColor }}>#{rank}</span>
           }
-          <span style={{ ...ORB, fontSize: 8, color: 'var(--gold-bright)' }}>{t.leaderboard.profileTitle}</span>
+          <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)' }}>{t.leaderboard.profileTitle}</span>
         </div>
         <button onClick={onClose} aria-label="Close" style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace' }}>✕</button>
       </div>
@@ -70,11 +70,11 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
           </p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{entry.heroName}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ ...ORB, fontSize: 8, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 6px' }}>
+            <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 6px' }}>
               POZ.{entry.level}
             </span>
             {entry.guildTag && (
-              <span style={{ ...MONO, fontSize: 9, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '2px 6px' }}>
+              <span style={{ ...MONO, fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '2px 6px' }}>
                 [{entry.guildTag}]
               </span>
             )}
@@ -84,7 +84,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
 
       {/* stats */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{t.leaderboard.combatStats}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.leaderboard.combatStats}</p>
         <StatBar label={t.leaderboard.atk} value={atk} max={maxStat * 1.2} color="#ff2d78" />
         <StatBar label={t.leaderboard.def} value={def} max={maxStat * 1.2} color="#00f5ff" />
         <StatBar label={t.leaderboard.hp} value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
@@ -92,23 +92,23 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
 
       {/* pvp */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{t.leaderboard.pvpStats}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.leaderboard.pvpStats}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           <div style={{ flex: 1, background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#00ff88' }}>{wins}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.wins}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.wins}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#ff2d78' }}>{losses}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.losses}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.losses}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#ffd700' }}>{winRate}%</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.winRate}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>{t.leaderboard.winRate}</p>
           </div>
           <div style={{ flex: 1, background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', padding: '6px 8px', textAlign: 'center' }}>
             <p style={{ ...ORB, fontSize: 14, color: '#c084fc' }}>{rating}</p>
-            <p style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', marginTop: 2 }}>RANKING</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>RANKING</p>
           </div>
         </div>
       </div>
@@ -222,12 +222,12 @@ export default function LeaderboardPanel() {
                 <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
                   <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
                   {entry.pvpRating !== undefined && (
-                    <span style={{ ...ORB, fontSize: 7, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
+                    <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
                       ⚔ {entry.pvpRating}
                     </span>
                   )}
                   {entry.guildTag && (
-                    <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 8, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
+                    <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
                       [{entry.guildTag}]
                     </span>
                   )}

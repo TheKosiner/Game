@@ -3,7 +3,6 @@ import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 
 import { PORTRAIT_LIST } from '../data/portraits';
-import { PX } from '../utils/styles';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');
@@ -42,7 +41,7 @@ export default function CharacterCreation() {
 
           {/* Name */}
           <div>
-            <label htmlFor="hero-name" style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 6, letterSpacing: '0.1em', display: 'block' }}>{t.creation.nameLabel}</label>
+            <label htmlFor="hero-name" style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 10, marginBottom: 6, letterSpacing: '0.1em', display: 'block' }}>{t.creation.nameLabel}</label>
             <input
               id="hero-name"
               type="text"
@@ -67,7 +66,7 @@ export default function CharacterCreation() {
 
           {/* Portrait picker */}
           <div>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 9, marginBottom: 10, letterSpacing: '0.1em' }}>{t.creation.chooseLabel}</p>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#64748b', fontSize: 10, marginBottom: 10, letterSpacing: '0.1em' }}>{t.creation.chooseLabel}</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
               {PORTRAIT_LIST.filter(p => !p.hidden).map(p => (
                 <button
@@ -87,7 +86,7 @@ export default function CharacterCreation() {
                     <img src={p.src} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </div>
                   <span style={{
-                    fontFamily: "'Orbitron', monospace", fontWeight: 700, fontSize: 8,
+                    fontFamily: "'Orbitron', monospace", fontWeight: 700, fontSize: 10,
                     color: portrait === p.index ? '#ff2d78' : '#475569',
                     textShadow: portrait === p.index ? '0 0 8px rgba(255,45,120,0.5)' : 'none',
                   }}>{p.label}</span>
@@ -100,7 +99,7 @@ export default function CharacterCreation() {
             onClick={handleCreate}
             disabled={!name.trim()}
             className="btn btn-primary"
-            style={{ width: '100%', padding: '13px', fontSize: 8 }}
+            style={{ width: '100%', padding: '13px', fontSize: 10 }}
           >
             {t.creation.startBtn}
           </button>
