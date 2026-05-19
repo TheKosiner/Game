@@ -143,7 +143,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? '🔮 Obrażenia mag.' : t.equipment.atk}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? (lang === 'en' ? '🔮 Magic Dmg.' : '🔮 Obrażenia mag.') : t.equipment.atk}</span>
             <span style={{ ...ORB, fontSize: 10, color: item.magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
@@ -154,12 +154,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Brak bonusów</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No bonuses' : 'Brak bonusów'}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>Min. poz. {item.level}</span>
+        <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</span>
         <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>{item.goldValue}🪙</span>
       </div>
 
@@ -397,6 +397,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
 
 export default function HeroCard() {
   const t              = useT();
+  const lang           = useLangStore(s => s.lang);
   const hero           = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
@@ -446,8 +447,8 @@ export default function HeroCard() {
   const hasQuest    = activeQuest !== null;
   const inDungeon   = currentDungeon !== null || inCombat;
 
-  const restBlockReason    = isBegging ? 'postać zbiera złom' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
-  const beggingBlockReason = isResting ? 'postać odpoczywa' : hasQuest ? 'postać wykonuje zadanie' : inDungeon ? 'postać jest w lochu' : undefined;
+  const restBlockReason    = isBegging ? (lang === 'en' ? 'character is scavenging' : 'postać zbiera złom') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
+  const beggingBlockReason = isResting ? (lang === 'en' ? 'character is resting' : 'postać odpoczywa') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
 
   const displayHp  = hero.hp + earnedRestHp;
   const hpPct      = (displayHp / hero.maxHp) * 100;

@@ -460,19 +460,25 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     if (!guild) return;
 
     if (myOwnedCount >= 1 && state?.guildId !== guild.id) {
-      alert('Twoja gildia może posiadać tylko jedną strefę na raz. Najpierw ją stracisz lub zostanie odbita.');
+      alert(isEn
+        ? 'Your guild can only hold one zone at a time. You must lose it or have it retaken first.'
+        : 'Twoja gildia może posiadać tylko jedną strefę na raz. Najpierw ją stracisz lub zostanie odbita.');
       return;
     }
 
     const now = Date.now();
     if (guild.lastCaptureAt && now - guild.lastCaptureAt < DAY_MS) {
       const left = DAY_MS - (now - guild.lastCaptureAt);
-      alert(`Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
+      alert(isEn
+        ? `Your guild can capture another zone in ${formatCountdown(left)}. (Limit: 1 capture per day)`
+        : `Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
       return;
     }
     if (guild.lastLostAt && now - guild.lastLostAt < DAY_MS) {
       const left = DAY_MS - (now - guild.lastLostAt);
-      alert(`Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
+      alert(isEn
+        ? `Your guild lost a zone and needs to recover. You can attack in ${formatCountdown(left)}.`
+        : `Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
       return;
     }
 
@@ -480,7 +486,9 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     const siegeExpired = isMyActiveSiege && state?.siegeStartedAt != null && Date.now() - state.siegeStartedAt >= SIEGE_DURATION_MS;
 
     if (isMyActiveSiege && !siegeExpired && myUid && (state?.siegeAttackers ?? []).includes(myUid)) {
-      alert('Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
+      alert(isEn
+        ? 'You already attacked in this siege. Each player can attack only once per siege.'
+        : 'Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
       return;
     }
 
@@ -499,7 +507,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         (state.defenderMembers ?? []).length > 0
           ? state.defenderMembers
           : Array.from({ length: Math.max(1, state.defenderMemberCount || 1) }, (_, i) => ({
-              name: `Obrońca ${i + 1}`,
+              name: isEn ? `Defender ${i + 1}` : `Obrońca ${i + 1}`,
               level: state.defenderAvgLevel > 0 ? state.defenderAvgLevel : def.minLevel,
             }));
 
@@ -528,19 +536,23 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       defenderIdx = 0;
       firstEnemyAtk   = defenders[0].atk;
       firstEnemyDef   = defenders[0].def;
-      firstEnemyName  = `[${state.guildTag}] ${defenders[0].name} (poz.${defenders[0].level})`;
+      firstEnemyName  = `[${state.guildTag}] ${defenders[0].name} (${isEn ? 'lvl.' : 'poz.'}${defenders[0].level})`;
       firstEnemyEmoji = '⚔';
     }
 
     const result = await initOrJoinSiege(def.id, guild.id, guild.tag, siegeMaxHp);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
-      alert(`Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
+      alert(isEn
+        ? `Another siege is underway: [${result.byTag}]. Ends in ${formatCountdown(Math.max(0, remaining))}.`
+        : `Inne oblężenie trwa: [${result.byTag}]. Kończy się za ${formatCountdown(Math.max(0, remaining))}.`);
       return;
     }
 
     if (myUid && result.attackers.includes(myUid)) {
-      alert('Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
+      alert(isEn
+        ? 'You already attacked in this siege. Each player can attack only once per siege.'
+        : 'Już zaatakowałeś w tym oblężeniu. Każdy gracz może zaatakować tylko raz podczas oblężenia.');
       return;
     }
 
@@ -563,7 +575,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       }
       firstEnemyAtk   = defenders[defenderIdx].atk;
       firstEnemyDef   = defenders[defenderIdx].def;
-      firstEnemyName  = `[${state!.guildTag}] ${defenders[defenderIdx].name} (poz.${defenders[defenderIdx].level})`;
+      firstEnemyName  = `[${state!.guildTag}] ${defenders[defenderIdx].name} (${isEn ? 'lvl.' : 'poz.'}${defenders[defenderIdx].level})`;
     }
 
     setCombat({
@@ -577,8 +589,12 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       enemyName: firstEnemyName, enemyEmoji: firstEnemyEmoji,
       defenders, defenderIdx,
       log: defenderIdx >= 0
-        ? [`Oblężenie ${def.name}! Walczysz z ${defenders.length} obrońcami. Pierwszy: ${firstEnemyName}`]
-        : [`Dołączyłeś do oblężenia ${def.name}! HP strażnika: ${currentHp}`],
+        ? [isEn
+            ? `Siege of ${def.nameEn ?? def.name}! Fighting ${defenders.length} defender(s). First: ${firstEnemyName}`
+            : `Oblężenie ${def.name}! Walczysz z ${defenders.length} obrońcami. Pierwszy: ${firstEnemyName}`]
+        : [isEn
+            ? `Joined siege of ${def.nameEn ?? def.name}! Guardian HP: ${currentHp}`
+            : `Dołączyłeś do oblężenia ${def.name}! HP strażnika: ${currentHp}`],
       done: false, won: false, damageDealt: 0,
       siegeStartedAt: result.startedAt,
       siegeAttackers: result.attackers,
@@ -588,17 +604,19 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   function advanceDefender(prev: SiegeCombatState, heroHp: number, damageDealt: number, log: string[]): SiegeCombatState {
     const nextIdx = prev.defenderIdx + 1;
     if (nextIdx >= prev.defenders.length) {
-      log.push('Wszyscy obrońcy pokonani! Strefa przejęta!');
+      log.push(isEn ? 'All defenders defeated! Zone captured!' : 'Wszyscy obrońcy pokonani! Strefa przejęta!');
       return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
     }
     const next = prev.defenders[nextIdx];
-    log.push(`▶ Następny obrońca: ${next.name} (poz.${next.level}) — ${next.hp} HP`);
+    log.push(isEn
+      ? `▶ Next defender: ${next.name} (lvl.${next.level}) — ${next.hp} HP`
+      : `▶ Następny obrońca: ${next.name} (poz.${next.level}) — ${next.hp} HP`);
     return {
       ...prev, heroHp, damageDealt, log,
       defenderIdx: nextIdx,
       enemyHp: next.hp, enemyStartHp: next.maxHp,
       enemyAtk: next.atk, enemyDef: next.def,
-      enemyName: `⚔ ${next.name} (poz.${next.level})`,
+      enemyName: `⚔ ${next.name} (${isEn ? 'lvl.' : 'poz.'}${next.level})`,
     };
   }
 
@@ -611,23 +629,23 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       const heroDmg = siegeDmg(heroAtk, enemyDef);
       enemyHp = Math.max(0, enemyHp - heroDmg);
       damageDealt += heroDmg;
-      log.push(`Zadajesz ${heroDmg} obrażeń. (Razem: ${damageDealt})`);
+      log.push(isEn ? `You deal ${heroDmg} damage. (Total: ${damageDealt})` : `Zadajesz ${heroDmg} obrażeń. (Razem: ${damageDealt})`);
 
       if (enemyHp <= 0) {
         if (prev.defenderIdx < 0) {
-          log.push('Strażnik pokonany! Strefa przejęta!');
+          log.push(isEn ? 'Guardian defeated! Zone captured!' : 'Strażnik pokonany! Strefa przejęta!');
           return { ...prev, heroHp, enemyHp: 0, damageDealt, log, done: true, won: true };
         }
-        log.push(`${prev.defenders[prev.defenderIdx].name} pokonany!`);
+        log.push(isEn ? `${prev.defenders[prev.defenderIdx].name} defeated!` : `${prev.defenders[prev.defenderIdx].name} pokonany!`);
         return advanceDefender({ ...prev, enemyHp: 0 }, heroHp, damageDealt, log);
       }
 
       const enemyDmg = siegeDmg(enemyAtk, heroDef);
       heroHp = Math.max(0, heroHp - enemyDmg);
-      log.push(`${prev.enemyName} zadaje ci ${enemyDmg} obrażeń.`);
+      log.push(isEn ? `${prev.enemyName} deals ${enemyDmg} damage to you.` : `${prev.enemyName} zadaje ci ${enemyDmg} obrażeń.`);
 
       if (heroHp <= 0) {
-        log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
+        log.push(isEn ? `You fell! You dealt ${damageDealt} damage this session.` : `Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
         return { ...prev, heroHp: 0, enemyHp, damageDealt, log, done: true, won: false };
       }
 
@@ -638,7 +656,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   function handleAutoFight() {
     setCombat(prev => {
       if (!prev || prev.done) return prev;
-      let state = { ...prev, log: [...prev.log, '⚡ Szybka walka...'] };
+      let state = { ...prev, log: [...prev.log, isEn ? '⚡ Quick fight...' : '⚡ Szybka walka...'] };
 
       for (let i = 0; i < 1000; i++) {
         let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = state;
@@ -648,10 +666,10 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
 
         if (enemyHp <= 0) {
           if (state.defenderIdx < 0) {
-            state.log.push('Strażnik pokonany! Strefa przejęta!');
+            state.log.push(isEn ? 'Guardian defeated! Zone captured!' : 'Strażnik pokonany! Strefa przejęta!');
             return { ...state, heroHp, enemyHp: 0, damageDealt, done: true, won: true };
           }
-          state.log.push(`${state.defenders[state.defenderIdx].name} pokonany!`);
+          state.log.push(isEn ? `${state.defenders[state.defenderIdx].name} defeated!` : `${state.defenders[state.defenderIdx].name} pokonany!`);
           state = advanceDefender({ ...state, enemyHp: 0 }, heroHp, damageDealt, state.log);
           if (state.done) return state;
           continue;
@@ -660,13 +678,13 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const enemyDmg = siegeDmg(enemyAtk, heroDef);
         heroHp = Math.max(0, heroHp - enemyDmg);
         if (heroHp <= 0) {
-          state.log.push(`Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
+          state.log.push(isEn ? `You fell! You dealt ${damageDealt} damage this session.` : `Padłeś! Zadałeś ${damageDealt} obrażeń w tej sesji.`);
           return { ...state, heroHp: 0, enemyHp, damageDealt, done: true, won: false };
         }
         state = { ...state, heroHp, enemyHp, enemyAtk, enemyDef, damageDealt };
       }
 
-      state.log.push(`Walka wstrzymana. Zadałeś ${state.damageDealt} obrażeń.`);
+      state.log.push(isEn ? `Fight paused. You dealt ${state.damageDealt} damage.` : `Walka wstrzymana. Zadałeś ${state.damageDealt} obrażeń.`);
       return state;
     });
   }
@@ -707,7 +725,9 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
 
   async function handleAbandon(territoryId: string) {
     if (!guild) return;
-    if (!confirm('Czy na pewno chcesz porzucić tę strefę? Gildia nie będzie mogła oblężyć żadnej przez 24h.')) return;
+    if (!confirm(isEn
+      ? 'Are you sure you want to abandon this zone? Your guild will not be able to siege any zone for 24h.'
+      : 'Czy na pewno chcesz porzucić tę strefę? Gildia nie będzie mogła oblężyć żadnej przez 24h.')) return;
     setAbandoning(territoryId);
     try {
       await abandonTerritory(territoryId, guild.id);

@@ -26,12 +26,12 @@ function primaryStat(item: Item): string | null {
   return `${STAT_NAMES[k] ?? k} +${v}`;
 }
 
-function mainBonus(item: Item): { label: string; value: string; color: string } | null {
+function mainBonus(item: Item, lang?: string): { label: string; value: string; color: string } | null {
   if (item.attackBonus) {
     const isMagic = (item as any).magicDamage;
     return { label: isMagic ? '🔮 Mag' : '⚔ Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
   }
-  if (item.defenseBonus) return { label: '🛡 Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
+  if (item.defenseBonus) return { label: lang === 'en' ? '🛡 Defense' : '🛡 Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
   const ps = primaryStat(item);
   if (ps) return { label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
   return null;
@@ -89,7 +89,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{(item as any).magicDamage ? '🔮 Obrażenia mag.' : t.equipment.atk}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{(item as any).magicDamage ? (lang === 'en' ? '🔮 Magic Dmg.' : '🔮 Obrażenia mag.') : t.equipment.atk}</span>
             <span style={{ ...ORB, fontSize: 10, color: (item as any).magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
@@ -100,12 +100,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Brak bonusów statystyk</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No stat bonuses' : 'Brak bonusów statystyk'}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Min. poz. {item.level}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
         <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{item.goldValue}🪙</p>
       </div>
 
@@ -124,7 +124,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
     rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
   };
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
-  const bonus = item ? mainBonus(item) : null;
+  const bonus = item ? mainBonus(item, lang) : null;
   const ps = item ? primaryStat(item) : null;
 
   return (
@@ -174,7 +174,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 <span style={{ ...MONO, fontSize: 10, color: '#00ff88' }}>+{ps.split('+')[1]} {ps.split(' +')[0]}</span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>Poziom: {item.level}</p>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>{lang === 'en' ? 'Level:' : 'Poziom:'} {item.level}</p>
           </div>
           <span style={{ color: 'var(--text-dim)', fontSize: 12, flexShrink: 0 }}>ℹ</span>
         </>
@@ -191,7 +191,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
 function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; label: string; icon: string; onSelect: () => void }) {
   const lang = useLangStore(s => s.lang);
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
-  const bonus = item ? mainBonus(item) : null;
+  const bonus = item ? mainBonus(item, lang) : null;
 
   return (
     <div onClick={item ? onSelect : undefined} style={{

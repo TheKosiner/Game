@@ -12,6 +12,7 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 const PX = (s: number) => ({ fontFamily: "'Press Start 2P', monospace", fontSize: s } as const);
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 
@@ -210,6 +211,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
 
 function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, number> }) {
   const t = useT();
+  const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat'>('info');
@@ -338,7 +340,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
               </div>
               {isLeader && !isMe && (
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  <button onClick={() => handleTransfer(m.uid, m.username)} disabled={acting} className="btn btn-secondary" style={{ fontSize: 4, padding: '3px 5px' }} title="Przekaż przywództwo">👑</button>
+                  <button onClick={() => handleTransfer(m.uid, m.username)} disabled={acting} className="btn btn-secondary" style={{ fontSize: 4, padding: '3px 5px' }} title={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'}>👑</button>
                   <button onClick={() => handleKick(m.uid, m.username)} disabled={acting} className="btn btn-danger" style={{ fontSize: 4, padding: '3px 5px' }} title={t.guild.kickBtn}>✕</button>
                 </div>
               )}
