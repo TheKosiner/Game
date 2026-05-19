@@ -7,12 +7,6 @@ import {
   calcGuildBossDamage,
   type GuildBossState,
 } from '../lib/guildBoss';
-
-function midnightAfter(ts: number): number {
-  const d = new Date(ts);
-  d.setHours(24, 0, 0, 0);
-  return d.getTime();
-}
 import { generateItem } from '../data/itemGenerator';
 import { syncToCloud } from '../lib/cloudSync';
 
@@ -20,6 +14,7 @@ const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 
 function fmtNum(n: number): string {
+  if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K';
   return String(n);
@@ -33,6 +28,22 @@ function fmtTime(ms: number): string {
   return `${String(h).padStart(2,'0')}:${String(m%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
 }
 
+function midnightAfter(ts: number): number {
+  const d = new Date(ts);
+  d.setHours(24, 0, 0, 0);
+  return d.getTime();
+}
+
+function buildLog(boss: GuildBossState, myUid: string): string[] {
+  return Object.entries(boss.participants)
+    .sort((a, b) => a[1].attackedAt - b[1].attackedAt)
+    .map(([uid, p]) => {
+      const pct = boss.maxHp > 0 ? ((p.damage / boss.maxHp) * 100).toFixed(2) : '0.00';
+      const tag = uid === myUid ? ' (ty)' : '';
+      return `⚔ ${p.heroName}${tag} [${p.username}] zadał ${fmtNum(p.damage)} dmg — ${pct}% HP bossa`;
+    });
+}
+
 export default function GuildBossPanel({ guildId, username }: { guildId: string; username: string }) {
   const hero = useGameStore(s => s.hero);
   const user = useAuthStore(s => s.user);
@@ -40,25 +51,38 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   const [now, setNow] = useState(Date.now());
   const [attacking, setAttacking] = useState(false);
   const [claiming, setClaiming] = useState(false);
-  const [lastResult, setLastResult] = useState<{ damage: number } | null>(null);
   const [claimResult, setClaimResult] = useState<{ xp: number; gold: number; item: ReturnType<typeof generateItem> } | null>(null);
+
+  // animation state
+  const [bossAnimKey, setBossAnimKey] = useState(0);
+  const [bossHitKey, setBossHitKey] = useState(0);
+  const [floatDmg, setFloatDmg] = useState<{ val: number; key: number } | null>(null);
+
+  // combat log
+  const [log, setLog] = useState<string[]>([]);
+  const logRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
-  // tick every second
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // ensure boss exists, then subscribe
   useEffect(() => {
     if (!guildId || initialized.current) return;
     initialized.current = true;
-
     ensureBossActive(guildId).catch(() => {});
-    const unsub = subscribeToBoss(guildId, b => setBoss(b));
+    const unsub = subscribeToBoss(guildId, b => {
+      setBoss(b);
+      if (b && user) setLog(buildLog(b, user.uid));
+    });
     return unsub;
   }, [guildId]);
+
+  // auto-scroll log
+  useEffect(() => {
+    logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' });
+  }, [log.length]);
 
   if (boss === 'loading') {
     return (
@@ -90,11 +114,12 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
     .sort((a, b) => b[1].damage - a[1].damage);
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
-  // Next reset time
   const nextResetLabel = boss.defeated && boss.defeatedAt
     ? `Następny boss o północy: ${fmtTime(midnightAfter(boss.defeatedAt) - now)}`
     : isExpired ? 'Reset za chwilę...'
     : null;
+
+  const hpColor = hpPct > 60 ? '#44cc44' : hpPct > 30 ? '#ff9900' : '#ff4444';
 
   async function handleAttack() {
     if (!user || attacking || alreadyAttackedToday || boss === 'loading' || !boss) return;
@@ -102,7 +127,9 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
     try {
       const res = await attackGuildBoss(guildId, user.uid, username, hero);
       if (res.success) {
-        setLastResult({ damage: res.damage });
+        setBossAnimKey(k => k + 1);
+        setBossHitKey(k => k + 1);
+        setFloatDmg({ val: res.damage, key: Date.now() });
         if (user) syncToCloud(user.uid, username).catch(() => {});
       }
     } finally {
@@ -124,7 +151,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Boss header */}
+      {/* Boss card with animation */}
       <div style={{
         background: boss.defeated
           ? 'linear-gradient(135deg, rgba(10,40,10,0.97), rgba(5,25,5,0.99))'
@@ -133,69 +160,124 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           : 'linear-gradient(135deg, rgba(30,4,4,0.97), rgba(18,2,2,0.99))',
         border: `1px solid ${boss.defeated ? 'rgba(68,200,68,0.3)' : isExpired ? 'rgba(200,120,20,0.3)' : 'rgba(200,20,20,0.3)'}`,
         padding: '14px 12px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-        textAlign: 'center',
+        display: 'flex', alignItems: 'center', gap: 12,
       }}>
-        <span style={{ fontSize: 52, lineHeight: 1 }}>{bossData.emoji}</span>
-        <div>
-          <p style={{ ...ORB, fontSize: 11, color: boss.defeated ? '#44cc44' : '#ff4444', marginBottom: 4,
-            textShadow: `0 0 12px ${boss.defeated ? '#44cc44' : '#ff4444'}` }}>
+
+        {/* Boss emoji with shake+flash animation */}
+        <div
+          key={bossAnimKey}
+          style={{
+            flexShrink: 0,
+            position: 'relative',
+            width: 80, height: 80,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: bossAnimKey > 0 ? 'bossShake 0.4s ease' : 'none',
+          }}
+        >
+          <div
+            key={bossHitKey}
+            style={{
+              animation: bossHitKey > 0 ? 'bossHit 0.35s ease' : 'none',
+              lineHeight: 1,
+            }}
+          >
+            <span style={{ fontSize: 64 }}>{bossData.emoji}</span>
+          </div>
+
+          {/* Floating damage number */}
+          {floatDmg && (
+            <span
+              key={floatDmg.key}
+              style={{
+                position: 'absolute', top: -4, right: -12,
+                ...ORB, fontSize: 11,
+                color: '#ff4444',
+                textShadow: '0 0 8px #ff4444',
+                pointerEvents: 'none', whiteSpace: 'nowrap',
+                animation: 'floatDmg 0.9s ease forwards',
+              }}
+            >
+              -{fmtNum(floatDmg.val)}
+            </span>
+          )}
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <p style={{
+            ...ORB, fontSize: 10,
+            color: boss.defeated ? '#44cc44' : '#ff4444',
+            textShadow: `0 0 12px ${boss.defeated ? '#44cc44' : '#ff4444'}`,
+            marginBottom: 3,
+          }}>
             {bossData.name}
           </p>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', maxWidth: 260, margin: '0 auto' }}>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
             {bossData.description}
           </p>
+
+          {/* HP bar */}
+          <div style={{ height: 10, background: '#1a0505', border: '1px solid rgba(100,20,20,0.4)', overflow: 'hidden', borderRadius: 2, marginBottom: 4 }}>
+            <div style={{
+              width: `${hpPct}%`, height: '100%',
+              background: hpPct > 60 ? 'linear-gradient(90deg,#3a8a0a,#6acc20)'
+                : hpPct > 30 ? 'linear-gradient(90deg,#8a4400,#ff9900)'
+                : 'linear-gradient(90deg,#660000,#ff2020)',
+              transition: 'width 0.8s ease',
+              boxShadow: `0 0 6px ${hpColor}55`,
+            }} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 9, color: hpColor }}>
+              {fmtNum(boss.currentHp)} / {fmtNum(boss.maxHp)} HP
+            </span>
+            {!boss.defeated && !isExpired && (
+              <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
+                ⏱ {fmtTime(timeLeft)}
+              </span>
+            )}
+            {nextResetLabel && (
+              <span style={{ ...MONO, fontSize: 9, color: '#888' }}>{nextResetLabel}</span>
+            )}
+          </div>
         </div>
 
         {/* Status badge */}
         {boss.defeated && (
           <span style={{ ...ORB, fontSize: 7, background: 'rgba(68,200,68,0.15)',
             border: '1px solid rgba(68,200,68,0.4)', color: '#44cc44',
-            padding: '3px 10px', borderRadius: 2 }}>
+            padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
             ✅ POKONANY
           </span>
         )}
         {isExpired && !boss.defeated && (
           <span style={{ ...ORB, fontSize: 7, background: 'rgba(200,120,20,0.15)',
             border: '1px solid rgba(200,120,20,0.4)', color: '#e08030',
-            padding: '3px 10px', borderRadius: 2 }}>
-            ⏰ CZAS MINĄŁ — RESET...
+            padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
+            ⏰ CZAS MINĄŁ
           </span>
         )}
       </div>
 
-      {/* HP bar */}
-      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ ...ORB, fontSize: 7, color: '#ff4444' }}>HP BOSSA</span>
-          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
-            {fmtNum(boss.currentHp)} / {fmtNum(boss.maxHp)}
-          </span>
-        </div>
-        <div style={{ height: 12, background: '#1a0505', border: '1px solid rgba(100,20,20,0.4)', overflow: 'hidden', borderRadius: 2 }}>
-          <div style={{
-            width: `${hpPct}%`, height: '100%',
-            background: hpPct > 50 ? 'linear-gradient(90deg,#6a1010,#cc2020)'
-              : hpPct > 20 ? 'linear-gradient(90deg,#8a2000,#ff6000)'
-              : 'linear-gradient(90deg,#660000,#ff0000)',
-            transition: 'width 0.8s ease',
-            boxShadow: `0 0 8px rgba(255,${hpPct > 50 ? 30 : hpPct > 20 ? 100 : 0},0,0.5)`,
-          }} />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-          <span style={{ ...MONO, fontSize: 9, color: '#888' }}>
-            Zadano łącznie: {fmtNum(totalDmg)}
-          </span>
-          {!boss.defeated && !isExpired && (
-            <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
-              ⏱ {fmtTime(timeLeft)}
+      {/* Attack section */}
+      {!boss.defeated && !isExpired && (
+        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
+            <span style={{ ...MONO, fontSize: 10, color: alreadyAttackedToday ? '#44cc44' : 'var(--text-dim)' }}>
+              {alreadyAttackedToday ? `✅ ${fmtNum(myDamage)} dmg` : `~${fmtNum(estimatedDmg)} dmg`}
             </span>
-          )}
-          {nextResetLabel && (
-            <span style={{ ...MONO, fontSize: 9, color: '#888' }}>{nextResetLabel}</span>
-          )}
+          </div>
+          <button
+            onClick={handleAttack}
+            disabled={attacking || alreadyAttackedToday}
+            className="btn btn-danger"
+            style={{ width: '100%', fontSize: 7, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
+              opacity: alreadyAttackedToday ? 0.5 : 1 }}>
+            {attacking ? '...' : alreadyAttackedToday ? '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ' : '⚔ ATAKUJ BOSSA'}
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Claim reward */}
       {canClaim && !claimResult && (
@@ -235,31 +317,6 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
         </div>
       )}
 
-      {/* Attack section */}
-      {!boss.defeated && !isExpired && (
-        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
-            <span style={{ ...MONO, fontSize: 10, color: alreadyAttackedToday ? '#44cc44' : 'var(--text-dim)' }}>
-              {alreadyAttackedToday ? `✅ ${fmtNum(myDamage)} dmg` : `~${fmtNum(estimatedDmg)} dmg`}
-            </span>
-          </div>
-          {lastResult && (
-            <p style={{ ...ORB, fontSize: 7, color: '#ff6060', marginBottom: 6, textAlign: 'center' }}>
-              ⚔ Zadałeś {fmtNum(lastResult.damage)} obrażeń!
-            </p>
-          )}
-          <button
-            onClick={handleAttack}
-            disabled={attacking || alreadyAttackedToday}
-            className="btn btn-danger"
-            style={{ width: '100%', fontSize: 7, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
-              opacity: alreadyAttackedToday ? 0.5 : 1 }}>
-            {attacking ? '...' : alreadyAttackedToday ? '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ' : '⚔ ATAKUJ BOSSA'}
-          </button>
-        </div>
-      )}
-
       {/* Rewards info */}
       <div style={{ background: 'rgba(150,80,255,0.05)', border: '1px solid rgba(150,80,255,0.15)', padding: '8px 12px' }}>
         <p style={{ ...ORB, fontSize: 6, color: '#9955cc', marginBottom: 5 }}>NAGRODY ZA POKONANIE</p>
@@ -270,10 +327,51 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
         </div>
       </div>
 
-      {/* Participants */}
+      {/* Combat log */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+          <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)' }}>LOG WALKI</p>
+          <span style={{ ...MONO, fontSize: 9, color: '#888' }}>
+            łącznie: {fmtNum(totalDmg)} dmg · {participants.length} graczy
+          </span>
+        </div>
+        <div
+          ref={logRef}
+          style={{
+            background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.07)',
+            padding: 8, maxHeight: 180, overflowY: 'auto',
+          }}
+        >
+          {log.length === 0 ? (
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
+              Nikt jeszcze nie zaatakował.
+            </p>
+          ) : (
+            log.map((line, i) => {
+              const isMe = line.includes('(ty)');
+              const isVictory = line.includes('🏆');
+              return (
+                <p key={i} style={{
+                  ...MONO, fontSize: 9, lineHeight: 1.7,
+                  color: isVictory ? '#ffd700' : isMe ? '#ff2d78' : 'var(--text-dim)',
+                }}>
+                  {line}
+                </p>
+              );
+            })
+          )}
+          {boss.defeated && (
+            <p style={{ ...ORB, fontSize: 8, color: '#ffd700', marginTop: 6, textAlign: 'center' }}>
+              🏆 BOSS POKONANY!
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Participants leaderboard */}
       <div>
         <p style={{ ...ORB, fontSize: 7, color: 'var(--text-dim)', marginBottom: 6 }}>
-          UCZESTNICY ({participants.length})
+          RANKING OBRAŻEŃ ({participants.length})
         </p>
         {participants.length === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
@@ -281,7 +379,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           </p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {participants.map(([uid, p]) => {
+          {participants.map(([uid, p], idx) => {
             const pct = boss.maxHp > 0 ? (p.damage / boss.maxHp) * 100 : 0;
             const isMe = uid === user?.uid;
             return (
@@ -291,6 +389,9 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                 padding: '6px 10px',
                 display: 'flex', alignItems: 'center', gap: 8,
               }}>
+                <span style={{ ...ORB, fontSize: 8, color: idx === 0 ? '#ffd700' : idx === 1 ? '#aaaaaa' : idx === 2 ? '#cd7f32' : 'var(--text-muted)', flexShrink: 0, width: 16 }}>
+                  {idx + 1}.
+                </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                     <span style={{ ...MONO, fontSize: 9, color: isMe ? '#ff2d78' : 'var(--text-bright)',
@@ -298,7 +399,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                       {p.heroName} {isMe ? '(ty)' : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
-                      {fmtNum(p.damage)} dmg ({pct.toFixed(1)}%)
+                      {fmtNum(p.damage)} ({pct.toFixed(2)}%)
                     </span>
                   </div>
                   <div style={{ height: 3, background: '#111', borderRadius: 1, overflow: 'hidden' }}>
