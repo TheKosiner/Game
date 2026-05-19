@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
-import { ALL_QUESTS, RANDOM_QUEST_NAMES } from '../data/quests';
+import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
 import logoSrc from '../assets/logo.png';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
 import { useAuthStore } from '../store/authStore';
 import { collectQuestServer } from '../lib/serverActions';
 import { syncToCloud } from '../lib/cloudSync';
@@ -61,6 +62,8 @@ function formatTime(ms: number): string {
 
 export default function QuestPanel() {
   const t = useT();
+  const lang = useLangStore(s => s.lang);
+  const isEn = lang === 'en';
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest      = useGameStore(s => s.startQuest);
@@ -79,10 +82,15 @@ export default function QuestPanel() {
   const [questDisplayName, setQuestDisplayName] = useState(
     () => RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]
   );
+  const [questDisplayNameEn, setQuestDisplayNameEn] = useState(
+    () => RANDOM_QUEST_NAMES_EN[Math.floor(Math.random() * RANDOM_QUEST_NAMES_EN.length)]
+  );
 
   useEffect(() => {
     if (!activeQuest) {
-      setQuestDisplayName(RANDOM_QUEST_NAMES[Math.floor(Math.random() * RANDOM_QUEST_NAMES.length)]);
+      const idx = Math.floor(Math.random() * RANDOM_QUEST_NAMES.length);
+      setQuestDisplayName(RANDOM_QUEST_NAMES[idx]);
+      setQuestDisplayNameEn(RANDOM_QUEST_NAMES_EN[idx]);
     }
   }, [activeQuest]);
 
@@ -154,8 +162,12 @@ export default function QuestPanel() {
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
             <div style={{ flex: 1 }}>
-              <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>{activeQuest.quest.name}</p>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{activeQuest.quest.description}</p>
+              <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-bright)', marginBottom: 3 }}>
+                {isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name}
+              </p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
+                {isEn ? (activeQuest.quest.descEn ?? activeQuest.quest.description) : activeQuest.quest.description}
+              </p>
             </div>
           </div>
 
@@ -239,8 +251,8 @@ export default function QuestPanel() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
                 <img src={logoSrc} alt="" style={{ width: 32, height: 32, objectFit: 'contain', flexShrink: 0, filter: 'drop-shadow(0 0 6px rgba(255,45,120,0.5))' }} />
                 <div>
-                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{questDisplayName}</p>
-                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{base.description}</p>
+                  <p style={{ ...ORB, fontSize: 9, color: 'var(--text-bright)', marginBottom: 2 }}>{isEn ? questDisplayNameEn : questDisplayName}</p>
+                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? (base.descEn ?? base.description) : base.description}</p>
                 </div>
               </div>
 
@@ -269,7 +281,7 @@ export default function QuestPanel() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName } as Quest)}
+                        onClick={() => handleStartQuest({ ...base, id: `${base.id}_${v.key}`, xpReward: xp, goldReward: gold, name: questDisplayName, nameEn: questDisplayNameEn } as Quest)}
                         className="btn btn-primary"
                         style={{ fontSize: 6, padding: '7px 10px', flexShrink: 0, borderColor: v.border }}
                       >

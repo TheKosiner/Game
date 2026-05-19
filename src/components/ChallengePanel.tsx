@@ -1230,6 +1230,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
 
 function SelectView() {
   const t                   = useT();
+  const lang                = useLangStore(s => s.lang);
   const challengeUnlocked  = useGameStore(s => s.challengeUnlocked);
   const lastChallengeAt    = useGameStore(s => s.lastChallengeAt);
   const startChallengeFight = useGameStore(s => s.startChallengeFight);
@@ -1319,7 +1320,7 @@ function SelectView() {
 
         {/* Description */}
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.6 }}>
-          {boss!.description}
+          {lang === 'en' ? (boss!.descriptionEn ?? boss!.description) : boss!.description}
         </p>
 
         {/* Stats grid */}
@@ -1343,7 +1344,7 @@ function SelectView() {
 
         {/* Powers */}
         <div style={{ width: '100%' }}>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 6 }}>MOCE BOSSA</p>
+          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginBottom: 6 }}>{lang === 'en' ? 'BOSS POWERS' : 'MOCE BOSSA'}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {boss!.powers.map(p => (
               <div key={p} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -1393,7 +1394,7 @@ function SelectView() {
             boxShadow: `0 0 20px ${accentColor}30` }}
           onClick={() => startChallengeFight(bossIdx)}
         >
-          ⚡ WALCZ Z {boss!.name.toUpperCase()}
+          ⚡ {lang === 'en' ? 'FIGHT' : 'WALCZ Z'} {boss!.name.toUpperCase()}
         </button>
       )}
     </div>
