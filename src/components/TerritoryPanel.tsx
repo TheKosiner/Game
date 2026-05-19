@@ -952,13 +952,15 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 className="btn btn-primary"
                 style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
               >
-                {claimingId === def.id ? '⏳ Odbieram...' : `🪙 Odbierz podatek (+${def.dailyGold}🪙, +${def.dailyXp}XP)`}
+                {claimingId === def.id
+                  ? (isEn ? '⏳ Claiming...' : '⏳ Odbieram...')
+                  : (isEn ? `🪙 Claim tax (+${def.dailyGold}🪙, +${def.dailyXp}XP)` : `🪙 Odbierz podatek (+${def.dailyGold}🪙, +${def.dailyXp}XP)`)}
               </button>
             )}
 
             {ownedByMyGuild && !canClaim && nextClaimIn !== null && (
               <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>
-                ⏳ Następny podatek za {formatCountdown(nextClaimIn)}
+                ⏳ {isEn ? `Next tax in ${formatCountdown(nextClaimIn)}` : `Następny podatek za ${formatCountdown(nextClaimIn)}`}
               </p>
             )}
 
@@ -969,7 +971,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 className="btn btn-secondary"
                 style={{ width: '100%', fontSize: 5, padding: '7px', marginTop: 4 }}
               >
-                🏳 Porzuć strefę
+                🏳 {isEn ? 'Abandon zone' : 'Porzuć strefę'}
               </button>
             )}
           </div>
