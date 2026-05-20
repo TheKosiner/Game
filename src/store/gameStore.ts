@@ -308,6 +308,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newEquipment = { ...hero.equipment, [item.slot as string]: item };
     const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
     set({ hero: { ...hero, equipment: newEquipment, inventory: newInventory, maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
+    get().saveGame();
   },
 
   unequipItem: (slot: ItemSlot) => {
@@ -320,6 +321,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     delete (newEquipment as any)[slot];
     const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);
     set({ hero: { ...hero, equipment: newEquipment, inventory: [...hero.inventory, item], maxHp: newMaxHp, hp: Math.min(hero.hp, newMaxHp) } });
+    get().saveGame();
   },
 
   sellItem: (item: Item, invIdx?: number) => {
@@ -329,6 +331,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (idx === -1) return;
     newInventory.splice(idx, 1);
     set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
+    get().saveGame();
   },
 
   buyItem: (item, price) => {
