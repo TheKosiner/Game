@@ -266,7 +266,7 @@ export default function App() {
         borderBottom: '1px solid rgba(255,45,120,0.3)',
         flexShrink: 0,
         zIndex: 40,
-        padding: '8px 12px',
+        padding: '4px 8px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
       }}>
@@ -274,28 +274,28 @@ export default function App() {
           src={logoImg}
           alt="Glitch Soul"
           style={{
-            height: 64, width: 'auto',
+            height: 34, width: 'auto',
             flexShrink: 0,
-            marginLeft: -6,
+            marginLeft: -4,
             filter: 'drop-shadow(0 0 8px rgba(140,60,255,0.8)) drop-shadow(0 0 16px rgba(0,200,255,0.3))',
           }}
         />
 
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
           <span style={{
-            fontFamily: "'Share Tech Mono', monospace",
-            color: '#ffd700', fontSize: 12,
+            fontFamily: "'Orbitron', monospace",
+            color: '#ffd700', fontSize: 10, fontWeight: 700,
             background: 'rgba(255,215,0,0.08)',
             border: '1px solid rgba(255,215,0,0.25)',
-            padding: '3px 8px',
+            padding: '3px 7px',
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
           }}>🪙 {hero.gold}</span>
           <span style={{
-            fontFamily: "'Share Tech Mono', monospace",
-            color: '#00e5ff', fontSize: 12,
+            fontFamily: "'Orbitron', monospace",
+            color: '#00e5ff', fontSize: 10, fontWeight: 700,
             background: 'rgba(0,229,255,0.08)',
             border: '1px solid rgba(0,229,255,0.25)',
-            padding: '3px 8px',
+            padding: '3px 7px',
             textShadow: '0 0 8px rgba(0,229,255,0.5)',
           }}>💎 {hero.gems}</span>
           <span style={{
