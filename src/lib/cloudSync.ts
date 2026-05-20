@@ -274,6 +274,13 @@ export async function upgradeGuildStat(guildId: string, leaderUid: string, type:
   });
 }
 
+export async function updateGuildDescription(guildId: string, leaderUid: string, description: string): Promise<void> {
+  if (!db) throw new Error('No DB');
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists() || snap.data().leaderUid !== leaderUid) throw new Error('Not leader');
+  await updateDoc(doc(db, 'guilds', guildId), { description });
+}
+
 export interface GuildInvite {
   id: string;
   guildId: string;

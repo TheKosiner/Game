@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
-  getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost,
+  getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost, updateGuildDescription,
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
 import TerritoryPanel from './TerritoryPanel';
@@ -224,6 +224,9 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
   const [depositing, setDepositing] = useState(false);
   const [depositErr, setDepositErr] = useState('');
   const [upgrading, setUpgrading] = useState<'exp' | 'gold' | null>(null);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descVal, setDescVal] = useState(guild.description ?? '');
+  const [savingDesc, setSavingDesc] = useState(false);
   const isLeader = guild.leaderUid === myUid;
   const treasury = guild.treasury ?? 0;
   const expLvl = guild.expUpgrade ?? 0;
@@ -254,102 +257,107 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
     finally { setUpgrading(null); }
   }
 
+  async function handleSaveDesc() {
+    setSavingDesc(true);
+    try { await updateGuildDescription(guild.id, myUid, descVal.trim()); onRefresh(); setEditingDesc(false); }
+    catch { }
+    finally { setSavingDesc(false); }
+  }
+
   return (
-    <div style={{ position: 'relative', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(157,78,221,0.3)' }}>
-      {/* Guild base image */}
-      <img
-        src="/guild_base.jpg"
-        alt="Guild base"
-        style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
-      />
-
-      {/* Dark gradient overlay */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.92) 100%)',
-      }} />
-
-      {/* Guild name + treasury overlaid at top */}
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0,
-        display: 'flex', alignItems: 'flex-start',
-        padding: '8px 10px',
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.5)', padding: '1px 5px', border: '1px solid rgba(255,215,0,0.3)' }}>[{guild.tag}]</span>
-            <p style={{ ...PX(7), color: '#fff', textShadow: '0 0 8px rgba(0,0,0,0.9)' }}>{guild.name}</p>
-          </div>
-          {guild.description && (
-            <p style={{ ...PX(4), color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{guild.description}</p>
-          )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Guild base image — clean, no overlay */}
+      <div style={{ position: 'relative', border: '1px solid rgba(157,78,221,0.3)', overflow: 'hidden' }}>
+        <img src="/guild_base.jpg" alt="Guild base" style={{ width: '100%', height: 'auto', display: 'block' }} />
+        {/* Name / tag badge at top-left */}
+        <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', border: '1px solid rgba(255,215,0,0.35)' }}>[{guild.tag}]</span>
+          <span style={{ ...PX(6), color: '#fff', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', textShadow: '0 0 6px #000' }}>{guild.name}</span>
         </div>
       </div>
 
-      {/* Bottom controls overlaid on image */}
-      <div style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: '10px 8px 8px',
-        display: 'flex', flexDirection: 'column', gap: 7,
-      }}>
-        {/* EXP | Deposit | Gold — single row */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'stretch' }}>
-          {(['exp', 'gold'] as const).map((type, idx) => {
-            const lvl = type === 'exp' ? expLvl : goldLvl;
-            const cost = type === 'exp' ? expCost : goldCost;
-            const color = type === 'exp' ? '#00e5ff' : '#ffd700';
-            const title = type === 'exp' ? t.guild.upgradeExpTitle : t.guild.upgradeGoldTitle;
-            const maxed = lvl >= 50;
-            const canAfford = treasury >= cost;
-            const box = (
-              <div key={type} style={{
-                flex: 1, background: 'rgba(0,0,0,0.78)', border: `1px solid ${type === 'exp' ? 'rgba(0,229,255,0.3)' : 'rgba(255,215,0,0.3)'}`,
-                padding: '5px 6px', display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0,
-              }}>
-                <p style={{ ...PX(4), color, textShadow: `0 0 6px ${color}`, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
-                  <p style={{ ...PX(7), color: '#fff' }}>{t.guild.upgradeBonus(lvl)}</p>
-                  <p style={{ ...PX(3), color: 'var(--text-muted)' }}>{t.guild.upgradeLevel(lvl)}</p>
-                </div>
-                {maxed ? (
-                  <p style={{ ...PX(4), color, textAlign: 'center' }}>{t.guild.upgradeMaxed}</p>
-                ) : (
-                  <>
-                    <p style={{ ...PX(3), color: canAfford ? '#ffd700' : '#555' }}>{t.guild.upgradeCost(cost)}</p>
-                    {isLeader ? (
-                      <button onClick={() => handleUpgrade(type)} disabled={!!upgrading || !canAfford} className="btn btn-primary"
-                        style={{ fontSize: 8, padding: '3px 4px', opacity: canAfford ? 1 : 0.4, marginTop: 1 }}>
-                        {upgrading === type ? '⏳' : t.guild.upgradeBtn}
-                      </button>
-                    ) : (
-                      <p style={{ ...PX(3), color: '#555' }}>{t.guild.upgradeNotLeader}</p>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-            const depositCol = (
-              <div key="deposit" style={{
-                flex: 1.1, background: 'rgba(0,0,0,0.78)', border: '1px solid rgba(255,215,0,0.25)',
-                padding: '5px 6px', display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center', justifyContent: 'center',
-              }}>
-                <p style={{ ...PX(4), color: '#ffd700' }}>{t.guild.treasury}</p>
-                <p style={{ ...PX(6), color: '#ffd700', textShadow: '0 0 6px rgba(255,215,0,0.5)' }}>{treasury.toLocaleString()}🪙</p>
-                <input
-                  type="number" min={1} max={hero.gold} value={depositAmt}
-                  onChange={e => { setDepositAmt(e.target.value); setDepositErr(''); }}
-                  placeholder={t.guild.depositLabel}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,215,0,0.35)', color: '#ffd700', fontFamily: "'Press Start 2P', monospace", fontSize: 8, padding: '4px 5px', boxSizing: 'border-box' }}
-                />
-                <button onClick={handleDeposit} disabled={depositing} className="btn btn-primary" style={{ fontSize: 8, padding: '4px 6px', width: '100%' }}>
-                  {depositing ? '⏳' : t.guild.depositBtn}
+      {/* Three boxes below the image */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+        {/* EXP upgrade */}
+        {(['exp', 'gold'] as const).map((type, idx) => {
+          const lvl = type === 'exp' ? expLvl : goldLvl;
+          const cost = type === 'exp' ? expCost : goldCost;
+          const color = type === 'exp' ? '#00e5ff' : '#ffd700';
+          const title = type === 'exp' ? t.guild.upgradeExpTitle : t.guild.upgradeGoldTitle;
+          const maxed = lvl >= 50;
+          const canAfford = treasury >= cost;
+          const upgradeBox = (
+            <div key={type} style={{
+              flex: 1, background: 'var(--bg-inset)', border: `1px solid ${type === 'exp' ? 'rgba(0,229,255,0.25)' : 'rgba(255,215,0,0.25)'}`,
+              padding: '8px 7px', display: 'flex', flexDirection: 'column', gap: 4,
+            }}>
+              <p style={{ ...PX(4), color, textShadow: `0 0 6px ${color}` }}>{title}</p>
+              <p style={{ ...PX(8), color: '#fff', textAlign: 'center' }}>{t.guild.upgradeBonus(lvl)}</p>
+              <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{t.guild.upgradeLevel(lvl)}</p>
+              {!maxed && <p style={{ ...PX(4), color: canAfford ? '#ffd700' : '#555', textAlign: 'center' }}>{t.guild.upgradeCost(cost)}</p>}
+              {maxed ? (
+                <p style={{ ...PX(5), color, textAlign: 'center' }}>{t.guild.upgradeMaxed}</p>
+              ) : isLeader ? (
+                <button onClick={() => handleUpgrade(type)} disabled={!!upgrading || !canAfford} className="btn btn-primary"
+                  style={{ fontSize: 9, padding: '5px 4px', opacity: canAfford ? 1 : 0.4, marginTop: 'auto' }}>
+                  {upgrading === type ? '⏳' : t.guild.upgradeBtn}
                 </button>
-                {depositErr && <p style={{ ...PX(3), color: 'var(--hp-bright)' }}>{depositErr}</p>}
-              </div>
-            );
-            return idx === 0 ? [box, depositCol] : [box];
-          })}
-        </div>
+              ) : (
+                <p style={{ ...PX(4), color: '#555', textAlign: 'center' }}>{t.guild.upgradeNotLeader}</p>
+              )}
+            </div>
+          );
+
+          if (idx === 1) return upgradeBox;
+
+          // Between EXP and Gold: treasury + deposit
+          const depositBox = (
+            <div key="deposit" style={{
+              flex: 1.1, background: 'var(--bg-inset)', border: '1px solid rgba(255,215,0,0.25)',
+              padding: '8px 7px', display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center',
+            }}>
+              <p style={{ ...PX(4), color: '#ffd700' }}>{t.guild.treasury}</p>
+              <p style={{ ...PX(7), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{treasury.toLocaleString()}🪙</p>
+              <input
+                type="number" min={1} max={hero.gold} value={depositAmt}
+                onChange={e => { setDepositAmt(e.target.value); setDepositErr(''); }}
+                placeholder={t.guild.depositLabel}
+                style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid rgba(255,215,0,0.3)', color: '#ffd700', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '5px 6px', boxSizing: 'border-box' }}
+              />
+              <button onClick={handleDeposit} disabled={depositing} className="btn btn-primary" style={{ fontSize: 9, padding: '5px 8px', width: '100%' }}>
+                {depositing ? '⏳' : t.guild.depositBtn}
+              </button>
+              {depositErr && <p style={{ ...PX(4), color: 'var(--hp-bright)' }}>{depositErr}</p>}
+            </div>
+          );
+
+          return [upgradeBox, depositBox];
+        })}
+      </div>
+
+      {/* Description — editable by leader */}
+      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 10px' }}>
+        {editingDesc ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <textarea
+              value={descVal} onChange={e => setDescVal(e.target.value)} maxLength={200} rows={3}
+              style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-dim)', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '6px 8px', boxSizing: 'border-box', resize: 'none' }}
+            />
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={handleSaveDesc} disabled={savingDesc} className="btn btn-primary" style={{ flex: 1, fontSize: 9, padding: '5px' }}>{savingDesc ? '⏳' : '✓ ZAPISZ'}</button>
+              <button onClick={() => { setEditingDesc(false); setDescVal(guild.description ?? ''); }} className="btn btn-secondary" style={{ flex: 1, fontSize: 9, padding: '5px' }}>✕ ANULUJ</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            <p style={{ ...PX(4), color: guild.description ? 'var(--text-dim)' : 'var(--text-muted)', fontStyle: guild.description ? 'normal' : 'italic', flex: 1 }}>
+              {guild.description || (isLeader ? '— dodaj opis gildii —' : '—')}
+            </p>
+            {isLeader && (
+              <button onClick={() => setEditingDesc(true)} className="btn btn-secondary" style={{ fontSize: 9, padding: '3px 7px', flexShrink: 0 }}>✎</button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
