@@ -270,16 +270,10 @@ export default function App() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
       }}>
-        <img
-          src={logoImg}
-          alt="Glitch Soul"
-          style={{
-            height: 34, width: 'auto',
-            flexShrink: 0,
-            marginLeft: -4,
-            filter: 'drop-shadow(0 0 8px rgba(140,60,255,0.8)) drop-shadow(0 0 16px rgba(0,200,255,0.3))',
-          }}
-        />
+        <span style={{ fontFamily: "'Orbitron', monospace", fontSize: 15, fontWeight: 900, letterSpacing: 1, flexShrink: 0 }}>
+          <span style={{ color: '#00f5ff', textShadow: '0 0 8px #00f5ff, 0 0 20px #00e5ff' }}>Glitch</span>
+          <span style={{ color: '#ff2d78', textShadow: '0 0 8px #ff2d78, 0 0 20px #ff2d78' }}>Soul</span>
+        </span>
 
         <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
           <span style={{
