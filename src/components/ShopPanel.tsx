@@ -89,7 +89,7 @@ export default function ShopPanel() {
     ? hero.equipment[selectedEntry.item.slot as keyof typeof hero.equipment] as Item | undefined
     : undefined;
 
-  function ShopItemCard({ item, price, featured, idx }: { item: Item; price: number; featured: boolean; idx: number }) {
+  function ShopItemCard({ item, price, idx }: { item: Item; price: number; idx: number }) {
     const canAfford   = hero.gold >= price;
     const rarityColor = item.color ?? RARITY_COLORS[item.rarity];
     const glowBg      = item.color ? `${item.color}22` : RARITY_GLOW[item.rarity];
@@ -108,16 +108,8 @@ export default function ShopPanel() {
           cursor: 'pointer',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
           boxShadow: isSelected ? `0 0 12px ${rarityColor}44` : 'none',
-          position: 'relative',
         }}
       >
-        {featured && (
-          <div style={{
-            position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
-            background: rarityColor, color: '#000', fontSize: 7, padding: '1px 4px',
-            fontFamily: "'Press Start 2P', monospace",
-          }}>★</div>
-        )}
         {/* Icon */}
         <div style={{
           background: 'rgba(5,8,20,0.9)', border: `1px solid ${rarityColor}33`,
@@ -217,7 +209,7 @@ export default function ShopPanel() {
           gap: 4, padding: '0 6px 6px',
         }}>
           {shopItems.slice(0, 2).map(({ item, price, featured, idx }) => (
-            <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
+            <ShopItemCard key={idx} item={item} price={price} idx={idx} />
           ))}
         </div>
       </div>
@@ -225,7 +217,7 @@ export default function ShopPanel() {
       {/* Remaining 4 items below the image */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {shopItems.slice(2).map(({ item, price, featured, idx }) => (
-          <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
+          <ShopItemCard key={idx} item={item} price={price} idx={idx} />
         ))}
       </div>
 
