@@ -20,7 +20,7 @@ interface BeggingCollectResult {
 }
 
 export async function claimDailyRewardServer(): Promise<DailyRewardResult> {
-  if (!functions) return { claimed: false };
+  if (!functions) throw new Error('Firebase functions not configured');
   const fn = httpsCallable<Record<string, never>, DailyRewardResult>(functions, 'claimDailyReward');
   const result = await fn({});
   return result.data;
