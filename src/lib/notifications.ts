@@ -6,23 +6,49 @@ const NOTIF_REST    = 11;
 const NOTIF_BEGGING = 12;
 
 const isNative = () => Capacitor.isNativePlatform();
+const webSupported = () => !isNative() && 'Notification' in window;
 
-async function ensurePermission(): Promise<boolean> {
-  if (!isNative()) return false;
+// ── Web: timeout-based scheduler ─────────────────────────────────────────────
+
+const webTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+async function ensureWebPermission(): Promise<boolean> {
+  if (!webSupported()) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const result = await Notification.requestPermission();
+  return result === 'granted';
+}
+
+function webSchedule(id: number, title: string, body: string, at: number) {
+  webCancel(id);
+  const delay = at - Date.now();
+  if (delay <= 0) return;
+  const timer = setTimeout(() => {
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/logo192.png' });
+    }
+    webTimers.delete(id);
+  }, delay);
+  webTimers.set(id, timer);
+}
+
+function webCancel(id: number) {
+  const t = webTimers.get(id);
+  if (t !== undefined) { clearTimeout(t); webTimers.delete(id); }
+}
+
+// ── Native: Capacitor local notifications ────────────────────────────────────
+
+async function ensureNativePermission(): Promise<boolean> {
   const { display } = await LocalNotifications.checkPermissions();
   if (display === 'granted') return true;
   const { display: result } = await LocalNotifications.requestPermissions();
   return result === 'granted';
 }
 
-export async function requestNotificationPermission() {
-  if (!isNative()) return;
-  await ensurePermission();
-}
-
-async function schedule(id: number, title: string, body: string, at: number) {
-  if (!isNative()) return;
-  if (!(await ensurePermission())) return;
+async function nativeSchedule(id: number, title: string, body: string, at: number) {
+  if (!(await ensureNativePermission())) return;
   await LocalNotifications.cancel({ notifications: [{ id }] });
   if (at <= Date.now()) return;
   await LocalNotifications.schedule({
@@ -37,9 +63,34 @@ async function schedule(id: number, title: string, body: string, at: number) {
   });
 }
 
-async function cancel(id: number) {
-  if (!isNative()) return;
+async function nativeCancel(id: number) {
   await LocalNotifications.cancel({ notifications: [{ id }] });
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+export async function requestNotificationPermission() {
+  if (isNative()) {
+    await ensureNativePermission();
+  } else {
+    await ensureWebPermission();
+  }
+}
+
+async function schedule(id: number, title: string, body: string, at: number) {
+  if (isNative()) {
+    await nativeSchedule(id, title, body, at);
+  } else if (webSupported()) {
+    if (await ensureWebPermission()) webSchedule(id, title, body, at);
+  }
+}
+
+function cancelSync(id: number) {
+  if (isNative()) {
+    nativeCancel(id);
+  } else {
+    webCancel(id);
+  }
 }
 
 export async function scheduleQuestNotification(questName: string, endsAt: number, lang: string) {
@@ -51,9 +102,7 @@ export async function scheduleQuestNotification(questName: string, endsAt: numbe
   await schedule(NOTIF_QUEST, title, body, endsAt);
 }
 
-export async function cancelQuestNotification() {
-  await cancel(NOTIF_QUEST);
-}
+export function cancelQuestNotification() { cancelSync(NOTIF_QUEST); }
 
 export async function scheduleRestNotification(endsAt: number, hp: number, lang: string) {
   const isEn = lang === 'en';
@@ -64,9 +113,7 @@ export async function scheduleRestNotification(endsAt: number, hp: number, lang:
   await schedule(NOTIF_REST, title, body, endsAt);
 }
 
-export async function cancelRestNotification() {
-  await cancel(NOTIF_REST);
-}
+export function cancelRestNotification() { cancelSync(NOTIF_REST); }
 
 export async function scheduleBeggingNotification(endsAt: number, gold: number, lang: string) {
   const isEn = lang === 'en';
@@ -77,6 +124,4 @@ export async function scheduleBeggingNotification(endsAt: number, gold: number, 
   await schedule(NOTIF_BEGGING, title, body, endsAt);
 }
 
-export async function cancelBeggingNotification() {
-  await cancel(NOTIF_BEGGING);
-}
+export function cancelBeggingNotification() { cancelSync(NOTIF_BEGGING); }
