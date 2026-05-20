@@ -617,12 +617,8 @@ function DungeonList() {
                 {/* outer glow ring */}
                 <circle cx={pos.x} cy={pos.y} r={6.5} fill="none"
                   stroke={isChosen ? '#ff2d78' : isUnlocked ? '#ffc83a' : '#555577'} strokeWidth="0.4" opacity={isChosen ? 0.8 : isUnlocked ? 0.4 : 0.25}
-                  style={{ animation: isUnlocked ? `mapPulse ${isChosen ? 1.6 : 2.8}s ease-out infinite` : 'none', transformOrigin: `${pos.x}px ${pos.y}px` }}
+                  style={{ animation: (!isChosen && isUnlocked) ? `mapPulse 2.8s ease-out infinite` : 'none', transformOrigin: `${pos.x}px ${pos.y}px` }}
                 />
-                {/* selected halo */}
-                {isChosen && (
-                  <circle cx={pos.x} cy={pos.y} r={7.5} fill="rgba(255,45,120,0.07)" stroke="rgba(255,45,120,0.22)" strokeWidth="0.6"/>
-                )}
                 {/* hexagonal background */}
                 <polygon
                   points={hexPoints(pos.x, pos.y, 5.2)}
