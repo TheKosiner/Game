@@ -88,6 +88,13 @@ export function rollDamage(base: number, variance = 0.2): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+export function calcDmgRange(atk: number): { min: number; max: number; critMin: number; critMax: number } {
+  const base = atk * atk / (atk + Math.max(1, 1));
+  const min     = Math.max(1, Math.floor(base * 0.7));
+  const max     = Math.ceil(base * 1.3);
+  return { min, max, critMin: min * 2, critMax: max * 2 };
+}
+
 function quadDmg(atk: number, def: number, critMult = 1): number {
   const base = atk * atk / (atk + Math.max(1, def));
   const variance = 0.7 + Math.random() * 0.6;
