@@ -5,8 +5,35 @@ const NOTIF_QUEST   = 10;
 const NOTIF_REST    = 11;
 const NOTIF_BEGGING = 12;
 
-const isNative = () => Capacitor.isNativePlatform();
+const isNative    = () => Capacitor.isNativePlatform();
 const webSupported = () => !isNative() && 'Notification' in window;
+
+// ── Service Worker (needed for Chrome on mobile and modern desktop) ──────────
+
+let _swReg: ServiceWorkerRegistration | null = null;
+
+async function getSwReg(): Promise<ServiceWorkerRegistration | null> {
+  if (_swReg) return _swReg;
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    _swReg = await navigator.serviceWorker.register('/sw.js');
+    return _swReg;
+  } catch {
+    return null;
+  }
+}
+
+async function showWebNotif(title: string, body: string) {
+  const sw = await getSwReg();
+  if (sw) {
+    try {
+      await sw.showNotification(title, { body, icon: '/favicon.png' });
+      return;
+    } catch {}
+  }
+  // Fallback for browsers that still support direct Notification
+  try { new Notification(title, { body, icon: '/favicon.png' }); } catch {}
+}
 
 // ── Web: timeout-based scheduler ─────────────────────────────────────────────
 
@@ -25,10 +52,8 @@ function webSchedule(id: number, title: string, body: string, at: number) {
   const delay = at - Date.now();
   if (delay <= 0) return;
   const timer = setTimeout(() => {
-    if (Notification.permission === 'granted') {
-      try { new Notification(title, { body, icon: '/favicon.png' }); } catch {}
-    }
     webTimers.delete(id);
+    if (Notification.permission === 'granted') showWebNotif(title, body);
   }, delay);
   webTimers.set(id, timer);
 }
@@ -53,9 +78,7 @@ async function nativeSchedule(id: number, title: string, body: string, at: numbe
   if (at <= Date.now()) return;
   await LocalNotifications.schedule({
     notifications: [{
-      id,
-      title,
-      body,
+      id, title, body,
       schedule: { at: new Date(at) },
       sound: undefined,
       smallIcon: 'ic_stat_icon_config_sample',
@@ -72,7 +95,8 @@ async function nativeCancel(id: number) {
 export async function requestNotificationPermission() {
   if (isNative()) {
     await ensureNativePermission();
-  } else {
+  } else if (webSupported()) {
+    await getSwReg();
     await ensureWebPermission();
   }
 }
@@ -80,6 +104,19 @@ export async function requestNotificationPermission() {
 export function getWebNotificationStatus(): 'granted' | 'denied' | 'default' | 'unsupported' {
   if (isNative() || !webSupported()) return 'unsupported';
   return Notification.permission;
+}
+
+async function schedule(id: number, title: string, body: string, at: number) {
+  if (isNative()) {
+    await nativeSchedule(id, title, body, at);
+  } else if (webSupported()) {
+    if (await ensureWebPermission()) webSchedule(id, title, body, at);
+  }
+}
+
+function cancelSync(id: number) {
+  if (isNative()) nativeCancel(id);
+  else webCancel(id);
 }
 
 export async function rescheduleActiveNotifications(
@@ -92,77 +129,62 @@ export async function rescheduleActiveNotifications(
 ) {
   if (isNative()) return;
   if (!webSupported() || Notification.permission !== 'granted') return;
+  await getSwReg();
+  const isEn = lang === 'en';
   if (activeQuest && activeQuest.endsAt > Date.now()) {
+    const name = isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name;
     webSchedule(NOTIF_QUEST,
-      lang === 'en' ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
-      lang === 'en'
-        ? `"${activeQuest.quest.nameEn ?? activeQuest.quest.name}" is done — collect your reward!`
-        : `"${activeQuest.quest.name}" zakończona — odbierz nagrodę!`,
+      isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
+      isEn ? `"${name}" is done — collect your reward!` : `"${name}" zakończona — odbierz nagrodę!`,
       activeQuest.endsAt,
     );
   }
   if (restUntil && restUntil > Date.now() && restHp) {
     webSchedule(NOTIF_REST,
-      lang === 'en' ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
-      lang === 'en' ? `Your hero recovered ${restHp} HP — ready for battle!` : `Bohater odzyskał ${restHp} HP — gotowy do walki!`,
+      isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
+      isEn ? `Your hero recovered ${restHp} HP — ready for battle!` : `Bohater odzyskał ${restHp} HP — gotowy do walki!`,
       restUntil,
     );
   }
   if (beggingUntil && beggingUntil > Date.now() && beggingReward) {
     webSchedule(NOTIF_BEGGING,
-      lang === 'en' ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
-      lang === 'en' ? `Collected ~${beggingReward}🪙 — come pick it up!` : `Zebrałeś ~${beggingReward}🪙 — odbierz złom!`,
+      isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
+      isEn ? `Collected ~${beggingReward}🪙 — come pick it up!` : `Zebrałeś ~${beggingReward}🪙 — odbierz złom!`,
       beggingUntil,
     );
-  }
-}
-
-async function schedule(id: number, title: string, body: string, at: number) {
-  if (isNative()) {
-    await nativeSchedule(id, title, body, at);
-  } else if (webSupported()) {
-    if (await ensureWebPermission()) webSchedule(id, title, body, at);
-  }
-}
-
-function cancelSync(id: number) {
-  if (isNative()) {
-    nativeCancel(id);
-  } else {
-    webCancel(id);
   }
 }
 
 export async function scheduleQuestNotification(namePl: string, nameEn: string | undefined, endsAt: number, lang: string) {
   const isEn = lang === 'en';
   const name = isEn ? (nameEn ?? namePl) : namePl;
-  const title = isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!';
-  const body  = isEn
-    ? `"${name}" is done — collect your reward!`
-    : `"${name}" zakończona — odbierz nagrodę!`;
-  await schedule(NOTIF_QUEST, title, body, endsAt);
+  await schedule(NOTIF_QUEST,
+    isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
+    isEn ? `"${name}" is done — collect your reward!` : `"${name}" zakończona — odbierz nagrodę!`,
+    endsAt,
+  );
 }
 
 export function cancelQuestNotification() { cancelSync(NOTIF_QUEST); }
 
 export async function scheduleRestNotification(endsAt: number, hp: number, lang: string) {
   const isEn = lang === 'en';
-  const title = isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!';
-  const body  = isEn
-    ? `Your hero recovered ${hp} HP — ready for battle!`
-    : `Bohater odzyskał ${hp} HP — gotowy do walki!`;
-  await schedule(NOTIF_REST, title, body, endsAt);
+  await schedule(NOTIF_REST,
+    isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
+    isEn ? `Your hero recovered ${hp} HP — ready for battle!` : `Bohater odzyskał ${hp} HP — gotowy do walki!`,
+    endsAt,
+  );
 }
 
 export function cancelRestNotification() { cancelSync(NOTIF_REST); }
 
 export async function scheduleBeggingNotification(endsAt: number, gold: number, lang: string) {
   const isEn = lang === 'en';
-  const title = isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!';
-  const body  = isEn
-    ? `Collected ~${gold}🪙 — come pick it up!`
-    : `Zebrałeś ~${gold}🪙 — odbierz złom!`;
-  await schedule(NOTIF_BEGGING, title, body, endsAt);
+  await schedule(NOTIF_BEGGING,
+    isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
+    isEn ? `Collected ~${gold}🪙 — come pick it up!` : `Zebrałeś ~${gold}🪙 — odbierz złom!`,
+    endsAt,
+  );
 }
 
 export function cancelBeggingNotification() { cancelSync(NOTIF_BEGGING); }
