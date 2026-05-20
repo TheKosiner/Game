@@ -84,10 +84,6 @@ export default function ShopPanel() {
     setTimeout(() => setNotification(null), 2500);
   }
 
-  // Split into left (even positions) and right (odd positions)
-  const leftItems  = shopItems.filter((_, i) => i % 2 === 0);
-  const rightItems = shopItems.filter((_, i) => i % 2 !== 0);
-
   const selectedEntry = selectedIdx !== null ? allItems[selectedIdx] : null;
   const equippedForSelected = selectedEntry && selectedEntry.item.slot !== 'consumable'
     ? hero.equipment[selectedEntry.item.slot as keyof typeof hero.equipment] as Item | undefined
@@ -205,38 +201,22 @@ export default function ShopPanel() {
         </div>
       )}
 
-      {/* Main: [left items] [shop image] [right items] */}
-      <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
-        {/* Left column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {leftItems.map(({ item, price, featured, idx }) => (
-            <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
-          ))}
-        </div>
-
-        {/* Center: shop image */}
-        <div style={{ flex: 1.2, position: 'relative' }}>
-          <img
-            src="/shop_bg.jpg"
-            alt="Shop"
-            style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
-          />
-          {/* Neon sign overlay */}
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
-            padding: '6px 4px 4px',
-            textAlign: 'center',
-            fontFamily: "'Orbitron', monospace", fontSize: 8, fontWeight: 900,
-            color: '#ff2d78', textShadow: '0 0 8px #ff2d78',
-          }}>
-            武器屋
-          </div>
-        </div>
-
-        {/* Right column */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {rightItems.map(({ item, price, featured, idx }) => (
+      {/* Main: items overlaid on full-width shop image */}
+      <div style={{ position: 'relative' }}>
+        <img
+          src="/shop_bg.jpg"
+          alt="Shop"
+          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
+        />
+        {/* Dark gradient so cards are readable */}
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+        {/* Items grid on top */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'grid', gridTemplateColumns: '1fr 1fr',
+          gap: 4, padding: 6, alignContent: 'start',
+        }}>
+          {shopItems.map(({ item, price, featured, idx }) => (
             <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
           ))}
         </div>
