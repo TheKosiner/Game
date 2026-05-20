@@ -7,6 +7,11 @@ import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense, calcCritChance, getEquipmentStats } from '../utils/combat';
 import { getT } from '../hooks/useT';
+import {
+  scheduleQuestNotification, cancelQuestNotification,
+  scheduleRestNotification, cancelRestNotification,
+  scheduleBeggingNotification, cancelBeggingNotification,
+} from '../lib/notifications';
 
 const SAVE_KEY = 'glitchsoul_save';
 const OLD_SAVE_KEY = 'cybermagic_save';
@@ -529,7 +534,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.questsCompletedToday >= MAX_DAILY_QUESTS) return;
     const now = Date.now();
     const duration = scaledQuestDuration(quest.durationMs, hero.level);
-    set({ activeQuest: { quest, startedAt: now, endsAt: now + duration } });
+    const endsAt = now + duration;
+    set({ activeQuest: { quest, startedAt: now, endsAt } });
+    scheduleQuestNotification(quest.name, endsAt, getLang());
     get().saveGame();
   },
 
@@ -537,6 +544,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { activeQuest, hero } = get();
     if (!activeQuest) return;
     if (Date.now() < activeQuest.endsAt) return;
+    cancelQuestNotification();
     get().addXp(activeQuest.quest.xpReward);
     get().addGold(activeQuest.quest.goldReward);
     set({ activeQuest: null, hero: { ...get().hero, questsCompletedToday: hero.questsCompletedToday + 1 } });
@@ -545,6 +553,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   abandonQuest: () => {
     if (!get().activeQuest) return;
+    cancelQuestNotification();
     set({ activeQuest: null });
     get().saveGame();
   },
@@ -650,6 +659,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const t = getT();
     set({ hero: { ...hero, voluntaryRestUntil: endsAt, voluntaryRestHp: hp, voluntaryRestStartAt: Date.now() } });
     get().addCombatLog(t.combat.restingMinutes(minutes, hp), 'system');
+    scheduleRestNotification(endsAt, hp, getLang());
     get().saveGame();
   },
 
@@ -666,6 +676,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const healAmount = Math.min(earned, hero.maxHp - hero.hp);
     const t = getT();
+    cancelRestNotification();
     set({ hero: { ...hero, hp: hero.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
     if (healAmount > 0) get().addCombatLog(t.combat.restCancelledWithHp(healAmount), 'system');
     else get().addCombatLog(t.combat.restCancelled, 'system');
@@ -684,6 +695,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const t = getT();
     set({ hero: { ...hero, beggingUntil: endsAt, beggingReward: goldReward, beggingStartAt: Date.now() } });
     get().addCombatLog(t.combat.beggingStart(clampedHours, goldReward), 'system');
+    scheduleBeggingNotification(endsAt, goldReward, getLang());
     get().saveGame();
   },
 
@@ -699,6 +711,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       earned = Math.floor(hero.beggingReward * elapsed / Math.max(1, total));
     }
     const t = getT();
+    cancelBeggingNotification();
     set({ hero: { ...hero, gold: hero.gold + earned, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     if (earned > 0) get().addCombatLog(t.combat.beggingCancelledWithGold(earned), 'loot');
     else get().addCombatLog(t.combat.beggingCancelled, 'system');
@@ -710,6 +723,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!hero.beggingUntil || Date.now() < hero.beggingUntil) return;
     const reward = hero.beggingReward ?? 0;
     const t = getT();
+    cancelBeggingNotification();
     set({ hero: { ...hero, gold: hero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
