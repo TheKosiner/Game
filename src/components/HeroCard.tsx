@@ -403,7 +403,6 @@ export default function HeroCard() {
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
   const restHero       = useGameStore(s => s.restHero);
   const cancelRest     = useGameStore(s => s.cancelRest);
-  const gemHeal        = useGameStore(s => s.gemHeal);
   const gemSpeedupRest = useGameStore(s => s.gemSpeedupRest);
   const startBegging   = useGameStore(s => s.startBegging);
   const cancelBegging  = useGameStore(s => s.cancelBegging);
@@ -598,25 +597,7 @@ export default function HeroCard() {
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
             <span style={{ ...MONO, fontSize: 10, color: '#ff4444' }}>{t.hero.vitality}</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
-              {hero.hp < hero.maxHp && (
-                <button
-                  onClick={gemHeal}
-                  disabled={hero.gems < 30}
-                  style={{
-                    ...MONO, fontSize: 10, padding: '1px 5px',
-                    background: hero.gems >= 30 ? 'rgba(0,229,255,0.12)' : 'rgba(0,0,0,0.3)',
-                    border: `1px solid ${hero.gems >= 30 ? 'rgba(0,229,255,0.4)' : 'rgba(255,255,255,0.1)'}`,
-                    color: hero.gems >= 30 ? '#00e5ff' : 'var(--text-dim)',
-                    cursor: hero.gems >= 30 ? 'pointer' : 'not-allowed',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {t.gems.healBtn(30)}
-                </button>
-              )}
-            </div>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{displayHp}/{hero.maxHp}</span>
           </div>
           <NeonBar pct={hpPct} color="#ff2d78" />
         </div>
