@@ -577,9 +577,6 @@ export default function GuildPanel() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
           <CreateGuildForm onCreated={load} />
-          <button onClick={() => setView('territory')} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '9px' }}>
-            {t.guild.territoriesBtn}
-          </button>
         </div>
       )}
     </div>
