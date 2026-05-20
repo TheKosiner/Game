@@ -208,7 +208,7 @@ export default function ShopPanel() {
           display: 'grid', gridTemplateColumns: '1fr 1fr',
           gap: 4, padding: '0 6px 6px',
         }}>
-          {shopItems.slice(0, 2).map(({ item, price, featured, idx }) => (
+          {shopItems.slice(0, 2).map(({ item, price, idx }) => (
             <ShopItemCard key={idx} item={item} price={price} idx={idx} />
           ))}
         </div>
@@ -216,7 +216,7 @@ export default function ShopPanel() {
 
       {/* Remaining 4 items below the image */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        {shopItems.slice(2).map(({ item, price, featured, idx }) => (
+        {shopItems.slice(2).map(({ item, price, idx }) => (
           <ShopItemCard key={idx} item={item} price={price} idx={idx} />
         ))}
       </div>

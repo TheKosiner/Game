@@ -679,6 +679,11 @@ export default function HeroCard() {
                       ❤ {hero.maxHp} HP
                     </span>
                   )}
+                  {attr === 'dexterity' && (
+                    <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', opacity: 0.85, marginLeft: 4 }}>
+                      💥 {critPct}%
+                    </span>
+                  )}
                 </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginTop: 1 }}>{desc}</p>
                 <p style={{ ...MONO, fontSize: 10, color, opacity: 0.6, marginTop: 1 }}>{note}</p>
