@@ -566,10 +566,27 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (item.slot !== 'consumable') return;
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
     const healAmount = Math.round(hero.maxHp * (item.healPercent ?? 1));
-    const newHp = Math.min(hero.maxHp, hero.hp + healAmount);
+    const actualHeal = Math.min(healAmount, hero.maxHp - hero.hp);
+    const newHp = hero.hp + actualHeal;
     const t = getT();
-    set({ hero: { ...hero, hp: newHp, inventory: newInventory } });
-    get().addCombatLog(`${item.emoji} ${t.combat.itemUsed(getItemName(item, getLang()), newHp - hero.hp)}`, 'system');
+
+    let restUntil   = hero.voluntaryRestUntil;
+    let restHp      = hero.voluntaryRestHp;
+    let restStartAt = hero.voluntaryRestStartAt;
+
+    if (restUntil !== null && restHp !== null && Date.now() < restUntil) {
+      if (newHp >= hero.maxHp) {
+        restUntil = null; restHp = null; restStartAt = null;
+      } else if (actualHeal > 0 && restHp > 0) {
+        const total = restUntil - (restStartAt ?? restUntil);
+        const timeSaved = Math.round(actualHeal * total / restHp);
+        restUntil = Math.max(Date.now(), restUntil - timeSaved);
+        restHp = Math.max(0, restHp - actualHeal);
+      }
+    }
+
+    set({ hero: { ...hero, hp: newHp, inventory: newInventory, voluntaryRestUntil: restUntil, voluntaryRestHp: restHp, voluntaryRestStartAt: restStartAt } });
+    get().addCombatLog(`${item.emoji} ${t.combat.itemUsed(getItemName(item, getLang()), actualHeal)}`, 'system');
     get().saveGame();
   },
 
