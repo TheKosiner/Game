@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
-import { requestNotificationPermission } from '../lib/notifications';
+import { requestNotificationPermission, getWebNotificationStatus } from '../lib/notifications';
+import { Capacitor } from '@capacitor/core';
 import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
 import logoSrc from '../assets/logo.png';
 import type { Quest } from '../types';
@@ -135,6 +136,9 @@ export default function QuestPanel() {
     : 0;
   const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
 
+  const isNative = Capacitor.isNativePlatform();
+  const notifStatus = !isNative ? getWebNotificationStatus() : 'unsupported';
+
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
@@ -144,6 +148,26 @@ export default function QuestPanel() {
           {hero.questsCompletedToday}/{MAX_DAILY_QUESTS} {t.quests.today}
         </p>
       </div>
+
+      {notifStatus !== 'unsupported' && notifStatus !== 'granted' && (
+        <button
+          onClick={requestNotificationPermission}
+          style={{
+            background: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.3)',
+            borderRadius: 4,
+            padding: '6px 10px',
+            color: '#f59e0b',
+            fontFamily: "'Press Start 2P', monospace",
+            fontSize: 9,
+            cursor: 'pointer',
+            textAlign: 'left',
+            width: '100%',
+          }}
+        >
+          🔔 {lang === 'en' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
+        </button>
+      )}
 
       {limitReached && !activeQuest && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 10, textAlign: 'center' }}>

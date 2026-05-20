@@ -77,6 +77,46 @@ export async function requestNotificationPermission() {
   }
 }
 
+export function getWebNotificationStatus(): 'granted' | 'denied' | 'default' | 'unsupported' {
+  if (isNative() || !webSupported()) return 'unsupported';
+  return Notification.permission;
+}
+
+export async function rescheduleActiveNotifications(
+  activeQuest: { quest: { name: string; nameEn?: string }; endsAt: number } | null,
+  restUntil: number | null,
+  restHp: number | null,
+  beggingUntil: number | null,
+  beggingReward: number | null,
+  lang: string,
+) {
+  if (isNative()) return;
+  if (!webSupported() || Notification.permission !== 'granted') return;
+  if (activeQuest && activeQuest.endsAt > Date.now()) {
+    webSchedule(NOTIF_QUEST,
+      lang === 'en' ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
+      lang === 'en'
+        ? `"${activeQuest.quest.nameEn ?? activeQuest.quest.name}" is done — collect your reward!`
+        : `"${activeQuest.quest.name}" zakończona — odbierz nagrodę!`,
+      activeQuest.endsAt,
+    );
+  }
+  if (restUntil && restUntil > Date.now() && restHp) {
+    webSchedule(NOTIF_REST,
+      lang === 'en' ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
+      lang === 'en' ? `Your hero recovered ${restHp} HP — ready for battle!` : `Bohater odzyskał ${restHp} HP — gotowy do walki!`,
+      restUntil,
+    );
+  }
+  if (beggingUntil && beggingUntil > Date.now() && beggingReward) {
+    webSchedule(NOTIF_BEGGING,
+      lang === 'en' ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
+      lang === 'en' ? `Collected ~${beggingReward}🪙 — come pick it up!` : `Zebrałeś ~${beggingReward}🪙 — odbierz złom!`,
+      beggingUntil,
+    );
+  }
+}
+
 async function schedule(id: number, title: string, body: string, at: number) {
   if (isNative()) {
     await nativeSchedule(id, title, body, at);

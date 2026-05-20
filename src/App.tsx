@@ -5,12 +5,12 @@ import logoImg from './assets/logo.png';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
-import { useLangStore } from './store/langStore';
+import { useLangStore, getLang } from './store/langStore';
 import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
 import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
-import { requestNotificationPermission } from './lib/notifications';
+import { requestNotificationPermission, rescheduleActiveNotifications } from './lib/notifications';
 import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
@@ -103,6 +103,16 @@ export default function App() {
         loadGame();
       }
       setGameLoaded(true);
+      const s = useGameStore.getState();
+      const h = s.hero;
+      rescheduleActiveNotifications(
+        s.activeQuest,
+        h.voluntaryRestUntil,
+        h.voluntaryRestHp,
+        h.beggingUntil,
+        h.beggingReward ?? null,
+        getLang(),
+      );
     }
     load();
   }, [authLoading, user?.uid]);
