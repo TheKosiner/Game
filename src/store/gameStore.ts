@@ -5,7 +5,7 @@ import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
-import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense } from '../utils/combat';
+import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense, calcCritChance, getEquipmentStats } from '../utils/combat';
 import { getT } from '../hooks/useT';
 
 const SAVE_KEY = 'glitchsoul_save';
@@ -66,20 +66,20 @@ function rollInt(min: number, max: number): number {
   return Math.floor(min + Math.random() * (max - min + 1));
 }
 
-function simDmg(atk: number, def: number): number {
+function simDmg(atk: number, def: number, critChance: number): number {
   const base = atk * atk / (atk + Math.max(1, def));
-  const isCrit = Math.random() < 0.10;
+  const isCrit = Math.random() < critChance;
   const variance = 0.7 + Math.random() * 0.6;
   return Math.max(1, Math.round(base * variance * (isCrit ? 2 : 1)));
 }
 
-function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number): boolean {
+function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: number, oppDef: number, oppHp: number, heroCrit: number, oppCrit: number): boolean {
   let hHp = heroHp;
   let oHp = oppHp;
   for (let i = 0; i < 300; i++) {
-    oHp -= simDmg(heroAtk, oppDef);
+    oHp -= simDmg(heroAtk, oppDef, heroCrit);
     if (oHp <= 0) return true;
-    hHp -= simDmg(oppAtk, heroDef);
+    hHp -= simDmg(oppAtk, heroDef, oppCrit);
     if (hHp <= 0) return false;
   }
   return hHp >= oHp;
@@ -594,9 +594,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Sanitize future timestamp (clock set backward exploit)
     if (lastPvpFight > now) { lastPvpFight = now; set({ lastPvpFight: now }); }
     if (now - lastPvpFight < PVP_COOLDOWN) return null;
-    const heroAtk = getHeroAttack(hero);
-    const heroDef = getHeroDefense(hero);
-    const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100);
+    const heroAtk  = getHeroAttack(hero);
+    const heroDef  = getHeroDefense(hero);
+    const heroCrit = calcCritChance(hero.stats.dexterity + getEquipmentStats(hero.equipment).dexterity, hero.level);
+    const oppCrit  = calcCritChance(0, opponent.level ?? 1); // opponent crit: base only (no dex info)
+    const won = simulatePvp(heroAtk, heroDef, hero.maxHp, opponent.attack ?? 10, opponent.defense ?? 5, opponent.maxHp ?? 100, heroCrit, oppCrit);
     const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
     const ratingDelta = won ? 25 : -15;
@@ -815,7 +817,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     };
 
     // ── Hero attacks ──
-    const critChance = 0.10 + hero.stats.dexterity * 0.005;
+    const critChance = calcCritChance(hero.stats.dexterity + getEquipmentStats(hero.equipment).dexterity, hero.level);
     const isCrit = Math.random() < critChance;
     if (pw.includes('dodge') && Math.random() < 0.25) {
       event.isDodge = true;

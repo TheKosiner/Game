@@ -5,6 +5,17 @@ function softCap(stat: number): number {
   return 100 + (stat - 100) * 0.5;
 }
 
+/**
+ * Crit chance: hyperbolic curve with level-scaled soft cap.
+ * Base 5%, max 40%. Higher level = more DEX needed for same crit %.
+ * Formula: 0.05 + (totalDex / (totalDex + softCap)) * 0.35
+ * softCap = 30 + level * 1.5  (lvl 1 → 31.5 | lvl 50 → 105)
+ */
+export function calcCritChance(totalDex: number, heroLevel: number): number {
+  const cap = 30 + heroLevel * 1.5;
+  return Math.min(0.40, 0.05 + (totalDex / (totalDex + cap)) * 0.35);
+}
+
 export function getEquipmentStats(equipment: Hero['equipment']): Stats {
   const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
   for (const item of Object.values(equipment)) {
@@ -86,7 +97,7 @@ function quadDmg(atk: number, def: number, critMult = 1): number {
 export function heroAttackEnemy(hero: Hero, enemy: Enemy, attackOverride?: number): { damage: number; isCrit: boolean } {
   const eq = getEquipmentStats(hero.equipment);
   const weapon = hero.equipment.weapon;
-  const critChance = 0.10 + (hero.stats.dexterity + eq.dexterity) * 0.005;
+  const critChance = calcCritChance(hero.stats.dexterity + eq.dexterity, hero.level);
   const isCrit = Math.random() < critChance;
   if (weapon?.magicDamage) {
     const magicAtk = attackOverride ?? getHeroAttack(hero);
