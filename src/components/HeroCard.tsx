@@ -457,8 +457,6 @@ export default function HeroCard() {
   const defense    = getHeroDefense(hero);
   const magicRes   = getHeroMagicResistance(hero);
   const eqStats    = getEquipmentStats(hero.equipment);
-  const isMagicWpn  = !!hero.equipment.weapon?.magicDamage;
-  const isRangedWpn = !isMagicWpn && !!hero.equipment.weapon?.ranged;
   const dmgRange   = calcDmgRange(attack);
   const critChance = calcCritChance(hero.stats.dexterity + eqStats.dexterity, hero.level);
   const critPct    = Math.round(critChance * 100);
@@ -562,12 +560,7 @@ export default function HeroCard() {
 
         {/* Main stats */}
         <div style={{ display: 'flex', gap: 4 }}>
-          <StatBox
-            icon={isMagicWpn ? '🔮' : isRangedWpn ? '🔫' : '⚔'}
-            value={attack}
-            label={isMagicWpn ? t.hero.magic : isRangedWpn ? t.shop.ranged : t.hero.attack}
-            color={isMagicWpn ? '#9d4edd' : isRangedWpn ? '#00f5ff' : '#ff2d78'}
-          />
+          <StatBox icon="⚔" value={attack} label={t.hero.attack} color="#ff2d78" />
           <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
           <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
           <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
