@@ -25,19 +25,8 @@ const RARITY_GLOW: Record<string, string> = {
   legendary: 'rgba(245,158,11,0.25)',
 };
 
-const RARITY_LABEL: Record<string, string> = {
-  common: 'ZWYKŁY',
-  uncommon: 'NIEZWYKŁY',
-  rare: 'RZADKI',
-  epic: 'EPICKI',
-  legendary: 'LEGENDARNY',
-};
-
-
-
 function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
   const [remaining, setRemaining] = useState(Math.max(0, cooldownEnd - Date.now()));
-
   useEffect(() => {
     const id = setInterval(() => {
       const r = Math.max(0, cooldownEnd - Date.now());
@@ -46,7 +35,6 @@ function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
     }, 1000);
     return () => clearInterval(id);
   }, [cooldownEnd]);
-
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);
   return (
@@ -56,35 +44,31 @@ function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
   );
 }
 
-// ── Main panel ───────────────────────────────────────────────────────────────
-
 export default function ShopPanel() {
   const t    = useT();
   const lang = useLangStore(s => s.lang);
   const hero = useGameStore(s => s.hero);
-  const buyShopItem = useGameStore(s => s.buyShopItem);
-  const refreshShop = useGameStore(s => s.refreshShop);
-  const shopSeed = useGameStore(s => s.shopSeed);
+  const buyShopItem  = useGameStore(s => s.buyShopItem);
+  const refreshShop  = useGameStore(s => s.refreshShop);
+  const shopSeed     = useGameStore(s => s.shopSeed);
   const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
-  const shopPurchased = useGameStore(s => s.shopPurchased);
+  const shopPurchased   = useGameStore(s => s.shopPurchased);
 
   const SLOT_LABEL: Record<string, string> = {
-    weapon: t.shop.slotWeapon,
-    armor: t.shop.slotArmor,
-    helmet: t.shop.slotHelmet,
-    boots: t.shop.slotBoots,
-    ring: t.shop.slotRing,
-    amulet: t.shop.slotAmulet,
+    weapon: t.shop.slotWeapon, armor: t.shop.slotArmor,
+    helmet: t.shop.slotHelmet, boots: t.shop.slotBoots,
+    ring: t.shop.slotRing, amulet: t.shop.slotAmulet,
     consumable: t.inventory.slotConsumable,
   };
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const shopItems = generateShopItems(hero.level, shopSeed);
+  const allItems = generateShopItems(hero.level, shopSeed);
+  const shopItems = allItems.map((s, idx) => ({ ...s, idx })).filter(({ idx }) => !shopPurchased.includes(idx));
 
   const cooldownEnd = lastShopRefresh + SHOP_REFRESH_COOLDOWN;
-  const canRefresh = Date.now() >= cooldownEnd;
+  const canRefresh  = Date.now() >= cooldownEnd;
 
   function handleBuy(e: React.MouseEvent, item: Item, price: number, slotIndex: number) {
     e.stopPropagation();
@@ -100,49 +84,112 @@ export default function ShopPanel() {
     setTimeout(() => setNotification(null), 2500);
   }
 
+  // Split into left (even positions) and right (odd positions)
+  const leftItems  = shopItems.filter((_, i) => i % 2 === 0);
+  const rightItems = shopItems.filter((_, i) => i % 2 !== 0);
+
+  const selectedEntry = selectedIdx !== null ? allItems[selectedIdx] : null;
+  const equippedForSelected = selectedEntry && selectedEntry.item.slot !== 'consumable'
+    ? hero.equipment[selectedEntry.item.slot as keyof typeof hero.equipment] as Item | undefined
+    : undefined;
+
+  function ShopItemCard({ item, price, featured, idx }: { item: Item; price: number; featured: boolean; idx: number }) {
+    const canAfford   = hero.gold >= price;
+    const rarityColor = item.color ?? RARITY_COLORS[item.rarity];
+    const glowBg      = item.color ? `${item.color}22` : RARITY_GLOW[item.rarity];
+    const isRare      = item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary' || !!item.color;
+    const isSelected  = selectedIdx === idx;
+
+    return (
+      <div
+        onClick={() => setSelectedIdx(isSelected ? null : idx)}
+        role="button" tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+        style={{
+          background: isRare ? `linear-gradient(135deg, ${glowBg}, rgba(5,8,20,0.95))` : 'rgba(5,8,20,0.8)',
+          border: `1px solid ${isSelected ? rarityColor + 'cc' : isRare ? rarityColor + '55' : 'rgba(30,41,59,0.7)'}`,
+          padding: '6px 5px',
+          cursor: 'pointer',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          boxShadow: isSelected ? `0 0 12px ${rarityColor}44` : 'none',
+          position: 'relative',
+        }}
+      >
+        {featured && (
+          <div style={{
+            position: 'absolute', top: -1, left: '50%', transform: 'translateX(-50%)',
+            background: rarityColor, color: '#000', fontSize: 7, padding: '1px 4px',
+            fontFamily: "'Press Start 2P', monospace",
+          }}>★</div>
+        )}
+        {/* Icon */}
+        <div style={{
+          background: 'rgba(5,8,20,0.9)', border: `1px solid ${rarityColor}33`,
+          padding: '4px 5px', boxShadow: isRare ? `0 0 8px ${rarityColor}44` : 'none',
+        }}>
+          <ItemIcon item={item} scale={2} />
+        </div>
+        {/* Slot label */}
+        <p style={{ fontSize: 7, color: 'var(--text-muted)', fontFamily: "'Share Tech Mono', monospace", textAlign: 'center', lineHeight: 1.2 }}>
+          {SLOT_LABEL[item.slot] ?? item.slot}
+        </p>
+        {/* Name */}
+        <p style={{
+          fontSize: 7, color: rarityColor,
+          textShadow: isRare ? `0 0 6px ${rarityColor}88` : 'none',
+          textAlign: 'center', lineHeight: 1.3,
+          overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+        }}>
+          {getItemName(item, lang)}
+        </p>
+        {/* Buy button */}
+        <button
+          onClick={e => handleBuy(e, item, price, idx)}
+          disabled={!canAfford}
+          style={{
+            background: canAfford ? `linear-gradient(135deg, ${rarityColor}33, rgba(5,8,20,0.9))` : 'rgba(15,23,42,0.6)',
+            border: `1px solid ${canAfford ? rarityColor + '66' : 'rgba(51,65,85,0.4)'}`,
+            color: canAfford ? rarityColor : '#475569',
+            fontFamily: "'Press Start 2P', monospace", fontSize: 8,
+            padding: '4px 5px', width: '100%', cursor: canAfford ? 'pointer' : 'not-allowed',
+            textAlign: 'center',
+            boxShadow: canAfford && isRare ? `0 0 8px ${rarityColor}33` : 'none',
+          }}
+        >
+          🪙{price}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ fontSize: 10, marginBottom: 2,
+          <p style={{
+            fontSize: 10, marginBottom: 2,
             background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>{t.shop.title}</p>
           <p style={{ color: '#475569', fontSize: 10 }}>{t.shop.subtitle}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{
-            color: '#fbbf24', fontSize: 10,
-            background: 'rgba(245,158,11,0.08)',
-            border: '1px solid rgba(245,158,11,0.2)',
-            borderRadius: 3,
-            padding: '3px 8px',
-          }}>🪙 {hero.gold}</span>
-          <button
-            onClick={refreshShop}
-            disabled={!canRefresh}
-            className="btn btn-secondary"
-            style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}
-          >
+          <span style={{ color: '#fbbf24', fontSize: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 8px' }}>
+            🪙 {hero.gold}
+          </span>
+          <button onClick={refreshShop} disabled={!canRefresh} className="btn btn-secondary"
+            style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}>
             {t.shop.refresh}
           </button>
         </div>
       </div>
 
-      {/* Cooldown banner */}
+      {/* Cooldown */}
       {!canRefresh && (
-        <div style={{
-          background: 'rgba(10,20,40,0.7)',
-          border: '1px solid rgba(51,65,85,0.5)',
-          borderRadius: 4,
-          padding: '6px 10px',
-          textAlign: 'center',
-        }}>
-          <p style={{ color: '#64748b', fontSize: 10 }}>
-            {t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} />
-          </p>
+        <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '6px 10px', textAlign: 'center' }}>
+          <p style={{ color: '#64748b', fontSize: 10 }}>{t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} /></p>
         </div>
       )}
 
@@ -151,165 +198,54 @@ export default function ShopPanel() {
         <div style={{
           background: notification.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
           border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
-          borderRadius: 4,
-          padding: '7px 12px',
-          textAlign: 'center',
-          color: notification.ok ? '#4ade80' : '#f87171',
-          fontSize: 10,
+          padding: '7px 12px', textAlign: 'center',
+          color: notification.ok ? '#4ade80' : '#f87171', fontSize: 10,
         }}>
           {notification.text}
         </div>
       )}
 
-      {/* Items */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {shopItems.map(({ item, price, featured }, idx) => {
-          if (shopPurchased.includes(idx)) return null;
-          const canAfford = hero.gold >= price;
-          const rarityColor = item.color ?? RARITY_COLORS[item.rarity];
-          const glowBg = item.color ? `${item.color}22` : RARITY_GLOW[item.rarity];
-          const isRare = item.rarity === 'rare' || item.rarity === 'epic' || item.rarity === 'legendary' || !!item.color;
-          const isSelected = selectedIdx === idx;
-          const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
-          const equipped = item.slot !== 'consumable' ? hero.equipment[item.slot as keyof typeof hero.equipment] : undefined;
+      {/* Main: [left items] [shop image] [right items] */}
+      <div style={{ display: 'flex', gap: 5, alignItems: 'flex-start' }}>
+        {/* Left column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {leftItems.map(({ item, price, featured, idx }) => (
+            <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
+          ))}
+        </div>
 
-          return (
-            <div key={`${item.id}-${idx}`}>
-              <div
-                onClick={() => setSelectedIdx(isSelected ? null : idx)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
-                style={{
-                  background: isRare
-                    ? `linear-gradient(135deg, ${glowBg}, rgba(5,8,20,0.95))`
-                    : 'rgba(5,8,20,0.7)',
-                  border: `1px solid ${isSelected ? rarityColor + 'aa' : isRare ? rarityColor + '55' : 'rgba(30,41,59,0.7)'}`,
-                  borderRadius: isSelected ? '4px 4px 0 0' : 4,
-                  padding: 10,
-                  boxShadow: isRare ? `0 0 20px ${rarityColor}22` : 'none',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                {featured && (
-                  <div style={{
-                    position: 'absolute', top: -1, right: 8,
-                    background: rarityColor,
-                    color: '#000',
-                    fontSize: 10,
-                    padding: '2px 5px',
-                    borderRadius: '0 0 3px 3px',
-                    fontFamily: "'Press Start 2P', monospace",
-                    letterSpacing: '0.05em',
-                  }}>
-                    {t.shop.featured}
-                  </div>
-                )}
+        {/* Center: shop image */}
+        <div style={{ flex: 1.2, position: 'relative' }}>
+          <img
+            src="/shop_bg.jpg"
+            alt="Shop"
+            style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
+          />
+          {/* Neon sign overlay */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+            padding: '6px 4px 4px',
+            textAlign: 'center',
+            fontFamily: "'Orbitron', monospace", fontSize: 8, fontWeight: 900,
+            color: '#ff2d78', textShadow: '0 0 8px #ff2d78',
+          }}>
+            武器屋
+          </div>
+        </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {/* Icon */}
-                  <div style={{
-                    background: 'rgba(5,8,20,0.9)',
-                    border: `1px solid ${rarityColor}33`,
-                    borderRadius: 3,
-                    padding: '6px 8px',
-                    flexShrink: 0,
-                    boxShadow: isRare ? `0 0 12px ${rarityColor}44` : 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <ItemIcon item={item} scale={3} />
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                      <span style={{
-                        fontFamily: "'Share Tech Mono', monospace",
-                        fontSize: 10,
-                        color: 'var(--text-muted)',
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.12)',
-                        padding: '1px 3px',
-                        flexShrink: 0,
-                      }}>
-                        {SLOT_LABEL[item.slot] ?? item.slot.toUpperCase()}
-                      </span>
-                      <p style={{ color: rarityColor, fontSize: 10, textShadow: isRare ? `0 0 8px ${rarityColor}88` : 'none' }}>
-                        {getItemName(item, lang)}
-                      </p>
-                      {item.ranged && (
-                        <span style={{
-                          fontFamily: "'Share Tech Mono', monospace",
-                          fontSize: 10, color: '#00f5ff',
-                          background: 'rgba(0,245,255,0.08)',
-                          border: '1px solid rgba(0,245,255,0.3)',
-                          padding: '1px 3px', flexShrink: 0,
-                        }}>
-                          🔫 {t.shop.ranged}
-                        </span>
-                      )}
-                      <span style={{
-                        color: rarityColor, fontSize: 10,
-                        background: rarityColor + '18',
-                        border: `1px solid ${rarityColor}44`,
-                        borderRadius: 2,
-                        padding: '1px 3px',
-                      }}>
-                        {RARITY_LABEL[item.rarity]}
-                      </span>
-                    </div>
-                    <p style={{ color: '#475569', fontSize: 10, marginBottom: 3 }}>
-                      {SLOT_LABEL[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
-                    </p>
-                    <p style={{ color: item.slot === 'consumable' ? rarityColor : '#64748b', fontSize: 10 }}>
-                      {item.slot === 'consumable'
-                        ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
-                        : <>
-                            {statEntries.map(([k, v]) => `+${v} ${({ strength: t.shop.statStr, dexterity: t.shop.statDex, intelligence: t.shop.statInt, vitality: t.shop.statVit } as Record<string, string>)[k] ?? k}`).join('  ')}
-                            {item.attackBonus ? `  ⚔️ +${item.attackBonus}` : ''}
-                            {item.defenseBonus ? `  🛡 +${item.defenseBonus}` : ''}
-                          </>
-                      }
-                    </p>
-                  </div>
-
-                  {/* Buy button */}
-                  <button
-                    onClick={(e) => handleBuy(e, item, price, idx)}
-                    disabled={!canAfford}
-                    style={{
-                      background: canAfford
-                        ? `linear-gradient(135deg, ${rarityColor}22, rgba(5,8,20,0.9))`
-                        : 'rgba(15,23,42,0.6)',
-                      border: `1px solid ${canAfford ? rarityColor + '55' : 'rgba(51,65,85,0.4)'}`,
-                      borderRadius: 3,
-                      padding: '6px 8px',
-                      color: canAfford ? rarityColor : '#475569',
-                      fontFamily: "'Press Start 2P', monospace",
-                      fontSize: 10,
-                      cursor: canAfford ? 'pointer' : 'not-allowed',
-                      flexShrink: 0,
-                      textAlign: 'center',
-                      minWidth: 54,
-                      transition: 'all 0.15s',
-                      boxShadow: canAfford && isRare ? `0 0 10px ${rarityColor}33` : 'none',
-                    }}
-                  >
-                    🪙 {price}
-                  </button>
-                </div>
-              </div>
-
-              {/* Inline comparison panel */}
-              {isSelected && item.slot !== 'consumable' && (
-                <ComparePanel newItem={item} equipped={equipped as Item | undefined} />
-              )}
-            </div>
-          );
-        })}
+        {/* Right column */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {rightItems.map(({ item, price, featured, idx }) => (
+            <ShopItemCard key={idx} item={item} price={price} featured={featured} idx={idx} />
+          ))}
+        </div>
       </div>
+
+      {/* Comparison panel below the grid */}
+      {selectedEntry && (
+        <ComparePanel newItem={selectedEntry.item} equipped={equippedForSelected} />
+      )}
     </div>
   );
 }
