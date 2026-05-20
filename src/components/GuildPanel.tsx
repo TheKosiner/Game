@@ -258,76 +258,107 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
     finally { setUpgrading(null); }
   }
 
-  function UpgradeBox({ type }: { type: 'exp' | 'gold' }) {
-    const lvl = type === 'exp' ? expLvl : goldLvl;
-    const cost = type === 'exp' ? expCost : goldCost;
-    const title = type === 'exp' ? t.guild.upgradeExpTitle : t.guild.upgradeGoldTitle;
-    const maxed = lvl >= 50;
-    const canAfford = treasury >= cost;
-    return (
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-        background: 'rgba(0,0,0,0.4)', border: `1px solid ${type === 'exp' ? 'rgba(100,200,255,0.2)' : 'rgba(255,215,0,0.2)'}`,
-        padding: '8px 6px',
-      }}>
-        <p style={{ ...PX(5), color: type === 'exp' ? '#00e5ff' : '#ffd700', textAlign: 'center' }}>{title}</p>
-        <p style={{ ...PX(8), color: 'var(--text-bright)', textShadow: `0 0 10px ${type === 'exp' ? '#00e5ff' : '#ffd700'}` }}>
-          {t.guild.upgradeBonus(lvl)}
-        </p>
-        <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.upgradeLevel(lvl)}</p>
-        {!maxed && <p style={{ ...PX(4), color: canAfford ? '#ffd700' : '#666', textAlign: 'center' }}>{t.guild.upgradeCost(cost)}</p>}
-        {maxed ? (
-          <p style={{ ...PX(5), color: '#ffd700' }}>{t.guild.upgradeMaxed}</p>
-        ) : isLeader ? (
-          <button
-            onClick={() => handleUpgrade(type)}
-            disabled={!!upgrading || !canAfford}
-            className="btn btn-primary"
-            style={{ fontSize: 9, padding: '4px 8px', width: '100%', opacity: canAfford ? 1 : 0.4 }}
-          >
-            {upgrading === type ? '⏳' : t.guild.upgradeBtn}
-          </button>
-        ) : (
-          <p style={{ ...PX(4), color: '#666' }}>{t.guild.upgradeNotLeader}</p>
-        )}
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Treasury */}
-      <div style={{ background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.2)', padding: '8px 10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <p style={{ ...PX(5), color: '#ffd700' }}>{t.guild.treasury}</p>
-          <p style={{ ...PX(7), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{t.guild.treasuryBalance(treasury)}</p>
+    <div style={{ position: 'relative', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(157,78,221,0.3)' }}>
+      {/* Guild base image */}
+      <img
+        src="/guild_base.jpg"
+        alt="Guild base"
+        style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
+      />
+
+      {/* Dark gradient overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.92) 100%)',
+      }} />
+
+      {/* Guild name + treasury overlaid at top */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        padding: '8px 10px',
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.5)', padding: '1px 5px', border: '1px solid rgba(255,215,0,0.3)' }}>[{guild.tag}]</span>
+            <p style={{ ...PX(7), color: '#fff', textShadow: '0 0 8px rgba(0,0,0,0.9)' }}>{guild.name}</p>
+          </div>
+          {guild.description && (
+            <p style={{ ...PX(4), color: 'rgba(255,255,255,0.7)', marginTop: 3 }}>{guild.description}</p>
+          )}
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+        <div style={{ textAlign: 'right', background: 'rgba(0,0,0,0.5)', padding: '3px 7px', border: '1px solid rgba(255,215,0,0.25)' }}>
+          <p style={{ ...PX(4), color: '#ffd700' }}>{t.guild.treasury}</p>
+          <p style={{ ...PX(6), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.6)' }}>{treasury.toLocaleString()}🪙</p>
+        </div>
+      </div>
+
+      {/* Bottom controls overlaid on image */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        padding: '10px 8px 8px',
+        display: 'flex', flexDirection: 'column', gap: 7,
+      }}>
+        {/* Deposit row */}
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
           <input
             type="number" min={1} max={hero.gold} value={depositAmt}
             onChange={e => { setDepositAmt(e.target.value); setDepositErr(''); }}
             placeholder={t.guild.depositLabel}
-            style={{ flex: 1, background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '5px 7px' }}
+            style={{
+              flex: 1, background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,215,0,0.35)',
+              color: '#ffd700', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '5px 7px',
+            }}
           />
           <button onClick={handleDeposit} disabled={depositing} className="btn btn-primary" style={{ fontSize: 9, padding: '5px 10px', flexShrink: 0 }}>
             {depositing ? '⏳' : t.guild.depositBtn}
           </button>
         </div>
-        {depositErr && <p style={{ ...PX(4), color: 'var(--hp-bright)', marginTop: 4 }}>{depositErr}</p>}
-      </div>
+        {depositErr && <p style={{ ...PX(4), color: 'var(--hp-bright)', marginTop: -4 }}>{depositErr}</p>}
 
-      {/* Three-column: EXP upgrade | Guild base | Gold upgrade */}
-      <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
-        <UpgradeBox type="exp" />
-        <div style={{
-          flex: 1.2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-          background: 'linear-gradient(135deg, rgba(28,20,6,0.8), rgba(10,10,20,0.9))',
-          border: '1px solid rgba(157,78,221,0.3)', padding: '8px 4px',
-        }}>
-          <p style={{ fontSize: 28 }}>🏰</p>
-          <p style={{ ...PX(5), color: '#9d4edd', textAlign: 'center', textShadow: '0 0 8px #9d4edd' }}>{t.guild.guildBase}</p>
+        {/* EXP | Gold upgrade row */}
+        <div style={{ display: 'flex', gap: 5 }}>
+          {(['exp', 'gold'] as const).map(type => {
+            const lvl = type === 'exp' ? expLvl : goldLvl;
+            const cost = type === 'exp' ? expCost : goldCost;
+            const color = type === 'exp' ? '#00e5ff' : '#ffd700';
+            const title = type === 'exp' ? t.guild.upgradeExpTitle : t.guild.upgradeGoldTitle;
+            const maxed = lvl >= 50;
+            const canAfford = treasury >= cost;
+            return (
+              <div key={type} style={{
+                flex: 1, background: 'rgba(0,0,0,0.72)', border: `1px solid ${type === 'exp' ? 'rgba(0,229,255,0.3)' : 'rgba(255,215,0,0.3)'}`,
+                padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 3,
+              }}>
+                <p style={{ ...PX(4), color, textShadow: `0 0 6px ${color}` }}>{title}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <p style={{ ...PX(7), color: '#fff' }}>{t.guild.upgradeBonus(lvl)}</p>
+                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.upgradeLevel(lvl)}</p>
+                </div>
+                {maxed ? (
+                  <p style={{ ...PX(5), color, textAlign: 'center' }}>{t.guild.upgradeMaxed}</p>
+                ) : (
+                  <>
+                    <p style={{ ...PX(4), color: canAfford ? '#ffd700' : '#555' }}>{t.guild.upgradeCost(cost)}</p>
+                    {isLeader ? (
+                      <button
+                        onClick={() => handleUpgrade(type)}
+                        disabled={!!upgrading || !canAfford}
+                        className="btn btn-primary"
+                        style={{ fontSize: 9, padding: '4px 6px', opacity: canAfford ? 1 : 0.4, marginTop: 2 }}
+                      >
+                        {upgrading === type ? '⏳' : t.guild.upgradeBtn}
+                      </button>
+                    ) : (
+                      <p style={{ ...PX(4), color: '#555' }}>{t.guild.upgradeNotLeader}</p>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
-        <UpgradeBox type="gold" />
       </div>
     </div>
   );
@@ -419,25 +450,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
       {/* INFO view */}
       {guildTab === 'info' && <>
 
-      {/* Header */}
-      <div style={{ background: 'linear-gradient(135deg, rgba(28,20,6,0.97), rgba(20,14,4,0.99))', border: '1px solid var(--gold-darker)', padding: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <span style={{ ...PX(6), color: 'var(--gold-main)', background: 'rgba(60,40,10,0.6)', border: '1px solid var(--gold-darker)', padding: '2px 6px' }}>[{guild.tag}]</span>
-              <p style={{ ...PX(9), color: 'var(--gold-bright)', textShadow: '0 0 10px var(--gold-glow)' }}>{guild.name}</p>
-            </div>
-            {guild.description && <p style={{ ...PX(4), color: 'var(--text-dim)', marginBottom: 4 }}>{guild.description}</p>}
-            <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{memberCount} {memberCount === 1 ? t.guild.member1 : t.guild.memberMany} · {t.guild.founded(formatDate(guild.createdAt))}</p>
-          </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 2 }}>{t.guild.guildXp}</p>
-            <p style={{ ...PX(8), color: 'var(--gold-bright)' }}>{guild.guildXp}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Treasury + Upgrades */}
+      {/* Guild base image with overlaid treasury + upgrades */}
       <GuildUpgrades guild={guild} myUid={myUid} onRefresh={onRefresh} />
 
       {/* Members */}
