@@ -241,7 +241,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
     if (amount > hero.gold) { setDepositErr(t.guild.depositError); return; }
     setDepositing(true); setDepositErr('');
     try {
-      await depositToTreasury(guild.id, amount);
+      await depositToTreasury(guild.id, myUid, amount);
       const s = useGameStore.getState();
       useGameStore.setState({ hero: { ...s.hero, gold: s.hero.gold - amount } });
       useGameStore.getState().saveGame();
@@ -472,6 +472,11 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
                 <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
                   {t.guild.heroLevel(m.heroName, m.level)}
                 </p>
+                {(guild.contributions?.[m.uid] ?? 0) > 0 && (
+                  <p style={{ ...PX(4), color: '#ffd700', marginTop: 2 }}>
+                    🪙 {(guild.contributions?.[m.uid] ?? 0).toLocaleString()}
+                  </p>
+                )}
               </div>
               {isLeader && !isMe && (
                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>

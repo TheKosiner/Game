@@ -245,15 +245,19 @@ export interface Guild {
   treasury: number;
   expUpgrade: number;
   goldUpgrade: number;
+  contributions: Record<string, number>;
 }
 
 export function guildUpgradeCost(currentLevel: number): number {
   return 2000 * Math.pow(2, currentLevel);
 }
 
-export async function depositToTreasury(guildId: string, amount: number): Promise<void> {
+export async function depositToTreasury(guildId: string, uid: string, amount: number): Promise<void> {
   if (!db) throw new Error('No DB');
-  await updateDoc(doc(db, 'guilds', guildId), { treasury: increment(amount) });
+  await updateDoc(doc(db, 'guilds', guildId), {
+    treasury: increment(amount),
+    [`contributions.${uid}`]: increment(amount),
+  });
 }
 
 export async function upgradeGuildStat(guildId: string, leaderUid: string, type: 'exp' | 'gold'): Promise<void> {
