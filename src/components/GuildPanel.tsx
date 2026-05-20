@@ -260,7 +260,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
       <img
         src="/guild_base.jpg"
         alt="Guild base"
-        style={{ width: '100%', height: 220, objectFit: 'cover', display: 'block' }}
+        style={{ width: '100%', height: 'auto', objectFit: 'contain', display: 'block' }}
       />
 
       {/* Dark gradient overlay */}
