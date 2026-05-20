@@ -3,11 +3,11 @@ import { useGameStore } from '../store/gameStore';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { generateShopItems } from '../data/items';
 import ItemIcon from './ItemIcon';
-import type { Item, Stats } from '../types';
+import type { Item } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-import { PX, MONO, ORB } from '../utils/styles';
+import { ComparePanel } from './ItemCompare';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -53,98 +53,6 @@ function CooldownTimer({ cooldownEnd }: { cooldownEnd: number }) {
     <span style={{ color: '#60a5fa', textShadow: '0 0 8px rgba(96,165,250,0.6)' }}>
       {mins}:{secs.toString().padStart(2, '0')}
     </span>
-  );
-}
-
-// ── Item comparison panel ────────────────────────────────────────────────────
-
-function StatDeltaRow({ label, oldVal, newVal }: { label: string; oldVal: number; newVal: number }) {
-  const delta = newVal - oldVal;
-  if (oldVal === 0 && newVal === 0) return null;
-  const color = delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#94a3b8';
-  const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-      <span style={{ ...MONO, fontSize: 10, color: '#64748b', flex: 1, paddingLeft: 8, paddingTop: 3, paddingBottom: 3 }}>{label}</span>
-      <span style={{ ...ORB, fontSize: 10, color: '#94a3b8', width: 32, textAlign: 'right', paddingRight: 6 }}>{oldVal || '—'}</span>
-      <span style={{ ...ORB, fontSize: 10, color, width: 48, textAlign: 'center' }}>
-        {delta !== 0 ? `${delta > 0 ? '+' : ''}${delta} ${arrow}` : '='}
-      </span>
-      <span style={{ ...ORB, fontSize: 10, color, width: 32, textAlign: 'left', paddingLeft: 6 }}>{newVal || '—'}</span>
-    </div>
-  );
-}
-
-function ComparePanel({ shopItem, equipped }: { shopItem: Item; equipped: Item | undefined }) {
-  const t = useT();
-  const lang = useLangStore(s => s.lang);
-  const STAT_LABELS: Record<string, string> = {
-    strength: t.shop.statStrength,
-    dexterity: t.shop.statDexterity,
-    intelligence: t.shop.statIntelligence,
-    vitality: t.shop.statVitality,
-    magic: t.shop.statMagic,
-    magicResistance: t.shop.statMagRes,
-  };
-  const shopColor  = RARITY_COLORS[shopItem.rarity];
-  const eqColor    = equipped ? RARITY_COLORS[equipped.rarity] : '#475569';
-
-  const shopAtk = shopItem.attackBonus  ?? 0;
-  const eqAtk   = equipped?.attackBonus  ?? 0;
-  const shopDef = shopItem.defenseBonus ?? 0;
-  const eqDef   = equipped?.defenseBonus ?? 0;
-
-  const allStats = Array.from(new Set([
-    ...Object.keys(shopItem.stats),
-    ...(equipped ? Object.keys(equipped.stats) : []),
-  ])) as (keyof Stats)[];
-
-  return (
-    <div style={{
-      background: 'rgba(2,6,18,0.97)',
-      border: '1px solid rgba(255,255,255,0.1)',
-      marginTop: 6,
-    }}>
-      {/* Header: equipped vs shop */}
-      <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ flex: 1, padding: '7px 8px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareEquipped}</p>
-          {equipped ? (
-            <>
-              <p style={{ ...MONO, fontSize: 10, color: eqColor, marginBottom: 1 }}>{equipped.name}</p>
-              <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lang === 'en' ? 'LVL.' : 'Poz.'} {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
-            </>
-          ) : (
-            <p style={{ ...MONO, fontSize: 10, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
-          )}
-        </div>
-        <div style={{ flex: 1, padding: '7px 8px' }}>
-          <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareShop}</p>
-          <p style={{ ...MONO, fontSize: 10, color: shopColor, marginBottom: 1 }}>{shopItem.name}</p>
-          <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lang === 'en' ? 'LVL.' : 'Poz.'} {shopItem.level} · {RARITY_LABEL[shopItem.rarity]}</p>
-        </div>
-      </div>
-
-      {/* Column labels */}
-      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <span style={{ ...PX(4), color: '#334155', flex: 1, paddingLeft: 8, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareStat}</span>
-        <span style={{ ...PX(4), color: '#475569', width: 32, textAlign: 'right', paddingRight: 6, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareYours}</span>
-        <span style={{ ...PX(4), color: '#475569', width: 48, textAlign: 'center', paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareDelta}</span>
-        <span style={{ ...PX(4), color: '#475569', width: 32, paddingLeft: 6, paddingTop: 4, paddingBottom: 4 }}>{t.shop.compareNew}</span>
-      </div>
-
-      {/* Stat rows */}
-      {(shopAtk > 0 || eqAtk > 0) && <StatDeltaRow label={t.shop.compareAtk} oldVal={eqAtk} newVal={shopAtk} />}
-      {(shopDef > 0 || eqDef > 0) && <StatDeltaRow label={t.shop.compareDef} oldVal={eqDef} newVal={shopDef} />}
-      {allStats.map(k => (
-        <StatDeltaRow
-          key={k}
-          label={STAT_LABELS[k] ?? k}
-          oldVal={(equipped?.stats[k] ?? 0) as number}
-          newVal={(shopItem.stats[k] ?? 0) as number}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -396,7 +304,7 @@ export default function ShopPanel() {
 
               {/* Inline comparison panel */}
               {isSelected && item.slot !== 'consumable' && (
-                <ComparePanel shopItem={item} equipped={equipped as Item | undefined} />
+                <ComparePanel newItem={item} equipped={equipped as Item | undefined} />
               )}
             </div>
           );

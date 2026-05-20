@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import ItemIcon from './ItemIcon';
 import type { Item } from '../types';
@@ -5,15 +6,23 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB } from '../utils/styles';
+import { ComparePanel } from './ItemCompare';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
 
-function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () => void; onSell: () => void; onUse?: () => void }) {
+function ItemCard({
+  item, selected, onToggle, onEquip, onSell, onUse,
+}: {
+  item: Item; selected: boolean;
+  onToggle: () => void; onEquip: () => void; onSell: () => void; onUse?: () => void;
+}) {
   const t    = useT();
   const lang = useLangStore(s => s.lang);
+  const equipment = useGameStore(s => s.hero.equipment);
+
   const rarityLabel: Record<string, string> = {
     common: t.equipment.rarityCommon, uncommon: t.equipment.rarityUncommon,
     rare: t.equipment.rarityRare, epic: t.equipment.rarityEpic, legendary: t.equipment.rarityLegendary,
@@ -27,64 +36,84 @@ function ItemCard({ item, onEquip, onSell, onUse }: { item: Item; onEquip: () =>
     strength: t.inventory.statStr, dexterity: t.inventory.statDex,
     intelligence: t.inventory.statInt, vitality: t.inventory.statVit,
   };
+
   const rc = item.color ?? RARITY_COLORS[item.rarity];
+  const isComparable = item.slot !== 'consumable';
+  const equipped = isComparable ? (equipment[item.slot as keyof typeof equipment] as Item | undefined) : undefined;
   const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
+
   return (
-    <div style={{
-      background: `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}06)`,
-      border: `1px solid ${rc}44`,
-      padding: 8, display: 'flex', gap: 8, alignItems: 'center',
-      boxShadow: item.rarity === 'legendary' ? `0 0 16px ${rc}20` : 'none',
-    }}>
-      <div style={{
-        background: 'rgba(0,0,0,0.5)', border: `1px solid ${rc}33`,
-        padding: 5, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: `0 0 8px ${rc}15`,
-      }}>
-        <ItemIcon item={item} scale={3} />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
-          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
-            {slotLabel[item.slot] ?? item.slot.toUpperCase()}
-          </span>
-          <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{getItemName(item, lang)}</p>
-          <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
-            {rarityLabel[item.rarity]}
-          </span>
+    <div style={{ borderRadius: selected ? '4px 4px 0 0' : 4 }}>
+      <div
+        onClick={isComparable ? onToggle : undefined}
+        role={isComparable ? 'button' : undefined}
+        tabIndex={isComparable ? 0 : undefined}
+        onKeyDown={isComparable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onToggle(); } : undefined}
+        style={{
+          background: `linear-gradient(135deg, rgba(0,0,0,0.6), ${rc}06)`,
+          border: `1px solid ${selected ? rc + '99' : rc + '44'}`,
+          borderRadius: selected ? '4px 4px 0 0' : 4,
+          padding: 8, display: 'flex', gap: 8, alignItems: 'center',
+          boxShadow: item.rarity === 'legendary' ? `0 0 16px ${rc}20` : 'none',
+          cursor: isComparable ? 'pointer' : 'default',
+          transition: 'border-color 0.15s',
+        }}
+      >
+        <div style={{
+          background: 'rgba(0,0,0,0.5)', border: `1px solid ${rc}33`,
+          padding: 5, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 0 8px ${rc}15`,
+        }}>
+          <ItemIcon item={item} scale={3} />
         </div>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
-          {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
-        </p>
-        <p style={{ ...MONO, fontSize: 10, color: item.slot === 'consumable' ? rc : 'var(--text-main)' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
+              {slotLabel[item.slot] ?? item.slot.toUpperCase()}
+            </span>
+            <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{getItemName(item, lang)}</p>
+            <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
+              {rarityLabel[item.rarity]}
+            </span>
+          </div>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
+            {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
+          </p>
+          <p style={{ ...MONO, fontSize: 10, color: item.slot === 'consumable' ? rc : 'var(--text-main)' }}>
+            {item.slot === 'consumable'
+              ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
+              : <>
+                  {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
+                  {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
+                  {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
+                </>
+            }
+          </p>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           {item.slot === 'consumable'
-            ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
-            : <>
-                {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
-                {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
-                {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
-              </>
+            ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.use}</button>
+            : <button onClick={e => { e.stopPropagation(); onEquip(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
           }
-        </p>
+          <button onClick={e => { e.stopPropagation(); onSell(); }} className="btn btn-secondary" style={{ padding: '5px 8px' }}>🪙{item.goldValue}</button>
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-        {item.slot === 'consumable'
-          ? <button onClick={onUse} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.use}</button>
-          : <button onClick={onEquip} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
-        }
-        <button onClick={onSell} className="btn btn-secondary" style={{ padding: '5px 8px' }}>🪙{item.goldValue}</button>
-      </div>
+
+      {selected && isComparable && (
+        <ComparePanel newItem={item} equipped={equipped} />
+      )}
     </div>
   );
 }
 
 export default function InventoryPanel() {
-  const t = useT();
+  const t         = useT();
   const inventory  = useGameStore(s => s.hero.inventory);
   const equipItem  = useGameStore(s => s.equipItem);
   const sellItem   = useGameStore(s => s.sellItem);
   const useItem    = useGameStore(s => s.useItem);
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -105,10 +134,17 @@ export default function InventoryPanel() {
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>{t.inventory.emptyHint}</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 400, overflowY: 'auto', paddingRight: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, maxHeight: 500, overflowY: 'auto', paddingRight: 2 }}>
           {inventory.map((item: Item, idx: number) => (
-            <ItemCard key={idx} item={item}
-              onEquip={() => equipItem(item, idx)} onSell={() => sellItem(item, idx)} onUse={() => useItem(item, idx)} />
+            <ItemCard
+              key={idx}
+              item={item}
+              selected={selectedIdx === idx}
+              onToggle={() => setSelectedIdx(prev => prev === idx ? null : idx)}
+              onEquip={() => { equipItem(item, idx); setSelectedIdx(null); }}
+              onSell={() => { sellItem(item, idx); setSelectedIdx(null); }}
+              onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
+            />
           ))}
         </div>
       )}
