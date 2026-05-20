@@ -283,7 +283,8 @@ export default function App() {
             border: '1px solid rgba(255,215,0,0.25)',
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
-          }}>🪙 {hero.gold}</span>
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+          }}><span style={{ fontSize: 11 }}>🪙</span>{hero.gold}</span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00e5ff', fontSize: 10, fontWeight: 700,
@@ -291,7 +292,8 @@ export default function App() {
             border: '1px solid rgba(0,229,255,0.25)',
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(0,229,255,0.5)',
-          }}>💎 {hero.gems}</span>
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+          }}><span style={{ fontSize: 11 }}>💎</span>{hero.gems}</span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00f5ff', fontSize: 10,
