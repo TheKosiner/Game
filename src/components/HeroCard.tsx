@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
-import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
@@ -457,7 +457,11 @@ export default function HeroCard() {
   const defense    = getHeroDefense(hero);
   const magicRes   = getHeroMagicResistance(hero);
   const eqStats    = getEquipmentStats(hero.equipment);
-  const isMagicWpn = !!hero.equipment.weapon?.magicDamage;
+  const isMagicWpn  = !!hero.equipment.weapon?.magicDamage;
+  const isRangedWpn = !isMagicWpn && !!hero.equipment.weapon?.ranged;
+  const dmgRange   = calcDmgRange(attack);
+  const critChance = calcCritChance(hero.stats.dexterity + eqStats.dexterity, hero.level);
+  const critPct    = Math.round(critChance * 100);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
 
@@ -558,10 +562,43 @@ export default function HeroCard() {
 
         {/* Main stats */}
         <div style={{ display: 'flex', gap: 4 }}>
-          <StatBox icon={isMagicWpn ? '🔮' : '⚔'} value={attack}    label={isMagicWpn ? t.hero.magic : t.hero.attack} color={isMagicWpn ? '#9d4edd' : '#ff2d78'} />
+          <StatBox
+            icon={isMagicWpn ? '🔮' : isRangedWpn ? '🔫' : '⚔'}
+            value={attack}
+            label={isMagicWpn ? t.hero.magic : isRangedWpn ? t.shop.ranged : t.hero.attack}
+            color={isMagicWpn ? '#9d4edd' : isRangedWpn ? '#00f5ff' : '#ff2d78'}
+          />
           <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
           <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
           <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
+        </div>
+
+        {/* DMG range */}
+        <div style={{
+          background: 'rgba(0,0,0,0.35)',
+          border: '1px solid rgba(255,45,120,0.15)',
+          borderRadius: 3,
+          padding: '5px 8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 6,
+        }}>
+          <span style={{ ...MONO, fontSize: 10, color: '#475569' }}>
+            {lang === 'en' ? 'DMG RANGE' : 'ZAKRES DMG'}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ ...ORB, fontSize: 11, color: '#ff2d78' }}>
+              {dmgRange.min}–{dmgRange.max}
+            </span>
+            <span style={{ ...MONO, fontSize: 10, color: '#475569' }}>·</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
+              💥 {lang === 'en' ? 'CRIT' : 'KRYT'} {critPct}%
+            </span>
+            <span style={{ ...ORB, fontSize: 11, color: '#f59e0b' }}>
+              {dmgRange.critMin}–{dmgRange.critMax}
+            </span>
+          </div>
         </div>
 
         {/* HP bar */}
