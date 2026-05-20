@@ -10,6 +10,7 @@ import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
 import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
+import { requestNotificationPermission } from './lib/notifications';
 import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
@@ -82,6 +83,8 @@ export default function App() {
   useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [tab]);
   useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
   const isNative = Capacitor.isNativePlatform();
+
+  useEffect(() => { requestNotificationPermission(); }, []);
 
   useEffect(() => {
     if (authLoading) return;
