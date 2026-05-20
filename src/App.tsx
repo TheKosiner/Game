@@ -118,7 +118,7 @@ export default function App() {
     tickPassiveRegen();
     const id = setInterval(() => {
       const currentUser = useAuthStore.getState().user;
-      if (!currentUser) checkDailyReset();
+      checkDailyReset();
       tickPassiveRegen();
       saveGame();
       if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
