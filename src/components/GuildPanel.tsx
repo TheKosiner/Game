@@ -355,7 +355,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
   );
 }
 
-function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, number> }) {
+function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number> }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
@@ -522,7 +522,6 @@ export default function GuildPanel() {
   const [guild, setGuild] = useState<Guild | null>(null);
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'guild' | 'territory'>('guild');
   const [playerPortraits, setPlayerPortraits] = useState<Record<string, number>>({});
 
   async function load() {
@@ -570,18 +569,10 @@ export default function GuildPanel() {
     );
   }
 
-  if (view === 'territory') {
-    return (
-      <div className="card p-3">
-        <TerritoryPanel guild={guild} onBack={() => setView('guild')} onRefresh={load} />
-      </div>
-    );
-  }
-
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} onOpenMap={() => setView('territory')} playerPortraits={playerPortraits} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
