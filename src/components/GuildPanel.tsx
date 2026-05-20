@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
-  getLeaderboard,
+  getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost,
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
 import TerritoryPanel from './TerritoryPanel';
@@ -221,6 +221,118 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
   );
 }
 
+function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; onRefresh: () => void }) {
+  const t = useT();
+  const hero = useGameStore(s => s.hero);
+  const [depositAmt, setDepositAmt] = useState('');
+  const [depositing, setDepositing] = useState(false);
+  const [depositErr, setDepositErr] = useState('');
+  const [upgrading, setUpgrading] = useState<'exp' | 'gold' | null>(null);
+  const isLeader = guild.leaderUid === myUid;
+  const treasury = guild.treasury ?? 0;
+  const expLvl = guild.expUpgrade ?? 0;
+  const goldLvl = guild.goldUpgrade ?? 0;
+  const expCost = guildUpgradeCost(expLvl);
+  const goldCost = guildUpgradeCost(goldLvl);
+
+  async function handleDeposit() {
+    const amount = parseInt(depositAmt, 10);
+    if (!amount || amount <= 0) return;
+    if (amount > hero.gold) { setDepositErr(t.guild.depositError); return; }
+    setDepositing(true); setDepositErr('');
+    try {
+      await depositToTreasury(guild.id, amount);
+      const s = useGameStore.getState();
+      useGameStore.setState({ hero: { ...s.hero, gold: s.hero.gold - amount } });
+      useGameStore.getState().saveGame();
+      setDepositAmt('');
+      onRefresh();
+    } catch { setDepositErr('Error'); }
+    finally { setDepositing(false); }
+  }
+
+  async function handleUpgrade(type: 'exp' | 'gold') {
+    setUpgrading(type);
+    try { await upgradeGuildStat(guild.id, myUid, type); onRefresh(); }
+    catch { }
+    finally { setUpgrading(null); }
+  }
+
+  function UpgradeBox({ type }: { type: 'exp' | 'gold' }) {
+    const lvl = type === 'exp' ? expLvl : goldLvl;
+    const cost = type === 'exp' ? expCost : goldCost;
+    const title = type === 'exp' ? t.guild.upgradeExpTitle : t.guild.upgradeGoldTitle;
+    const maxed = lvl >= 50;
+    const canAfford = treasury >= cost;
+    return (
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+        background: 'rgba(0,0,0,0.4)', border: `1px solid ${type === 'exp' ? 'rgba(100,200,255,0.2)' : 'rgba(255,215,0,0.2)'}`,
+        padding: '8px 6px',
+      }}>
+        <p style={{ ...PX(5), color: type === 'exp' ? '#00e5ff' : '#ffd700', textAlign: 'center' }}>{title}</p>
+        <p style={{ ...PX(8), color: 'var(--text-bright)', textShadow: `0 0 10px ${type === 'exp' ? '#00e5ff' : '#ffd700'}` }}>
+          {t.guild.upgradeBonus(lvl)}
+        </p>
+        <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.upgradeLevel(lvl)}</p>
+        {!maxed && <p style={{ ...PX(4), color: canAfford ? '#ffd700' : '#666', textAlign: 'center' }}>{t.guild.upgradeCost(cost)}</p>}
+        {maxed ? (
+          <p style={{ ...PX(5), color: '#ffd700' }}>{t.guild.upgradeMaxed}</p>
+        ) : isLeader ? (
+          <button
+            onClick={() => handleUpgrade(type)}
+            disabled={!!upgrading || !canAfford}
+            className="btn btn-primary"
+            style={{ fontSize: 9, padding: '4px 8px', width: '100%', opacity: canAfford ? 1 : 0.4 }}
+          >
+            {upgrading === type ? '⏳' : t.guild.upgradeBtn}
+          </button>
+        ) : (
+          <p style={{ ...PX(4), color: '#666' }}>{t.guild.upgradeNotLeader}</p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Treasury */}
+      <div style={{ background: 'rgba(255,215,0,0.04)', border: '1px solid rgba(255,215,0,0.2)', padding: '8px 10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <p style={{ ...PX(5), color: '#ffd700' }}>{t.guild.treasury}</p>
+          <p style={{ ...PX(7), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{t.guild.treasuryBalance(treasury)}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <input
+            type="number" min={1} max={hero.gold} value={depositAmt}
+            onChange={e => { setDepositAmt(e.target.value); setDepositErr(''); }}
+            placeholder={t.guild.depositLabel}
+            style={{ flex: 1, background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-bright)', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '5px 7px' }}
+          />
+          <button onClick={handleDeposit} disabled={depositing} className="btn btn-primary" style={{ fontSize: 9, padding: '5px 10px', flexShrink: 0 }}>
+            {depositing ? '⏳' : t.guild.depositBtn}
+          </button>
+        </div>
+        {depositErr && <p style={{ ...PX(4), color: 'var(--hp-bright)', marginTop: 4 }}>{depositErr}</p>}
+      </div>
+
+      {/* Three-column: EXP upgrade | Guild base | Gold upgrade */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
+        <UpgradeBox type="exp" />
+        <div style={{
+          flex: 1.2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
+          background: 'linear-gradient(135deg, rgba(28,20,6,0.8), rgba(10,10,20,0.9))',
+          border: '1px solid rgba(157,78,221,0.3)', padding: '8px 4px',
+        }}>
+          <p style={{ fontSize: 28 }}>🏰</p>
+          <p style={{ ...PX(5), color: '#9d4edd', textAlign: 'center', textShadow: '0 0 8px #9d4edd' }}>{t.guild.guildBase}</p>
+        </div>
+        <UpgradeBox type="gold" />
+      </div>
+    </div>
+  );
+}
+
 function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; onOpenMap: () => void; playerPortraits: Record<string, number> }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
@@ -325,6 +437,9 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
         </div>
       </div>
 
+      {/* Treasury + Upgrades */}
+      <GuildUpgrades guild={guild} myUid={myUid} onRefresh={onRefresh} />
+
       {/* Members */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -393,6 +508,7 @@ function GuildView({ guild, myUid, onRefresh, onOpenMap, playerPortraits }: { gu
 export default function GuildPanel() {
   const user = useAuthStore(s => s.user);
   const t = useT();
+  const setGuildBonuses = useGameStore(s => s.setGuildBonuses);
 
   const [guild, setGuild] = useState<Guild | null>(null);
   const [invites, setInvites] = useState<GuildInvite[]>([]);
@@ -416,8 +532,10 @@ export default function GuildPanel() {
       if (guildId) {
         const g = await getGuild(guildId);
         setGuild(g);
+        if (g) setGuildBonuses(g.expUpgrade ?? 0, g.goldUpgrade ?? 0);
       } else {
         setGuild(null);
+        setGuildBonuses(0, 0);
       }
     } finally { setLoading(false); }
   }

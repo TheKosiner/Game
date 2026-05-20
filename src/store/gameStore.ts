@@ -186,6 +186,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   challengeFight: null,
   challengeFightLog: [],
   challengeLastHit: null,
+  guildExpBonus: 0,
+  guildGoldBonus: 0,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
@@ -213,7 +215,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  setGuildBonuses: (exp: number, gold: number) => {
+    set({ guildExpBonus: exp, guildGoldBonus: gold });
+  },
+
   addXp: (amount) => {
+    const bonus = get().guildExpBonus;
+    if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
     let { xp, xpToNext, level, stats, maxHp, hp, attributePoints } = hero;
     xp += amount;
@@ -236,6 +244,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   addGold: (amount) => {
+    const bonus = get().guildGoldBonus;
+    if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
     set({ hero: { ...hero, gold: hero.gold + amount } });
   },

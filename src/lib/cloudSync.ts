@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId, increment } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -242,6 +242,32 @@ export interface Guild {
   lastSiegeAt: number | null;
   lastCaptureAt: number | null;
   lastLostAt: number | null;
+  treasury: number;
+  expUpgrade: number;
+  goldUpgrade: number;
+}
+
+export function guildUpgradeCost(currentLevel: number): number {
+  return 2000 * Math.pow(2, currentLevel);
+}
+
+export async function depositToTreasury(guildId: string, amount: number): Promise<void> {
+  if (!db) throw new Error('No DB');
+  await updateDoc(doc(db, 'guilds', guildId), { treasury: increment(amount) });
+}
+
+export async function upgradeGuildStat(guildId: string, leaderUid: string, type: 'exp' | 'gold'): Promise<void> {
+  if (!db) throw new Error('No DB');
+  const guild = await getGuild(guildId);
+  if (!guild || guild.leaderUid !== leaderUid) throw new Error('Not leader');
+  const currentLevel = type === 'exp' ? (guild.expUpgrade ?? 0) : (guild.goldUpgrade ?? 0);
+  if (currentLevel >= 50) throw new Error('Max level');
+  const cost = guildUpgradeCost(currentLevel);
+  if ((guild.treasury ?? 0) < cost) throw new Error('Not enough gold');
+  await updateDoc(doc(db, 'guilds', guildId), {
+    treasury: increment(-cost),
+    [type === 'exp' ? 'expUpgrade' : 'goldUpgrade']: increment(1),
+  });
 }
 
 export interface GuildInvite {
@@ -286,6 +312,9 @@ export async function createGuild(
     leaderUid,
     createdAt: now,
     guildXp: 0,
+    treasury: 0,
+    expUpgrade: 0,
+    goldUpgrade: 0,
     members: {
       [leaderUid]: {
         username: leaderUsername,

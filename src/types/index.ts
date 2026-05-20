@@ -220,8 +220,11 @@ export interface GameState {
   challengeFight: ChallengeFightState | null;
   challengeFightLog: string[];
   challengeLastHit: ChallengeHitEvent | null;
+  guildExpBonus: number;
+  guildGoldBonus: number;
 
   // actions
+  setGuildBonuses: (exp: number, gold: number) => void;
   initHero: (name: string, skinTone?: number, hairColor?: number, skipSave?: boolean, clothingColor?: number) => void;
   changeAppearance: (skinTone: number, hairColor: number, clothingColor: number) => void;
   respecStats: () => void;
