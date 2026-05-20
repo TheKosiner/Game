@@ -303,9 +303,6 @@ export default function App() {
           }}>{t.app.level(hero.level)}</span>
           {user && (
             <>
-              <span style={{ fontFamily: "'Share Tech Mono', monospace", color: 'var(--text-dim)', fontSize: 10 }}>
-                {user.username}
-              </span>
               <button
                 onClick={() => setLang('pl')}
                 aria-label="Język Polski"
