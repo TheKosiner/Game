@@ -364,7 +364,10 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
   blockedReason?: string;
 }) {
   const t = useT();
+  const level = useGameStore(s => s.hero.level);
   const [hours, setHours] = useState(2);
+  const goldPerHour = Math.floor(97 * Math.pow(1.09, level - 1));
+  const goldTotal = goldPerHour * hours;
   if (blocked && blockedReason) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.15)', padding: '8px 12px', textAlign: 'center' }}>
       <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.hero.beggingActive(blockedReason)}</p>
@@ -386,6 +389,9 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMin}</span>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMax}</span>
       </div>
+      <p style={{ ...MONO, fontSize: 10, color: '#ffd700', textAlign: 'center' }}>
+        ~{goldPerHour}🪙/h · ~{goldTotal}🪙
+      </p>
       <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{
         width: '100%', fontSize: 10, padding: '8px',
         borderColor: 'rgba(157,78,221,0.4)', color: '#9d4edd', textShadow: '0 0 6px #9d4edd',
