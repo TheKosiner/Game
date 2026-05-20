@@ -48,8 +48,7 @@ function tryBumpRarity(rarity: Rarity, difficulty: 'easy' | 'normal' | 'hard'): 
   return { rarity, bumped: false };
 }
 
-function tryDungeonLoot(heroLevel: number, dropChance: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
-  if (Math.random() >= dropChance) return;
+function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
   const hero = get().hero;
   if (hero.inventory.length >= MAX_INVENTORY) return;
   const baseRarity = rollRarity(mode, difficulty);
@@ -414,7 +413,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
       const xpMult  = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
       const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-      const dropChance = mode === 'xp' ? 0.30 : mode === 'loot' ? 1.0 : 0.60;
       const xpEarned   = Math.round(currentEnemy.xpReward * xpMult);
       const goldEarned = Math.round(currentEnemy.goldReward * goldMult);
       get().addXp(xpEarned);
@@ -424,7 +422,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(get().hero.level, dropChance, mode, diff, set, get);
+        tryDungeonLoot(get().hero.level, mode, diff, set, get);
         const freshHero = get().hero;
         const prevCompleted = freshHero.completedDungeons ?? [];
         if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
@@ -492,7 +490,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       const diffStatMult2   = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.5 : 1;
       const xpMult2   = (mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
       const goldMult2 = (mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
-      const dropChance2 = mode2 === 'xp' ? 0.30 : mode2 === 'loot' ? 1.0 : 0.60;
       const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2);
       const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2);
       get().addXp(xpEarned2);
@@ -505,7 +502,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(get().hero.level, dropChance2, mode2, diff2, set, get);
+        tryDungeonLoot(get().hero.level, mode2, diff2, set, get);
         const freshHero2 = get().hero;
         const prevCompleted2 = freshHero2.completedDungeons ?? [];
         if (diff2 !== 'easy' && !prevCompleted2.includes(currentDungeon.id)) {
