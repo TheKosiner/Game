@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
+import { requestNotificationPermission } from '../lib/notifications';
 import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
 import logoSrc from '../assets/logo.png';
 import type { Quest } from '../types';
@@ -65,6 +66,7 @@ export default function QuestPanel() {
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest      = useGameStore(s => s.startQuest);
   const handleStartQuest = (quest: Quest) => {
+    requestNotificationPermission();
     startQuest(quest);
     // Sync immediately so the CF has the activeQuest data when collecting
     if (user) syncToCloud(user.uid, user.username).catch(() => {});

@@ -536,7 +536,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const duration = scaledQuestDuration(quest.durationMs, hero.level);
     const endsAt = now + duration;
     set({ activeQuest: { quest, startedAt: now, endsAt } });
-    scheduleQuestNotification(quest.name, endsAt, getLang());
+    scheduleQuestNotification(quest.name, quest.nameEn, endsAt, getLang());
     get().saveGame();
   },
 
