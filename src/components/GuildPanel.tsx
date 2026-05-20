@@ -16,10 +16,6 @@ import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: '2-digit' });
-}
-
 // ── Create Guild Form ────────────────────────────────────────────────────────
 
 function CreateGuildForm({ onCreated }: { onCreated: () => void }) {
