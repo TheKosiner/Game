@@ -612,12 +612,11 @@ function DungeonList() {
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.dispatchEvent(new MouseEvent('click', { bubbles: true })); }}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', outline: 'none' }}
               >
                 {/* outer glow ring */}
                 <circle cx={pos.x} cy={pos.y} r={6.5} fill="none"
                   stroke={isChosen ? '#ff2d78' : isUnlocked ? '#ffc83a' : '#555577'} strokeWidth="0.4" opacity={isChosen ? 0.8 : isUnlocked ? 0.4 : 0.25}
-                  style={{ animation: (!isChosen && isUnlocked) ? `mapPulse 2.8s ease-out infinite` : 'none', transformOrigin: `${pos.x}px ${pos.y}px` }}
                 />
                 {/* hexagonal background */}
                 <polygon
