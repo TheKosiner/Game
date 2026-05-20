@@ -18,8 +18,9 @@ export const PORTRAIT_LIST: PortraitDef[] = [
   { index: 4, src: `${BASE}portraits/Portrait_2.png`,      label: 'PAWEŁEK', gemPrice: 200 },
   { index: 5, src: `${BASE}portraits/Portrait_3.png`,      label: 'FIFI',    gemPrice: 250 },
   { index: 6, src: `${BASE}portraits/Portrait_4.png`,      label: 'LUCYNA',  gemPrice: 350 },
-  { index: 7, src: `${BASE}portraits/Portrait_5.png`,      label: 'GRAZYNA', gemPrice: 500 },
-  { index: 2, src: `${BASE}portraits/1778573895348.png`,   label: 'KOSINER', hidden: true },
+  { index: 7, src: `${BASE}portraits/Portrait_5.png`,      label: 'GRAZYNA',     gemPrice: 500 },
+  { index: 8, src: `${BASE}portraits/beta_tester.png`,     label: 'BETA TESTER'             },
+  { index: 2, src: `${BASE}portraits/1778573895348.png`,   label: 'KOSINER',     hidden: true },
 ];
 
 // ── Ekskluzywne portrety przypisane do konkretnych graczy (po username) ───────
