@@ -26,7 +26,7 @@ function webSchedule(id: number, title: string, body: string, at: number) {
   if (delay <= 0) return;
   const timer = setTimeout(() => {
     if (Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/logo192.png' });
+      try { new Notification(title, { body, icon: '/favicon.png' }); } catch {}
     }
     webTimers.delete(id);
   }, delay);
@@ -93,12 +93,13 @@ function cancelSync(id: number) {
   }
 }
 
-export async function scheduleQuestNotification(questName: string, endsAt: number, lang: string) {
+export async function scheduleQuestNotification(namePl: string, nameEn: string | undefined, endsAt: number, lang: string) {
   const isEn = lang === 'en';
+  const name = isEn ? (nameEn ?? namePl) : namePl;
   const title = isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!';
   const body  = isEn
-    ? `"${questName}" is done — collect your reward!`
-    : `"${questName}" zakończona — odbierz nagrodę!`;
+    ? `"${name}" is done — collect your reward!`
+    : `"${name}" zakończona — odbierz nagrodę!`;
   await schedule(NOTIF_QUEST, title, body, endsAt);
 }
 
