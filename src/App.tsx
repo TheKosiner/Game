@@ -274,9 +274,8 @@ export default function App() {
           src={logoImg}
           alt="Glitch Soul"
           style={{
-            height: 36, width: 'auto',
-            transform: 'scale(1.5)',
-            transformOrigin: 'left center',
+            height: 50, width: 'auto',
+            flexShrink: 0,
             filter: 'drop-shadow(0 0 8px rgba(140,60,255,0.8)) drop-shadow(0 0 16px rgba(0,200,255,0.3))',
           }}
         />
