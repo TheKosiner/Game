@@ -1,17 +1,14 @@
 name: Reset Daily Limits (Admin)
 
 on:
+  push:
+    branches:
+      - run/reset-daily-limits
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Type "reset" to confirm'
-        required: true
-        default: ''
 
 jobs:
   reset:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.confirm == 'reset' }}
 
     steps:
       - name: Checkout
