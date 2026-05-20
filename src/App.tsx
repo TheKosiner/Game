@@ -281,7 +281,7 @@ export default function App() {
             color: '#ffd700', fontSize: 10, fontWeight: 700,
             background: 'rgba(255,215,0,0.08)',
             border: '1px solid rgba(255,215,0,0.25)',
-            padding: '3px 7px',
+            padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
           }}>🪙 {hero.gold}</span>
           <span style={{
@@ -289,7 +289,7 @@ export default function App() {
             color: '#00e5ff', fontSize: 10, fontWeight: 700,
             background: 'rgba(0,229,255,0.08)',
             border: '1px solid rgba(0,229,255,0.25)',
-            padding: '3px 7px',
+            padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(0,229,255,0.5)',
           }}>💎 {hero.gems}</span>
           <span style={{
@@ -298,7 +298,7 @@ export default function App() {
             fontWeight: 700,
             background: 'rgba(0,245,255,0.08)',
             border: '1px solid rgba(0,245,255,0.25)',
-            padding: '3px 7px',
+            padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(0,245,255,0.5)',
           }}>{t.app.level(hero.level)}</span>
           {user && (
