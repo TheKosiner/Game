@@ -132,7 +132,7 @@ export function generateItem(
   slotHint?: ItemSlot,
   rngIn?: () => number,
 ): Item {
-  const rng = rngIn ?? makeSRng(Date.now() * 6364136223846793005 + Math.random() * 1e15);
+  const rng = rngIn ?? makeSRng((Date.now() + Math.floor(Math.random() * 0x100000000)) >>> 0);
   const slots: ItemSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
   const slot: ItemSlot = slotHint && slotHint !== 'consumable' ? slotHint : pick(slots, rng);
 
