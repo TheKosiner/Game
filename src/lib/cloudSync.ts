@@ -63,7 +63,11 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   }
 
   // Leaderboard update — only reached when save was accepted
-  await setDoc(doc(db, 'players', uid), {
+  const playerRef = doc(db, 'players', uid);
+  const playerSnap = await getDoc(playerRef);
+  const existingGuildId = playerSnap.exists() ? (playerSnap.data().guildId as string | undefined) : undefined;
+
+  await setDoc(playerRef, {
     username,
     heroName: hero.name,
     heroClass: deleteField(),
@@ -82,6 +86,17 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     pvpRating: pvpRating ?? 1000,
     updatedAt: savedAt,
   }, { merge: true });
+
+  // Keep guild member data in sync with current hero stats
+  if (existingGuildId) {
+    try {
+      await updateDoc(doc(db, 'guilds', existingGuildId), {
+        [`members.${uid}.level`]: hero.level,
+        [`members.${uid}.heroName`]: hero.name,
+        [`members.${uid}.portrait`]: hero.portrait ?? 0,
+      });
+    } catch { /* non-critical, guild may no longer exist */ }
+  }
 }
 
 function migrateHeroFromRaw(raw: any) {
