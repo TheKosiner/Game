@@ -53,6 +53,8 @@ function tryBumpRarity(rarity: Rarity, difficulty: 'easy' | 'normal' | 'hard'): 
   return { rarity, bumped: false };
 }
 
+const LOOT_SLOTS: ItemSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
+
 function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
   const hero = get().hero;
   if (hero.inventory.length >= MAX_INVENTORY) return;
@@ -61,7 +63,8 @@ function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', dif
   // Item level = hero level ± difficulty offset
   const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
   const itemLevel = Math.max(1, heroLevel + levelBonus);
-  const item = generateItem(itemLevel, rarity);
+  const slot = LOOT_SLOTS[Math.floor(Math.random() * LOOT_SLOTS.length)];
+  const item = generateItem(itemLevel, rarity, slot);
   set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
   get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${getItemName(item, getLang())}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
