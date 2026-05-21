@@ -366,6 +366,20 @@ export async function getGuild(guildId: string): Promise<Guild | null> {
   return { id: snap.id, ...snap.data() } as Guild;
 }
 
+export async function getGuildMemberLevels(uids: string[]): Promise<Record<string, { level: number; heroName: string; portrait: number }>> {
+  if (!db || uids.length === 0) return {};
+  const result: Record<string, { level: number; heroName: string; portrait: number }> = {};
+  for (let i = 0; i < uids.length; i += 30) {
+    const chunk = uids.slice(i, i + 30);
+    const snap = await getDocs(query(collection(db, 'players'), where(documentId(), 'in', chunk)));
+    for (const d of snap.docs) {
+      const data = d.data();
+      result[d.id] = { level: data.level ?? 1, heroName: data.heroName ?? '', portrait: data.portrait ?? 0 };
+    }
+  }
+  return result;
+}
+
 export async function getMyGuildId(uid: string): Promise<string | null> {
   if (!db) return null;
   const snap = await getDoc(doc(db, 'players', uid));

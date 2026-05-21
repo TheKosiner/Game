@@ -3,6 +3,7 @@ import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
   getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost, updateGuildDescription,
+  getGuildMemberLevels,
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
 import TerritoryPanel from './TerritoryPanel';
@@ -547,8 +548,26 @@ export default function GuildPanel() {
       setInvites(myInvites);
       if (guildId) {
         const g = await getGuild(guildId);
-        setGuild(g);
-        if (g) setGuildBonuses(g.expUpgrade ?? 0, g.goldUpgrade ?? 0);
+        if (g) {
+          const memberUids = Object.keys(g.members);
+          const liveData = await getGuildMemberLevels(memberUids);
+          const updatedMembers = { ...g.members };
+          for (const [uid, live] of Object.entries(liveData)) {
+            if (updatedMembers[uid]) {
+              updatedMembers[uid] = {
+                ...updatedMembers[uid],
+                level: live.level,
+                heroName: live.heroName || updatedMembers[uid].heroName,
+                portrait: live.portrait ?? updatedMembers[uid].portrait,
+              };
+            }
+          }
+          setGuild({ ...g, members: updatedMembers });
+          setGuildBonuses(g.expUpgrade ?? 0, g.goldUpgrade ?? 0);
+        } else {
+          setGuild(null);
+          setGuildBonuses(0, 0);
+        }
       } else {
         setGuild(null);
         setGuildBonuses(0, 0);
