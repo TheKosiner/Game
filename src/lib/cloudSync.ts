@@ -237,6 +237,13 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
 
 // ── GUILDS ────────────────────────────────────────────────────────────────
 
+export interface GuildOpParticipant {
+  username: string;
+  heroName: string;
+  damage: number;
+  attackedAt: number;
+}
+
 export interface GuildOperationState {
   locationId: string;
   floor: number;
@@ -250,8 +257,7 @@ export interface GuildOperationState {
   startedAt: number;
   deadline: number;
   memberCount: number;
-  contributions: Record<string, number>;
-  memberHp: Record<string, number>;
+  participants: Record<string, GuildOpParticipant>;
   cooldownUntil: number;
   status: 'active' | 'failed' | 'completed';
   pendingReward: null | {
@@ -876,8 +882,7 @@ export async function startGuildOperation(
     startedAt: now,
     deadline: nextMidnightUtc(),
     memberCount,
-    contributions: {},
-    memberHp: {},
+    participants: {},
     cooldownUntil: 0,
     status: 'active',
     pendingReward: null,
@@ -892,6 +897,7 @@ export async function attackGuildEnemy(
   guildId: string,
   uid: string,
   heroMaxHp: number,
+  info: { username: string; heroName: string },
 ): Promise<{ status: AttackGuildResult; damage: number }> {
   if (!db) return { status: 'no_op', damage: 0 };
   const _db = db;
@@ -911,14 +917,20 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
-    const memberHp = op.memberHp ?? {};
-    if (memberHp[uid] === 0) return 'cooldown';
+    const existing = (op.participants ?? {})[uid];
+    if (existing && new Date(existing.attackedAt).toDateString() === new Date(now).toDateString()) {
+      return 'cooldown';
+    }
 
     const newHp = Math.max(0, op.enemyHp - damage);
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
-      [`guildOperation.contributions.${uid}`]: increment(damage),
-      [`guildOperation.memberHp.${uid}`]: 0,
+      [`guildOperation.participants.${uid}`]: {
+        username: info.username,
+        heroName: info.heroName,
+        damage,
+        attackedAt: now,
+      },
     };
 
     if (newHp <= 0) {
