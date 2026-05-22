@@ -2,6 +2,7 @@ import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getD
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
+import { GUILD_OP_LOCATIONS, getFloorEnemy } from '../data/guildOperations';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -236,6 +237,30 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
 
 // ── GUILDS ────────────────────────────────────────────────────────────────
 
+export interface GuildOperationState {
+  locationId: string;
+  floor: number;
+  maxFloors: number;
+  enemyHp: number;
+  enemyMaxHp: number;
+  enemyName: string;
+  enemyEmoji: string;
+  isBoss: boolean;
+  startedBy: string;
+  startedAt: number;
+  memberCount: number;
+  contributions: Record<string, number>;
+  lastAttacks: Record<string, number>;
+  cooldownUntil: number;
+  pendingReward: null | {
+    xp: number;
+    gold: number;
+    rarity: string;
+    completedAt: number;
+    claimedBy: Record<string, true>;
+  };
+}
+
 export interface GuildMemberData {
   username: string;
   heroName: string;
@@ -261,6 +286,7 @@ export interface Guild {
   expUpgrade: number;
   goldUpgrade: number;
   contributions: Record<string, number>;
+  guildOperation?: GuildOperationState | null;
 }
 
 export function guildUpgradeCost(currentLevel: number): number {
@@ -804,4 +830,126 @@ export async function markMailRead(mailId: string): Promise<void> {
 export async function deleteMail(mailId: string): Promise<void> {
   if (!db) return;
   await deleteDoc(doc(db, 'mail', mailId));
+}
+
+// ── GUILD OPERATIONS ──────────────────────────────────────────────────────
+
+const ATTACK_COOLDOWN_MS = 30_000;
+
+export async function startGuildOperation(
+  guildId: string,
+  uid: string,
+  locationId: string,
+  memberCount: number,
+): Promise<boolean> {
+  if (!db) return false;
+  const location = GUILD_OP_LOCATIONS.find(l => l.id === locationId);
+  if (!location) return false;
+
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists()) return false;
+  const data = snap.data();
+  if (data.leaderUid !== uid) return false;
+
+  const existing = data.guildOperation as GuildOperationState | null | undefined;
+  if (existing && !existing.pendingReward && existing.floor <= existing.maxFloors) return false;
+  if (existing && existing.cooldownUntil > Date.now()) return false;
+
+  const first = getFloorEnemy(location, 1, memberCount);
+  const op: GuildOperationState = {
+    locationId,
+    floor: 1,
+    maxFloors: location.floors,
+    enemyHp: first.hp,
+    enemyMaxHp: first.maxHp,
+    enemyName: first.name,
+    enemyEmoji: first.emoji,
+    isBoss: first.isBoss,
+    startedBy: uid,
+    startedAt: Date.now(),
+    memberCount,
+    contributions: {},
+    lastAttacks: {},
+    cooldownUntil: 0,
+    pendingReward: null,
+  };
+  await updateDoc(doc(db, 'guilds', guildId), { guildOperation: op });
+  return true;
+}
+
+export type AttackGuildResult = 'attacked' | 'advanced' | 'completed' | 'cooldown' | 'no_op';
+
+export async function attackGuildEnemy(
+  guildId: string,
+  uid: string,
+  heroLevel: number,
+): Promise<{ status: AttackGuildResult; damage: number }> {
+  if (!db) return { status: 'no_op', damage: 0 };
+  const _db = db;
+  const damage = Math.max(1, Math.floor(heroLevel * (10 + Math.random() * 10)));
+
+  const status = await runTransaction(_db, async (txn) => {
+    const ref = doc(_db, 'guilds', guildId);
+    const snap = await txn.get(ref);
+    if (!snap.exists()) return 'no_op';
+    const op = snap.data().guildOperation as GuildOperationState | null | undefined;
+    if (!op || op.pendingReward !== null || op.cooldownUntil > Date.now()) return 'no_op';
+    if (op.enemyHp <= 0) return 'no_op';
+    if ((op.lastAttacks[uid] ?? 0) + ATTACK_COOLDOWN_MS > Date.now()) return 'cooldown';
+
+    const newHp = Math.max(0, op.enemyHp - damage);
+    const now = Date.now();
+    const updates: Record<string, unknown> = {
+      'guildOperation.enemyHp': newHp,
+      [`guildOperation.contributions.${uid}`]: increment(damage),
+      [`guildOperation.lastAttacks.${uid}`]: now,
+    };
+
+    if (newHp <= 0) {
+      const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
+      if (op.floor >= op.maxFloors) {
+        const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12));
+        const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08));
+        updates['guildOperation.pendingReward'] = {
+          xp, gold, rarity: loc.finalRarity,
+          completedAt: now, claimedBy: {},
+        };
+        updates['guildOperation.cooldownUntil'] = now + loc.cooldownMs;
+        updates['guildOperation.enemyHp'] = 0;
+        txn.update(ref, updates);
+        return 'completed';
+      } else {
+        const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
+        updates['guildOperation.floor']       = op.floor + 1;
+        updates['guildOperation.enemyHp']     = next.hp;
+        updates['guildOperation.enemyMaxHp']  = next.maxHp;
+        updates['guildOperation.enemyName']   = next.name;
+        updates['guildOperation.enemyEmoji']  = next.emoji;
+        updates['guildOperation.isBoss']      = next.isBoss;
+        txn.update(ref, updates);
+        return 'advanced';
+      }
+    }
+    txn.update(ref, updates);
+    return 'attacked';
+  }) as AttackGuildResult;
+
+  return { status, damage };
+}
+
+export async function claimGuildOperationReward(
+  guildId: string,
+  uid: string,
+): Promise<{ xp: number; gold: number; rarity: string } | null> {
+  if (!db) return null;
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists()) return null;
+  const op = snap.data().guildOperation as GuildOperationState | null | undefined;
+  if (!op?.pendingReward) return null;
+  if (op.pendingReward.claimedBy[uid]) return null;
+  const { xp, gold, rarity } = op.pendingReward;
+  await updateDoc(doc(db, 'guilds', guildId), {
+    [`guildOperation.pendingReward.claimedBy.${uid}`]: true,
+  });
+  return { xp, gold, rarity };
 }

@@ -9,6 +9,7 @@ import {
 import TerritoryPanel from './TerritoryPanel';
 import GuildChat from './GuildChat';
 import GuildBossPanel from './GuildBossPanel';
+import GuildOperationPanel from './GuildOperationPanel';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
@@ -369,7 +370,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
-  const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat' | 'territory'>('info');
+  const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat' | 'territory' | 'ops'>('info');
   const [leaderWarn, setLeaderWarn] = useState(false);
   const isLeader = guild.leaderUid === myUid;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
@@ -415,16 +416,16 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
         </div>
       )}
 
-      {/* INFO / BOSS / CHAT / TERRITORY tabs */}
+      {/* INFO / BOSS / CHAT / TERRITORY / OPS tabs */}
       <div style={{ display: 'flex', gap: 4 }}>
-        {(['info', 'boss', 'chat', 'territory'] as const).map(tab => (
+        {(['info', 'boss', 'chat', 'territory', 'ops'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setGuildTab(tab)}
             className={guildTab === tab ? 'btn btn-primary' : 'btn btn-secondary'}
             style={{ flex: 1, fontSize: 9, padding: '7px 2px' }}
           >
-            {tab === 'info' ? 'INFO' : tab === 'boss' ? '💀 BOSS' : tab === 'chat' ? '💬 CHAT' : '🗺 MAPA'}
+            {tab === 'info' ? 'INFO' : tab === 'boss' ? '💀 BOSS' : tab === 'chat' ? '💬 CHAT' : tab === 'territory' ? '🗺 MAPA' : '⚔ RAJD'}
           </button>
         ))}
       </div>
@@ -437,6 +438,11 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
           username={members.find(m => m.uid === myUid)?.username ?? ''}
           portrait={members.find(m => m.uid === myUid)?.portrait ?? 0}
         />
+      )}
+
+      {/* OPS view */}
+      {guildTab === 'ops' && (
+        <GuildOperationPanel guild={guild} guildId={guild.id} myUid={myUid} />
       )}
 
       {/* BOSS view */}
