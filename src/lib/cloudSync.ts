@@ -988,6 +988,22 @@ export async function attackGuildEnemy(
   return { status, damage };
 }
 
+export async function resetGuildOpAttacks(guildId: string): Promise<void> {
+  if (!db) return;
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists()) return;
+  const op = snap.data().guildOperation as GuildOperationState | null | undefined;
+  if (!op) return;
+  const yesterday = Date.now() - 25 * 60 * 60 * 1000;
+  const updates: Record<string, unknown> = {};
+  for (const uid of Object.keys(op.participants ?? {})) {
+    updates[`guildOperation.participants.${uid}.attackedAt`] = yesterday;
+  }
+  if (Object.keys(updates).length > 0) {
+    await updateDoc(doc(db, 'guilds', guildId), updates);
+  }
+}
+
 export async function claimGuildOperationReward(
   guildId: string,
   uid: string,

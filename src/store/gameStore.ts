@@ -793,6 +793,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 
+  resetDailyLimits: () => {
+    const { hero } = get();
+    set({ hero: { ...hero, dungeonRunsToday: 0, questsCompletedToday: 0, lastDailyReset: Date.now() } });
+  },
+
   tickPassiveRegen: () => {
     const { hero, lastPassiveRegenAt } = get();
     const now = Date.now();
