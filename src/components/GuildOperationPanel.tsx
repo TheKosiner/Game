@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
-  startGuildOperation, attackGuildEnemy, claimGuildOperationReward, resetGuildOpAttacks,
+  startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -53,10 +53,9 @@ export default function GuildOperationPanel({
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
-  const hero             = useGameStore(s => s.hero);
-  const addXp            = useGameStore(s => s.addXp);
-  const addGold          = useGameStore(s => s.addGold);
-  const resetDailyLimits = useGameStore(s => s.resetDailyLimits);
+  const hero    = useGameStore(s => s.hero);
+  const addXp   = useGameStore(s => s.addXp);
+  const addGold = useGameStore(s => s.addGold);
   const isLeader    = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
@@ -133,12 +132,6 @@ export default function GuildOperationPanel({
       else if (status === 'enemy_killed') notify(`Zadano ${fmtNum(damage)} dmg! Wróg pokonany! 💀`, true);
       else                              notify(`Zadano ${fmtNum(damage)} dmg!`, true);
     } finally { setAttacking(false); }
-  }
-
-  async function handleResetLimits() {
-    await resetGuildOpAttacks(guildId);
-    resetDailyLimits();
-    notify('Limity zresetowane!', true);
   }
 
   async function handleClaim() {
@@ -282,17 +275,6 @@ export default function GuildOperationPanel({
             ? '✓ Zaatakowano dziś — wróć jutro'
             : `⚔ Atakuj! (−${fmtNum(hero.maxHp)} HP)`}
         </button>
-
-        {/* Reset button — leader only */}
-        {isLeader && (
-          <button
-            onClick={handleResetLimits}
-            className="btn btn-secondary"
-            style={{ width: '100%', fontSize: 9, opacity: 0.6 }}
-          >
-            🔄 Reset limitów dziennych
-          </button>
-        )}
 
         {/* Combat log */}
         <div

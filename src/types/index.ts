@@ -253,7 +253,6 @@ export interface GameState {
   performPvp: (opponent: PvpOpponent) => PvpResult | null;
   recordPvpResult: (won: boolean, opponent: PvpOpponent) => PvpResult;
   checkDailyReset: () => void;
-  resetDailyLimits: () => void;
   restHero: (minutes: number) => void;
   cancelRest: () => void;
   abandonQuest: () => void;
