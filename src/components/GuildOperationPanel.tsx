@@ -13,6 +13,14 @@ const RARITY_COLOR: Record<string, string> = {
   rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b',
 };
 
+const LOG_COLORS = {
+  kill:    '#f87171',
+  hit:     '#86efac',
+  me:      '#ff2d78',
+  floor:   '#ffd700',
+  done:    '#4ade80',
+};
+
 function fmtNum(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
   if (n >= 1_000)     return (n / 1_000).toFixed(0) + 'K';
@@ -42,13 +50,7 @@ export default function GuildOperationPanel({
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
 
-  // animation
-  const [shakeKey, setShakeKey]   = useState(0);
-  const [hitKey, setHitKey]       = useState(0);
-  const [floatDmg, setFloatDmg]   = useState<{ val: number; key: number } | null>(null);
-
-  // combat log
-  const [log, setLog] = useState<string[]>([]);
+  const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
 
   const hero    = useGameStore(s => s.hero);
@@ -69,22 +71,24 @@ export default function GuildOperationPanel({
       if (!snap.exists()) return;
       const newOp = snap.data().guildOperation as GuildOperationState | null ?? null;
       setOp(prev => {
-        // build log diff
         if (newOp && prev) {
           const prevParts = prev.participants ?? {};
           const newParts  = newOp.participants ?? {};
-          const lines: string[] = [];
+          const lines: { text: string; type: keyof typeof LOG_COLORS }[] = [];
           for (const [uid, p] of Object.entries(newParts)) {
-            if (!prevParts[uid]) {
+            if (!prevParts[uid] || p.attackedAt !== prevParts[uid].attackedAt) {
               const tag = uid === myUid ? ' (ty)' : '';
-              lines.push(`⚔ ${p.heroName}${tag} zadał ${fmtNum(p.damage)} dmg`);
+              lines.push({ text: `⚔ ${p.heroName}${tag} zadał ${fmtNum(p.damage)} dmg`, type: uid === myUid ? 'me' : 'hit' });
             }
           }
+          if (newOp.enemyInFloor > (prev.enemyInFloor ?? 0) && newOp.floor === prev.floor) {
+            lines.push({ text: `💀 ${prev.enemyName} pokonany!`, type: 'kill' });
+          }
           if (newOp.floor > prev.floor) {
-            lines.push(`⬆ Piętro ${newOp.floor} — ${newOp.enemyName} ${newOp.enemyEmoji}`);
+            lines.push({ text: `⬆ Piętro ${newOp.floor} — ${newOp.enemyName} ${newOp.enemyEmoji}`, type: 'floor' });
           }
           if (newOp.status === 'completed' && prev.status !== 'completed') {
-            lines.push('🏆 RAJD UKOŃCZONY!');
+            lines.push({ text: '🏆 OPERACJA UKOŃCZONA!', type: 'done' });
           }
           if (lines.length) setLog(l => [...l, ...lines]);
         }
@@ -108,7 +112,7 @@ export default function GuildOperationPanel({
     try {
       const ok = await startGuildOperation(guildId, myUid, locationId, memberCount);
       if (ok) setLog([]);
-      else notify('Nie można uruchomić rajdu.', false);
+      else notify('Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
   }
 
@@ -120,17 +124,13 @@ export default function GuildOperationPanel({
         guildId, myUid, hero.maxHp,
         { username: myUsername, heroName: hero.name },
       );
-      if (status === 'cooldown')       notify('Zaatakowałeś już dziś. Wróć jutro!', false);
-      else if (status === 'failed')    notify('Rajd wygasł — czas minął.', false);
-      else if (status === 'no_op')     notify('Brak aktywnego rajdu.', false);
-      else {
-        setShakeKey(k => k + 1);
-        setHitKey(k => k + 1);
-        setFloatDmg({ val: damage, key: Date.now() });
-        if (status === 'completed')    notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Rajd ukończony!`, true);
-        else if (status === 'advanced')notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
-        else notify(`Zadano ${fmtNum(damage)} dmg! 💥`, true);
-      }
+      if (status === 'cooldown')        notify('Zaatakowałeś już dziś. Wróć jutro!', false);
+      else if (status === 'failed')     notify('Operacja wygasła — czas minął.', false);
+      else if (status === 'no_op')      notify('Brak aktywnej operacji.', false);
+      else if (status === 'completed')  notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Operacja ukończona!`, true);
+      else if (status === 'advanced')   notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
+      else if (status === 'enemy_killed') notify(`Zadano ${fmtNum(damage)} dmg! Wróg pokonany! 💀`, true);
+      else                              notify(`Zadano ${fmtNum(damage)} dmg!`, true);
     } finally { setAttacking(false); }
   }
 
@@ -153,7 +153,7 @@ export default function GuildOperationPanel({
   const canStart    = isLeader && !isActive && !inCooldown;
 
   const participants = op
-    ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].attackedAt - a[1].attackedAt)
+    ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage)
     : [];
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
@@ -162,14 +162,11 @@ export default function GuildOperationPanel({
   const attackedToday = myEntry
     ? new Date(myEntry.attackedAt).toISOString().split('T')[0] === today
     : false;
-  const attackDmg = Math.max(1, hero.maxHp);
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
-
-  const hpPct = op ? Math.max(0, (op.enemyHp / op.enemyMaxHp) * 100) : 0;
-  const hpColor = hpPct > 60 ? '#44cc44' : hpPct > 30 ? '#ff9900' : '#ff4444';
-
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
+
+  const hpPct   = op ? Math.max(0, (op.enemyHp / op.enemyMaxHp) * 100) : 0;
 
   // ── Notification
   const notifBlock = notification && (
@@ -185,197 +182,156 @@ export default function GuildOperationPanel({
 
   // ── ACTIVE FIGHT ─────────────────────────────────────────────────────────────
   if (isActive && op) {
+    const enemyIdx   = op.enemyInFloor  ?? 0;
+    const enemyTotal = op.enemiesOnFloor ?? 1;
+
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {notifBlock}
 
-        {/* Enemy card */}
+        {/* Floor header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--gold-main)' }}>
+            {loc?.emoji} {loc?.name}
+          </p>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* floor dots */}
+            <div style={{ display: 'flex', gap: 3 }}>
+              {Array.from({ length: op.maxFloors }, (_, i) => (
+                <div key={i} style={{
+                  width: 7, height: 7,
+                  background: i < op.floor - 1 ? '#4ade80' : i === op.floor - 1 ? '#ffd700' : 'rgba(51,65,85,0.5)',
+                  border: '1px solid rgba(51,65,85,0.4)',
+                }} />
+              ))}
+            </div>
+            <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#f87171' : 'var(--text-dim)' }}>
+              ⏱ {fmtTime(timeLeft)}
+            </span>
+          </div>
+        </div>
+
+        {/* Enemy card — DungeonPanel style */}
         <div style={{
-          background: op.isBoss
-            ? 'linear-gradient(135deg, rgba(40,4,4,0.97), rgba(20,2,2,0.99))'
-            : 'linear-gradient(135deg, rgba(5,10,30,0.97), rgba(3,5,18,0.99))',
-          border: `1px solid ${op.isBoss ? 'rgba(220,38,38,0.4)' : 'rgba(51,65,85,0.5)'}`,
-          padding: '14px 12px',
-          display: 'flex', alignItems: 'center', gap: 12,
+          background: 'linear-gradient(135deg, rgba(20,5,5,0.97), rgba(14,4,4,0.99))',
+          border: '1px solid rgba(100,30,30,0.6)',
+          padding: 10,
+          boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
         }}>
-          {/* Enemy emoji with animations */}
-          <div
-            key={shakeKey}
-            style={{
-              flexShrink: 0, position: 'relative',
-              width: 80, height: 80,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: shakeKey > 0 ? 'bossShake 0.4s ease' : 'none',
-            }}
-          >
-            <div key={hitKey} style={{ animation: hitKey > 0 ? 'bossHit 0.35s ease' : 'none', lineHeight: 1 }}>
-              <span style={{ fontSize: 60 }}>{op.enemyEmoji}</span>
-            </div>
-            {floatDmg && (
-              <span
-                key={floatDmg.key}
-                style={{
-                  position: 'absolute', top: -4, right: -12,
-                  ...ORB, fontSize: 11, color: '#ff4444',
-                  textShadow: '0 0 8px #ff4444',
-                  pointerEvents: 'none', whiteSpace: 'nowrap',
-                  animation: 'floatDmg 0.9s ease forwards',
-                }}
-              >
-                -{fmtNum(floatDmg.val)}
-              </span>
-            )}
-          </div>
-
-          <div style={{ flex: 1 }}>
-            {/* Location + floor */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>
-                {loc?.emoji} {loc?.name}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+            <span style={{ fontSize: 60, lineHeight: 1, flexShrink: 0 }}>{op.enemyEmoji}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...MONO, fontSize: 11, color: '#c05050', marginBottom: 3 }}>{op.enemyName}</p>
+              <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
+                Piętro {op.floor} · Wróg {enemyIdx + 1}/{enemyTotal}
               </p>
-              {/* floor dots */}
-              <div style={{ display: 'flex', gap: 3 }}>
-                {Array.from({ length: op.maxFloors }, (_, i) => (
-                  <div key={i} style={{
-                    width: 7, height: 7,
-                    background: i < op.floor - 1 ? '#4ade80' : i === op.floor - 1 ? '#ffd700' : 'rgba(51,65,85,0.5)',
-                    border: '1px solid rgba(51,65,85,0.4)',
-                  }} />
-                ))}
-              </div>
-            </div>
-
-            {op.isBoss && (
-              <p style={{ ...ORB, fontSize: 9, color: '#f87171', marginBottom: 2 }}>⚠ BOSS</p>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <p style={{ ...ORB, fontSize: 11, color: op.isBoss ? '#f87171' : 'var(--text-bright)' }}>
-                {op.enemyName}
-              </p>
-            </div>
-
-            {/* HP bar */}
-            <div style={{ height: 10, background: '#0a0505', border: '1px solid rgba(100,20,20,0.4)', overflow: 'hidden', borderRadius: 2, marginBottom: 4 }}>
-              <div style={{
-                width: `${hpPct}%`, height: '100%',
-                background: hpPct > 60
-                  ? 'linear-gradient(90deg,#3a8a0a,#6acc20)'
-                  : hpPct > 30
-                  ? 'linear-gradient(90deg,#8a4400,#ff9900)'
-                  : 'linear-gradient(90deg,#660000,#ff2020)',
-                transition: 'width 0.8s ease',
-                boxShadow: `0 0 6px ${hpColor}55`,
-              }} />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ ...MONO, fontSize: 10, color: hpColor }}>
+              <p style={{ ...MONO, fontSize: 10, color: '#903040' }}>
                 {fmtNum(op.enemyHp)} / {fmtNum(op.enemyMaxHp)} HP
-              </span>
-              <span style={{ ...MONO, fontSize: 10, color: timeLeft < 3_600_000 ? '#f87171' : 'var(--text-dim)' }}>
-                ⏱ {fmtTime(timeLeft)}
-              </span>
+              </p>
             </div>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill" style={{
+              width: `${hpPct}%`,
+              background: 'linear-gradient(90deg, #5a0e0e, #b83030)',
+            }} />
           </div>
         </div>
 
-        {/* Attack section */}
-        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ ...ORB, fontSize: 9, color: attackedToday ? '#6b7280' : 'var(--text-dim)' }}>
-              {attackedToday ? '✓ ZAATAKOWAŁEŚ DZIŚ' : 'TWÓJ ATAK DZIŚ'}
+        {/* Your contribution */}
+        <div style={{
+          background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+          padding: 8,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#6b7280' : 'var(--text-dim)' }}>
+              {hero.name}
             </span>
-            <span style={{ ...MONO, fontSize: 10, color: (myEntry?.damage ?? 0) > 0 ? '#f87171' : 'var(--text-dim)' }}>
-              {(myEntry?.damage ?? 0) > 0
-                ? `${fmtNum(myEntry!.damage)} dmg`
-                : `−${fmtNum(attackDmg)} HP`}
+            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#f87171' : 'var(--text-dim)' }}>
+              {attackedToday
+                ? `+${fmtNum(myEntry!.damage)} dmg łącznie`
+                : `−${fmtNum(hero.maxHp)} HP`}
             </span>
           </div>
-          <button
-            onClick={handleAttack}
-            disabled={attacking || attackedToday}
-            className="btn btn-danger"
-            style={{
-              width: '100%', fontSize: 10,
-              cursor: attackedToday ? 'not-allowed' : 'pointer',
-              opacity: attackedToday ? 0.5 : 1,
-            }}
-          >
-            {attacking
-              ? '⚔ ATAKUJĘ...'
-              : attackedToday
-              ? '⚔ ZAATAKOWANO — wróć jutro'
-              : `⚔ ATAKUJ! (−${fmtNum(attackDmg)} HP)`}
-          </button>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill hp-fill" style={{ width: attackedToday ? '0%' : '100%' }} />
+          </div>
         </div>
+
+        {/* Buttons */}
+        <button
+          onClick={handleAttack}
+          disabled={attacking || attackedToday}
+          className="btn btn-primary"
+          style={{
+            width: '100%', fontSize: 10,
+            opacity: attackedToday ? 0.5 : 1,
+            cursor: attackedToday ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {attacking
+            ? '⚔ Atakuję...'
+            : attackedToday
+            ? '✓ Zaatakowano dziś — wróć jutro'
+            : `⚔ Atakuj! (−${fmtNum(hero.maxHp)} HP)`}
+        </button>
 
         {/* Combat log */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>LOG WALKI</p>
-            <span style={{ ...MONO, fontSize: 10, color: '#888' }}>
-              łącznie: {fmtNum(totalDmg)} dmg · {participants.length} graczy
-            </span>
-          </div>
-          <div
-            ref={logRef}
-            style={{
-              background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.07)',
-              padding: 8, maxHeight: 150, overflowY: 'auto',
-            }}
-          >
-            {log.length === 0 ? (
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-                Nikt jeszcze nie zaatakował.
+        <div
+          ref={logRef}
+          className="combat-log"
+        >
+          {log.length === 0 ? (
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
+              Nikt jeszcze nie zaatakował.
+            </p>
+          ) : (
+            log.map((entry, i) => (
+              <p key={i} style={{ color: LOG_COLORS[entry.type], marginBottom: 1 }}>
+                {entry.text}
               </p>
-            ) : (
-              log.map((line, i) => (
-                <p key={i} style={{
-                  ...MONO, fontSize: 10, lineHeight: 1.7,
-                  color: line.includes('(ty)') ? '#ff2d78' : line.startsWith('🏆') ? '#ffd700' : 'var(--text-dim)',
-                }}>
-                  {line}
-                </p>
-              ))
-            )}
-          </div>
+            ))
+          )}
         </div>
 
         {/* Damage ranking */}
-        <div>
-          <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
-            RANKING ({participants.length})
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {participants.map(([uid, p], idx) => {
-              const pct  = op.enemyMaxHp > 0 ? (p.damage / op.enemyMaxHp) * 100 : 0;
-              const isMe = uid === myUid;
-              return (
-                <div key={uid} style={{
-                  background: isMe ? 'rgba(255,45,120,0.06)' : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isMe ? 'rgba(255,45,120,0.2)' : 'rgba(255,255,255,0.05)'}`,
-                  padding: '6px 10px', display: 'flex', alignItems: 'center', gap: 8,
-                }}>
-                  <span style={{ ...ORB, fontSize: 10, color: idx === 0 ? '#ffd700' : idx === 1 ? '#aaa' : idx === 2 ? '#cd7f32' : 'var(--text-muted)', flexShrink: 0, width: 16 }}>
-                    {idx + 1}.
-                  </span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-                      <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.heroName} {isMe ? '(ty)' : ''}
-                      </span>
-                      <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
-                        {fmtNum(p.damage)} ({pct.toFixed(1)}%)
-                      </span>
-                    </div>
-                    <div style={{ height: 3, background: '#111', borderRadius: 1, overflow: 'hidden' }}>
-                      <div style={{ width: `${Math.min(100, pct * 5)}%`, height: '100%', background: isMe ? '#ff2d78' : '#4488ff' }} />
+        {participants.length > 0 && (
+          <div>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>
+              WKŁAD ({participants.length}) · łącznie: {fmtNum(totalDmg)} dmg
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {participants.map(([uid, p], idx) => {
+                const pct  = totalDmg > 0 ? (p.damage / totalDmg) * 100 : 0;
+                const isMe = uid === myUid;
+                return (
+                  <div key={uid} style={{
+                    background: isMe ? 'rgba(255,45,120,0.06)' : 'rgba(255,255,255,0.02)',
+                    border: `1px solid ${isMe ? 'rgba(255,45,120,0.2)' : 'rgba(255,255,255,0.05)'}`,
+                    padding: '5px 8px', display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <span style={{ ...MONO, fontSize: 9, color: idx === 0 ? '#ffd700' : 'var(--text-muted)', width: 14, flexShrink: 0 }}>
+                      {idx + 1}.
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.heroName}{isMe ? ' (ty)' : ''}
+                        </span>
+                        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
+                          {fmtNum(p.damage)}
+                        </span>
+                      </div>
+                      <div style={{ height: 3, background: '#111', overflow: 'hidden' }}>
+                        <div style={{ width: `${pct}%`, height: '100%', background: isMe ? '#ff2d78' : '#4488ff' }} />
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
@@ -391,14 +347,14 @@ export default function GuildOperationPanel({
           padding: '14px 12px', textAlign: 'center',
         }}>
           <p style={{ fontSize: 28, marginBottom: 6 }}>💀</p>
-          <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>RAJD NIEUKOŃCZONY</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>OPERACJA NIEUKOŃCZONA</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
             {loc?.emoji} {loc?.name} — czas minął
           </p>
         </div>
         {participants.length > 0 && (
           <div style={{ background: 'rgba(5,10,25,0.6)', border: '1px solid rgba(51,65,85,0.4)', padding: '8px 10px' }}>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>WKŁAD FINALNY</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>WKŁAD</p>
             {participants.map(([uid, p]) => (
               <div key={uid} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ ...MONO, fontSize: 11, color: uid === myUid ? '#ffd700' : 'var(--text-dim)' }}>
@@ -411,7 +367,7 @@ export default function GuildOperationPanel({
         )}
         {isLeader && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
-            ▶ NOWY RAJD
+            ▶ NOWA OPERACJA
           </button>
         )}
       </div>
@@ -430,7 +386,7 @@ export default function GuildOperationPanel({
           boxShadow: '0 0 20px rgba(68,200,68,0.1)',
         }}>
           <p style={{ fontSize: 28, marginBottom: 6 }}>🏆</p>
-          <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>RAJD UKOŃCZONY!</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>OPERACJA UKOŃCZONA!</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
             {loc?.emoji} {loc?.name}
           </p>
@@ -440,7 +396,7 @@ export default function GuildOperationPanel({
                 +{op.pendingReward.xp} XP &nbsp;·&nbsp; +{op.pendingReward.gold} 🪙
               </p>
               <p style={{ ...MONO, fontSize: 11, color: RARITY_COLOR[op.pendingReward.rarity] ?? '#aaa', marginTop: 4 }}>
-                Item: [{op.pendingReward.rarity.toUpperCase()}]
+                [{op.pendingReward.rarity.toUpperCase()}]
               </p>
             </div>
           )}
@@ -455,18 +411,18 @@ export default function GuildOperationPanel({
 
         {participants.length > 0 && (
           <div>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>RANKING</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              {participants.sort((a, b) => b[1].damage - a[1].damage).map(([uid, p], idx) => {
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>RANKING</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {participants.map(([uid, p], idx) => {
                 const isMe = uid === myUid;
                 return (
                   <div key={uid} style={{
                     background: isMe ? 'rgba(255,45,120,0.06)' : 'rgba(255,255,255,0.02)',
                     border: `1px solid ${isMe ? 'rgba(255,45,120,0.2)' : 'rgba(255,255,255,0.05)'}`,
-                    padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}>
                     <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)' }}>
-                      {idx + 1}. {p.heroName} {isMe ? '(ty)' : ''}
+                      {idx + 1}. {p.heroName}{isMe ? ' (ty)' : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 10, color: '#f87171' }}>{fmtNum(p.damage)} dmg</span>
                   </div>
@@ -479,13 +435,13 @@ export default function GuildOperationPanel({
         {inCooldown && (
           <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '8px 10px', textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-              ⏳ Następny rajd za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
+              ⏳ Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
             </p>
           </div>
         )}
         {!inCooldown && isLeader && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
-            ▶ NOWY RAJD
+            ▶ NOWA OPERACJA
           </button>
         )}
       </div>
@@ -496,13 +452,13 @@ export default function GuildOperationPanel({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
-      <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)', marginBottom: 4 }}>WYBIERZ LOKACJĘ</p>
+      <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)', marginBottom: 2 }}>WYBIERZ OPERACJĘ</p>
       <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>
         Trudność skaluje się z liczbą członków ({memberCount}).
-        {!isLeader && ' Tylko władca może uruchomić rajd.'}
+        {!isLeader && ' Tylko władca może uruchomić operację.'}
       </p>
       <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', marginBottom: 6 }}>
-        ⚡ Każdy atakuje raz dziennie swoim pełnym HP. Rajd musi zakończyć się przed północą (UTC).
+        ⚡ Każdy atakuje raz dziennie swoim pełnym HP. Operacja musi zakończyć się przed północą (UTC).
       </p>
 
       {GUILD_OP_LOCATIONS.map(location => {
@@ -519,7 +475,7 @@ export default function GuildOperationPanel({
                   {location.emoji} {location.name}
                 </p>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                  {location.floors} pięter · [{location.finalRarity.toUpperCase()}]
+                  {location.floors} pięter · {location.enemiesPerFloor} wrogów/piętro · [{location.finalRarity.toUpperCase()}]
                 </p>
               </div>
               <div style={{ textAlign: 'right' }}>

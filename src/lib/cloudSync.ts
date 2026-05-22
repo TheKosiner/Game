@@ -252,7 +252,8 @@ export interface GuildOperationState {
   enemyMaxHp: number;
   enemyName: string;
   enemyEmoji: string;
-  isBoss: boolean;
+  enemyInFloor: number;
+  enemiesOnFloor: number;
   startedBy: string;
   startedAt: number;
   deadline: number;
@@ -881,7 +882,8 @@ export async function startGuildOperation(
     enemyMaxHp: first.maxHp,
     enemyName: first.name,
     enemyEmoji: first.emoji,
-    isBoss: first.isBoss,
+    enemyInFloor: 0,
+    enemiesOnFloor: first.count,
     startedBy: uid,
     startedAt: now,
     deadline: nextMidnightUtc(),
@@ -943,7 +945,17 @@ export async function attackGuildEnemy(
 
     if (newHp <= 0) {
       const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
-      if (op.floor >= op.maxFloors) {
+      const enemyInFloor  = op.enemyInFloor  ?? 0;
+      const enemiesOnFloor = op.enemiesOnFloor ?? 1;
+
+      if (enemyInFloor < enemiesOnFloor - 1) {
+        // More enemies on this floor
+        const same = getFloorEnemy(loc, op.floor, op.memberCount);
+        updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
+        updates['guildOperation.enemyHp']      = same.hp;
+        txn.update(ref, updates);
+        return 'enemy_killed';
+      } else if (op.floor >= op.maxFloors) {
         // All floors done → complete
         const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12));
         const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08));
@@ -958,12 +970,13 @@ export async function attackGuildEnemy(
       } else {
         // Advance to next floor
         const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
-        updates['guildOperation.floor']      = op.floor + 1;
-        updates['guildOperation.enemyHp']    = next.hp;
-        updates['guildOperation.enemyMaxHp'] = next.maxHp;
-        updates['guildOperation.enemyName']  = next.name;
-        updates['guildOperation.enemyEmoji'] = next.emoji;
-        updates['guildOperation.isBoss']     = next.isBoss;
+        updates['guildOperation.floor']          = op.floor + 1;
+        updates['guildOperation.enemyHp']        = next.hp;
+        updates['guildOperation.enemyMaxHp']     = next.maxHp;
+        updates['guildOperation.enemyName']      = next.name;
+        updates['guildOperation.enemyEmoji']     = next.emoji;
+        updates['guildOperation.enemyInFloor']   = 0;
+        updates['guildOperation.enemiesOnFloor'] = next.count;
         txn.update(ref, updates);
         return 'advanced';
       }

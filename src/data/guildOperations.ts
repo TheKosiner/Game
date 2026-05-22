@@ -2,7 +2,6 @@ export interface GuildOpEnemy {
   name: string;
   emoji: string;
   hpMult: number;
-  isBoss?: boolean;
 }
 
 export interface GuildOpLocation {
@@ -12,6 +11,7 @@ export interface GuildOpLocation {
   description: string;
   floors: number;
   enemies: GuildOpEnemy[];
+  enemiesPerFloor: number;
   baseHpPerMember: number;
   baseXpPerFloor: number;
   baseGoldPerFloor: number;
@@ -28,11 +28,12 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     floors: 4,
     enemies: [
       { name: 'Strażnik Danych',   emoji: '🤖', hpMult: 1.0 },
-      { name: 'Duch Sieci',        emoji: '👻', hpMult: 1.5 },
-      { name: 'Fragmentator',      emoji: '💀', hpMult: 2.0 },
-      { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 4.0, isBoss: true },
+      { name: 'Duch Sieci',        emoji: '👻', hpMult: 1.2 },
+      { name: 'Fragmentator',      emoji: '💀', hpMult: 1.5 },
+      { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 2.0 },
     ],
-    baseHpPerMember: 25,
+    enemiesPerFloor: 5,
+    baseHpPerMember: 40,
     baseXpPerFloor: 120,
     baseGoldPerFloor: 60,
     finalRarity: 'rare',
@@ -46,12 +47,13 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     floors: 5,
     enemies: [
       { name: 'Akwa-Dron',         emoji: '🦈', hpMult: 1.0 },
-      { name: 'Zatopiony Android', emoji: '🤖', hpMult: 1.4 },
-      { name: 'Lewiatan Rekin',    emoji: '🐋', hpMult: 1.9 },
-      { name: 'Kraken Mech',       emoji: '🦑', hpMult: 2.6 },
-      { name: 'Terror Głębin',     emoji: '👾', hpMult: 5.0, isBoss: true },
+      { name: 'Zatopiony Android', emoji: '🤖', hpMult: 1.2 },
+      { name: 'Lewiatan Rekin',    emoji: '🐋', hpMult: 1.5 },
+      { name: 'Kraken Mech',       emoji: '🦑', hpMult: 1.8 },
+      { name: 'Terror Głębin',     emoji: '👾', hpMult: 2.2 },
     ],
-    baseHpPerMember: 40,
+    enemiesPerFloor: 5,
+    baseHpPerMember: 60,
     baseXpPerFloor: 160,
     baseGoldPerFloor: 80,
     finalRarity: 'epic',
@@ -65,12 +67,13 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     floors: 5,
     enemies: [
       { name: 'Strażnik Orbity',   emoji: '🛸', hpMult: 1.0 },
-      { name: 'Satelita Bojowy',   emoji: '⚡', hpMult: 1.5 },
-      { name: 'Łowca Kosmiczny',   emoji: '🚀', hpMult: 2.2 },
-      { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 3.0 },
-      { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 6.0, isBoss: true },
+      { name: 'Satelita Bojowy',   emoji: '⚡', hpMult: 1.3 },
+      { name: 'Łowca Kosmiczny',   emoji: '🚀', hpMult: 1.6 },
+      { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 2.0 },
+      { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 2.5 },
     ],
-    baseHpPerMember: 55,
+    enemiesPerFloor: 5,
+    baseHpPerMember: 80,
     baseXpPerFloor: 210,
     baseGoldPerFloor: 105,
     finalRarity: 'epic',
@@ -84,13 +87,14 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     floors: 6,
     enemies: [
       { name: 'Skażony Strażnik',  emoji: '☢️', hpMult: 1.0 },
-      { name: 'Nano-Zaraza',       emoji: '🧬', hpMult: 1.5 },
-      { name: 'Reaktorowy Mech',   emoji: '⚗️', hpMult: 2.1 },
-      { name: 'Mutant Radiacji',   emoji: '💀', hpMult: 2.8 },
-      { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 3.6 },
-      { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 7.0, isBoss: true },
+      { name: 'Nano-Zaraza',       emoji: '🧬', hpMult: 1.3 },
+      { name: 'Reaktorowy Mech',   emoji: '⚗️', hpMult: 1.6 },
+      { name: 'Mutant Radiacji',   emoji: '💀', hpMult: 2.0 },
+      { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 2.4 },
+      { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 3.0 },
     ],
-    baseHpPerMember: 70,
+    enemiesPerFloor: 6,
+    baseHpPerMember: 100,
     baseXpPerFloor: 280,
     baseGoldPerFloor: 140,
     finalRarity: 'legendary',
@@ -100,18 +104,19 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     id: 'singularity',
     name: 'Punkt Singularności',
     emoji: '🌌',
-    description: 'Serce kwantowej sieci — tu rzeczywistość się kruszy. Tylko najpotężniejsze gildie mogą pokonać Boga Singularności.',
+    description: 'Serce kwantowej sieci — tu rzeczywistość się kruszy. Tylko najpotężniejsze gildie mogą pokonać Strażnika Singularności.',
     floors: 7,
     enemies: [
       { name: 'Kwantowy Cień',       emoji: '👁️', hpMult: 1.0 },
-      { name: 'Rozdarcie Realności', emoji: '🌀', hpMult: 1.5 },
-      { name: 'Nieskończony Pętlarz',emoji: '♾️', hpMult: 2.1 },
-      { name: 'Fazowy Kolos',        emoji: '⚛️', hpMult: 2.8 },
-      { name: 'Strażnik Singul.',    emoji: '🔮', hpMult: 3.6 },
-      { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 4.5 },
-      { name: 'Bóg Singularności',   emoji: '🌌', hpMult: 8.0, isBoss: true },
+      { name: 'Rozdarcie Realności', emoji: '🌀', hpMult: 1.3 },
+      { name: 'Nieskończony Pętlarz',emoji: '♾️', hpMult: 1.6 },
+      { name: 'Fazowy Kolos',        emoji: '⚛️', hpMult: 2.0 },
+      { name: 'Strażnik Singul.',    emoji: '🔮', hpMult: 2.5 },
+      { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 3.0 },
+      { name: 'Kwantowy Tytan',      emoji: '🌌', hpMult: 3.6 },
     ],
-    baseHpPerMember: 90,
+    enemiesPerFloor: 6,
+    baseHpPerMember: 130,
     baseXpPerFloor: 380,
     baseGoldPerFloor: 190,
     finalRarity: 'legendary',
@@ -123,8 +128,8 @@ export function getFloorEnemy(
   location: GuildOpLocation,
   floor: number,
   memberCount: number,
-): { name: string; emoji: string; hp: number; maxHp: number; isBoss: boolean } {
+): { name: string; emoji: string; hp: number; maxHp: number; count: number } {
   const e = location.enemies[Math.min(floor - 1, location.enemies.length - 1)];
   const hp = Math.max(1, Math.round(location.baseHpPerMember * memberCount * e.hpMult));
-  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, isBoss: !!e.isBoss };
+  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, count: location.enemiesPerFloor };
 }
