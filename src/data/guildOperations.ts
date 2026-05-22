@@ -12,7 +12,8 @@ export interface GuildOpLocation {
   description: string;
   floors: number;
   enemies: GuildOpEnemy[];
-  baseHpPerMember: number;
+  baseEnemyHp: number;
+  enemiesPerFloor: number;
   baseXpPerFloor: number;
   baseGoldPerFloor: number;
   finalRarity: 'rare' | 'epic' | 'legendary';
@@ -30,9 +31,10 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Strażnik Danych',   emoji: '🤖', hpMult: 1.0 },
       { name: 'Duch Sieci',        emoji: '👻', hpMult: 1.5 },
       { name: 'Fragmentator',      emoji: '💀', hpMult: 2.0 },
-      { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 4.5, isBoss: true },
+      { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 4.0, isBoss: true },
     ],
-    baseHpPerMember: 350,
+    baseEnemyHp: 60,
+    enemiesPerFloor: 5,
     baseXpPerFloor: 120,
     baseGoldPerFloor: 60,
     finalRarity: 'rare',
@@ -51,7 +53,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kraken Mech',       emoji: '🦑', hpMult: 2.6 },
       { name: 'Terror Głębin',     emoji: '👾', hpMult: 5.0, isBoss: true },
     ],
-    baseHpPerMember: 500,
+    baseEnemyHp: 95,
+    enemiesPerFloor: 5,
     baseXpPerFloor: 160,
     baseGoldPerFloor: 80,
     finalRarity: 'epic',
@@ -70,7 +73,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 3.0 },
       { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 6.0, isBoss: true },
     ],
-    baseHpPerMember: 700,
+    baseEnemyHp: 140,
+    enemiesPerFloor: 5,
     baseXpPerFloor: 210,
     baseGoldPerFloor: 105,
     finalRarity: 'epic',
@@ -90,7 +94,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 3.6 },
       { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 7.0, isBoss: true },
     ],
-    baseHpPerMember: 900,
+    baseEnemyHp: 200,
+    enemiesPerFloor: 6,
     baseXpPerFloor: 280,
     baseGoldPerFloor: 140,
     finalRarity: 'legendary',
@@ -103,15 +108,16 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     description: 'Serce kwantowej sieci — tu rzeczywistość się kruszy. Tylko najpotężniejsze gildie mogą pokonać Boga Singularności.',
     floors: 7,
     enemies: [
-      { name: 'Kwantowy Cień',     emoji: '👁️', hpMult: 1.0 },
+      { name: 'Kwantowy Cień',       emoji: '👁️', hpMult: 1.0 },
       { name: 'Rozdarcie Realności', emoji: '🌀', hpMult: 1.5 },
-      { name: 'Nieskończony Pętlarz', emoji: '♾️', hpMult: 2.1 },
-      { name: 'Fazowy Kolos',      emoji: '⚛️', hpMult: 2.8 },
-      { name: 'Strażnik Singul.',  emoji: '🔮', hpMult: 3.6 },
-      { name: 'Aberacja Kodu',     emoji: '💠', hpMult: 4.5 },
-      { name: 'Bóg Singularności', emoji: '🌌', hpMult: 8.0, isBoss: true },
+      { name: 'Nieskończony Pętlarz',emoji: '♾️', hpMult: 2.1 },
+      { name: 'Fazowy Kolos',        emoji: '⚛️', hpMult: 2.8 },
+      { name: 'Strażnik Singul.',    emoji: '🔮', hpMult: 3.6 },
+      { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 4.5 },
+      { name: 'Bóg Singularności',   emoji: '🌌', hpMult: 8.0, isBoss: true },
     ],
-    baseHpPerMember: 1200,
+    baseEnemyHp: 280,
+    enemiesPerFloor: 6,
     baseXpPerFloor: 380,
     baseGoldPerFloor: 190,
     finalRarity: 'legendary',
@@ -122,9 +128,10 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
 export function getFloorEnemy(
   location: GuildOpLocation,
   floor: number,
-  memberCount: number,
-): { name: string; emoji: string; hp: number; maxHp: number; isBoss: boolean } {
+): { name: string; emoji: string; hp: number; maxHp: number; isBoss: boolean; count: number } {
   const e = location.enemies[Math.min(floor - 1, location.enemies.length - 1)];
-  const hp = Math.max(1, Math.floor(location.baseHpPerMember * memberCount * e.hpMult));
-  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, isBoss: !!e.isBoss };
+  const isBossFloor = floor === location.floors;
+  const count = isBossFloor ? 1 : location.enemiesPerFloor;
+  const hp = Math.max(1, Math.round(location.baseEnemyHp * e.hpMult));
+  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, isBoss: !!e.isBoss, count };
 }

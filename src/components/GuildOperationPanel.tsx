@@ -120,15 +120,16 @@ export default function GuildOperationPanel({
         guildId, myUid, hero.maxHp,
         { username: myUsername, heroName: hero.name },
       );
-      if (status === 'cooldown')    notify('Już dziś walczyłeś! Wróć po północy.', false);
-      else if (status === 'failed') notify('Rajd wygasł — czas minął.', false);
-      else if (status === 'no_op')  notify('Brak aktywnego rajdu.', false);
+      if (status === 'cooldown')       notify('Wyczerpałeś ataki na dziś. Wróć po północy.', false);
+      else if (status === 'failed')    notify('Rajd wygasł — czas minął.', false);
+      else if (status === 'no_op')     notify('Brak aktywnego rajdu.', false);
       else {
         setShakeKey(k => k + 1);
         setHitKey(k => k + 1);
         setFloatDmg({ val: damage, key: Date.now() });
-        if (status === 'completed')  notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Rajd ukończony!`, true);
-        else if (status === 'advanced') notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
+        if (status === 'completed')    notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Rajd ukończony!`, true);
+        else if (status === 'advanced')notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
+        else if (status === 'enemy_killed') notify(`Zadano ${fmtNum(damage)} dmg! Wróg pokonany! 💀`, true);
         else notify(`Zadano ${fmtNum(damage)} dmg! 💥`, true);
       }
     } finally { setAttacking(false); }
@@ -158,8 +159,12 @@ export default function GuildOperationPanel({
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
   const myEntry = op?.participants?.[myUid];
-  const attackedToday = !!myEntry &&
-    new Date(myEntry.attackedAt).toDateString() === new Date(now).toDateString();
+  const today = new Date(now).toISOString().split('T')[0];
+  const myAtkInfo = op?.attackInfo?.[myUid];
+  const attacksUsedToday = myAtkInfo?.dateStr === today ? (myAtkInfo.count ?? 0) : 0;
+  const attacksLeft = Math.max(0, 5 - attacksUsedToday);
+  const exhausted = attacksLeft === 0;
+  const attackDmg = Math.max(1, Math.floor(hero.maxHp / 5));
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
 
@@ -245,9 +250,16 @@ export default function GuildOperationPanel({
             {op.isBoss && (
               <p style={{ ...ORB, fontSize: 9, color: '#f87171', marginBottom: 2 }}>⚠ BOSS</p>
             )}
-            <p style={{ ...ORB, fontSize: 11, color: op.isBoss ? '#f87171' : 'var(--text-bright)', marginBottom: 6 }}>
-              {op.enemyName}
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <p style={{ ...ORB, fontSize: 11, color: op.isBoss ? '#f87171' : 'var(--text-bright)' }}>
+                {op.enemyName}
+              </p>
+              {!op.isBoss && (
+                <p style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
+                  Wróg {(op.enemyInFloor ?? 0) + 1}/{op.enemiesOnFloor ?? 1}
+                </p>
+              )}
+            </div>
 
             {/* HP bar */}
             <div style={{ height: 10, background: '#0a0505', border: '1px solid rgba(100,20,20,0.4)', overflow: 'hidden', borderRadius: 2, marginBottom: 4 }}>
@@ -276,28 +288,43 @@ export default function GuildOperationPanel({
         {/* Attack section */}
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
-            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#44cc44' : 'var(--text-dim)' }}>
-              {attackedToday
-                ? `✅ ${fmtNum(myEntry!.damage)} dmg`
-                : `~${fmtNum(hero.maxHp)} HP`}
+            <div>
+              <span style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
+              <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <div key={i} style={{
+                    width: 10, height: 10,
+                    background: i < attacksUsedToday ? '#6b7280' : '#f59e0b',
+                    border: '1px solid rgba(245,158,11,0.3)',
+                    borderRadius: 2,
+                  }} />
+                ))}
+                <span style={{ ...MONO, fontSize: 9, color: exhausted ? '#6b7280' : '#f59e0b', marginLeft: 4 }}>
+                  {attacksLeft}/5 pozostało
+                </span>
+              </div>
+            </div>
+            <span style={{ ...MONO, fontSize: 10, color: (myEntry?.damage ?? 0) > 0 ? '#f87171' : 'var(--text-dim)' }}>
+              {(myEntry?.damage ?? 0) > 0
+                ? `${fmtNum(myEntry!.damage)} dmg`
+                : `−${fmtNum(attackDmg)} HP/atak`}
             </span>
           </div>
           <button
             onClick={handleAttack}
-            disabled={attacking || attackedToday}
+            disabled={attacking || exhausted}
             className="btn btn-danger"
             style={{
               width: '100%', fontSize: 10,
-              cursor: attackedToday ? 'not-allowed' : 'pointer',
-              opacity: attackedToday ? 0.5 : 1,
+              cursor: exhausted ? 'not-allowed' : 'pointer',
+              opacity: exhausted ? 0.5 : 1,
             }}
           >
             {attacking
               ? '⚔ ATAKUJĘ...'
-              : attackedToday
-              ? '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ'
-              : '⚔ ATAKUJ!'}
+              : exhausted
+              ? '⚔ WYCZERPANY — wróć po północy'
+              : `⚔ ATAKUJ! (−${fmtNum(attackDmg)} HP)`}
           </button>
         </div>
 
