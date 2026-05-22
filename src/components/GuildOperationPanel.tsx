@@ -18,33 +18,7 @@ const RARITY_COLOR: Record<string, string> = {
   rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b',
 };
 
-function CooldownBtn({ lastAtk, onAttack }: { lastAtk: number; onAttack: () => void }) {
-  const [left, setLeft] = useState(Math.max(0, lastAtk + 30000 - Date.now()));
-  useEffect(() => {
-    const r = Math.max(0, lastAtk + 30000 - Date.now());
-    setLeft(r);
-    if (r <= 0) return;
-    const id = setInterval(() => {
-      const rem = Math.max(0, lastAtk + 30000 - Date.now());
-      setLeft(rem);
-      if (rem === 0) clearInterval(id);
-    }, 500);
-    return () => clearInterval(id);
-  }, [lastAtk]);
-
-  return (
-    <button
-      onClick={onAttack}
-      disabled={left > 0}
-      className="btn btn-primary"
-      style={{ flex: 1, fontSize: 10, padding: '10px 0', opacity: left > 0 ? 0.5 : 1 }}
-    >
-      {left > 0 ? `⏳ ${Math.ceil(left / 1000)}s` : '⚔ ATAK!'}
-    </button>
-  );
-}
-
-function CooldownTimer({ until }: { until: number }) {
+function CountdownTimer({ until, label, color = '#60a5fa' }: { until: number; label: string; color?: string }) {
   const [left, setLeft] = useState(Math.max(0, until - Date.now()));
   useEffect(() => {
     const id = setInterval(() => {
@@ -57,7 +31,11 @@ function CooldownTimer({ until }: { until: number }) {
   const h = Math.floor(left / 3600000);
   const m = Math.floor((left % 3600000) / 60000);
   const s = Math.floor((left % 60000) / 1000);
-  return <span style={{ color: '#60a5fa' }}>{h}:{String(m).padStart(2,'0')}:{String(s).padStart(2,'0')}</span>;
+  return (
+    <span style={{ color }}>
+      {label} {h}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
+    </span>
+  );
 }
 
 export default function GuildOperationPanel({
@@ -73,12 +51,19 @@ export default function GuildOperationPanel({
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
   const [attacking, setAttacking] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
-  const hero   = useGameStore(s => s.hero);
-  const addXp  = useGameStore(s => s.addXp);
+  const hero    = useGameStore(s => s.hero);
+  const addXp   = useGameStore(s => s.addXp);
   const addGold = useGameStore(s => s.addGold);
-  const isLeader = guild.leaderUid === myUid;
+  const isLeader   = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
+
+  // Update clock every second to re-evaluate deadline
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!db || !guildId) return;
@@ -90,14 +75,14 @@ export default function GuildOperationPanel({
 
   function notify(text: string, ok: boolean) {
     setNotification({ text, ok });
-    setTimeout(() => setNotification(null), 3000);
+    setTimeout(() => setNotification(null), 3500);
   }
 
   async function handleStart(locationId: string) {
     setStarting(true);
     try {
       const ok = await startGuildOperation(guildId, myUid, locationId, memberCount);
-      if (!ok) notify('Nie można uruchomić operacji.', false);
+      if (!ok) notify('Nie można uruchomić rajdu.', false);
     } finally { setStarting(false); }
   }
 
@@ -105,12 +90,13 @@ export default function GuildOperationPanel({
     if (attacking) return;
     setAttacking(true);
     try {
-      const { status, damage } = await attackGuildEnemy(guildId, myUid, hero.level);
-      if (status === 'cooldown') notify('Odczekaj przed następnym atakiem!', false);
-      else if (status === 'no_op') notify('Brak aktywnej operacji.', false);
-      else if (status === 'completed') notify(`Zadano ${damage} dmg! Operacja ukończona! 🎉`, true);
+      const { status, damage } = await attackGuildEnemy(guildId, myUid, hero.maxHp);
+      if (status === 'cooldown')   notify('Już dziś walczyłeś! Wróć po północy.', false);
+      else if (status === 'failed') notify('Rajd wygasł przed ukończeniem.', false);
+      else if (status === 'no_op') notify('Brak aktywnego rajdu.', false);
+      else if (status === 'completed') notify(`Zadano ${damage} dmg! Rajd ukończony! 🎉`, true);
       else if (status === 'advanced') notify(`Zadano ${damage} dmg! Następne piętro! ⬆️`, true);
-      else notify(`Zadano ${damage} dmg!`, true);
+      else notify(`Zadano ${damage} dmg! 💥`, true);
     } finally { setAttacking(false); }
   }
 
@@ -122,18 +108,23 @@ export default function GuildOperationPanel({
     notify(`+${reward.xp} XP  +${reward.gold} 🪙  [${reward.rarity.toUpperCase()}]`, true);
   }
 
-  const isActive    = !!op && op.pendingReward === null;
-  const isCompleted = !!op && op.pendingReward !== null;
-  const inCooldown  = !!op && op.cooldownUntil > Date.now();
-  const canStart    = isLeader && !isActive && (!inCooldown);
+  const deadline = op?.deadline ?? 0;
+  const isExpired = deadline > 0 && deadline <= now;
+
+  const isActive    = !!op && op.status === 'active' && !isExpired;
+  const isFailed    = !!op && (op.status === 'failed' || (op.status === 'active' && isExpired));
+  const isCompleted = !!op && op.status === 'completed';
+  const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
+  const canStart    = isLeader && !isActive && !inCooldown;
+
+  const memberHp  = op?.memberHp ?? {};
+  const myHpSpent = memberHp[myUid] === 0;
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
 
   const hpPct = op ? Math.max(0, op.enemyHp / op.enemyMaxHp) * 100 : 0;
   const members = Object.entries(guild.members)
-    .map(([uid, d]) => ({ uid, username: d.username, dmg: op?.contributions[uid] ?? 0 }))
+    .map(([uid, d]) => ({ uid, username: d.username, dmg: op?.contributions[uid] ?? 0, spent: (op?.memberHp ?? {})[uid] === 0 }))
     .sort((a, b) => b.dmg - a.dmg);
-
-  const lastAtk = op?.lastAttacks[myUid] ?? 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -154,27 +145,34 @@ export default function GuildOperationPanel({
       {isActive && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-          {/* Location + floor header */}
+          {/* Location + floor + deadline header */}
           <div style={{
             background: 'rgba(10,20,40,0.8)', border: '1px solid rgba(51,65,85,0.6)',
-            padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            padding: '8px 10px',
           }}>
-            <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <p style={{ ...PX(8), color: 'var(--gold-main)' }}>
-                {GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)?.emoji} {GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)?.name}
+                {GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)?.emoji}{' '}
+                {GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)?.name}
               </p>
-              <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginTop: 3 }}>
+              {/* Floor dots */}
+              <div style={{ display: 'flex', gap: 4 }}>
+                {Array.from({ length: op.maxFloors }, (_, i) => (
+                  <div key={i} style={{
+                    width: 8, height: 8,
+                    background: i < op.floor - 1 ? '#4ade80' : i === op.floor - 1 ? 'var(--gold-main)' : 'rgba(51,65,85,0.5)',
+                    border: '1px solid rgba(51,65,85,0.4)',
+                  }} />
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
                 Piętro {op.floor} / {op.maxFloors}
               </p>
-            </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {Array.from({ length: op.maxFloors }, (_, i) => (
-                <div key={i} style={{
-                  width: 8, height: 8,
-                  background: i < op.floor - 1 ? '#4ade80' : i === op.floor - 1 ? 'var(--gold-main)' : 'rgba(51,65,85,0.5)',
-                  border: '1px solid rgba(51,65,85,0.4)',
-                }} />
-              ))}
+              <p style={{ ...MONO, fontSize: 11 }}>
+                <CountdownTimer until={deadline} label="⏳ Do końca:" color="#f59e0b" />
+              </p>
             </div>
           </div>
 
@@ -185,20 +183,16 @@ export default function GuildOperationPanel({
             padding: '12px 10px', textAlign: 'center',
             boxShadow: op.isBoss ? '0 0 20px rgba(239,68,68,0.15)' : 'none',
           }}>
-            {op.isBoss && (
-              <p style={{ ...PX(7), color: '#f87171', marginBottom: 4 }}>⚠ BOSS ⚠</p>
-            )}
+            {op.isBoss && <p style={{ ...PX(7), color: '#f87171', marginBottom: 4 }}>⚠ BOSS ⚠</p>}
             <p style={{ fontSize: op.isBoss ? 40 : 32, marginBottom: 6 }}>{op.enemyEmoji}</p>
             <p style={{ ...PX(9), color: op.isBoss ? '#f87171' : 'var(--text-bright)', marginBottom: 10 }}>
               {op.enemyName}
             </p>
-
-            {/* HP bar */}
             <div style={{ background: 'rgba(20,30,50,0.8)', border: '1px solid rgba(51,65,85,0.4)', height: 14, marginBottom: 4 }}>
               <div style={{
                 background: op.isBoss
-                  ? `linear-gradient(90deg, #dc2626, #f87171)`
-                  : `linear-gradient(90deg, #16a34a, #4ade80)`,
+                  ? 'linear-gradient(90deg, #dc2626, #f87171)'
+                  : 'linear-gradient(90deg, #16a34a, #4ade80)',
                 width: `${hpPct}%`, height: '100%',
                 transition: 'width 0.4s ease',
               }} />
@@ -209,13 +203,70 @@ export default function GuildOperationPanel({
           </div>
 
           {/* Attack button */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <CooldownBtn lastAtk={lastAtk} onAttack={handleAttack} />
+          {myHpSpent ? (
+            <div style={{
+              background: 'rgba(30,20,5,0.7)', border: '1px solid rgba(100,80,20,0.4)',
+              padding: '10px', textAlign: 'center',
+            }}>
+              <p style={{ ...PX(8), color: '#f59e0b', marginBottom: 3 }}>😴 WYCZERPANY</p>
+              <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
+                HP wydane. Wróć po północy.
+              </p>
+            </div>
+          ) : (
+            <button
+              onClick={handleAttack}
+              disabled={attacking}
+              className="btn btn-primary"
+              style={{ fontSize: 10, padding: '12px 0', opacity: attacking ? 0.6 : 1 }}
+            >
+              {attacking ? '⏳ ATAKUJĘ...' : `⚔ ATAKUJ  (${hero.maxHp.toLocaleString()} HP)`}
+            </button>
+          )}
+
+          {/* Member HP status */}
+          <div style={{ background: 'rgba(5,10,25,0.6)', border: '1px solid rgba(51,65,85,0.4)', padding: '8px 10px' }}>
+            <p style={{ ...PX(7), color: 'var(--text-muted)', marginBottom: 6 }}>STATUS CZŁONKÓW</p>
+            {members.map(m => (
+              <div key={m.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ ...MONO, fontSize: 11, color: m.uid === myUid ? '#ffd700' : 'var(--text-dim)' }}>
+                  {m.uid === myUid ? '▶ ' : ''}{m.username}
+                </span>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {m.dmg > 0 && (
+                    <span style={{ ...MONO, fontSize: 11, color: '#f87171' }}>
+                      {m.dmg.toLocaleString()} dmg
+                    </span>
+                  )}
+                  <span style={{ ...MONO, fontSize: 10, color: m.spent ? '#6b7280' : '#4ade80' }}>
+                    {m.spent ? '💤 wyczerpany' : '✅ gotowy'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* === FAILED === */}
+      {isFailed && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{
+            background: 'rgba(40,5,5,0.85)', border: '1px solid rgba(239,68,68,0.4)',
+            padding: '14px 12px', textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 28, marginBottom: 6 }}>💀</p>
+            <p style={{ ...PX(9), color: '#f87171', marginBottom: 4 }}>RAJD NIEUKOŃCZONY</p>
+            <p style={{ ...MONO, fontSize: 12, color: 'var(--text-muted)' }}>
+              {GUILD_OP_LOCATIONS.find(l => l.id === op!.locationId)?.name}
+            </p>
+            <p style={{ ...MONO, fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+              Czas minął zanim ukończono wszystkie piętra.
+            </p>
           </div>
 
-          {/* Contributions */}
           <div style={{ background: 'rgba(5,10,25,0.6)', border: '1px solid rgba(51,65,85,0.4)', padding: '8px 10px' }}>
-            <p style={{ ...PX(7), color: 'var(--text-muted)', marginBottom: 6 }}>WKŁAD CZŁONKÓW</p>
+            <p style={{ ...PX(7), color: 'var(--text-muted)', marginBottom: 6 }}>FINALNY WKŁAD</p>
             {members.map(m => (
               <div key={m.uid} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ ...MONO, fontSize: 11, color: m.uid === myUid ? '#ffd700' : 'var(--text-dim)' }}>
@@ -227,6 +278,12 @@ export default function GuildOperationPanel({
               </div>
             ))}
           </div>
+
+          {isLeader && (
+            <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
+              ▶ NOWY RAJD
+            </button>
+          )}
         </div>
       )}
 
@@ -239,12 +296,11 @@ export default function GuildOperationPanel({
             boxShadow: '0 0 20px rgba(34,197,94,0.1)',
           }}>
             <p style={{ fontSize: 28, marginBottom: 6 }}>🏆</p>
-            <p style={{ ...PX(9), color: '#4ade80', marginBottom: 4 }}>OPERACJA UKOŃCZONA!</p>
+            <p style={{ ...PX(9), color: '#4ade80', marginBottom: 4 }}>RAJD UKOŃCZONY!</p>
             <p style={{ ...MONO, fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
               {GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)?.name}
             </p>
 
-            {/* Reward info */}
             {op.pendingReward && (
               <div style={{ background: 'rgba(10,25,10,0.7)', border: '1px solid rgba(34,197,94,0.25)', padding: '8px 12px', marginBottom: 10 }}>
                 <p style={{ ...MONO, fontSize: 12, color: '#4ade80' }}>
@@ -265,7 +321,6 @@ export default function GuildOperationPanel({
             )}
           </div>
 
-          {/* Contributions */}
           <div style={{ background: 'rgba(5,10,25,0.6)', border: '1px solid rgba(51,65,85,0.4)', padding: '8px 10px' }}>
             <p style={{ ...PX(7), color: 'var(--text-muted)', marginBottom: 6 }}>WKŁAD FINALNY</p>
             {members.map(m => (
@@ -280,31 +335,32 @@ export default function GuildOperationPanel({
             ))}
           </div>
 
-          {/* Cooldown */}
           {inCooldown && (
             <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '8px 10px', textAlign: 'center' }}>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-                Następna operacja za: <CooldownTimer until={op.cooldownUntil} />
+                <CountdownTimer until={op.cooldownUntil} label="Następny rajd za:" />
               </p>
             </div>
           )}
 
-          {/* Start new (if cooldown done and leader) */}
           {!inCooldown && isLeader && (
             <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
-              ▶ NOWA OPERACJA
+              ▶ NOWY RAJD
             </button>
           )}
         </div>
       )}
 
       {/* === LOCATION SELECTION === */}
-      {!isActive && !isCompleted && (
+      {!isActive && !isFailed && !isCompleted && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ ...PX(8), color: 'var(--gold-main)', marginBottom: 4 }}>WYBIERZ LOKACJĘ</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>
-            Trudność skaluje się z liczbą członków gildii ({memberCount} członków).
-            {!isLeader && ' Tylko władca może uruchomić operację.'}
+            Trudność skaluje się z liczbą członków ({memberCount}).
+            {!isLeader && ' Tylko władca może uruchomić rajd.'}
+          </p>
+          <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', marginBottom: 4 }}>
+            ⚡ Każdy członek atakuje raz dziennie całym swoim HP. Rajd musi skończyć się przed północą (UTC).
           </p>
 
           {GUILD_OP_LOCATIONS.map(loc => {
@@ -321,7 +377,7 @@ export default function GuildOperationPanel({
                       {loc.emoji} {loc.name}
                     </p>
                     <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                      {loc.floors} pięter · nagroda: [{loc.finalRarity.toUpperCase()}]
+                      {loc.floors} pięter · [{loc.finalRarity.toUpperCase()}]
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>

@@ -248,10 +248,12 @@ export interface GuildOperationState {
   isBoss: boolean;
   startedBy: string;
   startedAt: number;
+  deadline: number;
   memberCount: number;
   contributions: Record<string, number>;
-  lastAttacks: Record<string, number>;
+  memberHp: Record<string, number>;
   cooldownUntil: number;
+  status: 'active' | 'failed' | 'completed';
   pendingReward: null | {
     xp: number;
     gold: number;
@@ -834,7 +836,10 @@ export async function deleteMail(mailId: string): Promise<void> {
 
 // ── GUILD OPERATIONS ──────────────────────────────────────────────────────
 
-const ATTACK_COOLDOWN_MS = 30_000;
+function nextMidnightUtc(): number {
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+}
 
 export async function startGuildOperation(
   guildId: string,
@@ -851,9 +856,11 @@ export async function startGuildOperation(
   const data = snap.data();
   if (data.leaderUid !== uid) return false;
 
+  const now = Date.now();
   const existing = data.guildOperation as GuildOperationState | null | undefined;
-  if (existing && !existing.pendingReward && existing.floor <= existing.maxFloors) return false;
-  if (existing && existing.cooldownUntil > Date.now()) return false;
+  const isActiveAndValid = existing?.status === 'active' && (existing.deadline ?? 0) > now;
+  const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
+  if (isActiveAndValid || isInCooldown) return false;
 
   const first = getFloorEnemy(location, 1, memberCount);
   const op: GuildOperationState = {
@@ -866,43 +873,52 @@ export async function startGuildOperation(
     enemyEmoji: first.emoji,
     isBoss: first.isBoss,
     startedBy: uid,
-    startedAt: Date.now(),
+    startedAt: now,
+    deadline: nextMidnightUtc(),
     memberCount,
     contributions: {},
-    lastAttacks: {},
+    memberHp: {},
     cooldownUntil: 0,
+    status: 'active',
     pendingReward: null,
   };
   await updateDoc(doc(db, 'guilds', guildId), { guildOperation: op });
   return true;
 }
 
-export type AttackGuildResult = 'attacked' | 'advanced' | 'completed' | 'cooldown' | 'no_op';
+export type AttackGuildResult = 'attacked' | 'advanced' | 'completed' | 'cooldown' | 'no_op' | 'failed';
 
 export async function attackGuildEnemy(
   guildId: string,
   uid: string,
-  heroLevel: number,
+  heroMaxHp: number,
 ): Promise<{ status: AttackGuildResult; damage: number }> {
   if (!db) return { status: 'no_op', damage: 0 };
   const _db = db;
-  const damage = Math.max(1, Math.floor(heroLevel * (10 + Math.random() * 10)));
+  const damage = Math.max(1, heroMaxHp);
 
   const status = await runTransaction(_db, async (txn) => {
     const ref = doc(_db, 'guilds', guildId);
     const snap = await txn.get(ref);
     if (!snap.exists()) return 'no_op';
     const op = snap.data().guildOperation as GuildOperationState | null | undefined;
-    if (!op || op.pendingReward !== null || op.cooldownUntil > Date.now()) return 'no_op';
+    if (!op || op.status !== 'active' || op.pendingReward !== null) return 'no_op';
     if (op.enemyHp <= 0) return 'no_op';
-    if ((op.lastAttacks[uid] ?? 0) + ATTACK_COOLDOWN_MS > Date.now()) return 'cooldown';
+
+    const now = Date.now();
+    if ((op.deadline ?? 0) <= now) {
+      txn.update(ref, { 'guildOperation.status': 'failed' });
+      return 'failed';
+    }
+
+    const memberHp = op.memberHp ?? {};
+    if (memberHp[uid] === 0) return 'cooldown';
 
     const newHp = Math.max(0, op.enemyHp - damage);
-    const now = Date.now();
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.contributions.${uid}`]: increment(damage),
-      [`guildOperation.lastAttacks.${uid}`]: now,
+      [`guildOperation.memberHp.${uid}`]: 0,
     };
 
     if (newHp <= 0) {
@@ -916,6 +932,7 @@ export async function attackGuildEnemy(
         };
         updates['guildOperation.cooldownUntil'] = now + loc.cooldownMs;
         updates['guildOperation.enemyHp'] = 0;
+        updates['guildOperation.status'] = 'completed';
         txn.update(ref, updates);
         return 'completed';
       } else {
