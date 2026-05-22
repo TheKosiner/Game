@@ -174,7 +174,7 @@ export async function claimBossReward(
 
       bossIdx = data.bossIdx;
       const boss = GUILD_BOSSES[bossIdx];
-      const mult = 1 + (hero.level - 1) * 0.05;
+      const mult = 1 + (hero.level - 1) * 0.08;
       xp = Math.round(boss.xpReward * mult);
       gold = Math.round(boss.goldReward * mult);
 

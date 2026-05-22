@@ -75,7 +75,7 @@ export function getHeroMaxHp(stats: Stats, level: number, equipment?: Hero['equi
 }
 
 export function calcXpToNext(level: number): number {
-  return Math.floor(100 * Math.pow(1.4, level - 1));
+  return Math.floor(100 * Math.pow(level, 2.3));
 }
 
 export function calcStatBonus(stats: Partial<Stats>): number {

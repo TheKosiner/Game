@@ -127,7 +127,7 @@ export default function QuestPanel() {
 
   const eligible = ALL_QUESTS.filter(q => q.minLevel <= hero.level);
   const base = eligible.length > 0 ? eligible[eligible.length - 1] : ALL_QUESTS[0];
-  const levelRewardMult = 1 + (hero.level - 1) * 0.08;
+  const levelRewardMult = 1 + (hero.level - 1) * 0.10;
 
   const remaining  = activeQuest ? activeQuest.endsAt - now : 0;
   const canCollect = activeQuest && now >= activeQuest.endsAt;
