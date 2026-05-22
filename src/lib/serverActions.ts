@@ -39,3 +39,10 @@ export async function collectQuestServer(): Promise<QuestCollectResult> {
   const result = await fn({});
   return result.data;
 }
+
+export async function resetAllDailyLimits(): Promise<{ ok: boolean; resetCount: number }> {
+  if (!functions) throw new Error('Firebase not configured');
+  const fn = httpsCallable<Record<string, never>, { ok: boolean; resetCount: number }>(functions, 'resetAllDailyLimits');
+  const result = await fn({});
+  return result.data;
+}

@@ -316,6 +316,55 @@ export const collectBeggingServer = functions.https.onCall(async (_data, context
   });
 });
 
+// ── resetAllDailyLimits ───────────────────────────────────────────────────────
+// Admin-only: resets dungeonRunsToday + questsCompletedToday for every player
+// and clears today's attackedAt for all active guild operation participants.
+export const resetAllDailyLimits = functions.https.onCall(async (_data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+
+  const adminUid = functions.config().admin?.uid as string | undefined;
+  if (adminUid && context.auth.uid !== adminUid) {
+    throw new functions.https.HttpsError('permission-denied', 'Admin only');
+  }
+
+  const BATCH_SIZE = 400;
+  let resetCount = 0;
+
+  // ── Reset saves (dungeonRunsToday, questsCompletedToday) ──────────────────
+  const savesSnap = await db.collection('saves').get();
+  for (let i = 0; i < savesSnap.docs.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    savesSnap.docs.slice(i, i + BATCH_SIZE).forEach(d => {
+      batch.update(d.ref, {
+        'hero.dungeonRunsToday': 0,
+        'hero.questsCompletedToday': 0,
+      });
+      resetCount++;
+    });
+    await batch.commit();
+  }
+
+  // ── Reset guild op attackedAt for all active operations ───────────────────
+  const yesterday = Date.now() - 25 * 60 * 60 * 1000;
+  const guildsSnap = await db.collection('guilds').get();
+  for (let i = 0; i < guildsSnap.docs.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    guildsSnap.docs.slice(i, i + BATCH_SIZE).forEach(d => {
+      const op = d.data().guildOperation;
+      if (!op || op.status !== 'active') return;
+      const participants: Record<string, unknown> = op.participants ?? {};
+      const updates: Record<string, unknown> = {};
+      for (const uid of Object.keys(participants)) {
+        updates[`guildOperation.participants.${uid}.attackedAt`] = yesterday;
+      }
+      if (Object.keys(updates).length > 0) batch.update(d.ref, updates);
+    });
+    await batch.commit();
+  }
+
+  return { ok: true, resetCount };
+});
+
 export const validatePlayerUpdate = functions.firestore
   .document('players/{uid}')
   .onUpdate(async (change, context) => {
