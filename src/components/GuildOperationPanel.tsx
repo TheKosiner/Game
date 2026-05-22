@@ -120,7 +120,7 @@ export default function GuildOperationPanel({
         guildId, myUid, hero.maxHp,
         { username: myUsername, heroName: hero.name },
       );
-      if (status === 'cooldown')       notify('Wyczerpałeś ataki na dziś. Wróć po północy.', false);
+      if (status === 'cooldown')       notify('Zaatakowałeś już dziś. Wróć jutro!', false);
       else if (status === 'failed')    notify('Rajd wygasł — czas minął.', false);
       else if (status === 'no_op')     notify('Brak aktywnego rajdu.', false);
       else {
@@ -129,7 +129,6 @@ export default function GuildOperationPanel({
         setFloatDmg({ val: damage, key: Date.now() });
         if (status === 'completed')    notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Rajd ukończony!`, true);
         else if (status === 'advanced')notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
-        else if (status === 'enemy_killed') notify(`Zadano ${fmtNum(damage)} dmg! Wróg pokonany! 💀`, true);
         else notify(`Zadano ${fmtNum(damage)} dmg! 💥`, true);
       }
     } finally { setAttacking(false); }
@@ -160,11 +159,10 @@ export default function GuildOperationPanel({
 
   const myEntry = op?.participants?.[myUid];
   const today = new Date(now).toISOString().split('T')[0];
-  const myAtkInfo = op?.attackInfo?.[myUid];
-  const attacksUsedToday = myAtkInfo?.dateStr === today ? (myAtkInfo.count ?? 0) : 0;
-  const attacksLeft = Math.max(0, 5 - attacksUsedToday);
-  const exhausted = attacksLeft === 0;
-  const attackDmg = Math.max(1, Math.floor(hero.maxHp / 5));
+  const attackedToday = myEntry
+    ? new Date(myEntry.attackedAt).toISOString().split('T')[0] === today
+    : false;
+  const attackDmg = Math.max(1, hero.maxHp);
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
 
@@ -254,11 +252,6 @@ export default function GuildOperationPanel({
               <p style={{ ...ORB, fontSize: 11, color: op.isBoss ? '#f87171' : 'var(--text-bright)' }}>
                 {op.enemyName}
               </p>
-              {!op.isBoss && (
-                <p style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
-                  Wróg {(op.enemyInFloor ?? 0) + 1}/{op.enemiesOnFloor ?? 1}
-                </p>
-              )}
             </div>
 
             {/* HP bar */}
@@ -288,42 +281,29 @@ export default function GuildOperationPanel({
         {/* Attack section */}
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <div>
-              <span style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>TWÓJ ATAK DZIŚ</span>
-              <div style={{ display: 'flex', gap: 3, marginTop: 4 }}>
-                {Array.from({ length: 5 }, (_, i) => (
-                  <div key={i} style={{
-                    width: 10, height: 10,
-                    background: i < attacksUsedToday ? '#6b7280' : '#f59e0b',
-                    border: '1px solid rgba(245,158,11,0.3)',
-                    borderRadius: 2,
-                  }} />
-                ))}
-                <span style={{ ...MONO, fontSize: 9, color: exhausted ? '#6b7280' : '#f59e0b', marginLeft: 4 }}>
-                  {attacksLeft}/5 pozostało
-                </span>
-              </div>
-            </div>
+            <span style={{ ...ORB, fontSize: 9, color: attackedToday ? '#6b7280' : 'var(--text-dim)' }}>
+              {attackedToday ? '✓ ZAATAKOWAŁEŚ DZIŚ' : 'TWÓJ ATAK DZIŚ'}
+            </span>
             <span style={{ ...MONO, fontSize: 10, color: (myEntry?.damage ?? 0) > 0 ? '#f87171' : 'var(--text-dim)' }}>
               {(myEntry?.damage ?? 0) > 0
                 ? `${fmtNum(myEntry!.damage)} dmg`
-                : `−${fmtNum(attackDmg)} HP/atak`}
+                : `−${fmtNum(attackDmg)} HP`}
             </span>
           </div>
           <button
             onClick={handleAttack}
-            disabled={attacking || exhausted}
+            disabled={attacking || attackedToday}
             className="btn btn-danger"
             style={{
               width: '100%', fontSize: 10,
-              cursor: exhausted ? 'not-allowed' : 'pointer',
-              opacity: exhausted ? 0.5 : 1,
+              cursor: attackedToday ? 'not-allowed' : 'pointer',
+              opacity: attackedToday ? 0.5 : 1,
             }}
           >
             {attacking
               ? '⚔ ATAKUJĘ...'
-              : exhausted
-              ? '⚔ WYCZERPANY — wróć po północy'
+              : attackedToday
+              ? '⚔ ZAATAKOWANO — wróć jutro'
               : `⚔ ATAKUJ! (−${fmtNum(attackDmg)} HP)`}
           </button>
         </div>
@@ -522,7 +502,7 @@ export default function GuildOperationPanel({
         {!isLeader && ' Tylko władca może uruchomić rajd.'}
       </p>
       <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', marginBottom: 6 }}>
-        ⚡ Każdy atakuje raz dziennie całym swoim HP. Rajd kończy się o północy (UTC).
+        ⚡ Każdy atakuje raz dziennie swoim pełnym HP. Rajd musi zakończyć się przed północą (UTC).
       </p>
 
       {GUILD_OP_LOCATIONS.map(location => {

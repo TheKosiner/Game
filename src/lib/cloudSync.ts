@@ -253,14 +253,11 @@ export interface GuildOperationState {
   enemyName: string;
   enemyEmoji: string;
   isBoss: boolean;
-  enemyInFloor: number;
-  enemiesOnFloor: number;
   startedBy: string;
   startedAt: number;
   deadline: number;
   memberCount: number;
   participants: Record<string, GuildOpParticipant>;
-  attackInfo: Record<string, { count: number; dateStr: string }>;
   cooldownUntil: number;
   status: 'active' | 'failed' | 'completed';
   pendingReward: null | {
@@ -845,8 +842,6 @@ export async function deleteMail(mailId: string): Promise<void> {
 
 // ── GUILD OPERATIONS ──────────────────────────────────────────────────────
 
-const ATTACKS_PER_DAY = 5;
-
 function nextMidnightUtc(): number {
   const now = new Date();
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
@@ -877,7 +872,7 @@ export async function startGuildOperation(
   const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
   if (isActiveAndValid || isInCooldown) return false;
 
-  const first = getFloorEnemy(location, 1);
+  const first = getFloorEnemy(location, 1, memberCount);
   const op: GuildOperationState = {
     locationId,
     floor: 1,
@@ -887,14 +882,11 @@ export async function startGuildOperation(
     enemyName: first.name,
     enemyEmoji: first.emoji,
     isBoss: first.isBoss,
-    enemyInFloor: 0,
-    enemiesOnFloor: first.count,
     startedBy: uid,
     startedAt: now,
     deadline: nextMidnightUtc(),
     memberCount,
     participants: {},
-    attackInfo: {},
     cooldownUntil: 0,
     status: 'active',
     pendingReward: null,
@@ -913,7 +905,7 @@ export async function attackGuildEnemy(
 ): Promise<{ status: AttackGuildResult; damage: number }> {
   if (!db) return { status: 'no_op', damage: 0 };
   const _db = db;
-  const damage = Math.max(1, Math.floor(heroMaxHp / ATTACKS_PER_DAY));
+  const damage = Math.max(1, heroMaxHp);
 
   const status = await runTransaction(_db, async (txn) => {
     const ref = doc(_db, 'guilds', guildId);
@@ -929,13 +921,16 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
+    // Once per day: compare participant's attackedAt date with today
     const today = todayStr();
-    const ai = (op.attackInfo ?? {})[uid];
-    const countToday = ai?.dateStr === today ? (ai.count ?? 0) : 0;
-    if (countToday >= ATTACKS_PER_DAY) return 'cooldown';
+    const existing = (op.participants ?? {})[uid];
+    if (existing) {
+      const attackDate = new Date(existing.attackedAt).toISOString().split('T')[0];
+      if (attackDate === today) return 'cooldown';
+    }
 
     const newHp = Math.max(0, op.enemyHp - damage);
-    const prevDmg = (op.participants ?? {})[uid]?.damage ?? 0;
+    const prevDmg = existing?.damage ?? 0;
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {
@@ -944,21 +939,11 @@ export async function attackGuildEnemy(
         damage: prevDmg + damage,
         attackedAt: now,
       },
-      [`guildOperation.attackInfo.${uid}`]: { count: countToday + 1, dateStr: today },
     };
 
     if (newHp <= 0) {
       const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
-      const enemyInFloor = op.enemyInFloor ?? 0;
-      const enemiesOnFloor = op.enemiesOnFloor ?? 1;
-
-      if (enemyInFloor < enemiesOnFloor - 1) {
-        // More enemies on this floor — spawn next
-        updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
-        updates['guildOperation.enemyHp']      = op.enemyMaxHp;
-        txn.update(ref, updates);
-        return 'enemy_killed';
-      } else if (op.floor >= op.maxFloors) {
+      if (op.floor >= op.maxFloors) {
         // All floors done → complete
         const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12));
         const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08));
@@ -972,15 +957,13 @@ export async function attackGuildEnemy(
         return 'completed';
       } else {
         // Advance to next floor
-        const next = getFloorEnemy(loc, op.floor + 1);
-        updates['guildOperation.floor']         = op.floor + 1;
-        updates['guildOperation.enemyHp']       = next.hp;
-        updates['guildOperation.enemyMaxHp']    = next.maxHp;
-        updates['guildOperation.enemyName']     = next.name;
-        updates['guildOperation.enemyEmoji']    = next.emoji;
-        updates['guildOperation.isBoss']        = next.isBoss;
-        updates['guildOperation.enemyInFloor']  = 0;
-        updates['guildOperation.enemiesOnFloor']= next.count;
+        const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
+        updates['guildOperation.floor']      = op.floor + 1;
+        updates['guildOperation.enemyHp']    = next.hp;
+        updates['guildOperation.enemyMaxHp'] = next.maxHp;
+        updates['guildOperation.enemyName']  = next.name;
+        updates['guildOperation.enemyEmoji'] = next.emoji;
+        updates['guildOperation.isBoss']     = next.isBoss;
         txn.update(ref, updates);
         return 'advanced';
       }

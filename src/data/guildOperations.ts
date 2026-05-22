@@ -12,8 +12,7 @@ export interface GuildOpLocation {
   description: string;
   floors: number;
   enemies: GuildOpEnemy[];
-  baseEnemyHp: number;
-  enemiesPerFloor: number;
+  baseHpPerMember: number;
   baseXpPerFloor: number;
   baseGoldPerFloor: number;
   finalRarity: 'rare' | 'epic' | 'legendary';
@@ -33,8 +32,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Fragmentator',      emoji: '💀', hpMult: 2.0 },
       { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 4.0, isBoss: true },
     ],
-    baseEnemyHp: 60,
-    enemiesPerFloor: 5,
+    baseHpPerMember: 25,
     baseXpPerFloor: 120,
     baseGoldPerFloor: 60,
     finalRarity: 'rare',
@@ -53,8 +51,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kraken Mech',       emoji: '🦑', hpMult: 2.6 },
       { name: 'Terror Głębin',     emoji: '👾', hpMult: 5.0, isBoss: true },
     ],
-    baseEnemyHp: 95,
-    enemiesPerFloor: 5,
+    baseHpPerMember: 40,
     baseXpPerFloor: 160,
     baseGoldPerFloor: 80,
     finalRarity: 'epic',
@@ -73,8 +70,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 3.0 },
       { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 6.0, isBoss: true },
     ],
-    baseEnemyHp: 140,
-    enemiesPerFloor: 5,
+    baseHpPerMember: 55,
     baseXpPerFloor: 210,
     baseGoldPerFloor: 105,
     finalRarity: 'epic',
@@ -94,8 +90,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 3.6 },
       { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 7.0, isBoss: true },
     ],
-    baseEnemyHp: 200,
-    enemiesPerFloor: 6,
+    baseHpPerMember: 70,
     baseXpPerFloor: 280,
     baseGoldPerFloor: 140,
     finalRarity: 'legendary',
@@ -116,8 +111,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 4.5 },
       { name: 'Bóg Singularności',   emoji: '🌌', hpMult: 8.0, isBoss: true },
     ],
-    baseEnemyHp: 280,
-    enemiesPerFloor: 6,
+    baseHpPerMember: 90,
     baseXpPerFloor: 380,
     baseGoldPerFloor: 190,
     finalRarity: 'legendary',
@@ -128,10 +122,9 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
 export function getFloorEnemy(
   location: GuildOpLocation,
   floor: number,
-): { name: string; emoji: string; hp: number; maxHp: number; isBoss: boolean; count: number } {
+  memberCount: number,
+): { name: string; emoji: string; hp: number; maxHp: number; isBoss: boolean } {
   const e = location.enemies[Math.min(floor - 1, location.enemies.length - 1)];
-  const isBossFloor = floor === location.floors;
-  const count = isBossFloor ? 1 : location.enemiesPerFloor;
-  const hp = Math.max(1, Math.round(location.baseEnemyHp * e.hpMult));
-  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, isBoss: !!e.isBoss, count };
+  const hp = Math.max(1, Math.round(location.baseHpPerMember * memberCount * e.hpMult));
+  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, isBoss: !!e.isBoss };
 }
