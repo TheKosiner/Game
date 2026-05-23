@@ -5,6 +5,7 @@ import { PORTRAIT_LIST } from '../data/portraits';
 import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { MONO, ORB } from '../utils/styles';
+import gemShopSrc from '../assets/gem-shop.png';
 
 const GEM_PACKAGES = [
   { id: '100',  gems: 100,  price: '$0.99' },
@@ -48,6 +49,11 @@ export default function GemsPanel() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* Header image */}
+      <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(157,78,221,0.4)', boxShadow: '0 0 24px rgba(157,78,221,0.2)' }}>
+        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 200 }} />
+      </div>
 
       {/* Flash message from Stripe return */}
       {flashMsg && (

@@ -9,6 +9,7 @@ import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 
 import { PX, MONO, ORB } from '../utils/styles';
+import arenaSrc from '../assets/arena.png';
 const REROLL_COOLDOWN = 15 * 60 * 1000;
 
 // Module-level cache — survives tab navigation (component unmount/remount)
@@ -467,6 +468,11 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* Arena header image */}
+      <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(180,40,40,0.5)', boxShadow: '0 0 24px rgba(180,40,40,0.2)' }}>
+        <img src={arenaSrc} alt="Arena" style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 200 }} />
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.pvp.title}</p>
