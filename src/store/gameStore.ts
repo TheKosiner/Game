@@ -1010,7 +1010,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ mysteryBoxPending: { box, invIdx } });
   },
 
-  collectMysteryBoxReward: (box, invIdx, wonItem) => {
+  collectMysteryBoxReward: (_box, invIdx, wonItem) => {
     const { hero } = get();
     if (hero.inventory.length - 1 >= 20) return false; // -1 for box being removed
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);

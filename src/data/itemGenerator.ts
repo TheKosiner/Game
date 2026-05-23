@@ -79,7 +79,7 @@ const WEAPON_NAMES_EN: string[][] = [
   ['Cyber-Bat', 'Energy Whip', 'Club'],
 ];
 
-const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable'>, string[]> = {
+const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, string[]> = {
   armor:  ['Armor', 'Vest', 'Cuirass', 'Suit', 'Exoskeleton'],
   helmet: ['Helmet', 'Visor', 'Mask', 'Hood', 'Face Shield'],
   boots:  ['Boots', 'Combat Boots', 'Greaves', 'Battle Shoes', 'Sabatons'],
@@ -108,7 +108,7 @@ const WEAPON_TEMPLATES: WeaponTemplate[] = [
 ];
 
 // ── Slot name pools ───────────────────────────────────────────────────────────
-const SLOT_NAMES: Record<Exclude<ItemSlot, 'weapon' | 'consumable'>, { names: string[]; emoji: string }> = {
+const SLOT_NAMES: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, { names: string[]; emoji: string }> = {
   armor:  { names: ['Pancerz', 'Kamizelka', 'Zbroja', 'Kombinezon', 'Egzoszkielet'], emoji: '🦺' },
   helmet: { names: ['Hełm', 'Wizjer', 'Maska', 'Kaptur', 'Visor'],                   emoji: '⛑' },
   boots:  { names: ['Buty', 'Boty', 'Nagolenniki', 'Buty Bojowe', 'Saboty'],          emoji: '👟' },
@@ -117,7 +117,7 @@ const SLOT_NAMES: Record<Exclude<ItemSlot, 'weapon' | 'consumable'>, { names: st
 };
 
 // ── Stat pools per slot ───────────────────────────────────────────────────────
-const SLOT_STATS: Record<Exclude<ItemSlot, 'weapon' | 'consumable'>, (keyof Stats)[]> = {
+const SLOT_STATS: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, (keyof Stats)[]> = {
   armor:  ['vitality', 'strength', 'magicResistance', 'dexterity'],
   helmet: ['intelligence', 'vitality', 'magicResistance', 'magic'],
   boots:  ['dexterity', 'strength', 'vitality', 'intelligence'],
