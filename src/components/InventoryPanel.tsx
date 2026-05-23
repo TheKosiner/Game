@@ -118,6 +118,9 @@ export default function InventoryPanel() {
   const useItem         = useGameStore(s => s.useItem);
   const openBoxModal    = useGameStore(s => s.openMysteryBoxModal);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [sellConfirm, setSellConfirm] = useState<{ item: Item; idx: number } | null>(null);
+
+  const rc = sellConfirm ? (RARITY_COLORS[sellConfirm.item.rarity] ?? '#aaa') : '#aaa';
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -146,11 +149,65 @@ export default function InventoryPanel() {
               selected={selectedIdx === idx}
               onToggle={() => setSelectedIdx(prev => prev === idx ? null : idx)}
               onEquip={() => { equipItem(item, idx); setSelectedIdx(null); }}
-              onSell={() => { sellItem(item, idx); setSelectedIdx(null); }}
+              onSell={() => { setSellConfirm({ item, idx }); setSelectedIdx(null); }}
               onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
               onOpen={() => { openBoxModal(item, idx); setSelectedIdx(null); }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Sell confirmation overlay */}
+      {sellConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1100,
+          background: 'rgba(0,0,0,0.82)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 24,
+        }}>
+          <div style={{
+            background: '#08080f',
+            border: `2px solid ${rc}66`,
+            boxShadow: `0 0 30px ${rc}22`,
+            padding: '20px 22px',
+            width: '100%', maxWidth: 320,
+            display: 'flex', flexDirection: 'column', gap: 14,
+          }}>
+            <p style={{ ...ORB, fontSize: 10, color: rc, textAlign: 'center' }}>
+              SPRZEDAĆ PRZEDMIOT?
+            </p>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              background: 'rgba(255,255,255,0.03)', border: `1px solid ${rc}33`, padding: '10px 12px',
+            }}>
+              <ItemIcon item={sellConfirm.item} scale={4} />
+              <div>
+                <p style={{ ...MONO, fontSize: 11, color: rc }}>{sellConfirm.item.name}</p>
+                <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>
+                  🪙 {sellConfirm.item.goldValue} złota
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => {
+                  sellItem(sellConfirm.item, sellConfirm.idx);
+                  setSellConfirm(null);
+                }}
+                className="btn btn-primary"
+                style={{ flex: 1, fontSize: 10 }}
+              >
+                ✓ Sprzedaj
+              </button>
+              <button
+                onClick={() => setSellConfirm(null)}
+                className="btn btn-secondary"
+                style={{ flex: 1, fontSize: 10 }}
+              >
+                ✕ Anuluj
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
