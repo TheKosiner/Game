@@ -1,5 +1,5 @@
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-export type ItemSlot = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet' | 'consumable';
+export type ItemSlot = 'weapon' | 'armor' | 'helmet' | 'boots' | 'ring' | 'amulet' | 'consumable' | 'mystery_box';
 export type QuestStatus = 'idle' | 'active' | 'complete';
 
 export interface Stats {
@@ -195,6 +195,7 @@ export interface PvpOpponent {
 
 export interface GameState {
   hero: Hero;
+  mysteryBoxPending: { box: Item; invIdx: number } | null;
   activeQuest: ActiveQuest | null;
   currentDungeon: Dungeon | null;
   currentFloor: number;
@@ -266,6 +267,10 @@ export interface GameState {
   fleeChallengeFight: () => void;
   clearChallengeResult: () => void;
   takeDamageInGuildRaid: (amount: number) => void;
+  addToInventory: (item: Item) => void;
+  openMysteryBoxModal: (box: Item, invIdx: number) => void;
+  collectMysteryBoxReward: (box: Item, invIdx: number, wonItem: Item) => boolean;
+  dismissMysteryBox: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

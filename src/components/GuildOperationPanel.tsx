@@ -6,6 +6,8 @@ import {
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
+import { createMysteryBox } from '../data/mysteryBoxes';
+import { MYSTERY_BOXES } from '../config/features';
 import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
 import { ORB, MONO } from '../utils/styles';
@@ -58,10 +60,11 @@ export default function GuildOperationPanel({
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
 
-  const hero        = useGameStore(s => s.hero);
-  const addXp       = useGameStore(s => s.addXp);
-  const addGold     = useGameStore(s => s.addGold);
-  const takeDamage  = useGameStore(s => s.takeDamageInGuildRaid);
+  const hero           = useGameStore(s => s.hero);
+  const addXp          = useGameStore(s => s.addXp);
+  const addGold        = useGameStore(s => s.addGold);
+  const takeDamage     = useGameStore(s => s.takeDamageInGuildRaid);
+  const addToInventory = useGameStore(s => s.addToInventory);
   const isLeader    = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
@@ -186,7 +189,13 @@ export default function GuildOperationPanel({
     if (!reward) { notify('Brak nagrody do odebrania.', false); return; }
     addXp(reward.xp);
     addGold(reward.gold);
-    notify(`+${reward.xp} XP  +${reward.gold} 🪙  [${reward.rarity.toUpperCase()}]`, true);
+    if (MYSTERY_BOXES) {
+      const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', hero.level);
+      addToInventory(box);
+      notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
+    } else {
+      notify(`+${reward.xp} XP  +${reward.gold} 🪙  [${reward.rarity.toUpperCase()}]`, true);
+    }
   }
 
   const deadline   = op?.deadline ?? 0;

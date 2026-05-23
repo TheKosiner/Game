@@ -27,6 +27,7 @@ import ChallengePanel from './components/ChallengePanel';
 import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
 import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
+import MysteryBoxModal from './components/MysteryBoxModal';
 import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 
@@ -397,6 +398,7 @@ export default function App() {
       </div>
 
       <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
+      <MysteryBoxModal />
     </div>
   );
 }

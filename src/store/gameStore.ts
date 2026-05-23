@@ -191,6 +191,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   challengeLastHit: null,
   guildExpBonus: 0,
   guildGoldBonus: 0,
+  mysteryBoxPending: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
@@ -996,6 +997,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     set({ hero: { ...hero, hp: Math.max(0, hero.hp - amount) } });
     get().saveGame();
+  },
+
+  addToInventory: (item) => {
+    const { hero } = get();
+    if (hero.inventory.length >= 20) return;
+    set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
+    get().saveGame();
+  },
+
+  openMysteryBoxModal: (box, invIdx) => {
+    set({ mysteryBoxPending: { box, invIdx } });
+  },
+
+  collectMysteryBoxReward: (box, invIdx, wonItem) => {
+    const { hero } = get();
+    if (hero.inventory.length - 1 >= 20) return false; // -1 for box being removed
+    const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
+    if (newInventory.length >= 20) return false;
+    newInventory.push(wonItem);
+    set({ hero: { ...hero, inventory: newInventory }, mysteryBoxPending: null });
+    get().saveGame();
+    return true;
+  },
+
+  dismissMysteryBox: () => {
+    set({ mysteryBoxPending: null });
   },
 
   saveGame: () => {

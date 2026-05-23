@@ -14,10 +14,10 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 function ItemCard({
-  item, selected, onToggle, onEquip, onSell, onUse,
+  item, selected, onToggle, onEquip, onSell, onUse, onOpen,
 }: {
   item: Item; selected: boolean;
-  onToggle: () => void; onEquip: () => void; onSell: () => void; onUse?: () => void;
+  onToggle: () => void; onEquip: () => void; onSell: () => void; onUse?: () => void; onOpen?: () => void;
 }) {
   const t    = useT();
   const lang = useLangStore(s => s.lang);
@@ -30,7 +30,7 @@ function ItemCard({
   const slotLabel: Record<string, string> = {
     weapon: t.inventory.slotWeapon, armor: t.inventory.slotArmor, helmet: t.inventory.slotHelmet,
     boots: t.inventory.slotBoots, ring: t.inventory.slotRing, amulet: t.inventory.slotAmulet,
-    consumable: t.inventory.slotConsumable,
+    consumable: t.inventory.slotConsumable, mystery_box: 'SKRZYNKA',
   };
   const statAbbr: Record<string, string> = {
     strength: t.inventory.statStr, dexterity: t.inventory.statDex,
@@ -38,7 +38,8 @@ function ItemCard({
   };
 
   const rc = item.color ?? RARITY_COLORS[item.rarity];
-  const isComparable = item.slot !== 'consumable';
+  const isBox = item.slot === 'mystery_box';
+  const isComparable = item.slot !== 'consumable' && !isBox;
   const equipped = isComparable ? (equipment[item.slot as keyof typeof equipment] as Item | undefined) : undefined;
   const statEntries = Object.entries(item.stats).filter(([, v]) => v && (v as number) > 0);
 
@@ -92,7 +93,9 @@ function ItemCard({
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-          {item.slot === 'consumable'
+          {isBox
+            ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}>📦 OTWÓRZ</button>
+            : item.slot === 'consumable'
             ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.use}</button>
             : <button onClick={e => { e.stopPropagation(); onEquip(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
           }
@@ -111,8 +114,9 @@ export default function InventoryPanel() {
   const t         = useT();
   const inventory  = useGameStore(s => s.hero.inventory);
   const equipItem  = useGameStore(s => s.equipItem);
-  const sellItem   = useGameStore(s => s.sellItem);
-  const useItem    = useGameStore(s => s.useItem);
+  const sellItem        = useGameStore(s => s.sellItem);
+  const useItem         = useGameStore(s => s.useItem);
+  const openBoxModal    = useGameStore(s => s.openMysteryBoxModal);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   return (
@@ -144,6 +148,7 @@ export default function InventoryPanel() {
               onEquip={() => { equipItem(item, idx); setSelectedIdx(null); }}
               onSell={() => { sellItem(item, idx); setSelectedIdx(null); }}
               onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
+              onOpen={() => { openBoxModal(item, idx); setSelectedIdx(null); }}
             />
           ))}
         </div>
