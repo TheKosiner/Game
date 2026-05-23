@@ -66,5 +66,4 @@ jobs:
           body: Najnowsza wersja aplikacji. Pobierz i zainstaluj na telefonie z Androidem.
           files: android/app/build/outputs/apk/debug/app-debug.apk
           make_latest: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
