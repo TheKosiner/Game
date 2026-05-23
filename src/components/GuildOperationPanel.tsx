@@ -3,6 +3,7 @@ import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
   startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
+  MAX_GUILD_ATTACKS_PER_DAY,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -19,6 +20,7 @@ const LOG_COLORS = {
   me:      '#ff2d78',
   floor:   '#ffd700',
   done:    '#4ade80',
+  enemy:   '#fb923c',
 };
 
 function fmtNum(n: number): string {
@@ -76,9 +78,10 @@ export default function GuildOperationPanel({
           const newParts  = newOp.participants ?? {};
           const lines: { text: string; type: keyof typeof LOG_COLORS }[] = [];
           for (const [uid, p] of Object.entries(newParts)) {
+            if (uid === myUid) continue; // own attacks logged locally in handleAttack
             if (!prevParts[uid] || p.attackedAt !== prevParts[uid].attackedAt) {
-              const tag = uid === myUid ? ' (ty)' : '';
-              lines.push({ text: `⚔ ${p.heroName}${tag} zadał ${fmtNum(p.damage)} dmg`, type: uid === myUid ? 'me' : 'hit' });
+              const dmgDelta = p.damage - (prevParts[uid]?.damage ?? 0);
+              lines.push({ text: `⚔ ${p.heroName} → ${fmtNum(dmgDelta)} dmg`, type: 'hit' });
             }
           }
           if (newOp.enemyInFloor > (prev.enemyInFloor ?? 0) && newOp.floor === prev.floor) {
@@ -117,20 +120,35 @@ export default function GuildOperationPanel({
   }
 
   async function handleAttack() {
-    if (attacking) return;
+    if (attacking || !op) return;
     setAttacking(true);
+    const enemyNameSnap  = op.enemyName;
+    const enemyEmojiSnap = op.enemyEmoji;
+    const enemyMaxHpSnap = op.enemyMaxHp;
     try {
-      const { status, damage } = await attackGuildEnemy(
+      const { status, damage, attacksLeft } = await attackGuildEnemy(
         guildId, myUid, hero.maxHp,
         { username: myUsername, heroName: hero.name },
       );
-      if (status === 'cooldown')        notify('Zaatakowałeś już dziś. Wróć jutro!', false);
-      else if (status === 'failed')     notify('Operacja wygasła — czas minął.', false);
-      else if (status === 'no_op')      notify('Brak aktywnej operacji.', false);
-      else if (status === 'completed')  notify(`Zadano ${fmtNum(damage)} dmg! 🏆 Operacja ukończona!`, true);
-      else if (status === 'advanced')   notify(`Zadano ${fmtNum(damage)} dmg! ⬆ Następne piętro!`, true);
-      else if (status === 'enemy_killed') notify(`Zadano ${fmtNum(damage)} dmg! Wróg pokonany! 💀`, true);
-      else                              notify(`Zadano ${fmtNum(damage)} dmg!`, true);
+      if (status === 'cooldown') {
+        notify(`Wyczerpałeś ${MAX_GUILD_ATTACKS_PER_DAY} ataków na dziś!`, false);
+      } else if (status === 'failed') {
+        notify('Operacja wygasła — czas minął.', false);
+      } else if (status === 'no_op') {
+        notify('Brak aktywnej operacji.', false);
+      } else {
+        const counterDmg = Math.max(1, Math.round(enemyMaxHpSnap / 18 * (0.7 + Math.random() * 0.6)));
+        const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
+          { text: `⚔ Ty (${hero.name}) → ${fmtNum(damage)} dmg na ${enemyNameSnap} ${enemyEmojiSnap}`, type: 'me' },
+          { text: `💥 ${enemyNameSnap} kontruje: −${fmtNum(counterDmg)} HP`, type: 'enemy' },
+        ];
+        if (status === 'enemy_killed')  newLines.push({ text: `💀 ${enemyNameSnap} pokonany!`, type: 'kill' });
+        if (status === 'advanced')      newLines.push({ text: `⬆ Przejście na następne piętro!`, type: 'floor' });
+        if (status === 'completed')     newLines.push({ text: `🏆 OPERACJA UKOŃCZONA!`, type: 'done' });
+        setLog(l => [...l, ...newLines]);
+        const leftMsg = attacksLeft > 0 ? ` (${attacksLeft} ataków zostało)` : ' (limit na dziś)';
+        notify(`+${fmtNum(damage)} dmg!${leftMsg}`, true);
+      }
     } finally { setAttacking(false); }
   }
 
@@ -159,9 +177,11 @@ export default function GuildOperationPanel({
 
   const myEntry = op?.participants?.[myUid];
   const today = new Date(now).toISOString().split('T')[0];
-  const attackedToday = myEntry
-    ? new Date(myEntry.attackedAt).toISOString().split('T')[0] === today
-    : false;
+  const attacksUsedToday = myEntry
+    ? (new Date(myEntry.attackedAt).toISOString().split('T')[0] === today ? (myEntry.attacksToday ?? 0) : 0)
+    : 0;
+  const attacksLeft = MAX_GUILD_ATTACKS_PER_DAY - attacksUsedToday;
+  const attackedToday = attacksLeft <= 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
@@ -244,17 +264,20 @@ export default function GuildOperationPanel({
           padding: 8,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#6b7280' : 'var(--text-dim)' }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
               {hero.name}
             </span>
-            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#f87171' : 'var(--text-dim)' }}>
-              {attackedToday
-                ? `+${fmtNum(myEntry!.damage)} dmg łącznie`
-                : `−${fmtNum(hero.maxHp)} HP`}
+            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#f87171' : '#86efac' }}>
+              {attacksUsedToday}/{MAX_GUILD_ATTACKS_PER_DAY} ataków · {fmtNum(myEntry?.damage ?? 0)} dmg łącznie
             </span>
           </div>
           <div className="pixel-bar">
-            <div className="pixel-bar-fill hp-fill" style={{ width: attackedToday ? '0%' : '100%' }} />
+            <div className="pixel-bar-fill" style={{
+              width: `${(attacksUsedToday / MAX_GUILD_ATTACKS_PER_DAY) * 100}%`,
+              background: attackedToday
+                ? 'linear-gradient(90deg, #7f1d1d, #dc2626)'
+                : 'linear-gradient(90deg, #1e40af, #3b82f6)',
+            }} />
           </div>
         </div>
 
@@ -272,8 +295,8 @@ export default function GuildOperationPanel({
           {attacking
             ? '⚔ Atakuję...'
             : attackedToday
-            ? '✓ Zaatakowano dziś — wróć jutro'
-            : `⚔ Atakuj! (−${fmtNum(hero.maxHp)} HP)`}
+            ? `✓ Wyczerpano ${MAX_GUILD_ATTACKS_PER_DAY}/${MAX_GUILD_ATTACKS_PER_DAY} ataków — wróć jutro`
+            : `⚔ Atakuj! [${attacksLeft}/${MAX_GUILD_ATTACKS_PER_DAY}] (−${fmtNum(Math.round(hero.maxHp / MAX_GUILD_ATTACKS_PER_DAY))} HP)`}
         </button>
 
         {/* Combat log */}

@@ -242,7 +242,10 @@ export interface GuildOpParticipant {
   heroName: string;
   damage: number;
   attackedAt: number;
+  attacksToday: number;
 }
+
+export const MAX_GUILD_ATTACKS_PER_DAY = 10;
 
 export interface GuildOperationState {
   locationId: string;
@@ -904,11 +907,12 @@ export async function attackGuildEnemy(
   uid: string,
   heroMaxHp: number,
   info: { username: string; heroName: string },
-): Promise<{ status: AttackGuildResult; damage: number }> {
-  if (!db) return { status: 'no_op', damage: 0 };
+): Promise<{ status: AttackGuildResult; damage: number; attacksLeft: number }> {
+  if (!db) return { status: 'no_op', damage: 0, attacksLeft: 0 };
   const _db = db;
-  const damage = Math.max(1, heroMaxHp);
+  const perAttackDamage = Math.max(1, Math.round(heroMaxHp / MAX_GUILD_ATTACKS_PER_DAY));
 
+  let attacksLeft = 0;
   const status = await runTransaction(_db, async (txn) => {
     const ref = doc(_db, 'guilds', guildId);
     const snap = await txn.get(ref);
@@ -923,23 +927,26 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
-    // Once per day: compare participant's attackedAt date with today
     const today = todayStr();
     const existing = (op.participants ?? {})[uid];
+    let attacksToday = 0;
     if (existing) {
-      const attackDate = new Date(existing.attackedAt).toISOString().split('T')[0];
-      if (attackDate === today) return 'cooldown';
+      const prevDate = new Date(existing.attackedAt).toISOString().split('T')[0];
+      attacksToday = prevDate === today ? (existing.attacksToday ?? 0) : 0;
     }
+    if (attacksToday >= MAX_GUILD_ATTACKS_PER_DAY) return 'cooldown';
+    attacksLeft = MAX_GUILD_ATTACKS_PER_DAY - attacksToday - 1;
 
-    const newHp = Math.max(0, op.enemyHp - damage);
+    const newHp = Math.max(0, op.enemyHp - perAttackDamage);
     const prevDmg = existing?.damage ?? 0;
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {
         username: info.username,
         heroName: info.heroName,
-        damage: prevDmg + damage,
+        damage: prevDmg + perAttackDamage,
         attackedAt: now,
+        attacksToday: attacksToday + 1,
       },
     };
 
@@ -949,14 +956,12 @@ export async function attackGuildEnemy(
       const enemiesOnFloor = op.enemiesOnFloor ?? 1;
 
       if (enemyInFloor < enemiesOnFloor - 1) {
-        // More enemies on this floor
         const same = getFloorEnemy(loc, op.floor, op.memberCount);
         updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
         updates['guildOperation.enemyHp']      = same.hp;
         txn.update(ref, updates);
         return 'enemy_killed';
       } else if (op.floor >= op.maxFloors) {
-        // All floors done → complete
         const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12));
         const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08));
         updates['guildOperation.pendingReward'] = {
@@ -968,7 +973,6 @@ export async function attackGuildEnemy(
         txn.update(ref, updates);
         return 'completed';
       } else {
-        // Advance to next floor
         const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
         updates['guildOperation.floor']          = op.floor + 1;
         updates['guildOperation.enemyHp']        = next.hp;
@@ -985,7 +989,7 @@ export async function attackGuildEnemy(
     return 'attacked';
   }) as AttackGuildResult;
 
-  return { status, damage };
+  return { status, damage: perAttackDamage, attacksLeft };
 }
 
 export async function claimGuildOperationReward(
