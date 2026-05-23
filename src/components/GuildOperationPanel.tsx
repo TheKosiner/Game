@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
   startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
-  MAX_GUILD_ATTACKS_PER_DAY,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
+import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
 import { ORB, MONO } from '../utils/styles';
 
@@ -54,10 +54,13 @@ export default function GuildOperationPanel({
 
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
+  const [autoFight, setAutoFight] = useState(false);
+  const attackingRef = useRef(false);
 
-  const hero    = useGameStore(s => s.hero);
-  const addXp   = useGameStore(s => s.addXp);
-  const addGold = useGameStore(s => s.addGold);
+  const hero              = useGameStore(s => s.hero);
+  const addXp             = useGameStore(s => s.addXp);
+  const addGold           = useGameStore(s => s.addGold);
+  const takeDamage        = useGameStore(s => s.takeDamageInGuildRaid);
   const isLeader    = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
@@ -119,38 +122,64 @@ export default function GuildOperationPanel({
     } finally { setStarting(false); }
   }
 
-  async function handleAttack() {
-    if (attacking || !op) return;
+  const handleAttack = useCallback(async () => {
+    if (attackingRef.current) return;
+    const currentOp = op;
+    const currentHero = useGameStore.getState().hero;
+    if (!currentOp || currentHero.hp <= 0) return;
+
+    attackingRef.current = true;
     setAttacking(true);
-    const enemyNameSnap  = op.enemyName;
-    const enemyEmojiSnap = op.enemyEmoji;
-    const enemyMaxHpSnap = op.enemyMaxHp;
+
+    const locData = GUILD_OP_LOCATIONS.find(l => l.id === currentOp.locationId);
+    const heroDamage = Math.max(1, rollDamage(getHeroAttack(currentHero)));
+    const enemyBaseDmg = Math.max(3, Math.round(
+      (locData?.baseHpPerMember ?? 40) * (1 + (currentOp.floor - 1) * 0.18) * 0.38,
+    ));
+    const enemyDmg = Math.max(1, Math.round(enemyBaseDmg * (0.7 + Math.random() * 0.6)));
+
     try {
-      const { status, damage, attacksLeft } = await attackGuildEnemy(
-        guildId, myUid, hero.maxHp,
-        { username: myUsername, heroName: hero.name },
+      const { status, damage } = await attackGuildEnemy(
+        guildId, myUid, heroDamage,
+        { username: myUsername, heroName: currentHero.name },
       );
-      if (status === 'cooldown') {
-        notify(`Wyczerpałeś ${MAX_GUILD_ATTACKS_PER_DAY} ataków na dziś!`, false);
-      } else if (status === 'failed') {
+      if (status === 'failed') {
         notify('Operacja wygasła — czas minął.', false);
+        setAutoFight(false);
       } else if (status === 'no_op') {
         notify('Brak aktywnej operacji.', false);
+        setAutoFight(false);
       } else {
-        const counterDmg = Math.max(1, Math.round(enemyMaxHpSnap / 18 * (0.7 + Math.random() * 0.6)));
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
-          { text: `⚔ Ty (${hero.name}) → ${fmtNum(damage)} dmg na ${enemyNameSnap} ${enemyEmojiSnap}`, type: 'me' },
-          { text: `💥 ${enemyNameSnap} kontruje: −${fmtNum(counterDmg)} HP`, type: 'enemy' },
+          { text: `⚔ Ty → ${fmtNum(damage)} dmg na ${currentOp.enemyName}`, type: 'me' },
+          { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
-        if (status === 'enemy_killed')  newLines.push({ text: `💀 ${enemyNameSnap} pokonany!`, type: 'kill' });
-        if (status === 'advanced')      newLines.push({ text: `⬆ Przejście na następne piętro!`, type: 'floor' });
-        if (status === 'completed')     newLines.push({ text: `🏆 OPERACJA UKOŃCZONA!`, type: 'done' });
+        if (status === 'enemy_killed') newLines.push({ text: `💀 ${currentOp.enemyName} pokonany!`, type: 'kill' });
+        if (status === 'advanced')     newLines.push({ text: `⬆ Przejście na następne piętro!`, type: 'floor' });
+        if (status === 'completed')    newLines.push({ text: `🏆 OPERACJA UKOŃCZONA!`, type: 'done' });
         setLog(l => [...l, ...newLines]);
-        const leftMsg = attacksLeft > 0 ? ` (${attacksLeft} ataków zostało)` : ' (limit na dziś)';
-        notify(`+${fmtNum(damage)} dmg!${leftMsg}`, true);
+        takeDamage(enemyDmg);
+        const freshHp = Math.max(0, currentHero.hp - enemyDmg);
+        if (freshHp <= 0) {
+          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Odpocznij żeby wrócić do walki.`, type: 'kill' }]);
+          setAutoFight(false);
+        }
+        if (status === 'completed') setAutoFight(false);
       }
-    } finally { setAttacking(false); }
-  }
+    } finally {
+      attackingRef.current = false;
+      setAttacking(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op, guildId, myUid, myUsername, takeDamage]);
+
+  useEffect(() => {
+    if (!autoFight) return;
+    const id = setInterval(() => {
+      if (!attackingRef.current) handleAttack();
+    }, 1200);
+    return () => clearInterval(id);
+  }, [autoFight, handleAttack]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -176,12 +205,8 @@ export default function GuildOperationPanel({
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
   const myEntry = op?.participants?.[myUid];
-  const today = new Date(now).toISOString().split('T')[0];
-  const attacksUsedToday = myEntry
-    ? (new Date(myEntry.attackedAt).toISOString().split('T')[0] === today ? (myEntry.attacksToday ?? 0) : 0)
-    : 0;
-  const attacksLeft = MAX_GUILD_ATTACKS_PER_DAY - attacksUsedToday;
-  const attackedToday = attacksLeft <= 0;
+  const isDead = hero.hp <= 0;
+  const hpPctHero = hero.maxHp > 0 ? Math.max(0, (hero.hp / hero.maxHp) * 100) : 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
@@ -258,46 +283,60 @@ export default function GuildOperationPanel({
           </div>
         </div>
 
-        {/* Your contribution */}
+        {/* Hero HP */}
         <div style={{
-          background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
+          background: 'var(--bg-inset)', border: `1px solid ${isDead ? 'rgba(239,68,68,0.4)' : 'var(--border-dark)'}`,
           padding: 8,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
-              {hero.name}
+            <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
+              {isDead ? '💀' : '❤'} {hero.name}
             </span>
-            <span style={{ ...MONO, fontSize: 10, color: attackedToday ? '#f87171' : '#86efac' }}>
-              {attacksUsedToday}/{MAX_GUILD_ATTACKS_PER_DAY} ataków · {fmtNum(myEntry?.damage ?? 0)} dmg łącznie
+            <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : '#86efac' }}>
+              {hero.hp} / {hero.maxHp} HP · {fmtNum(myEntry?.damage ?? 0)} dmg zadano
             </span>
           </div>
           <div className="pixel-bar">
             <div className="pixel-bar-fill" style={{
-              width: `${(attacksUsedToday / MAX_GUILD_ATTACKS_PER_DAY) * 100}%`,
-              background: attackedToday
-                ? 'linear-gradient(90deg, #7f1d1d, #dc2626)'
-                : 'linear-gradient(90deg, #1e40af, #3b82f6)',
+              width: `${hpPctHero}%`,
+              background: hpPctHero > 50
+                ? 'linear-gradient(90deg, #166534, #22c55e)'
+                : hpPctHero > 25
+                ? 'linear-gradient(90deg, #92400e, #f59e0b)'
+                : 'linear-gradient(90deg, #7f1d1d, #dc2626)',
             }} />
           </div>
         </div>
 
         {/* Buttons */}
-        <button
-          onClick={handleAttack}
-          disabled={attacking || attackedToday}
-          className="btn btn-primary"
-          style={{
-            width: '100%', fontSize: 10,
-            opacity: attackedToday ? 0.5 : 1,
-            cursor: attackedToday ? 'not-allowed' : 'pointer',
-          }}
-        >
-          {attacking
-            ? '⚔ Atakuję...'
-            : attackedToday
-            ? `✓ Wyczerpano ${MAX_GUILD_ATTACKS_PER_DAY}/${MAX_GUILD_ATTACKS_PER_DAY} ataków — wróć jutro`
-            : `⚔ Atakuj! [${attacksLeft}/${MAX_GUILD_ATTACKS_PER_DAY}] (−${fmtNum(Math.round(hero.maxHp / MAX_GUILD_ATTACKS_PER_DAY))} HP)`}
-        </button>
+        {isDead ? (
+          <div style={{
+            background: 'rgba(30,5,5,0.9)', border: '1px solid rgba(239,68,68,0.3)',
+            padding: '10px 12px', textAlign: 'center',
+          }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
+              💀 Jesteś pokonany! Odpocznij żeby wrócić do walki.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={handleAttack}
+              disabled={attacking}
+              className="btn btn-primary"
+              style={{ flex: 1, fontSize: 10 }}
+            >
+              {attacking ? '⚔ Atakuję...' : `⚔ Atakuj!`}
+            </button>
+            <button
+              onClick={() => setAutoFight(f => !f)}
+              className={autoFight ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ fontSize: 10, padding: '0 10px', minWidth: 80 }}
+            >
+              {autoFight ? '⏹ Stop' : '▶ Auto'}
+            </button>
+          </div>
+        )}
 
         {/* Combat log */}
         <div

@@ -242,10 +242,7 @@ export interface GuildOpParticipant {
   heroName: string;
   damage: number;
   attackedAt: number;
-  attacksToday: number;
 }
-
-export const MAX_GUILD_ATTACKS_PER_DAY = 10;
 
 export interface GuildOperationState {
   locationId: string;
@@ -900,19 +897,17 @@ export async function startGuildOperation(
   return true;
 }
 
-export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'cooldown' | 'no_op' | 'failed';
+export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed';
 
 export async function attackGuildEnemy(
   guildId: string,
   uid: string,
-  heroMaxHp: number,
+  heroDamage: number,
   info: { username: string; heroName: string },
-): Promise<{ status: AttackGuildResult; damage: number; attacksLeft: number }> {
-  if (!db) return { status: 'no_op', damage: 0, attacksLeft: 0 };
+): Promise<{ status: AttackGuildResult; damage: number }> {
+  if (!db) return { status: 'no_op', damage: 0 };
   const _db = db;
-  const perAttackDamage = Math.max(1, Math.round(heroMaxHp / MAX_GUILD_ATTACKS_PER_DAY));
 
-  let attacksLeft = 0;
   const status = await runTransaction(_db, async (txn) => {
     const ref = doc(_db, 'guilds', guildId);
     const snap = await txn.get(ref);
@@ -927,26 +922,16 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
-    const today = todayStr();
     const existing = (op.participants ?? {})[uid];
-    let attacksToday = 0;
-    if (existing) {
-      const prevDate = new Date(existing.attackedAt).toISOString().split('T')[0];
-      attacksToday = prevDate === today ? (existing.attacksToday ?? 0) : 0;
-    }
-    if (attacksToday >= MAX_GUILD_ATTACKS_PER_DAY) return 'cooldown';
-    attacksLeft = MAX_GUILD_ATTACKS_PER_DAY - attacksToday - 1;
-
-    const newHp = Math.max(0, op.enemyHp - perAttackDamage);
+    const newHp = Math.max(0, op.enemyHp - heroDamage);
     const prevDmg = existing?.damage ?? 0;
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {
         username: info.username,
         heroName: info.heroName,
-        damage: prevDmg + perAttackDamage,
+        damage: prevDmg + heroDamage,
         attackedAt: now,
-        attacksToday: attacksToday + 1,
       },
     };
 
@@ -989,7 +974,7 @@ export async function attackGuildEnemy(
     return 'attacked';
   }) as AttackGuildResult;
 
-  return { status, damage: perAttackDamage, attacksLeft };
+  return { status, damage: heroDamage };
 }
 
 export async function claimGuildOperationReward(

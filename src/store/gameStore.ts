@@ -992,6 +992,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     set({ challengeResult: null });
   },
 
+  takeDamageInGuildRaid: (amount: number) => {
+    const { hero } = get();
+    set({ hero: { ...hero, hp: Math.max(0, hero.hp - amount) } });
+    get().saveGame();
+  },
+
   saveGame: () => {
     const state = get();
     const save = {

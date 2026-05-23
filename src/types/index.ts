@@ -265,6 +265,7 @@ export interface GameState {
   attackChallengeBoss: () => void;
   fleeChallengeFight: () => void;
   clearChallengeResult: () => void;
+  takeDamageInGuildRaid: (amount: number) => void;
   loadGame: () => void;
   saveGame: () => void;
 }
