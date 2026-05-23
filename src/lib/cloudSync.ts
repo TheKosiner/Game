@@ -208,6 +208,44 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   return snap.docs.map(d => ({ uid: d.id, ...d.data() } as LeaderboardEntry));
 }
 
+export interface GuildLeaderboardEntry {
+  id: string;
+  name: string;
+  tag: string;
+  memberCount: number;
+  averageLevel: number;
+  guildXp: number;
+  treasury: number;
+  leaderUsername: string;
+}
+
+export async function getGuildLeaderboard(): Promise<GuildLeaderboardEntry[]> {
+  if (!db) return [];
+  const snap = await getDocs(collection(db, 'guilds'));
+  const entries: GuildLeaderboardEntry[] = snap.docs.map(d => {
+    const data = d.data() as Guild;
+    const memberValues = Object.values(data.members ?? {});
+    const memberCount = memberValues.length;
+    const averageLevel = memberCount > 0
+      ? Math.round(memberValues.reduce((sum, m) => sum + (m.level ?? 1), 0) / memberCount)
+      : 1;
+    const leaderEntry = Object.values(data.members ?? {}).find(m => m.role === 'leader');
+    return {
+      id: d.id,
+      name: data.name,
+      tag: data.tag,
+      memberCount,
+      averageLevel,
+      guildXp: data.guildXp ?? 0,
+      treasury: data.treasury ?? 0,
+      leaderUsername: leaderEntry?.username ?? '',
+    };
+  });
+  return entries
+    .sort((a, b) => b.memberCount - a.memberCount || b.averageLevel - a.averageLevel)
+    .slice(0, 30);
+}
+
 export interface PvpFightRecord {
   attackerUid: string;
   attackerUsername: string;

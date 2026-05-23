@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getLeaderboard, type LeaderboardEntry } from '../lib/cloudSync';
+import { getLeaderboard, getGuildLeaderboard, type LeaderboardEntry, type GuildLeaderboardEntry } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import { useT } from '../hooks/useT';
@@ -116,10 +116,89 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
   );
 }
 
+function GuildLeaderboard() {
+  const [guilds, setGuilds] = useState<GuildLeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  async function fetch() {
+    setLoading(true); setError('');
+    try { setGuilds(await getGuildLeaderboard()); }
+    catch { setError('Błąd połączenia'); }
+    finally { setLoading(false); }
+  }
+
+  useEffect(() => { fetch(); }, []);
+
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button onClick={fetch} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>⟳ Odśwież</button>
+      </div>
+
+      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Ładowanie…</p>}
+      {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
+      {!loading && !error && guilds.length === 0 && (
+        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>Brak gildii</p>
+      )}
+
+      {!loading && guilds.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {guilds.map((guild, i) => {
+            const rank = i + 1;
+            const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
+            return (
+              <div key={guild.id} style={{
+                background: 'var(--bg-inset)',
+                border: `1px solid ${rank <= 3 ? `${RANK_COLORS[rank-1]}44` : 'var(--border-dark)'}`,
+                padding: '8px 10px',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}>
+                <div style={{ minWidth: 26, textAlign: 'center', flexShrink: 0 }}>
+                  {rank <= 3
+                    ? <span style={{ fontSize: 15 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+                    : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
+                  }
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                    <span style={{ ...MONO, fontSize: 11, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 5px', flexShrink: 0 }}>
+                      [{guild.tag}]
+                    </span>
+                    <p style={{ ...PX(6), color: 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {guild.name}
+                    </p>
+                  </div>
+                  <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                    Lider: {guild.leaderUsername}
+                  </p>
+                </div>
+
+                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', padding: '1px 6px' }}>
+                    👥 {guild.memberCount}
+                  </span>
+                  <span style={{ ...ORB, fontSize: 10, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', padding: '1px 6px' }}>
+                    POZ.Ø {guild.averageLevel}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>Top 30 gildii wg liczby członków</p>
+    </>
+  );
+}
+
 export default function LeaderboardPanel() {
   const user = useAuthStore(s => s.user);
   const t = useT();
 
+  const [tab, setTab] = useState<'players' | 'guilds'>('players');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -148,97 +227,124 @@ export default function LeaderboardPanel() {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.leaderboard.title}</p>
-        <button onClick={fetchLeaderboard} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>{t.leaderboard.refresh}</button>
+        {tab === 'players' && (
+          <button onClick={fetchLeaderboard} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>{t.leaderboard.refresh}</button>
+        )}
       </div>
 
-      {myRank > 0 && (
-        <div style={{ background: 'rgba(28,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.leaderboard.yourPlace}</p>
-          <p style={{ ...PX(10), color: 'var(--gold-bright)' }}>#{myRank}</p>
-        </div>
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 6 }}>
+        {(['players', 'guilds'] as const).map(t2 => (
+          <button
+            key={t2}
+            onClick={() => setTab(t2)}
+            className="btn"
+            style={{
+              flex: 1, fontSize: 10, padding: '5px 0',
+              background: tab === t2 ? 'rgba(255,215,0,0.12)' : 'var(--bg-inset)',
+              border: `1px solid ${tab === t2 ? 'rgba(255,215,0,0.5)' : 'var(--border-dark)'}`,
+              color: tab === t2 ? 'var(--gold-bright)' : 'var(--text-dim)',
+            }}
+          >
+            {t2 === 'players' ? '👤 Gracze' : '⚔ Gildie'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'guilds' ? (
+        <GuildLeaderboard />
+      ) : (
+        <>
+          {myRank > 0 && (
+            <div style={{ background: 'rgba(28,20,8,0.8)', border: '1px solid var(--gold-darker)', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.leaderboard.yourPlace}</p>
+              <p style={{ ...PX(10), color: 'var(--gold-bright)' }}>#{myRank}</p>
+            </div>
+          )}
+
+          {selected && (
+            <PlayerProfile
+              entry={selected}
+              rank={selectedRank}
+              onClose={() => setSelected(null)}
+            />
+          )}
+
+          {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.loading}</p>}
+          {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{t.leaderboard.error}</p>}
+          {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.noPlayers}</p>}
+
+          {!loading && entries.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {entries.map((entry, i) => {
+                const rank = i + 1;
+                const isMe = entry.uid === user?.uid;
+                const isSelected = selected?.uid === entry.uid;
+                const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
+
+                return (
+                  <div
+                    key={entry.uid}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => selectEntry(entry, rank)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+                    style={{
+                      background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
+                      border: `1px solid ${isSelected ? 'rgba(255,215,0,0.4)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
+                      padding: '7px 8px',
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s, background 0.15s',
+                    }}
+                  >
+                    <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
+                      {rank <= 3
+                        ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+                        : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
+                      }
+                    </div>
+
+                    <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+                      <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {entry.username}{isMe ? ' ◀' : ''}
+                      </p>
+                      <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 1 }}>
+                        {entry.heroName}
+                      </p>
+                      {(entry.pvpWins !== undefined || entry.pvpLosses !== undefined) && (
+                        <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                          {entry.pvpWins ?? 0}W / {entry.pvpLosses ?? 0}L
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                      <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
+                      {entry.pvpRating !== undefined && (
+                        <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
+                          ⚔ {entry.pvpRating}
+                        </span>
+                      )}
+                      {entry.guildTag && (
+                        <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
+                          [{entry.guildTag}]
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{t.leaderboard.top50}</p>
+        </>
       )}
-
-      {selected && (
-        <PlayerProfile
-          entry={selected}
-          rank={selectedRank}
-          onClose={() => setSelected(null)}
-        />
-      )}
-
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.loading}</p>}
-      {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{t.leaderboard.error}</p>}
-      {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.noPlayers}</p>}
-
-      {!loading && entries.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {entries.map((entry, i) => {
-            const rank = i + 1;
-            const isMe = entry.uid === user?.uid;
-            const isSelected = selected?.uid === entry.uid;
-            const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
-
-            return (
-              <div
-                key={entry.uid}
-                role="button"
-                tabIndex={0}
-                onClick={() => selectEntry(entry, rank)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
-                style={{
-                  background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
-                  border: `1px solid ${isSelected ? 'rgba(255,215,0,0.4)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
-                  padding: '7px 8px',
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  cursor: 'pointer',
-                  transition: 'border-color 0.15s, background 0.15s',
-                }}
-              >
-                <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
-                  {rank <= 3
-                    ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
-                    : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
-                  }
-                </div>
-
-                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
-                  <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                </div>
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {entry.username}{isMe ? ' ◀' : ''}
-                  </p>
-                  <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 1 }}>
-                    {entry.heroName}
-                  </p>
-                  {(entry.pvpWins !== undefined || entry.pvpLosses !== undefined) && (
-                    <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                      {entry.pvpWins ?? 0}W / {entry.pvpLosses ?? 0}L
-                    </p>
-                  )}
-                </div>
-
-                <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-                  <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
-                  {entry.pvpRating !== undefined && (
-                    <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
-                      ⚔ {entry.pvpRating}
-                    </span>
-                  )}
-                  {entry.guildTag && (
-                    <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
-                      [{entry.guildTag}]
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{t.leaderboard.top50}</p>
     </div>
   );
 }
