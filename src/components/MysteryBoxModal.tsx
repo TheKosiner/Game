@@ -3,7 +3,6 @@ import { useGameStore } from '../store/gameStore';
 import { openMysteryBox, SPIN_POOL, RARITY_ORDER } from '../data/mysteryBoxes';
 import type { Item, Rarity } from '../types';
 import { MONO, ORB } from '../utils/styles';
-import mysteryBoxImg from '../assets/mystery-box.png';
 
 const RC: Record<Rarity, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -132,37 +131,22 @@ export default function MysteryBoxModal() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
 
-        {isDone ? (
-          <span style={{
-            fontSize: 72, lineHeight: 1, marginBottom: 10,
-            filter: `drop-shadow(0 0 12px ${rc})`,
-          }}>
-            {display.emoji}
-          </span>
-        ) : (
-          <img
-            src={mysteryBoxImg}
-            alt="mystery box"
-            style={{
-              width: 90, height: 90, objectFit: 'contain', marginBottom: 10,
-              filter: `drop-shadow(0 0 10px ${rc}88)`,
-              animation: 'neon-pulse 1.2s ease-in-out infinite',
-            }}
-          />
-        )}
-        {isDone && (
-          <>
-            <p style={{ ...MONO, fontSize: 11, color: rc, textAlign: 'center', padding: '0 10px', marginBottom: 6 }}>
-              {display.name}
-            </p>
-            <span style={{
-              ...ORB, fontSize: 9, padding: '2px 8px',
-              background: `${rc}22`, border: `1px solid ${rc}55`, color: rc,
-            }}>
-              {RARITY_LABEL[display.rarity]}
-            </span>
-          </>
-        )}
+        <span style={{
+          fontSize: 72, lineHeight: 1, marginBottom: 10,
+          transition: isDone ? 'none' : 'opacity 0.05s',
+          filter: isDone ? `drop-shadow(0 0 12px ${rc})` : 'none',
+        }}>
+          {display.emoji}
+        </span>
+        <p style={{ ...MONO, fontSize: 11, color: rc, textAlign: 'center', padding: '0 10px', marginBottom: 6 }}>
+          {display.name}
+        </p>
+        <span style={{
+          ...ORB, fontSize: 9, padding: '2px 8px',
+          background: `${rc}22`, border: `1px solid ${rc}55`, color: rc,
+        }}>
+          {RARITY_LABEL[display.rarity]}
+        </span>
       </div>
 
       {/* Won item stats (shown after reveal) */}
