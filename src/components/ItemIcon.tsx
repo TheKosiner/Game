@@ -2,6 +2,7 @@ import React from 'react';
 import type { Item, Rarity } from '../types';
 import cannonFusionSrc from '../assets/cannon_fusion.png';
 import mysteryBoxSrc from '../assets/mystery-box.png';
+import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
 
 interface Colors {
   primary: string;
@@ -653,9 +654,13 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
   const px = size ?? (scale ? scale * 12 : 48);
 
   if (item.slot === 'mystery_box') {
+    const BOX_IMG: Partial<Record<string, string>> = {
+      uncommon: mysteryBoxUncommonSrc,
+    };
+    const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
     return (
       <img
-        src={mysteryBoxSrc}
+        src={src}
         width={px}
         height={px}
         style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
