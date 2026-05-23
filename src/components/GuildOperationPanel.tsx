@@ -155,9 +155,6 @@ export default function GuildOperationPanel({
           { text: `⚔ Ty → ${fmtNum(damage)} dmg na ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
-        if (status === 'enemy_killed') newLines.push({ text: `💀 ${currentOp.enemyName} pokonany!`, type: 'kill' });
-        if (status === 'advanced')     newLines.push({ text: `⬆ Przejście na następne piętro!`, type: 'floor' });
-        if (status === 'completed')    newLines.push({ text: `🏆 OPERACJA UKOŃCZONA!`, type: 'done' });
         setLog(l => [...l, ...newLines]);
         takeDamage(enemyDmg);
         if (Math.max(0, currentHero.hp - enemyDmg) <= 0) {
