@@ -183,14 +183,6 @@ export default function GuildOperationPanel({
 
   // Heal to full when entering an active operation
   const healedRef = useRef(false);
-  useEffect(() => {
-    if (isActive && !healedRef.current) {
-      healedRef.current = true;
-      useGameStore.setState(s => ({ hero: { ...s.hero, hp: s.hero.maxHp } }));
-      useGameStore.getState().saveGame();
-    }
-    if (!isActive) healedRef.current = false;
-  }, [isActive]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -209,6 +201,15 @@ export default function GuildOperationPanel({
   const isCompleted = !!op && op.status === 'completed';
   const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
   const canStart    = isLeader && !isActive && !inCooldown;
+
+  useEffect(() => {
+    if (isActive && !healedRef.current) {
+      healedRef.current = true;
+      useGameStore.setState(s => ({ hero: { ...s.hero, hp: s.hero.maxHp } }));
+      useGameStore.getState().saveGame();
+    }
+    if (!isActive) healedRef.current = false;
+  }, [isActive]);
 
   const participants = op
     ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage)
