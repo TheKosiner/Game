@@ -848,9 +848,6 @@ function nextMidnightUtc(): number {
   return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
 }
 
-function todayStr(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 export async function startGuildOperation(
   guildId: string,
