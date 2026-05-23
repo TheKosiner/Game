@@ -3,6 +3,8 @@ import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item,
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { generateItem, getItemName } from '../data/itemGenerator';
+import { createMysteryBox } from '../data/mysteryBoxes';
+import { MYSTERY_BOXES } from '../config/features';
 import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense, calcCritChance, getEquipmentStats } from '../utils/combat';
@@ -60,14 +62,19 @@ function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', dif
   if (hero.inventory.length >= MAX_INVENTORY) return;
   const baseRarity = rollRarity(mode, difficulty);
   const { rarity, bumped } = tryBumpRarity(baseRarity, difficulty);
-  // Item level = hero level ± difficulty offset
   const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
   const itemLevel = Math.max(1, heroLevel + levelBonus);
-  const slot = LOOT_SLOTS[Math.floor(Math.random() * LOOT_SLOTS.length)];
-  const item = generateItem(itemLevel, rarity, slot);
-  set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
-  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${getItemName(item, getLang())}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
+  if (MYSTERY_BOXES) {
+    const box = createMysteryBox(rarity, itemLevel);
+    set({ hero: { ...hero, inventory: [...hero.inventory, box] } });
+    get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${box.emoji} ${box.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
+  } else {
+    const slot = LOOT_SLOTS[Math.floor(Math.random() * LOOT_SLOTS.length)];
+    const item = generateItem(itemLevel, rarity, slot);
+    set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
+    get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${getItemName(item, getLang())}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
+  }
 }
 
 function rollInt(min: number, max: number): number {
