@@ -190,7 +190,9 @@ export default function GuildOperationPanel({
     addXp(reward.xp);
     addGold(reward.gold);
     if (MYSTERY_BOXES) {
-      const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', hero.level);
+      const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
+      const boxLevel = opLoc?.minLevel ?? hero.level;
+      const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
       addToInventory(box);
       notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
     } else {

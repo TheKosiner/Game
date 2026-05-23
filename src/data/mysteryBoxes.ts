@@ -54,9 +54,12 @@ function rollRarity(boxRarity: Rarity): Rarity {
   return table[0][0];
 }
 
-export function openMysteryBox(box: Item, heroLevel: number): Item {
+export function openMysteryBox(box: Item): Item {
   const dropRarity = rollRarity(box.rarity);
-  return generateItem(Math.max(1, heroLevel), dropRarity);
+  // Item level follows box level with small variance (±2)
+  const variance = Math.round((Math.random() - 0.5) * 4);
+  const itemLevel = Math.max(1, box.level + variance);
+  return generateItem(itemLevel, dropRarity);
 }
 
 // Items shown during the spin animation (display only)

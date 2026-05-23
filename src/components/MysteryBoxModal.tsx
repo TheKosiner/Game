@@ -35,7 +35,6 @@ export default function MysteryBoxModal() {
   const pending      = useGameStore(s => s.mysteryBoxPending);
   const collectReward = useGameStore(s => s.collectMysteryBoxReward);
   const dismiss      = useGameStore(s => s.dismissMysteryBox);
-  const heroLevel    = useGameStore(s => s.hero.level);
 
   const [wonItem, setWonItem]       = useState<Item | null>(null);
   const [display, setDisplay]       = useState<SpinEntry>(SPIN_POOL[0]);
@@ -45,7 +44,7 @@ export default function MysteryBoxModal() {
 
   useEffect(() => {
     if (!pending) { setFullInv(false); return; }
-    const item = openMysteryBox(pending.box, heroLevel);
+    const item = openMysteryBox(pending.box);
     setWonItem(item);
     setPhase('spinning');
     setFullInv(false);
