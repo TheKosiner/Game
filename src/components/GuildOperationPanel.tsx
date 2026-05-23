@@ -61,6 +61,7 @@ export default function GuildOperationPanel({
   const hero        = useGameStore(s => s.hero);
   const addXp       = useGameStore(s => s.addXp);
   const addGold     = useGameStore(s => s.addGold);
+  const takeDamage  = useGameStore(s => s.takeDamageInGuildRaid);
   const isLeader    = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
@@ -126,7 +127,7 @@ export default function GuildOperationPanel({
     if (attackingRef.current) return;
     const currentOp = op;
     const currentHero = useGameStore.getState().hero;
-    if (!currentOp) return;
+    if (!currentOp || currentHero.hp <= 0) return;
 
     attackingRef.current = true;
     setAttacking(true);
@@ -158,6 +159,11 @@ export default function GuildOperationPanel({
         if (status === 'advanced')     newLines.push({ text: `⬆ Przejście na następne piętro!`, type: 'floor' });
         if (status === 'completed')    newLines.push({ text: `🏆 OPERACJA UKOŃCZONA!`, type: 'done' });
         setLog(l => [...l, ...newLines]);
+        takeDamage(enemyDmg);
+        if (Math.max(0, currentHero.hp - enemyDmg) <= 0) {
+          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Odpocznij żeby wrócić.`, type: 'kill' }]);
+          setAutoFight(false);
+        }
         if (status === 'completed') setAutoFight(false);
       }
     } finally {
@@ -174,6 +180,17 @@ export default function GuildOperationPanel({
     }, 1200);
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
+
+  // Heal to full when entering an active operation
+  const healedRef = useRef(false);
+  useEffect(() => {
+    if (isActive && !healedRef.current) {
+      healedRef.current = true;
+      useGameStore.setState(s => ({ hero: { ...s.hero, hp: s.hero.maxHp } }));
+      useGameStore.getState().saveGame();
+    }
+    if (!isActive) healedRef.current = false;
+  }, [isActive]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -198,7 +215,9 @@ export default function GuildOperationPanel({
     : [];
   const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
 
-  const myEntry = op?.participants?.[myUid];
+  const myEntry    = op?.participants?.[myUid];
+  const isDead     = hero.hp <= 0;
+  const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (hero.hp / hero.maxHp) * 100) : 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
@@ -275,34 +294,61 @@ export default function GuildOperationPanel({
           </div>
         </div>
 
-        {/* Your contribution */}
-        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 8 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>⚔ {hero.name}</span>
-            <span style={{ ...MONO, fontSize: 10, color: '#86efac' }}>
-              {fmtNum(myEntry?.damage ?? 0)} dmg zadano
+        {/* Hero HP */}
+        <div style={{
+          background: 'var(--bg-inset)',
+          border: `1px solid ${isDead ? 'rgba(239,68,68,0.4)' : 'var(--border-dark)'}`,
+          padding: 8,
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
+              {isDead ? '💀' : '❤'} {hero.name}
             </span>
+            <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : '#86efac' }}>
+              {hero.hp} / {hero.maxHp} HP · {fmtNum(myEntry?.damage ?? 0)} dmg zadano
+            </span>
+          </div>
+          <div className="pixel-bar">
+            <div className="pixel-bar-fill" style={{
+              width: `${hpPctHero}%`,
+              background: hpPctHero > 50
+                ? 'linear-gradient(90deg, #166534, #22c55e)'
+                : hpPctHero > 25
+                ? 'linear-gradient(90deg, #92400e, #f59e0b)'
+                : 'linear-gradient(90deg, #7f1d1d, #dc2626)',
+            }} />
           </div>
         </div>
 
         {/* Buttons */}
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={handleAttack}
-            disabled={attacking}
-            className="btn btn-primary"
-            style={{ flex: 1, fontSize: 10 }}
-          >
-            {attacking ? '⚔ Atakuję...' : '⚔ Atakuj!'}
-          </button>
-          <button
-            onClick={() => setAutoFight(f => !f)}
-            className={autoFight ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ fontSize: 10, padding: '0 10px', minWidth: 80 }}
-          >
-            {autoFight ? '⏹ Stop' : '▶ Auto'}
-          </button>
-        </div>
+        {isDead ? (
+          <div style={{
+            background: 'rgba(30,5,5,0.9)', border: '1px solid rgba(239,68,68,0.3)',
+            padding: '10px 12px', textAlign: 'center',
+          }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
+              💀 Jesteś pokonany! Odpocznij żeby wrócić do walki.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={handleAttack}
+              disabled={attacking}
+              className="btn btn-primary"
+              style={{ flex: 1, fontSize: 10 }}
+            >
+              {attacking ? '⚔ Atakuję...' : '⚔ Atakuj!'}
+            </button>
+            <button
+              onClick={() => setAutoFight(f => !f)}
+              className={autoFight ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ fontSize: 10, padding: '0 10px', minWidth: 80 }}
+            >
+              {autoFight ? '⏹ Stop' : '▶ Auto'}
+            </button>
+          </div>
+        )}
 
         {/* Combat log */}
         <div
