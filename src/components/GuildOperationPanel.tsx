@@ -286,7 +286,8 @@ export default function GuildOperationPanel({
             <div style={{ flex: 1 }}>
               <p style={{ ...MONO, fontSize: 11, color: '#c05050', marginBottom: 3 }}>{op.enemyName}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
-                Piętro {op.floor} · Wróg {enemyIdx + 1}/{enemyTotal}
+                Piętro {op.floor}/{op.maxFloors} · Wróg {enemyIdx + 1}/{enemyTotal}
+                {loc?.minLevel ? ` · POZ. ${loc.minLevel}+` : ''}
               </p>
               <p style={{ ...MONO, fontSize: 10, color: '#903040' }}>
                 {fmtNum(op.enemyHp)} / {fmtNum(op.enemyMaxHp)} HP
@@ -552,9 +553,17 @@ export default function GuildOperationPanel({
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
               <div>
-                <p style={{ ...ORB, fontSize: 9, color: rarColor }}>
-                  {location.emoji} {location.name}
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <p style={{ ...ORB, fontSize: 9, color: rarColor }}>
+                    {location.emoji} {location.name}
+                  </p>
+                  <span style={{
+                    ...MONO, fontSize: 8, padding: '1px 5px',
+                    background: `${rarColor}22`, border: `1px solid ${rarColor}55`, color: rarColor,
+                  }}>
+                    POZ. {location.minLevel}+
+                  </span>
+                </div>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
                   {location.floors} pięter · {location.enemiesPerFloor} wrogów/piętro · [{location.finalRarity.toUpperCase()}]
                 </p>

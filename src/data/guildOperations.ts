@@ -9,6 +9,7 @@ export interface GuildOpLocation {
   name: string;
   emoji: string;
   description: string;
+  minLevel: number;
   floors: number;
   enemies: GuildOpEnemy[];
   enemiesPerFloor: number;
@@ -25,6 +26,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     name: 'Cybernetyczny Labirynt',
     emoji: '🌐',
     description: 'Opuszczony labirynt przetwarzania AI. Błądzące programy i cyfrowe duchy strzegą tajemnicy rdzenia.',
+    minLevel: 5,
     floors: 4,
     enemies: [
       { name: 'Strażnik Danych',   emoji: '🤖', hpMult: 1.0 },
@@ -32,8 +34,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Fragmentator',      emoji: '💀', hpMult: 1.5 },
       { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 2.0 },
     ],
-    enemiesPerFloor: 5,
-    baseHpPerMember: 40,
+    enemiesPerFloor: 8,
+    baseHpPerMember: 60,
     baseXpPerFloor: 500,
     baseGoldPerFloor: 120,
     finalRarity: 'rare',
@@ -44,6 +46,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     name: 'Zatopione Megamiasto',
     emoji: '🌊',
     description: 'Zalane sektory dawnej metropolii. Akwa-mechanizmy i głębinowe bestie kontrolują te ruiny podwodne.',
+    minLevel: 15,
     floors: 5,
     enemies: [
       { name: 'Akwa-Dron',         emoji: '🦈', hpMult: 1.0 },
@@ -52,8 +55,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kraken Mech',       emoji: '🦑', hpMult: 1.8 },
       { name: 'Terror Głębin',     emoji: '👾', hpMult: 2.2 },
     ],
-    enemiesPerFloor: 5,
-    baseHpPerMember: 60,
+    enemiesPerFloor: 10,
+    baseHpPerMember: 90,
     baseXpPerFloor: 640,
     baseGoldPerFloor: 160,
     finalRarity: 'epic',
@@ -64,6 +67,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     name: 'Forteca Orbitalna ARES',
     emoji: '🛸',
     description: 'Wojskowa platforma na orbicie. Zero grawitacji, satelitarne działka i elitarni zabójcy korporacji.',
+    minLevel: 25,
     floors: 5,
     enemies: [
       { name: 'Strażnik Orbity',   emoji: '🛸', hpMult: 1.0 },
@@ -72,8 +76,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 2.0 },
       { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 2.5 },
     ],
-    enemiesPerFloor: 5,
-    baseHpPerMember: 80,
+    enemiesPerFloor: 10,
+    baseHpPerMember: 120,
     baseXpPerFloor: 840,
     baseGoldPerFloor: 210,
     finalRarity: 'epic',
@@ -84,6 +88,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     name: 'Bunkier Nuklearny SIGMA',
     emoji: '☢️',
     description: 'Skażony bunkier dawnej megakorporacji. Promieniowanie, nano-zaraza i reaktorowe kolosy czyhają na intruzów.',
+    minLevel: 35,
     floors: 6,
     enemies: [
       { name: 'Skażony Strażnik',  emoji: '☢️', hpMult: 1.0 },
@@ -93,8 +98,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 2.4 },
       { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 3.0 },
     ],
-    enemiesPerFloor: 6,
-    baseHpPerMember: 100,
+    enemiesPerFloor: 12,
+    baseHpPerMember: 160,
     baseXpPerFloor: 1120,
     baseGoldPerFloor: 280,
     finalRarity: 'legendary',
@@ -105,6 +110,7 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     name: 'Punkt Singularności',
     emoji: '🌌',
     description: 'Serce kwantowej sieci — tu rzeczywistość się kruszy. Tylko najpotężniejsze gildie mogą pokonać Strażnika Singularności.',
+    minLevel: 50,
     floors: 7,
     enemies: [
       { name: 'Kwantowy Cień',       emoji: '👁️', hpMult: 1.0 },
@@ -115,8 +121,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
       { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 3.0 },
       { name: 'Kwantowy Tytan',      emoji: '🌌', hpMult: 3.6 },
     ],
-    enemiesPerFloor: 6,
-    baseHpPerMember: 130,
+    enemiesPerFloor: 15,
+    baseHpPerMember: 200,
     baseXpPerFloor: 2000,
     baseGoldPerFloor: 380,
     finalRarity: 'legendary',
