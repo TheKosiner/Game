@@ -52,7 +52,7 @@ export default function GemsPanel() {
 
       {/* Header image */}
       <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(157,78,221,0.4)', boxShadow: '0 0 24px rgba(157,78,221,0.2)' }}>
-        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 200 }} />
+        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', display: 'block' }} />
       </div>
 
       {/* Flash message from Stripe return */}

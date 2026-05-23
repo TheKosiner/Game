@@ -471,7 +471,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
 
       {/* Arena header image */}
       <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(180,40,40,0.5)', boxShadow: '0 0 24px rgba(180,40,40,0.2)' }}>
-        <img src={arenaSrc} alt="Arena" style={{ width: '100%', display: 'block', objectFit: 'cover', maxHeight: 200 }} />
+        <img src={arenaSrc} alt="Arena" style={{ width: '100%', display: 'block' }} />
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
