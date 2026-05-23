@@ -1014,21 +1014,25 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   openMysteryBoxModal: (box, invIdx) => {
-    set({ mysteryBoxPending: { box, invIdx } });
+    // Remove box from inventory immediately on open — prevents infinite rerolling
+    // by closing and reopening. The won item must be collected or discarded.
+    const { hero } = get();
+    const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
+    set({ hero: { ...hero, inventory: newInventory }, mysteryBoxPending: { box, invIdx } });
+    get().saveGame();
   },
 
-  collectMysteryBoxReward: (_box, invIdx, wonItem) => {
+  collectMysteryBoxReward: (_box, _invIdx, wonItem) => {
     const { hero } = get();
-    if (hero.inventory.length - 1 >= 20) return false; // -1 for box being removed
-    const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
-    if (newInventory.length >= 20) return false;
-    newInventory.push(wonItem);
-    set({ hero: { ...hero, inventory: newInventory }, mysteryBoxPending: null });
+    // Box already removed on open; just add the won item if there's space
+    if (hero.inventory.length >= 20) return false;
+    set({ hero: { ...hero, inventory: [...hero.inventory, wonItem] }, mysteryBoxPending: null });
     get().saveGame();
     return true;
   },
 
   dismissMysteryBox: () => {
+    // Box already consumed — just close the modal (won item is discarded)
     set({ mysteryBoxPending: null });
   },
 

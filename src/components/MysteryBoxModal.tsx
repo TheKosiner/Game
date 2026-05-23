@@ -183,9 +183,11 @@ export default function MysteryBoxModal() {
             ⏭ Pomiń animację
           </button>
         )}
-        <button onClick={dismiss} className="btn btn-secondary" style={{ fontSize: 9, opacity: 0.6 }}>
-          ✕ Zamknij
-        </button>
+        {isDone && fullInv && (
+          <button onClick={dismiss} className="btn btn-secondary" style={{ fontSize: 9, opacity: 0.7 }}>
+            🗑 Wyrzuć przedmiot
+          </button>
+        )}
       </div>
     </div>
   );
