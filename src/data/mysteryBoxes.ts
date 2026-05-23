@@ -12,11 +12,11 @@ export const BOX_GOLD_VALUE: Record<Rarity, number> = {
 };
 
 const DROP_TABLE: Record<Rarity, [Rarity, number][]> = {
-  common:    [['common', 0.80], ['uncommon', 0.20]],
-  uncommon:  [['uncommon', 0.60], ['rare', 0.35], ['epic', 0.05]],
-  rare:      [['rare', 0.55], ['epic', 0.35], ['legendary', 0.10]],
-  epic:      [['epic', 0.55], ['legendary', 0.45]],
-  legendary: [['legendary', 0.80], ['epic', 0.20]],
+  common:    [['common', 0.82], ['uncommon', 0.15], ['rare', 0.03]],
+  uncommon:  [['uncommon', 0.72], ['rare', 0.22], ['epic', 0.06]],
+  rare:      [['rare', 0.68], ['epic', 0.24], ['legendary', 0.08]],
+  epic:      [['epic', 0.78], ['legendary', 0.22]],
+  legendary: [['legendary', 0.90], ['epic', 0.10]],
 };
 
 const BOX_EMOJI: Record<Rarity, string> = {
