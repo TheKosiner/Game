@@ -83,8 +83,8 @@ const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery
   armor:  ['Armor', 'Vest', 'Cuirass', 'Suit', 'Exoskeleton'],
   helmet: ['Helmet', 'Visor', 'Mask', 'Hood', 'Face Shield'],
   boots:  ['Boots', 'Combat Boots', 'Greaves', 'Battle Shoes', 'Sabatons'],
-  ring:   ['Implant', 'Graft', 'Chip', 'Ring', 'Core'],
-  amulet: ['Amulet', 'Core', 'Pendant', 'Crystal', 'Transmitter'],
+  ring:   ['Main Core', 'Implant', 'Chip', 'Module', 'Processor'],
+  amulet: ['Aux Core', 'Transmitter', 'Crystal', 'Amplifier', 'Node'],
 };
 
 // ── Weapon type templates ─────────────────────────────────────────────────────
@@ -112,8 +112,8 @@ const SLOT_NAMES: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_bo
   armor:  { names: ['Pancerz', 'Kamizelka', 'Zbroja', 'Kombinezon', 'Egzoszkielet'], emoji: '🦺' },
   helmet: { names: ['Hełm', 'Wizjer', 'Maska', 'Kaptur', 'Visor'],                   emoji: '⛑' },
   boots:  { names: ['Buty', 'Boty', 'Nagolenniki', 'Buty Bojowe', 'Saboty'],          emoji: '👟' },
-  ring:   { names: ['Implant', 'Wszczep', 'Chip', 'Pierścień', 'Rdzeń'],              emoji: '💉' },
-  amulet: { names: ['Amulet', 'Rdzeń', 'Wisior', 'Kryształ', 'Nadajnik'],            emoji: '📿' },
+  ring:   { names: ['Rdzeń Główny', 'Implant', 'Chip', 'Moduł', 'Procesor'],           emoji: '💉' },
+  amulet: { names: ['Rdzeń Dodatkowy', 'Nadajnik', 'Kryształ', 'Wzmacniacz', 'Węzeł'], emoji: '📿' },
 };
 
 // ── Stat pools per slot ───────────────────────────────────────────────────────
