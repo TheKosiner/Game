@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Item, Rarity } from '../types';
 import cannonFusionSrc from '../assets/cannon_fusion.png';
+import mysteryBoxSrc from '../assets/mystery-box.png';
 
 interface Colors {
   primary: string;
@@ -650,6 +651,18 @@ const ITEM_IMAGE_MAP: Partial<Record<string, { src: string; w: number; h: number
 
 export default function ItemIcon({ item, size, scale, style }: Props) {
   const px = size ?? (scale ? scale * 12 : 48);
+
+  if (item.slot === 'mystery_box') {
+    return (
+      <img
+        src={mysteryBoxSrc}
+        width={px}
+        height={px}
+        style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
+        alt={item.name}
+      />
+    );
+  }
 
   const custom = ITEM_IMAGE_MAP[item.id];
   if (custom) {
