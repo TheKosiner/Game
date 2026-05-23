@@ -130,6 +130,8 @@ export default function App() {
     if (!gameLoaded) return;
     if (!user) checkDailyReset();
     tickPassiveRegen();
+    // Save immediately so initial regen/daily-reset changes aren't lost on quick reload
+    saveGame();
     const id = setInterval(() => {
       const currentUser = useAuthStore.getState().user;
       checkDailyReset();
@@ -139,6 +141,15 @@ export default function App() {
     }, 30_000);
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
+
+  // Flush save to localStorage before the page unloads so the last 30s of
+  // progress isn't lost when the user closes/refreshes the app mid-interval.
+  useEffect(() => {
+    if (!gameLoaded) return;
+    const flush = () => useGameStore.getState().saveGame();
+    window.addEventListener('beforeunload', flush);
+    return () => window.removeEventListener('beforeunload', flush);
+  }, [gameLoaded]);
 
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
   useEffect(() => {

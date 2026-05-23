@@ -155,7 +155,9 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
       const localRaw = localStorage.getItem('glitchsoul_save');
       if (localRaw) {
         const localSave = JSON.parse(localRaw);
-        if (localSave.uid === uid && (localSave.lastSaved ?? 0) > cloudTs) return false;
+        // Prefer local if it's within 10s of cloud — protects against minor clock
+        // drift and the brief window between local save and cloud sync write.
+        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 10_000 > cloudTs) return false;
       }
     }
   } catch { /* ignore */ }
