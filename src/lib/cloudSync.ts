@@ -535,13 +535,20 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   // Remove pending invites
   const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
   for (const d of invites.docs) await deleteDoc(d.ref);
-  // Release any territories owned by this guild
+  // Release territories owned by this guild (also clear any active siege by this guild)
   const ownedTerritories = await getDocs(query(collection(db, 'territories'), where('guildId', '==', guildId)));
-  for (const d of ownedTerritories.docs) {
-    await setDoc(d.ref, {
-      guildId: null, guildName: null, guildTag: null,
-      capturedAt: null, lastRewardAt: null,
-      defenderMemberCount: 0, defenderAvgLevel: 0,
+  const siegingTerritories = await getDocs(query(collection(db, 'territories'), where('siegeGuildId', '==', guildId)));
+  const resetTerritory = {
+    guildId: null, guildName: null, guildTag: null,
+    capturedAt: null, lastRewardAt: null, expiresAt: null,
+    defenderMemberCount: 0, defenderAvgLevel: 0, defenderMembers: [],
+    siegeGuildId: null, siegeGuildTag: null,
+    siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+    siegeStartedAt: null, siegeAttackers: [],
+  };
+  for (const d of ownedTerritories.docs) await setDoc(d.ref, resetTerritory);
+  for (const d of siegingTerritories.docs) {
+    await updateDoc(d.ref, {
       siegeGuildId: null, siegeGuildTag: null,
       siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
       siegeStartedAt: null, siegeAttackers: [],
@@ -622,18 +629,26 @@ export async function getTerritories(): Promise<Record<string, TerritoryState>> 
     }
 
     if (data.guildId && !existingGuilds.has(data.guildId)) {
+      // Owner guild deleted — wipe the territory completely
       Object.assign(data, EMPTY_TERRITORY, { id: d.id });
-      dirty = true;
+      await setDoc(d.ref, { ...EMPTY_TERRITORY });
     } else if (data.siegeGuildId && !existingGuilds.has(data.siegeGuildId)) {
+      // Siege guild deleted — cancel the siege only
       data.siegeGuildId = null;
       data.siegeGuildTag = null;
       data.siegeCurrentHp = null;
       data.siegeMaxHp = null;
       data.siegeLastHitAt = null;
+      data.siegeStartedAt = null;
+      data.siegeAttackers = [];
       dirty = true;
     }
 
-    if (dirty) await setDoc(d.ref, data);
+    if (dirty) await updateDoc(d.ref, {
+      siegeGuildId: null, siegeGuildTag: null,
+      siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
+      siegeStartedAt: null, siegeAttackers: [],
+    });
     result[d.id] = data;
   }));
 
