@@ -193,30 +193,19 @@ export default function ShopPanel() {
         </div>
       )}
 
-      {/* Image with 2 items overlaid at the bottom */}
+      {/* Shop image */}
       <div style={{ position: 'relative' }}>
         <img
           src="/shop_bg.jpg"
           alt="Shop"
           style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
         />
-        {/* Gradient at bottom for readability */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%)' }} />
-        {/* 2 items at the bottom of the image */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          display: 'grid', gridTemplateColumns: '1fr 1fr',
-          gap: 4, padding: '0 6px 6px',
-        }}>
-          {shopItems.slice(0, 2).map(({ item, price, idx }) => (
-            <ShopItemCard key={idx} item={item} price={price} idx={idx} />
-          ))}
-        </div>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
       </div>
 
-      {/* Remaining 4 items below the image */}
+      {/* All items below the image */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        {shopItems.slice(2).map(({ item, price, idx }) => (
+        {shopItems.map(({ item, price, idx }) => (
           <ShopItemCard key={idx} item={item} price={price} idx={idx} />
         ))}
       </div>
