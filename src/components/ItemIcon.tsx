@@ -3,6 +3,7 @@ import type { Item, Rarity } from '../types';
 import cannonFusionSrc from '../assets/cannon_fusion.png';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
+import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
 
 interface Colors {
   primary: string;
@@ -655,6 +656,7 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
 
   if (item.slot === 'mystery_box') {
     const BOX_IMG: Partial<Record<string, string>> = {
+      common:   mysteryBoxCommonSrc,
       uncommon: mysteryBoxUncommonSrc,
     };
     const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
