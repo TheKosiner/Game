@@ -40,16 +40,14 @@ export default function MysteryBoxModal() {
   const [wonItem, setWonItem]       = useState<Item | null>(null);
   const [display, setDisplay]       = useState<SpinEntry>(SPIN_POOL[0]);
   const [phase, setPhase]           = useState<'spinning' | 'done'>('spinning');
-  const [collected, setCollected]   = useState(false);
   const [fullInv, setFullInv]       = useState(false);
   const activeRef = useRef(false);
 
   useEffect(() => {
-    if (!pending) { setCollected(false); setFullInv(false); return; }
+    if (!pending) { setFullInv(false); return; }
     const item = openMysteryBox(pending.box, heroLevel);
     setWonItem(item);
     setPhase('spinning');
-    setCollected(false);
     setFullInv(false);
     activeRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,6 +65,9 @@ export default function MysteryBoxModal() {
       if (elapsed >= DURATION) {
         setDisplay({ name: wonItem!.name, emoji: wonItem!.emoji, rarity: wonItem!.rarity });
         setPhase('done');
+        const ok = collectReward(pending!.box, pending!.invIdx, wonItem!);
+        if (!ok) setFullInv(true);
+        setTimeout(() => dismiss(), 2000);
         return;
       }
       const t = elapsed / DURATION;
@@ -88,14 +89,9 @@ export default function MysteryBoxModal() {
     activeRef.current = false;
     setDisplay({ name: wonItem.name, emoji: wonItem.emoji, rarity: wonItem.rarity });
     setPhase('done');
-  }
-
-  function handleCollect() {
-    if (!pending || !wonItem) return;
-    const ok = collectReward(pending.box, pending.invIdx, wonItem);
-    if (!ok) { setFullInv(true); return; }
-    setCollected(true);
-    setTimeout(() => dismiss(), 1200);
+    const ok = collectReward(pending!.box, pending!.invIdx, wonItem);
+    if (!ok) setFullInv(true);
+    setTimeout(() => dismiss(), 2000);
   }
 
   if (!pending) return null;
@@ -167,25 +163,23 @@ export default function MysteryBoxModal() {
       {/* Buttons */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 220 }}>
         {isDone ? (
-          collected ? (
-            <p style={{ ...ORB, fontSize: 10, color: '#4ade80', textAlign: 'center' }}>✓ Odebrano!</p>
-          ) : fullInv ? (
-            <p style={{ ...MONO, fontSize: 10, color: '#f87171', textAlign: 'center' }}>
-              Plecak pełny! Zwolnij miejsce.
-            </p>
+          fullInv ? (
+            <>
+              <p style={{ ...MONO, fontSize: 10, color: '#f87171', textAlign: 'center' }}>
+                Plecak pełny! Przedmiot przepadł.
+              </p>
+              <button onClick={dismiss} className="btn btn-secondary" style={{ fontSize: 9 }}>
+                ✕ Zamknij
+              </button>
+            </>
           ) : (
-            <button onClick={handleCollect} className="btn btn-primary" style={{ fontSize: 11 }}>
-              🎁 ODBIERZ
-            </button>
+            <p style={{ ...ORB, fontSize: 10, color: '#4ade80', textAlign: 'center' }}>
+              ✓ Dodano do plecaka!
+            </p>
           )
         ) : (
           <button onClick={handleSkip} className="btn btn-secondary" style={{ fontSize: 10 }}>
             ⏭ Pomiń animację
-          </button>
-        )}
-        {isDone && fullInv && (
-          <button onClick={dismiss} className="btn btn-secondary" style={{ fontSize: 9, opacity: 0.7 }}>
-            🗑 Wyrzuć przedmiot
           </button>
         )}
       </div>
