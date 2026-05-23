@@ -204,7 +204,26 @@ export default function AuthScreen() {
             width: 160, height: 'auto', display: 'block', margin: '0 auto 8px',
             filter: 'drop-shadow(0 0 20px rgba(140,60,255,0.9)) drop-shadow(0 0 40px rgba(0,200,255,0.4))',
           }} />
-          <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 6, letterSpacing: 1 }}>GlitchSoul</h1>
+          <h1 style={{ color: '#fbbf24', fontSize: 13, marginBottom: 10, letterSpacing: 1 }}>GlitchSoul</h1>
+          <div style={{
+            display: 'inline-block',
+            background: 'linear-gradient(90deg, rgba(220,38,38,0.15), rgba(220,38,38,0.25), rgba(220,38,38,0.15))',
+            border: '2px solid #dc2626',
+            padding: '6px 18px',
+            marginBottom: 10,
+            boxShadow: '0 0 18px rgba(220,38,38,0.5), 0 0 40px rgba(220,38,38,0.2)',
+            animation: 'neon-pulse 2s ease-in-out infinite',
+          }}>
+            <span style={{
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 13,
+              color: '#f87171',
+              letterSpacing: 3,
+              textShadow: '0 0 10px #dc2626, 0 0 20px #dc2626',
+            }}>
+              ⚠ EARLY ACCESS ⚠
+            </span>
+          </div>
           <p style={{ color: '#475569', fontSize: 10 }}>{t.app.tagline}</p>
         </div>
 
