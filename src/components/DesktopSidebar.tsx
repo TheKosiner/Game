@@ -23,16 +23,6 @@ interface Props {
   onReset: () => void;
 }
 
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <p style={{
-      ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)',
-      letterSpacing: 3, textTransform: 'uppercase',
-      padding: '10px 16px 4px',
-    }}>{label}</p>
-  );
-}
-
 function NavItem({
   label, icon, active, onClick, badge,
 }: {
