@@ -1006,6 +1006,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  recordTerritoryClaimAt: (territoryId: string) => {
+    const { hero } = get();
+    set({ hero: { ...hero, lastTerritoryClaimAt: { ...(hero.lastTerritoryClaimAt ?? {}), [territoryId]: Date.now() } } });
+    get().saveGame();
+  },
+
   addToInventory: (item) => {
     const { hero } = get();
     if (hero.inventory.length >= 20) return;

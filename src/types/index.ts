@@ -68,6 +68,7 @@ export interface Hero {
   unlockedPortraits: number[];
   lastRespecAt: number | null;
   completedDungeons: string[];
+  lastTerritoryClaimAt?: Record<string, number>;
 }
 
 export interface Enemy {
@@ -267,6 +268,7 @@ export interface GameState {
   fleeChallengeFight: () => void;
   clearChallengeResult: () => void;
   takeDamageInGuildRaid: (amount: number) => void;
+  recordTerritoryClaimAt: (territoryId: string) => void;
   addToInventory: (item: Item) => void;
   openMysteryBoxModal: (box: Item, invIdx: number) => void;
   collectMysteryBoxReward: (box: Item, invIdx: number, wonItem: Item) => boolean;

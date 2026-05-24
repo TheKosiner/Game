@@ -19,18 +19,50 @@ const SIEGE_DURATION_MS = 5 * 60 * 60 * 1000; // 5h siege window
 // ── Map constants ─────────────────────────────────────────────────────────────
 
 const MAP_POS: Record<string, { x: number; y: number }> = {
+  // Original 5
   misty_forest:  { x: 28, y: 76 },
   ruined_keep:   { x: 60, y: 62 },
   dark_mountain: { x: 78, y: 36 },
   cursed_tomb:   { x: 14, y: 44 },
   dragon_peak:   { x: 50, y: 14 },
+  // New 10
+  data_slums:    { x: 18, y: 92 },
+  neon_bridge:   { x: 44, y: 94 },
+  black_market:  { x: 82, y: 86 },
+  hacker_den:    { x: 38, y: 56 },
+  cyber_temple:  { x: 22, y: 26 },
+  ghost_district:{ x: 70, y: 48 },
+  megacorp_hq:   { x: 92, y: 28 },
+  quantum_lab:   { x: 62, y: 22 },
+  orbital_relay: { x: 32, y: 6  },
+  nexus_core:    { x: 80, y: 8  },
 };
 const MAP_EDGES: [string, string][] = [
+  // Original
   ['misty_forest', 'ruined_keep'],
   ['misty_forest', 'cursed_tomb'],
   ['ruined_keep', 'dark_mountain'],
   ['ruined_keep', 'dragon_peak'],
   ['cursed_tomb', 'dragon_peak'],
+  // Bottom tier
+  ['data_slums', 'misty_forest'],
+  ['neon_bridge', 'misty_forest'],
+  ['neon_bridge', 'ruined_keep'],
+  ['black_market', 'ruined_keep'],
+  // Middle tier
+  ['hacker_den', 'ruined_keep'],
+  ['hacker_den', 'cursed_tomb'],
+  ['ghost_district', 'ruined_keep'],
+  ['ghost_district', 'dark_mountain'],
+  // Upper tier
+  ['cyber_temple', 'cursed_tomb'],
+  ['quantum_lab', 'dark_mountain'],
+  ['megacorp_hq', 'dark_mountain'],
+  // Top tier
+  ['orbital_relay', 'dragon_peak'],
+  ['orbital_relay', 'quantum_lab'],
+  ['nexus_core', 'quantum_lab'],
+  ['nexus_core', 'megacorp_hq'],
 ];
 const BUILDINGS = [
   { x: 3,  y: 3,  w: 13, h: 8  },
@@ -425,10 +457,14 @@ function SiegeCombat({
 
 // ── Territory Panel ───────────────────────────────────────────────────────────
 
+const CAPTURE_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h between captures
+const MAX_TERRITORIES = 3; // max zones a guild can hold simultaneously
+
 export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Guild | null; onBack: () => void; onRefresh?: () => void }) {
-  const hero    = useGameStore(s => s.hero);
-  const addGold = useGameStore(s => s.addGold);
-  const addXp   = useGameStore(s => s.addXp);
+  const hero                    = useGameStore(s => s.hero);
+  const addGold                 = useGameStore(s => s.addGold);
+  const addXp                   = useGameStore(s => s.addXp);
+  const recordTerritoryClaimAt  = useGameStore(s => s.recordTerritoryClaimAt);
   const myUid   = useAuthStore(s => s.user?.uid);
   const lang    = useLangStore(s => s.lang);
   const isEn    = lang === 'en';
@@ -467,26 +503,26 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   async function handleAttack(def: TerritoryDef, state: TerritoryState | undefined) {
     if (!guild) return;
 
-    if (myOwnedCount >= 1 && state?.guildId !== guild.id) {
+    if (myOwnedCount >= MAX_TERRITORIES && state?.guildId !== guild.id) {
       setAlertMsg(isEn
-        ? 'Your guild can only hold one zone at a time. You must lose it or have it retaken first.'
-        : 'Twoja gildia może posiadać tylko jedną strefę na raz. Najpierw ją stracisz lub zostanie odbita.');
+        ? `Your guild already controls ${MAX_TERRITORIES} zones (maximum). Lose one or abandon it first.`
+        : `Twoja gildia kontroluje już ${MAX_TERRITORIES} strefy (maksimum). Najpierw ją stracisz lub porzucisz.`);
       return;
     }
 
     const now = Date.now();
-    if (guild.lastCaptureAt && now - guild.lastCaptureAt < DAY_MS) {
-      const left = DAY_MS - (now - guild.lastCaptureAt);
+    if (guild.lastCaptureAt && now - guild.lastCaptureAt < CAPTURE_COOLDOWN_MS) {
+      const left = CAPTURE_COOLDOWN_MS - (now - guild.lastCaptureAt);
       setAlertMsg(isEn
-        ? `Your guild can capture another zone in ${formatCountdown(left)}. (Limit: 1 capture per day)`
-        : `Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}. (Limit: 1 przejęcie na dobę)`);
+        ? `Your guild can capture another zone in ${formatCountdown(left)}.`
+        : `Wasza gildia może przejąć kolejną strefę za ${formatCountdown(left)}.`);
       return;
     }
-    if (guild.lastLostAt && now - guild.lastLostAt < DAY_MS) {
-      const left = DAY_MS - (now - guild.lastLostAt);
+    if (guild.lastLostAt && now - guild.lastLostAt < CAPTURE_COOLDOWN_MS) {
+      const left = CAPTURE_COOLDOWN_MS - (now - guild.lastLostAt);
       setAlertMsg(isEn
-        ? `Your guild lost a zone and needs to recover. You can attack in ${formatCountdown(left)}.`
-        : `Wasza gildia straciła strefę i musi odpocząć. Można atakować za ${formatCountdown(left)}.`);
+        ? `Your guild lost a zone recently. You can attack in ${formatCountdown(left)}.`
+        : `Wasza gildia straciła strefę. Można atakować za ${formatCountdown(left)}.`);
       return;
     }
 
@@ -726,6 +762,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       if (result !== null) {
         addGold(def.dailyGold);
         addXp(def.dailyXp);
+        recordTerritoryClaimAt(def.id);
         await reloadTerritories();
       }
     } finally { setClaimingId(null); }
@@ -792,27 +829,39 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       )}
 
       {/* Alerts */}
-      {guild && myOwnedCount >= 1 && (
+      {guild && myOwnedCount >= MAX_TERRITORIES && (
         <div style={{ background: 'rgba(10,30,10,0.7)', border: '1px solid rgba(40,120,40,0.4)', padding: 8 }}>
           <p style={{ ...PX(4), color: '#60c060' }}>
-            {isEn ? '✦ Your guild controls a zone. Limit: 1 — it must be recaptured first.' : '✦ Twoja gildia kontroluje strefę. Limit: 1 — musi zostać najpierw odbita.'}
+            {isEn
+              ? `✦ Your guild controls ${myOwnedCount}/${MAX_TERRITORIES} zones (maximum). Abandon one to capture another.`
+              : `✦ Twoja gildia kontroluje ${myOwnedCount}/${MAX_TERRITORIES} stref (maksimum). Porzuć jedną, by przejąć kolejną.`}
+          </p>
+        </div>
+      )}
+
+      {guild && myOwnedCount > 0 && myOwnedCount < MAX_TERRITORIES && (
+        <div style={{ background: 'rgba(10,30,10,0.5)', border: '1px solid rgba(40,120,40,0.3)', padding: 8 }}>
+          <p style={{ ...PX(4), color: '#60c060' }}>
+            {isEn
+              ? `✦ Zones: ${myOwnedCount}/${MAX_TERRITORIES} — you can still capture ${MAX_TERRITORIES - myOwnedCount} more.`
+              : `✦ Strefy: ${myOwnedCount}/${MAX_TERRITORIES} — możecie przejąć jeszcze ${MAX_TERRITORIES - myOwnedCount}.`}
           </p>
         </div>
       )}
 
       {guild && (() => {
         const now2 = Date.now();
-        const capCd = guild.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
-          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
-        const lostCd = guild.lastLostAt && now2 - guild.lastLostAt < DAY_MS
-          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        const capCd = guild.lastCaptureAt && now2 - guild.lastCaptureAt < CAPTURE_COOLDOWN_MS
+          ? CAPTURE_COOLDOWN_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCd = guild.lastLostAt && now2 - guild.lastLostAt < CAPTURE_COOLDOWN_MS
+          ? CAPTURE_COOLDOWN_MS - (now2 - guild.lastLostAt) : null;
         if (!capCd && !lostCd) return null;
         return (
           <div style={{ background: 'rgba(40,20,0,0.7)', border: '1px solid rgba(180,100,0,0.4)', padding: 8 }}>
             <p style={{ ...PX(4), color: '#e09040' }}>
               {lostCd
-                ? (isEn ? `⏳ You lost a zone — next attack in ${formatCountdown(lostCd)}` : `⏳ Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`)
-                : (isEn ? `⏳ Zone captured today — next capture in ${formatCountdown(capCd!)}` : `⏳ Przejęliście strefę dziś — kolejne przejęcie za ${formatCountdown(capCd!)}`)}
+                ? (isEn ? `⏳ Lost a zone — next attack in ${formatCountdown(lostCd)}` : `⏳ Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`)
+                : (isEn ? `⏳ Zone captured — next capture in ${formatCountdown(capCd!)}` : `⏳ Przejęliście strefę — kolejne przejęcie za ${formatCountdown(capCd!)}`)}
             </p>
           </div>
         );
@@ -847,19 +896,20 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         const siegeTimeLeft    = mySiegeActive && state?.siegeStartedAt ? (state.siegeStartedAt + SIEGE_DURATION_MS) - now : null;
         const attackerCount    = mySiegeActive ? (state?.siegeAttackers ?? []).length : 0;
 
+        const myLastClaim = hero.lastTerritoryClaimAt?.[def.id] ?? null;
         const canClaim = ownedByMyGuild && guild &&
-          (state.lastRewardAt === null || now - (state.lastRewardAt ?? 0) >= DAY_MS);
-        const nextClaimIn = ownedByMyGuild && !canClaim && state?.lastRewardAt
-          ? DAY_MS - (now - state.lastRewardAt)
+          (myLastClaim === null || now - myLastClaim >= DAY_MS);
+        const nextClaimIn = ownedByMyGuild && !canClaim && myLastClaim !== null
+          ? DAY_MS - (now - myLastClaim)
           : null;
 
         const now2 = Date.now();
-        const captureCooldown = guild?.lastCaptureAt && now2 - guild.lastCaptureAt < DAY_MS
-          ? DAY_MS - (now2 - guild.lastCaptureAt) : null;
-        const lostCooldown = guild?.lastLostAt && now2 - guild.lastLostAt < DAY_MS
-          ? DAY_MS - (now2 - guild.lastLostAt) : null;
+        const captureCooldown = guild?.lastCaptureAt && now2 - guild.lastCaptureAt < CAPTURE_COOLDOWN_MS
+          ? CAPTURE_COOLDOWN_MS - (now2 - guild.lastCaptureAt) : null;
+        const lostCooldown = guild?.lastLostAt && now2 - guild.lastLostAt < CAPTURE_COOLDOWN_MS
+          ? CAPTURE_COOLDOWN_MS - (now2 - guild.lastLostAt) : null;
         const onCooldown = !!(captureCooldown || lostCooldown);
-        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < 1 && !alreadyAttacked && !onCooldown;
+        const canAttack = !locked && !ownedByMyGuild && !!guild && myOwnedCount < MAX_TERRITORIES && !alreadyAttacked && !onCooldown;
 
         const borderColor = isFocused
           ? 'rgba(0,245,255,0.6)'
@@ -962,8 +1012,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
               <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? 'Join a guild to capture zones' : 'Dołącz do gildii, by przejmować strefy'}</p>
             )}
 
-            {!locked && !ownedByMyGuild && guild && myOwnedCount >= 1 && (
-              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 {isEn ? 'Your guild already controls a zone' : 'Twoja gildia już kontroluje strefę'}</p>
+            {!locked && !ownedByMyGuild && guild && myOwnedCount >= MAX_TERRITORIES && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 {isEn ? `Guild zone limit reached (${MAX_TERRITORIES}/${MAX_TERRITORIES})` : `Limit stref gildii osiągnięty (${MAX_TERRITORIES}/${MAX_TERRITORIES})`}</p>
             )}
 
             {canAttack && (
