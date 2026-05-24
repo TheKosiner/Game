@@ -227,31 +227,6 @@ export default function AuthScreen() {
           <p style={{ color: '#475569', fontSize: 10 }}>{t.app.tagline}</p>
         </div>
 
-        {/* Mode tabs — hidden on reset screen */}
-        {mode !== 'reset' && (
-          <div style={{ display: 'flex', marginBottom: 16, border: '2px solid #334155' }}>
-            {(['login', 'register'] as Mode[]).map(m => (
-              <button
-                key={m}
-                onClick={() => switchMode(m)}
-                style={{
-                  flex: 1,
-                  padding: '8px 4px',
-                  background: mode === m ? '#1c1408' : '#0a0a1a',
-                  border: 'none',
-                  borderBottom: mode === m ? '2px solid #d97706' : '2px solid transparent',
-                  color: mode === m ? '#fbbf24' : '#475569',
-                  fontFamily: "'Press Start 2P', monospace",
-                  fontSize: 10,
-                  cursor: 'pointer',
-                }}
-              >
-                {m === 'login' ? t.auth.login : t.auth.register}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Discord */}
         <a
           href="https://discord.gg/8vCk7jxna"
@@ -277,6 +252,31 @@ export default function AuthScreen() {
           </svg>
           DISCORD — DOŁĄCZ DO SERWERA
         </a>
+
+        {/* Mode tabs — hidden on reset screen */}
+        {mode !== 'reset' && (
+          <div style={{ display: 'flex', marginBottom: 16, border: '2px solid #334155' }}>
+            {(['login', 'register'] as Mode[]).map(m => (
+              <button
+                key={m}
+                onClick={() => switchMode(m)}
+                style={{
+                  flex: 1,
+                  padding: '8px 4px',
+                  background: mode === m ? '#1c1408' : '#0a0a1a',
+                  border: 'none',
+                  borderBottom: mode === m ? '2px solid #d97706' : '2px solid transparent',
+                  color: mode === m ? '#fbbf24' : '#475569',
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: 10,
+                  cursor: 'pointer',
+                }}
+              >
+                {m === 'login' ? t.auth.login : t.auth.register}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Form */}
         <div className="card p-3">
