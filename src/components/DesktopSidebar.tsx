@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import logoImg from '../assets/logo.png';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
@@ -71,14 +72,14 @@ function NavItem({
 }
 
 function SectionNavItem({
-  label, tabId, active, onClick,
+  label, tabId, active, open, onToggle,
 }: {
-  label: string; tabId: MainTab; active: boolean; onClick: () => void;
+  label: string; tabId: MainTab; active: boolean; open: boolean; onToggle: () => void;
 }) {
   const color = active ? '#ff2d78' : 'rgba(255,255,255,0.45)';
   return (
     <button
-      onClick={onClick}
+      onClick={onToggle}
       className="desktop-nav-top"
       style={{
         width: '100%', padding: '10px 16px',
@@ -99,11 +100,17 @@ function SectionNavItem({
         <TabIcon id={tabId} color={color} />
       </span>
       <span style={{
-        ...ORB, fontSize: 11,
+        ...ORB, fontSize: 11, flex: 1,
         color: active ? '#fff' : 'rgba(255,255,255,0.55)',
         textShadow: active ? '0 0 8px rgba(255,45,120,0.6)' : 'none',
         letterSpacing: 1,
       }}>{label}</span>
+      <span style={{
+        fontSize: 10, color: 'rgba(255,255,255,0.3)',
+        transition: 'transform 0.2s',
+        display: 'inline-block',
+        transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+      }}>▾</span>
     </button>
   );
 }
@@ -117,6 +124,16 @@ export default function DesktopSidebar({
   const hero = useGameStore(s => s.hero);
   const { lang, setLang } = useLangStore();
   const t = useT();
+
+  // Which collapsible sections are open (start with active tab's section open)
+  const [open, setOpen] = useState<Record<string, boolean>>(() => ({ [tab]: true }));
+  function toggle(section: MainTab) {
+    setOpen(prev => ({ ...prev, [section]: !prev[section] }));
+  }
+  function expandAndNav(section: MainTab, navFn: () => void) {
+    setOpen(prev => ({ ...prev, [section]: true }));
+    navFn();
+  }
 
   return (
     <aside style={{
@@ -147,37 +164,56 @@ export default function DesktopSidebar({
       {/* Nav */}
       <nav style={{ flex: 1, paddingTop: 4 }}>
 
-        {/* Hero */}
-        <SectionNavItem tabId="hero" label={t.nav.hero} active={tab === 'hero'} onClick={() => onTab('hero')} />
+        {/* Hero — no subnav, direct click */}
+        <SectionNavItem tabId="hero" label={t.nav.hero} active={tab === 'hero'} open={false}
+          onToggle={() => { onTab('hero'); setOpen(prev => ({ ...prev, hero: false })); }} />
 
         {/* Play */}
-        <SectionNavItem tabId="play" label={t.nav.play} active={tab === 'play'} onClick={() => { onTab('play'); onPlay('dungeon'); }} />
-        <NavItem icon="🏰" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
-          onClick={() => { onTab('play'); onPlay('dungeon'); }} />
-        <NavItem icon="💀" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
-          onClick={() => { onTab('play'); onPlay('challenge'); }} />
-        <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
-          onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
+        <SectionNavItem tabId="play" label={t.nav.play} active={tab === 'play'} open={!!open['play']}
+          onToggle={() => {
+            if (!open['play']) expandAndNav('play', () => { onTab('play'); onPlay('dungeon'); });
+            else toggle('play');
+          }} />
+        {open['play'] && <>
+          <NavItem icon="🏰" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
+            onClick={() => { onTab('play'); onPlay('dungeon'); }} />
+          <NavItem icon="💀" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
+            onClick={() => { onTab('play'); onPlay('challenge'); }} />
+          <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
+            onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
+        </>}
 
         {/* Social */}
-        <SectionNavItem tabId="social" label={t.nav.social} active={tab === 'social'} onClick={() => { onTab('social'); onSocial('guild'); }} />
-        <NavItem icon="⚔" label={t.nav.arena} active={tab === 'social' && socialSub === 'pvp'}
-          onClick={() => { onTab('social'); onSocial('pvp'); }} />
-        <NavItem icon="🏛" label={t.nav.guild} active={tab === 'social' && socialSub === 'guild'}
-          onClick={() => { onTab('social'); onSocial('guild'); }} />
-        <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
-          onClick={() => { onTab('social'); onSocial('ranking'); }} />
-        <NavItem icon="💬" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
-          onClick={() => { onTab('social'); onSocial('chat'); }} badge={chatHasNew} />
-        <NavItem icon="✉" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
-          onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
+        <SectionNavItem tabId="social" label={t.nav.social} active={tab === 'social'} open={!!open['social']}
+          onToggle={() => {
+            if (!open['social']) expandAndNav('social', () => { onTab('social'); onSocial('guild'); });
+            else toggle('social');
+          }} />
+        {open['social'] && <>
+          <NavItem icon="⚔" label={t.nav.arena} active={tab === 'social' && socialSub === 'pvp'}
+            onClick={() => { onTab('social'); onSocial('pvp'); }} />
+          <NavItem icon="🏛" label={t.nav.guild} active={tab === 'social' && socialSub === 'guild'}
+            onClick={() => { onTab('social'); onSocial('guild'); }} />
+          <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
+            onClick={() => { onTab('social'); onSocial('ranking'); }} />
+          <NavItem icon="💬" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
+            onClick={() => { onTab('social'); onSocial('chat'); }} badge={chatHasNew} />
+          <NavItem icon="✉" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
+            onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
+        </>}
 
         {/* Shop */}
-        <SectionNavItem tabId="shop" label={t.nav.shop} active={tab === 'shop'} onClick={() => { onTab('shop'); onShop('shop'); }} />
-        <NavItem icon="🛒" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
-          onClick={() => { onTab('shop'); onShop('shop'); }} />
-        <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
-          onClick={() => { onTab('shop'); onShop('gems'); }} />
+        <SectionNavItem tabId="shop" label={t.nav.shop} active={tab === 'shop'} open={!!open['shop']}
+          onToggle={() => {
+            if (!open['shop']) expandAndNav('shop', () => { onTab('shop'); onShop('shop'); });
+            else toggle('shop');
+          }} />
+        {open['shop'] && <>
+          <NavItem icon="🛒" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
+            onClick={() => { onTab('shop'); onShop('shop'); }} />
+          <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
+            onClick={() => { onTab('shop'); onShop('gems'); }} />
+        </>}
 
       </nav>
 
