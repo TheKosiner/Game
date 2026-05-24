@@ -628,7 +628,7 @@ const EMPTY_TERRITORY = {
 };
 
 const SIEGE_DURATION = 5 * 60 * 60 * 1000; // 5h — siege window
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const WEEK_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — territory stays until recaptured
 
 export async function getTerritories(): Promise<Record<string, TerritoryState>> {
   if (!db) return {};
@@ -846,17 +846,12 @@ export async function claimTerritoryReward(
 ): Promise<{ gold: number; xp: number } | null> {
   if (!db) return null;
   const ref = doc(db, 'territories', territoryId);
-  return runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return null;
-    const data = snap.data() as TerritoryState;
-    if (data.guildId !== guildId) return null;
-    const now = Date.now();
-    const DAY = 24 * 60 * 60 * 1000;
-    if (data.lastRewardAt !== null && now - data.lastRewardAt < DAY) return null;
-    tx.update(ref, { lastRewardAt: now });
-    return { gold: 0, xp: 0 };
-  });
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return null;
+  const data = snap.data() as TerritoryState;
+  if (data.guildId !== guildId) return null;
+  // Per-player cooldown is tracked client-side; server just verifies ownership
+  return { gold: 0, xp: 0 };
 }
 
 // ── Mail ─────────────────────────────────────────────────────────────────────

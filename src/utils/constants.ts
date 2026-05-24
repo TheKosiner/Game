@@ -1,7 +1,7 @@
 export const MAX_INVENTORY = 20;
 export const MAX_COMBAT_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
-export const MAX_DAILY_QUESTS = 10;
+export const MAX_DAILY_QUESTS = 5;
 export const SHOP_REFRESH_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 export const PVP_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 export const AUTO_SAVE_INTERVAL_MS = 30 * 1000; // 30 seconds
