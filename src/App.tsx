@@ -6,7 +6,7 @@ import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
 import { useLangStore, getLang } from './store/langStore';
-import { syncToCloud, loadFromCloud, deleteCloudSave } from './lib/cloudSync';
+import { syncToCloud, loadFromCloud } from './lib/cloudSync';
 import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
@@ -270,13 +270,6 @@ export default function App() {
   const isNewGame = hero.name === 'Hero' && !hasSave;
   if (isNewGame) return <CharacterCreation />;
 
-  async function handleReset() {
-    if (!confirm(t.app.resetConfirm)) return;
-    localStorage.removeItem('glitchsoul_save');
-    try { if (user) await deleteCloudSave(user.uid); } catch {}
-    initHero('Hero');
-  }
-
   // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
   if (isDesktop && !isNative) {
     const sectionLabel: Record<MainTab, string> = {
@@ -292,7 +285,7 @@ export default function App() {
           tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
           questBadge={questBadge} mailUnread={mailUnread} chatHasNew={chatHasNew}
           onTab={switchTab} onPlay={switchPlay} onSocial={switchSocial} onShop={switchShop}
-          onLogout={() => logout()} onReset={handleReset}
+          onLogout={() => logout()}
         />
 
         {/* Content area */}
@@ -429,14 +422,6 @@ export default function App() {
               >{t.app.logout}</button>
             </>
           )}
-          <button
-            onClick={handleReset}
-            aria-label={lang === 'en' ? 'Reset game' : 'Resetuj grę'}
-            style={{
-              color: 'rgba(255,45,120,0.4)', fontSize: 14,
-              background: 'none', border: 'none', cursor: 'pointer',
-            }}
-          >↩</button>
         </div>
       </header>
 

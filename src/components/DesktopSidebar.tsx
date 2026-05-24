@@ -21,7 +21,6 @@ interface Props {
   onSocial: (t: SocialSub) => void;
   onShop: (t: ShopSub) => void;
   onLogout: () => void;
-  onReset: () => void;
 }
 
 function NavItem({
@@ -119,7 +118,7 @@ export default function DesktopSidebar({
   tab, playSub, socialSub, shopSub,
   questBadge, mailUnread, chatHasNew,
   onTab, onPlay, onSocial, onShop,
-  onLogout, onReset,
+  onLogout,
 }: Props) {
   const hero = useGameStore(s => s.hero);
   const { lang, setLang } = useLangStore();
@@ -261,10 +260,6 @@ export default function DesktopSidebar({
             ...MONO, fontSize: 9, color: 'rgba(255,45,120,0.7)',
             background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px',
           }}>{t.app.logout}</button>
-          <button onClick={onReset} aria-label="Reset" style={{
-            fontSize: 12, color: 'rgba(255,45,120,0.4)',
-            background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px',
-          }}>↩</button>
         </div>
       </div>
     </aside>
