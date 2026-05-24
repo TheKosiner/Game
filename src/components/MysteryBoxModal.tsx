@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { openMysteryBox, SPIN_POOL, RARITY_ORDER } from '../data/mysteryBoxes';
 import type { Item, Rarity } from '../types';
@@ -98,9 +99,9 @@ export default function MysteryBoxModal() {
   const rc = RC[display.rarity];
   const isDone = phase === 'done';
 
-  return (
+  return createPortal(
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
+      position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.88)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       backdropFilter: 'blur(4px)',
@@ -182,6 +183,7 @@ export default function MysteryBoxModal() {
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
