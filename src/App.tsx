@@ -286,6 +286,7 @@ export default function App() {
       shop: t.nav.shop,
     };
     return (
+      <>
       <div className="desktop-layout" style={{ display: 'flex', background: '#040408', overflow: 'hidden' }}>
         <DesktopSidebar
           tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
@@ -341,9 +342,9 @@ export default function App() {
             </main>
           </div>
         </div>
-
-        <MysteryBoxModal />
       </div>
+      <MysteryBoxModal />
+      </>
     );
   }
 
