@@ -29,6 +29,7 @@ import ChatPanel from './components/ChatPanel';
 import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
 import MysteryBoxModal from './components/MysteryBoxModal';
 import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
+import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 
 export default function App() {
@@ -84,6 +85,13 @@ export default function App() {
   useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [tab]);
   useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
   const isNative = Capacitor.isNativePlatform();
+
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
+  useEffect(() => {
+    const handler = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   useEffect(() => { requestNotificationPermission(); }, []);
 
@@ -269,6 +277,77 @@ export default function App() {
     initHero('Hero');
   }
 
+  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
+  if (isDesktop && !isNative) {
+    const sectionLabel: Record<MainTab, string> = {
+      hero: t.nav.hero,
+      play: t.nav.play,
+      social: t.nav.social,
+      shop: t.nav.shop,
+    };
+    return (
+      <div style={{ display: 'flex', height: '100dvh', background: '#040408', overflow: 'hidden' }}>
+        <DesktopSidebar
+          tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
+          questBadge={questBadge} mailUnread={mailUnread} chatHasNew={chatHasNew}
+          onTab={switchTab} onPlay={switchPlay} onSocial={switchSocial} onShop={switchShop}
+          onLogout={() => logout()} onReset={handleReset}
+        />
+
+        {/* Content area */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+          {/* Thin top bar */}
+          <header style={{
+            flexShrink: 0,
+            background: 'linear-gradient(180deg, #080810 0%, #0a0a18 100%)',
+            borderBottom: '1px solid rgba(255,45,120,0.2)',
+            padding: '8px 24px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxShadow: '0 2px 20px rgba(0,0,0,0.6)',
+          }}>
+            <p style={{
+              fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 700,
+              color: 'rgba(255,255,255,0.35)', letterSpacing: 3, textTransform: 'uppercase',
+            }}>
+              {sectionLabel[tab]}
+            </p>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
+              {hero.name}
+            </p>
+          </header>
+
+          {/* Scrollable content */}
+          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            <main style={{
+              padding: '20px 28px',
+              display: tab === 'hero' ? 'grid' : 'flex',
+              gridTemplateColumns: tab === 'hero' ? '1fr 1fr' : undefined,
+              flexDirection: tab !== 'hero' ? 'column' : undefined,
+              gap: 16,
+              maxWidth: tab === 'hero' ? 1400 : 960,
+            }}>
+              {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
+              {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+              {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+              {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+              {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
+              {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
+              {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}
+              {tab === 'social' && socialSub === 'guild'   && <GuildPanel />}
+              {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+              {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+              {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+            </main>
+          </div>
+        </div>
+
+        <MysteryBoxModal />
+      </div>
+    );
+  }
+
+  // ── MOBILE LAYOUT ─────────────────────────────────────────────────────────────
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
