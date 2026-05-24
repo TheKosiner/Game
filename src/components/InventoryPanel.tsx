@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import ItemIcon from './ItemIcon';
 import type { Item } from '../types';
@@ -169,12 +170,12 @@ export default function InventoryPanel() {
         </div>
       )}
 
-      {/* Box open confirmation overlay */}
-      {boxConfirm && (() => {
+      {/* Box open confirmation overlay — portal bypasses zoom stacking context */}
+      {boxConfirm && createPortal((() => {
         const bc = RARITY_COLORS[boxConfirm.item.rarity] ?? '#aaa';
         return (
           <div style={{
-            position: 'fixed', inset: 0, zIndex: 1100,
+            position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(0,0,0,0.88)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 24,
@@ -220,12 +221,12 @@ export default function InventoryPanel() {
             </div>
           </div>
         );
-      })()}
+      })(), document.body)}
 
-      {/* Sell confirmation overlay */}
-      {sellConfirm && (
+      {/* Sell confirmation overlay — portal bypasses zoom stacking context */}
+      {sellConfirm && createPortal(
         <div style={{
-          position: 'fixed', inset: 0, zIndex: 1100,
+          position: 'fixed', inset: 0, zIndex: 9999,
           background: 'rgba(0,0,0,0.82)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: 24,
@@ -255,10 +256,7 @@ export default function InventoryPanel() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                onClick={() => {
-                  sellItem(sellConfirm.item, sellConfirm.idx);
-                  setSellConfirm(null);
-                }}
+                onClick={() => { sellItem(sellConfirm.item, sellConfirm.idx); setSellConfirm(null); }}
                 className="btn btn-primary"
                 style={{ flex: 1, fontSize: 10 }}
               >
@@ -273,7 +271,8 @@ export default function InventoryPanel() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
