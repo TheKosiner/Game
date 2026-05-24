@@ -479,6 +479,16 @@ input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
   background: rgba(0,245,255,0.06) !important;
 }
 
+/* ── Desktop 150% scale ── */
+.desktop-layout {
+  zoom: 1.5;
+  width: calc(100vw / 1.5);
+  height: calc(100dvh / 1.5);
+}
+.desktop-layout img {
+  zoom: 0.6667;
+}
+
 /* ── Desktop scrollbar ── */
 @media (min-width: 1024px) {
   ::-webkit-scrollbar { width: 4px; }

@@ -286,7 +286,7 @@ export default function App() {
       shop: t.nav.shop,
     };
     return (
-      <div style={{ display: 'flex', height: '100dvh', background: '#040408', overflow: 'hidden' }}>
+      <div className="desktop-layout" style={{ display: 'flex', background: '#040408', overflow: 'hidden' }}>
         <DesktopSidebar
           tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
           questBadge={questBadge} mailUnread={mailUnread} chatHasNew={chatHasNew}
