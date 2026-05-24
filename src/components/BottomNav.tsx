@@ -21,7 +21,7 @@ const svgBase = {
   strokeLinejoin: 'round' as const,
 };
 
-function TabIcon({ id, color }: { id: MainTab; color: string }) {
+export function TabIcon({ id, color }: { id: MainTab; color: string }) {
   const p = { ...svgBase, stroke: color };
   switch (id) {
     case 'hero': return (

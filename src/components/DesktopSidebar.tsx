@@ -2,7 +2,7 @@ import logoImg from '../assets/logo.png';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import type { MainTab, PlaySub, SocialSub, ShopSub } from './BottomNav';
+import { TabIcon, type MainTab, type PlaySub, type SocialSub, type ShopSub } from './BottomNav';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -80,31 +80,38 @@ function NavItem({
   );
 }
 
-function TopNavItem({
-  label, icon, active, onClick,
+function SectionNavItem({
+  label, tabId, active, onClick,
 }: {
-  label: string; icon: string; active: boolean; onClick: () => void;
+  label: string; tabId: MainTab; active: boolean; onClick: () => void;
 }) {
+  const color = active ? '#ff2d78' : 'rgba(255,255,255,0.45)';
   return (
     <button
       onClick={onClick}
       className="desktop-nav-top"
       style={{
-        width: '100%', padding: '11px 16px',
+        width: '100%', padding: '10px 16px',
         display: 'flex', alignItems: 'center', gap: 10,
-        background: active ? 'rgba(0,245,255,0.08)' : 'transparent',
+        background: active ? 'rgba(255,45,120,0.1)' : 'transparent',
         border: 'none',
-        borderLeft: `3px solid ${active ? '#00f5ff' : 'transparent'}`,
+        borderLeft: `3px solid ${active ? '#ff2d78' : 'transparent'}`,
         cursor: 'pointer',
         textAlign: 'left',
         transition: 'all 0.15s',
       }}
     >
-      <span style={{ fontSize: 16, width: 20, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      <span style={{
+        flexShrink: 0,
+        filter: active ? 'drop-shadow(0 0 5px #ff2d78)' : 'none',
+        display: 'flex', alignItems: 'center',
+      }}>
+        <TabIcon id={tabId} color={color} />
+      </span>
       <span style={{
         ...ORB, fontSize: 11,
-        color: active ? '#00f5ff' : 'rgba(255,255,255,0.6)',
-        textShadow: active ? '0 0 10px rgba(0,245,255,0.7)' : 'none',
+        color: active ? '#fff' : 'rgba(255,255,255,0.55)',
+        textShadow: active ? '0 0 8px rgba(255,45,120,0.6)' : 'none',
         letterSpacing: 1,
       }}>{label}</span>
     </button>
@@ -148,16 +155,13 @@ export default function DesktopSidebar({
       </div>
 
       {/* Nav */}
-      <nav style={{ flex: 1, paddingTop: 6 }}>
+      <nav style={{ flex: 1, paddingTop: 4 }}>
 
-        <TopNavItem
-          icon="👤"
-          label={t.nav.hero.toUpperCase()}
-          active={tab === 'hero'}
-          onClick={() => onTab('hero')}
-        />
+        {/* Hero */}
+        <SectionNavItem tabId="hero" label={t.nav.hero} active={tab === 'hero'} onClick={() => onTab('hero')} />
 
-        <SectionLabel label={t.nav.play} />
+        {/* Play */}
+        <SectionNavItem tabId="play" label={t.nav.play} active={tab === 'play'} onClick={() => { onTab('play'); onPlay('dungeon'); }} />
         <NavItem icon="🏰" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
           onClick={() => { onTab('play'); onPlay('dungeon'); }} />
         <NavItem icon="💀" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
@@ -165,7 +169,8 @@ export default function DesktopSidebar({
         <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
           onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
 
-        <SectionLabel label={t.nav.social} />
+        {/* Social */}
+        <SectionNavItem tabId="social" label={t.nav.social} active={tab === 'social'} onClick={() => { onTab('social'); onSocial('guild'); }} />
         <NavItem icon="⚔" label={t.nav.arena} active={tab === 'social' && socialSub === 'pvp'}
           onClick={() => { onTab('social'); onSocial('pvp'); }} />
         <NavItem icon="🏛" label={t.nav.guild} active={tab === 'social' && socialSub === 'guild'}
@@ -177,7 +182,8 @@ export default function DesktopSidebar({
         <NavItem icon="✉" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
           onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
 
-        <SectionLabel label={t.nav.shop} />
+        {/* Shop */}
+        <SectionNavItem tabId="shop" label={t.nav.shop} active={tab === 'shop'} onClick={() => { onTab('shop'); onShop('shop'); }} />
         <NavItem icon="🛒" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
           onClick={() => { onTab('shop'); onShop('shop'); }} />
         <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
