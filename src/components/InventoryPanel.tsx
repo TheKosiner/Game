@@ -7,6 +7,17 @@ import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB } from '../utils/styles';
 import { ComparePanel } from './ItemCompare';
+import mysteryBoxSrc from '../assets/mystery-box.png';
+import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
+import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
+
+const BOX_IMG: Partial<Record<string, string>> = {
+  common:   mysteryBoxCommonSrc,
+  uncommon: mysteryBoxUncommonSrc,
+};
+function getBoxImg(rarity: string) {
+  return BOX_IMG[rarity] ?? mysteryBoxSrc;
+}
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -119,6 +130,7 @@ export default function InventoryPanel() {
   const openBoxModal    = useGameStore(s => s.openMysteryBoxModal);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [sellConfirm, setSellConfirm] = useState<{ item: Item; idx: number } | null>(null);
+  const [boxConfirm,  setBoxConfirm]  = useState<{ item: Item; idx: number } | null>(null);
 
   const rc = sellConfirm ? (RARITY_COLORS[sellConfirm.item.rarity] ?? '#aaa') : '#aaa';
 
@@ -151,11 +163,64 @@ export default function InventoryPanel() {
               onEquip={() => { equipItem(item, idx); setSelectedIdx(null); }}
               onSell={() => { setSellConfirm({ item, idx }); setSelectedIdx(null); }}
               onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
-              onOpen={() => { openBoxModal(item, idx); setSelectedIdx(null); }}
+              onOpen={() => { setBoxConfirm({ item, idx }); setSelectedIdx(null); }}
             />
           ))}
         </div>
       )}
+
+      {/* Box open confirmation overlay */}
+      {boxConfirm && (() => {
+        const bc = RARITY_COLORS[boxConfirm.item.rarity] ?? '#aaa';
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 1100,
+            background: 'rgba(0,0,0,0.88)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24,
+          }}>
+            <div style={{
+              background: '#08080f',
+              border: `2px solid ${bc}66`,
+              boxShadow: `0 0 40px ${bc}33`,
+              padding: '20px 22px',
+              width: '100%', maxWidth: 320,
+              display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
+            }}>
+              <p style={{ ...ORB, fontSize: 10, color: bc, textAlign: 'center', letterSpacing: 2 }}>
+                OTWORZYĆ SKRZYNKĘ?
+              </p>
+              <img
+                src={getBoxImg(boxConfirm.item.rarity)}
+                alt={boxConfirm.item.name}
+                style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain' }}
+              />
+              <p style={{ ...MONO, fontSize: 11, color: bc, textAlign: 'center' }}>
+                {boxConfirm.item.name}
+              </p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
+                Po otwarciu skrzynka zniknie z plecaka.
+              </p>
+              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                <button
+                  onClick={() => { openBoxModal(boxConfirm.item, boxConfirm.idx); setBoxConfirm(null); }}
+                  className="btn btn-primary"
+                  style={{ flex: 1, fontSize: 10 }}
+                >
+                  ✓ Otwórz
+                </button>
+                <button
+                  onClick={() => setBoxConfirm(null)}
+                  className="btn btn-secondary"
+                  style={{ flex: 1, fontSize: 10 }}
+                >
+                  ✕ Anuluj
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Sell confirmation overlay */}
       {sellConfirm && (
