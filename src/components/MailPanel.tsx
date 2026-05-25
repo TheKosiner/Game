@@ -229,7 +229,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
           }}>
             <div>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
-              {recipient.heroName && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{recipient.heroName} · {lang === 'en' ? 'LVL.' : 'Poz.'}{recipient.level}</p>}
+              {recipient.level > 0 && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang === 'en' ? 'LVL.' : 'Poz.'}{recipient.level}</p>}
             </div>
             <button onClick={() => { setRecipient(null); setSearch(''); }} aria-label="Clear recipient" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
@@ -269,7 +269,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)' }}>{p.username}</span>
-                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{p.heroName} · {lang === 'en' ? 'LVL.' : 'Poz.'}{p.level}</span>
+                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang === 'en' ? 'LVL.' : 'Poz.'}{p.level}</span>
                   </div>
                 ))}
               </div>

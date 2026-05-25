@@ -494,7 +494,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
                   </p>
                 </div>
                 <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                  {t.guild.heroLevel(m.heroName, m.level)}
+                  POZ.{m.level}
                 </p>
                 {(guild.contributions?.[m.uid] ?? 0) > 0 && (
                   <p style={{ ...PX(4), color: '#ffd700', marginTop: 2 }}>

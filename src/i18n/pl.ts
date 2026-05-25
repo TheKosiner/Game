@@ -366,7 +366,7 @@ export const pl: Translations = {
     member1: 'członek',
     memberMany: 'członków',
     founded: (d: string) => `założona ${d}`,
-    heroLevel: (h: string, l: number) => `${h} · POZ.${l}`,
+    heroLevel: (l: number) => `POZ.${l}`,
     needAccount: 'Wymagane konto gracza',
     kickBtn: 'Wyrzuć',
     treasury: 'SKARBIEC',

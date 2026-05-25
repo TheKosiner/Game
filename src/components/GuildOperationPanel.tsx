@@ -88,7 +88,7 @@ export default function GuildOperationPanel({
             if (uid === myUid) continue; // own attacks logged locally in handleAttack
             if (!prevParts[uid] || p.attackedAt !== prevParts[uid].attackedAt) {
               const dmgDelta = p.damage - (prevParts[uid]?.damage ?? 0);
-              lines.push({ text: `⚔ ${p.heroName} → ${fmtNum(dmgDelta)} dmg`, type: 'hit' });
+              lines.push({ text: `⚔ ${p.username} → ${fmtNum(dmgDelta)} dmg`, type: 'hit' });
             }
           }
           if (newOp.enemyInFloor > (prev.enemyInFloor ?? 0) && newOp.floor === prev.floor) {
@@ -400,7 +400,7 @@ export default function GuildOperationPanel({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                         <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {p.heroName}{isMe ? ' (ty)' : ''}
+                          {p.username}{isMe ? ' (ty)' : ''}
                         </span>
                         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
                           {fmtNum(p.damage)}
@@ -442,7 +442,7 @@ export default function GuildOperationPanel({
             {participants.map(([uid, p]) => (
               <div key={uid} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ ...MONO, fontSize: 11, color: uid === myUid ? '#ffd700' : 'var(--text-dim)' }}>
-                  {uid === myUid ? '▶ ' : ''}{p.heroName}
+                  {uid === myUid ? '▶ ' : ''}{p.username}
                 </span>
                 <span style={{ ...MONO, fontSize: 11, color: '#f87171' }}>{fmtNum(p.damage)} dmg</span>
               </div>
@@ -506,7 +506,7 @@ export default function GuildOperationPanel({
                     padding: '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}>
                     <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)' }}>
-                      {idx + 1}. {p.heroName}{isMe ? ' (ty)' : ''}
+                      {idx + 1}. {p.username}{isMe ? ' (ty)' : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 10, color: '#f87171' }}>{fmtNum(p.damage)} dmg</span>
                   </div>
