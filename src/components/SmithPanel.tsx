@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import type { Item, ItemSlot, Equipment } from '../types';
+import type { Item, Equipment } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
