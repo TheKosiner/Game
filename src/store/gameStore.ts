@@ -1022,7 +1022,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (source === 'inventory') {
       item = hero.inventory[idxOrSlot as number];
     } else {
-      item = hero.equipment[idxOrSlot as ItemSlot] as Item | undefined;
+      item = hero.equipment[idxOrSlot as keyof typeof hero.equipment] as Item | undefined;
     }
     if (!item) return;
     if (item.slot === 'consumable' || item.slot === 'mystery_box') return;
@@ -1056,7 +1056,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       updatedHero = { ...updatedHero, inventory: inv };
       // Also update equipped copy if it was synced
     } else {
-      updatedHero = { ...updatedHero, equipment: { ...hero.equipment, [idxOrSlot as ItemSlot]: updatedItem } };
+      updatedHero = { ...updatedHero, equipment: { ...hero.equipment, [idxOrSlot as keyof typeof hero.equipment]: updatedItem } };
     }
     set({ hero: updatedHero });
     get().saveGame();

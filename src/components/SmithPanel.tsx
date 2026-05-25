@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import type { Item, ItemSlot } from '../types';
+import type { Item, ItemSlot, Equipment } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -19,10 +19,11 @@ const RARITY_COLOR: Record<string, string> = {
   legendary: '#ffd700',
 };
 
+type EquipSlot = keyof Equipment;
 type Source = 'equipment' | 'inventory';
 interface Selection {
   source: Source;
-  idxOrSlot: number | ItemSlot;
+  idxOrSlot: number | EquipSlot;
   item: Item;
 }
 
@@ -77,9 +78,9 @@ export default function SmithPanel() {
   const [section, setSection] = useState<'equipped' | 'inventory'>('equipped');
   const [flash, setFlash] = useState<'success' | 'fail' | null>(null);
 
-  const enhanceable: ItemSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
+  const enhanceable: EquipSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
 
-  const equippedItems: { slot: ItemSlot; item: Item }[] = enhanceable
+  const equippedItems: { slot: EquipSlot; item: Item }[] = enhanceable
     .filter(slot => !!hero.equipment[slot])
     .map(slot => ({ slot, item: hero.equipment[slot] as Item }));
 
@@ -87,7 +88,7 @@ export default function SmithPanel() {
     .map((item, idx) => ({ item, idx }))
     .filter(({ item }) => item.slot !== 'consumable' && item.slot !== 'mystery_box');
 
-  function handleSelect(source: Source, idxOrSlot: number | ItemSlot, item: Item) {
+  function handleSelect(source: Source, idxOrSlot: number | EquipSlot, item: Item) {
     if (selected?.source === source && selected.idxOrSlot === idxOrSlot) {
       setSelected(null);
     } else {
@@ -110,7 +111,7 @@ export default function SmithPanel() {
       if (selected.source === 'inventory') {
         updatedItem = updatedHero.inventory[selected.idxOrSlot as number];
       } else {
-        updatedItem = updatedHero.equipment[selected.idxOrSlot as ItemSlot] as Item | undefined;
+        updatedItem = updatedHero.equipment[selected.idxOrSlot as EquipSlot] as Item | undefined;
       }
       const didSucceed = (updatedItem?.enhanceLevel ?? 0) > enh;
       setFlash(didSucceed ? 'success' : 'fail');
@@ -127,7 +128,6 @@ export default function SmithPanel() {
   const selEnh = sel ? (sel.item.enhanceLevel ?? 0) : 0;
   const canEnhance = sel && selEnh < MAX_ENHANCE;
   const cost = canEnhance ? ENHANCE_COSTS[selEnh] : null;
-  const chance = canEnhance ? ENHANCE_CHANCES[selEnh] : null;
   const hasGold = cost !== null && hero.gold >= cost;
 
   // Sync selected item from store in case it was updated
@@ -137,7 +137,7 @@ export default function SmithPanel() {
       const item = hero.inventory[sel.idxOrSlot as number];
       return item ? { ...sel, item } : null;
     } else {
-      const item = hero.equipment[sel.idxOrSlot as ItemSlot] as Item | undefined;
+      const item = hero.equipment[sel.idxOrSlot as EquipSlot] as Item | undefined;
       return item ? { ...sel, item } : null;
     }
   })();
