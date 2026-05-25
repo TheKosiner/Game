@@ -238,11 +238,11 @@ export default function App() {
 
   // Clear chat badge when user is already on chat tab
   useEffect(() => {
-    if (tab === 'social' && socialSub === 'chat') {
+    if (tab === 'guild' && guildSub === 'chat') {
       lastChatViewedAt.current = Date.now();
       setChatHasNew(false);
     }
-  }, [tab, socialSub]);
+  }, [tab, guildSub]);
 
   // Claim any pending gem credits from Stripe purchases
   useEffect(() => {
