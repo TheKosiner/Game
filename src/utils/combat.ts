@@ -51,18 +51,18 @@ export function getHeroAttack(hero: Hero): number {
   // Magic weapons scale with magic stat (steeper: /70)
   if (weapon.magicDamage) {
     const magicVal = softCap(hero.stats.magic + eq.magic);
-    return Math.round((levelBase + (weapon.attackBonus ?? 0) + enhBonus) * (1 + magicVal / 70));
+    return Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + magicVal / 70)) + enhBonus;
   }
   const scaleStat = (Object.entries(weapon.stats ?? {})
     .filter(([k]) => k !== 'vitality' && k !== 'magicResistance')
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
   const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
-  const base = Math.round((levelBase + (weapon.attackBonus ?? 0) + enhBonus) * (1 + softCap(heroStatVal) / 100));
+  const base = Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
   if (weapon.ranged) {
     const intVal = softCap(hero.stats.intelligence + eq.intelligence);
-    return Math.round(base * (1 + intVal / 250));
+    return Math.round(base * (1 + intVal / 250)) + enhBonus;
   }
-  return base;
+  return base + enhBonus;
 }
 
 export function getHeroMagicResistance(hero: Hero): number {
