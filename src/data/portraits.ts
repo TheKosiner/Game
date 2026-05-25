@@ -21,11 +21,13 @@ export const PORTRAIT_LIST: PortraitDef[] = [
   { index: 7, src: `${BASE}portraits/Portrait_5.png`,      label: 'GRAZYNA',     gemPrice: 500 },
   { index: 8, src: `${BASE}portraits/beta_tester.png`,     label: 'BETA TESTER'             },
   { index: 2, src: `${BASE}portraits/1778573895348.png`,   label: 'KOSINER',     hidden: true },
+  { index: 9, src: `${BASE}portraits/fifu.png`,            label: 'FIFU',        hidden: true },
 ];
 
 // ── Ekskluzywne portrety przypisane do konkretnych graczy (po username) ───────
 export const PORTRAIT_OVERRIDES: Record<string, number> = {
   'Kosiner': 2,
+  'FIFU': 9,
 };
 
 export function resolvePortrait(p: number | undefined, username: string): number {
