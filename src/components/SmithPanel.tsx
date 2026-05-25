@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
@@ -26,13 +27,15 @@ interface Selection {
   idxOrSlot: number | EquipSlot;
   item: Item;
 }
+interface EnhanceResult {
+  success: boolean;
+  itemName: string;
+  itemEmoji: string;
+  fromLevel: number;
+  toLevel: number;
+}
 
-
-function ItemCard({
-  item, selected, onClick,
-}: {
-  item: Item; selected: boolean; onClick: () => void;
-}) {
+function ItemCard({ item, selected, onClick }: { item: Item; selected: boolean; onClick: () => void }) {
   const enh = item.enhanceLevel ?? 0;
   const color = RARITY_COLOR[item.rarity] ?? 'white';
   return (
@@ -57,14 +60,99 @@ function ItemCard({
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700', flexShrink: 0 }}>+{enh}</span>
           )}
         </div>
-        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>
-          Lv.{item.level}
-        </span>
+        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Lv.{item.level}</span>
       </div>
       {enh >= MAX_ENHANCE && (
         <span style={{ ...ORB, fontSize: 8, color: '#ffd700' }}>MAX</span>
       )}
     </button>
+  );
+}
+
+function ResultModal({ result, onClose, onRetry }: {
+  result: EnhanceResult;
+  onClose: () => void;
+  onRetry: () => void;
+}) {
+  const t = useT();
+  const lang = useLangStore(s => s.lang);
+  const success = result.success;
+  const color = success ? '#00e676' : '#ff4444';
+  const bgColor = success ? 'rgba(0,230,118,0.07)' : 'rgba(255,68,68,0.07)';
+  const borderColor = success ? 'rgba(0,230,118,0.35)' : 'rgba(255,68,68,0.35)';
+  const icon = success ? '✅' : '❌';
+  const title = success
+    ? (lang === 'en' ? 'ENHANCEMENT SUCCESS!' : 'ULEPSZENIE UDANE!')
+    : (lang === 'en' ? 'ENHANCEMENT FAILED!' : 'ULEPSZENIE NIEUDANE!');
+  const levelText = success
+    ? `+${result.fromLevel} → +${result.toLevel}`
+    : result.fromLevel > 0
+      ? `+${result.fromLevel} → +${result.toLevel}`
+      : (lang === 'en' ? 'Stayed at base' : 'Pozostał bazowy');
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.85)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{
+        background: '#08080f',
+        border: `2px solid ${borderColor}`,
+        boxShadow: `0 0 40px ${success ? 'rgba(0,230,118,0.2)' : 'rgba(255,68,68,0.2)'}`,
+        borderRadius: 10,
+        padding: '28px 24px',
+        width: '100%', maxWidth: 320,
+        display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 48 }}>{icon}</span>
+
+        <p style={{ ...ORB, fontSize: 13, color, textAlign: 'center', letterSpacing: 1, margin: 0 }}>
+          {title}
+        </p>
+
+        <div style={{
+          background: bgColor,
+          border: `1px solid ${borderColor}`,
+          borderRadius: 8, padding: '12px 20px',
+          display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+        }}>
+          <span style={{ fontSize: 28 }}>{result.itemEmoji}</span>
+          <div>
+            <p style={{ ...ORB, fontSize: 10, color: 'rgba(255,255,255,0.8)', margin: 0 }}>{result.itemName}</p>
+            <p style={{ ...ORB, fontSize: 14, color, margin: '4px 0 0' }}>{levelText}</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+          <button
+            onClick={onRetry}
+            style={{
+              ...ORB, flex: 1, padding: '10px 0', fontSize: 10,
+              background: 'linear-gradient(135deg, rgba(255,150,50,0.2), rgba(255,45,120,0.15))',
+              border: '1px solid #ff9632',
+              color: '#ff9632', borderRadius: 6, cursor: 'pointer',
+              textShadow: '0 0 8px rgba(255,150,50,0.4)',
+            }}
+          >
+            ⚒ {lang === 'en' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              ...MONO, flex: 1, padding: '10px 0', fontSize: 10,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: 'rgba(255,255,255,0.5)', borderRadius: 6, cursor: 'pointer',
+            }}
+          >
+            {lang === 'en' ? 'CLOSE' : 'ZAMKNIJ'}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -76,7 +164,7 @@ export default function SmithPanel() {
 
   const [selected, setSelected] = useState<Selection | null>(null);
   const [section, setSection] = useState<'equipped' | 'inventory'>('equipped');
-  const [flash, setFlash] = useState<'success' | 'fail' | null>(null);
+  const [result, setResult] = useState<EnhanceResult | null>(null);
 
   const enhanceable: EquipSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
 
@@ -102,9 +190,11 @@ export default function SmithPanel() {
     if (enh >= MAX_ENHANCE) return;
     if (hero.gold < ENHANCE_COSTS[enh]) return;
 
+    const itemName = lang === 'en' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
+    const itemEmoji = selected.item.emoji;
+
     enhanceItem(selected.source, selected.idxOrSlot);
 
-    // Detect success by checking updated item
     setTimeout(() => {
       const updatedHero = useGameStore.getState().hero;
       let updatedItem: Item | undefined;
@@ -113,43 +203,53 @@ export default function SmithPanel() {
       } else {
         updatedItem = updatedHero.equipment[selected.idxOrSlot as EquipSlot] as Item | undefined;
       }
-      const didSucceed = (updatedItem?.enhanceLevel ?? 0) > enh;
-      setFlash(didSucceed ? 'success' : 'fail');
-      setTimeout(() => setFlash(null), 1200);
-
-      // Keep selection updated after enhance
+      const newLevel = updatedItem?.enhanceLevel ?? 0;
+      const didSucceed = newLevel > enh;
+      setResult({ success: didSucceed, itemName, itemEmoji, fromLevel: enh, toLevel: newLevel });
       if (updatedItem) {
         setSelected(prev => prev ? { ...prev, item: updatedItem! } : null);
       }
     }, 0);
   }
 
-  const sel = selected;
-  const selEnh = sel ? (sel.item.enhanceLevel ?? 0) : 0;
-  const canEnhance = sel && selEnh < MAX_ENHANCE;
-  const cost = canEnhance ? ENHANCE_COSTS[selEnh] : null;
-  const hasGold = cost !== null && hero.gold >= cost;
+  function handleClose() {
+    setResult(null);
+  }
 
-  // Sync selected item from store in case it was updated
+  function handleRetry() {
+    setResult(null);
+    // handleEnhance will be called by the button, so just close modal
+  }
+
+  // Sync selected item from store
   const freshSelected = (() => {
-    if (!sel) return null;
-    if (sel.source === 'inventory') {
-      const item = hero.inventory[sel.idxOrSlot as number];
-      return item ? { ...sel, item } : null;
+    if (!selected) return null;
+    if (selected.source === 'inventory') {
+      const item = hero.inventory[selected.idxOrSlot as number];
+      return item ? { ...selected, item } : null;
     } else {
-      const item = hero.equipment[sel.idxOrSlot as EquipSlot] as Item | undefined;
-      return item ? { ...sel, item } : null;
+      const item = hero.equipment[selected.idxOrSlot as EquipSlot] as Item | undefined;
+      return item ? { ...selected, item } : null;
     }
   })();
+
   const freshEnh = freshSelected ? (freshSelected.item.enhanceLevel ?? 0) : 0;
   const freshCost = freshSelected && freshEnh < MAX_ENHANCE ? ENHANCE_COSTS[freshEnh] : null;
   const freshChance = freshSelected && freshEnh < MAX_ENHANCE ? ENHANCE_CHANCES[freshEnh] : null;
-
+  const hasGold = freshCost !== null && hero.gold >= freshCost;
   const isWeapon = freshSelected?.item.slot === 'weapon';
   const isDefense = freshSelected?.item.slot === 'armor' || freshSelected?.item.slot === 'helmet' || freshSelected?.item.slot === 'boots';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {result && (
+        <ResultModal
+          result={result}
+          onClose={handleClose}
+          onRetry={handleRetry}
+        />
+      )}
 
       {/* Header */}
       <div style={{
@@ -165,8 +265,6 @@ export default function SmithPanel() {
 
         {/* Item list */}
         <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-          {/* Section toggle */}
           <div style={{ display: 'flex', gap: 4 }}>
             {(['equipped', 'inventory'] as const).map(s => (
               <button key={s} onClick={() => setSection(s)} style={{
@@ -217,15 +315,10 @@ export default function SmithPanel() {
             </div>
           ) : (
             <div style={{
-              background: flash === 'success'
-                ? 'rgba(0,255,100,0.08)'
-                : flash === 'fail'
-                  ? 'rgba(255,50,50,0.08)'
-                  : 'rgba(255,150,50,0.05)',
-              border: `1px solid ${flash === 'success' ? 'rgba(0,255,100,0.3)' : flash === 'fail' ? 'rgba(255,50,50,0.3)' : 'rgba(255,150,50,0.2)'}`,
+              background: 'rgba(255,150,50,0.05)',
+              border: '1px solid rgba(255,150,50,0.2)',
               borderRadius: 8, padding: '14px 16px',
               display: 'flex', flexDirection: 'column', gap: 10,
-              transition: 'background 0.3s, border-color 0.3s',
             }}>
               {/* Item preview */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -264,7 +357,6 @@ export default function SmithPanel() {
                 </p>
               ) : (
                 <>
-                  {/* Stats */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     {(isWeapon || isDefense) && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -273,25 +365,31 @@ export default function SmithPanel() {
                         </span>
                         <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
                           +{isWeapon
-                            ? Math.max(1, Math.round(freshSelected.item.level * 0.6))
-                            : Math.max(1, Math.round(freshSelected.item.level * 0.4))}
+                            ? Math.max(1, Math.round(freshSelected.item.level * 0.1))
+                            : Math.max(1, Math.round(freshSelected.item.level * 0.07))}
                         </span>
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>Success</span>
+                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                        {lang === 'en' ? 'Success' : 'Szansa'}
+                      </span>
                       <span style={{ ...ORB, fontSize: 10, color: freshChance! >= 50 ? '#4caf50' : freshChance! >= 30 ? '#ff9632' : '#ff4444' }}>
                         {freshChance}%
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>Cost</span>
+                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                        {lang === 'en' ? 'Cost' : 'Koszt'}
+                      </span>
                       <span style={{ ...ORB, fontSize: 10, color: hasGold ? '#ffd700' : '#ff4444' }}>
                         {freshCost}🪙
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>On fail</span>
+                      <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                        {lang === 'en' ? 'On fail' : 'Przy porażce'}
+                      </span>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,100,100,0.7)' }}>
                         {freshEnh > 0 ? `+${freshEnh} → +${freshEnh - 1}` : '—'}
                       </span>
