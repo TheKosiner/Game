@@ -437,8 +437,27 @@ export async function createGuild(
 export async function getGuild(guildId: string): Promise<Guild | null> {
   if (!db) return null;
   const snap = await getDoc(doc(db, 'guilds', guildId));
-  if (!snap.exists()) return null;
+  if (!snap.exists()) {
+    // Guild deleted — clean up all orphaned references in the background
+    cleanupDeletedGuild(guildId).catch(() => {});
+    return null;
+  }
   return { id: snap.id, ...snap.data() } as Guild;
+}
+
+/** Remove all traces of a guild that no longer exists in Firestore. */
+async function cleanupDeletedGuild(guildId: string): Promise<void> {
+  if (!db) return;
+  const [orphanPlayers, orphanInvites] = await Promise.all([
+    getDocs(query(collection(db, 'players'), where('guildId', '==', guildId))),
+    getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId))),
+  ]);
+  await Promise.all([
+    ...orphanPlayers.docs.map(d =>
+      updateDoc(d.ref, { guildId: deleteField(), guildTag: deleteField() })
+    ),
+    ...orphanInvites.docs.map(d => deleteDoc(d.ref)),
+  ]);
 }
 
 export async function getGuildMemberLevels(uids: string[]): Promise<Record<string, { level: number; heroName: string; portrait: number }>> {
@@ -459,7 +478,16 @@ export async function getMyGuildId(uid: string): Promise<string | null> {
   if (!db) return null;
   const snap = await getDoc(doc(db, 'players', uid));
   if (!snap.exists()) return null;
-  return (snap.data().guildId as string) ?? null;
+  const guildId = (snap.data().guildId as string) ?? null;
+  if (!guildId) return null;
+  // Verify the guild still exists; if not, clean up immediately
+  const guildSnap = await getDoc(doc(db, 'guilds', guildId));
+  if (!guildSnap.exists()) {
+    await updateDoc(snap.ref, { guildId: deleteField(), guildTag: deleteField() });
+    cleanupDeletedGuild(guildId).catch(() => {});
+    return null;
+  }
+  return guildId;
 }
 
 export async function getGuildSentInvites(guildId: string, fromUid: string): Promise<string[]> {
@@ -515,7 +543,21 @@ export async function getMyInvites(uid: string): Promise<GuildInvite[]> {
     collection(db, 'guildInvites'),
     where('toUid', '==', uid),
   ));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as GuildInvite));
+  const invites = snap.docs.map(d => ({ id: d.id, ...d.data() } as GuildInvite));
+  // Check which inviting guilds still exist and silently delete stale invites
+  const guildChecks = await Promise.all(
+    [...new Set(invites.map(i => i.guildId))].map(async gId => {
+      const g = await getDoc(doc(db!, 'guilds', gId));
+      return { gId, exists: g.exists() };
+    })
+  );
+  const deadGuilds = new Set(guildChecks.filter(c => !c.exists).map(c => c.gId));
+  if (deadGuilds.size > 0) {
+    const stale = snap.docs.filter(d => deadGuilds.has((d.data() as GuildInvite).guildId));
+    await Promise.all(stale.map(d => deleteDoc(d.ref)));
+    await Promise.all([...deadGuilds].map(gId => cleanupDeletedGuild(gId).catch(() => {})));
+  }
+  return invites.filter(i => !deadGuilds.has(i.guildId));
 }
 
 export async function acceptInvite(
