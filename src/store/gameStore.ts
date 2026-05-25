@@ -1014,7 +1014,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   enhanceItem: (source, idxOrSlot) => {
     const { hero } = get();
-    const ENHANCE_COSTS = [200, 500, 1000, 2000, 4000, 8000, 15000, 25000, 40000];
+    const ENHANCE_COST_PER_LV = [20, 50, 100, 200, 400, 800, 1500, 2500, 4000];
     const ENHANCE_CHANCES = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
     const MAX_ENHANCE = 9;
 
@@ -1030,7 +1030,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const currentLevel = item.enhanceLevel ?? 0;
     if (currentLevel >= MAX_ENHANCE) return;
 
-    const cost = ENHANCE_COSTS[currentLevel];
+    const cost = item.level * ENHANCE_COST_PER_LV[currentLevel];
     if (hero.gold < cost) return;
 
     const chance = ENHANCE_CHANCES[currentLevel];

@@ -8,7 +8,7 @@ import type { Item, Equipment } from '../types';
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
 
-const ENHANCE_COSTS = [200, 500, 1000, 2000, 4000, 8000, 15000, 25000, 40000];
+const ENHANCE_COST_PER_LV = [20, 50, 100, 200, 400, 800, 1500, 2500, 4000];
 const ENHANCE_CHANCES = [90, 80, 70, 60, 50, 40, 30, 20, 10];
 const MAX_ENHANCE = 9;
 
@@ -187,7 +187,7 @@ export default function SmithPanel() {
     if (!selected) return;
     const enh = selected.item.enhanceLevel ?? 0;
     if (enh >= MAX_ENHANCE) return;
-    if (hero.gold < ENHANCE_COSTS[enh]) return;
+    if (hero.gold < selected.item.level * ENHANCE_COST_PER_LV[enh]) return;
 
     const itemName = lang === 'en' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
     const itemEmoji = selected.item.emoji;
@@ -233,7 +233,7 @@ export default function SmithPanel() {
   })();
 
   const freshEnh = freshSelected ? (freshSelected.item.enhanceLevel ?? 0) : 0;
-  const freshCost = freshSelected && freshEnh < MAX_ENHANCE ? ENHANCE_COSTS[freshEnh] : null;
+  const freshCost = freshSelected && freshEnh < MAX_ENHANCE ? freshSelected.item.level * ENHANCE_COST_PER_LV[freshEnh] : null;
   const freshChance = freshSelected && freshEnh < MAX_ENHANCE ? ENHANCE_CHANCES[freshEnh] : null;
   const hasGold = freshCost !== null && hero.gold >= freshCost;
   const isWeapon = freshSelected?.item.slot === 'weapon';
