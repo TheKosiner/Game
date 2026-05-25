@@ -68,7 +68,6 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
           <p style={{ ...ORB, fontSize: 11, color: 'var(--gold-bright)', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>
             {entry.username}
           </p>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{entry.heroName}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 6px' }}>
               POZ.{entry.level}
@@ -312,9 +311,6 @@ export default function LeaderboardPanel() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {entry.username}{isMe ? ' ◀' : ''}
-                      </p>
-                      <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 1 }}>
-                        {entry.heroName}
                       </p>
                       {(entry.pvpWins !== undefined || entry.pvpLosses !== undefined) && (
                         <p style={{ ...PX(4), color: 'var(--text-muted)' }}>

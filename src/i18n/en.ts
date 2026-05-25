@@ -365,7 +365,7 @@ export const en = {
     member1: 'member',
     memberMany: 'members',
     founded: (d: string) => `founded ${d}`,
-    heroLevel: (h: string, l: number) => `${h} · LVL.${l}`,
+    heroLevel: (l: number) => `LVL.${l}`,
     needAccount: 'Player account required',
     kickBtn: 'Kick',
     treasury: 'TREASURY',

@@ -41,8 +41,8 @@ function buildLog(boss: GuildBossState, myUid: string, isEn: boolean): string[] 
       const pct = boss.maxHp > 0 ? ((p.damage / boss.maxHp) * 100).toFixed(2) : '0.00';
       const tag = uid === myUid ? (isEn ? ' (you)' : ' (ty)') : '';
       return isEn
-        ? `⚔ ${p.heroName}${tag} [${p.username}] dealt ${fmtNum(p.damage)} dmg — ${pct}% boss HP`
-        : `⚔ ${p.heroName}${tag} [${p.username}] zadał ${fmtNum(p.damage)} dmg — ${pct}% HP bossa`;
+        ? `⚔ ${p.username}${tag} dealt ${fmtNum(p.damage)} dmg — ${pct}% boss HP`
+        : `⚔ ${p.username}${tag} zadał ${fmtNum(p.damage)} dmg — ${pct}% HP bossa`;
     });
 }
 
@@ -409,7 +409,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                     <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {p.heroName} {isMe ? (isEn ? '(you)' : '(ty)') : ''}
+                      {p.username} {isMe ? (isEn ? '(you)' : '(ty)') : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
                       {fmtNum(p.damage)} ({pct.toFixed(2)}%)

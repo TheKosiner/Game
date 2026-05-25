@@ -190,9 +190,8 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           </div>
 
           <div style={{ flex: 1 }}>
-            <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 2 }}>{combat.opponent.heroName}</p>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>
-              @{combat.opponent.username} · POZ. {combat.opponent.level}
+            <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 5 }}>
+              {combat.opponent.username} · POZ. {combat.opponent.level}
             </p>
             <p style={{ ...MONO, fontSize: 10, color: oppHpColor }}>
               {Math.max(0, combat.oppHp)} / {combat.oppMaxHp} HP
@@ -223,7 +222,6 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
           <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
             <img src={portraitSrc(hero.portrait)} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
-          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flex: 1 }}>{hero.name}</span>
           <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
         </div>
         <div className="pixel-bar">
@@ -353,9 +351,6 @@ function ArenaCard({ entry, canFight, onChallenge }: {
       <div>
         <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {entry.username}
-        </p>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {entry.heroName}
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
           <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.25)', padding: '2px 5px' }}>
@@ -601,13 +596,13 @@ export default function PvpPanel() {
 
     const { damage: heroDmg, isCrit: heroCrit } = pvpHit(combat.heroAtk, combat.oppDef, combat.heroCritChance);
     oppHp = Math.max(0, oppHp - heroDmg);
-    newLog.unshift({ message: `${t.pvp.youAttack(combat.opponent.heroName, heroDmg)}${heroCrit ? ` ${t.pvp.crit}` : ''} (${oppHp}/${combat.oppMaxHp} HP)`, type: 'hero', timestamp: Date.now() });
+    newLog.unshift({ message: `${t.pvp.youAttack(combat.opponent.username, heroDmg)}${heroCrit ? ` ${t.pvp.crit}` : ''} (${oppHp}/${combat.oppMaxHp} HP)`, type: 'hero', timestamp: Date.now() });
 
     if (oppHp <= 0) {
       if (!resultRecorded) {
         setResultRecorded(true);
         const result = recordPvpResult(true, combat.opponent);
-        newLog.unshift({ message: t.pvp.youWin(combat.opponent.heroName, result.xpGained, result.goldGained), type: 'loot', timestamp: Date.now() });
+        newLog.unshift({ message: t.pvp.youWin(combat.opponent.username, result.xpGained, result.goldGained), type: 'loot', timestamp: Date.now() });
         setCombat({ ...combat, oppHp: 0, heroHp, log: newLog, done: true, won: true, xpGained: result.xpGained, goldGained: result.goldGained });
         if (user) {
           addPvpFight({ attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level, defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level, attackerWon: true, timestamp: Date.now() }).catch(() => {});
@@ -619,13 +614,13 @@ export default function PvpPanel() {
 
     const { damage: oppDmg, isCrit: oppCrit } = pvpHit(combat.oppAtk, combat.heroDef, combat.oppCritChance);
     heroHp = Math.max(0, heroHp - oppDmg);
-    newLog.unshift({ message: `${t.pvp.oppAttacks(combat.opponent.heroName, oppDmg)}${oppCrit ? ` ${t.pvp.crit}` : ''} (${heroHp}/${combat.heroMaxHp} HP)`, type: 'enemy', timestamp: Date.now() });
+    newLog.unshift({ message: `${t.pvp.oppAttacks(combat.opponent.username, oppDmg)}${oppCrit ? ` ${t.pvp.crit}` : ''} (${heroHp}/${combat.heroMaxHp} HP)`, type: 'enemy', timestamp: Date.now() });
 
     if (heroHp <= 0) {
       if (!resultRecorded) {
         setResultRecorded(true);
         const result = recordPvpResult(false, combat.opponent);
-        newLog.unshift({ message: t.pvp.youLose(combat.opponent.heroName, result.xpGained), type: 'system', timestamp: Date.now() });
+        newLog.unshift({ message: t.pvp.youLose(combat.opponent.username, result.xpGained), type: 'system', timestamp: Date.now() });
         setCombat({ ...combat, oppHp, heroHp: 0, log: newLog, done: true, won: false, xpGained: result.xpGained, goldGained: 0 });
         if (user) {
           addPvpFight({ attackerUid: user.uid, attackerUsername: user.username, attackerHeroName: hero.name, attackerLevel: hero.level, defenderUid: combat.opponent.uid, defenderUsername: combat.opponent.username, defenderHeroName: combat.opponent.heroName, defenderLevel: combat.opponent.level, attackerWon: false, timestamp: Date.now() }).catch(() => {});
@@ -670,7 +665,7 @@ export default function PvpPanel() {
       oppAtk, oppDef,
       heroCritChance: 0.10 + hero.stats.dexterity * 0.005,
       oppCritChance:  0.10 + entry.level * 0.003,
-      log: [{ message: t.pvp.fightStart(entry.heroName, entry.level), type: 'system', timestamp: Date.now() }],
+      log: [{ message: t.pvp.fightStart(entry.username, entry.level), type: 'system', timestamp: Date.now() }],
       done: false, won: null, xpGained: 0, goldGained: 0,
     });
     setResultRecorded(false);
