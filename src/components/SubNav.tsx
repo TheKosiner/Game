@@ -9,7 +9,7 @@ interface SubNavProps<T extends string> {
   centered?: boolean;
 }
 
-function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNavProps<T>) {
+export function SubNavBar<T extends string>({ tabs, active, onChange, centered }: SubNavProps<T>) {
   return (
     <div style={{
       position: 'sticky',

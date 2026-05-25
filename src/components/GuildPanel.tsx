@@ -17,6 +17,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
+import { SubNavBar } from './SubNav';
 
 // ── Create Guild Form ────────────────────────────────────────────────────────
 
@@ -417,18 +418,17 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
       )}
 
       {/* INFO / BOSS / CHAT / TERRITORY / OPS tabs */}
-      <div style={{ display: 'flex', gap: 4 }}>
-        {(['info', 'boss', 'chat', 'territory', 'ops'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setGuildTab(tab)}
-            className={guildTab === tab ? 'btn btn-primary' : 'btn btn-secondary'}
-            style={{ flex: 1, fontSize: 9, padding: '7px 2px' }}
-          >
-            {tab === 'info' ? 'INFO' : tab === 'boss' ? '💀 BOSS' : tab === 'chat' ? '💬 CHAT' : tab === 'territory' ? '🗺 MAPA' : '⚔ RAJD'}
-          </button>
-        ))}
-      </div>
+      <SubNavBar
+        tabs={[
+          { id: 'info',      label: 'INFO' },
+          { id: 'boss',      label: '💀 BOSS' },
+          { id: 'chat',      label: '💬 CHAT' },
+          { id: 'territory', label: '🗺 MAPA' },
+          { id: 'ops',       label: '⚔ RAJD' },
+        ]}
+        active={guildTab}
+        onChange={setGuildTab}
+      />
 
       {/* CHAT view */}
       {guildTab === 'chat' && (
