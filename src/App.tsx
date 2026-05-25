@@ -160,6 +160,28 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', flush);
   }, [gameLoaded]);
 
+  // Sync to cloud immediately when the player leaves the tab/app so that
+  // switching to another device (phone ↔ PC) always picks up the latest state.
+  // Also reload from cloud when returning after a long absence (>30s) to pick
+  // up changes made on the other device.
+  useEffect(() => {
+    if (!gameLoaded || !user) return;
+    let hiddenAt = 0;
+    const handleVisibility = () => {
+      const currentUser = useAuthStore.getState().user;
+      if (document.hidden) {
+        hiddenAt = Date.now();
+        if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
+      } else {
+        if (currentUser && Date.now() - hiddenAt > 30_000) {
+          loadFromCloud(currentUser.uid).catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [gameLoaded, user?.uid]);
+
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
   useEffect(() => {
     if (!gameLoaded || !user) return;
