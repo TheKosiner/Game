@@ -7,6 +7,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB } from '../utils/styles';
+import { getEnhanceAttackBonus, getEnhanceDefenseBonus } from '../utils/combat';
 import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
@@ -86,6 +87,11 @@ function ItemCard({
               {slotLabel[item.slot] ?? item.slot.toUpperCase()}
             </span>
             <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{getItemName(item, lang)}</p>
+            {(item.enhanceLevel ?? 0) > 0 && (
+              <span style={{ ...ORB, fontSize: 10, color: '#ffd700', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.35)', padding: '1px 5px', flexShrink: 0 }}>
+                +{item.enhanceLevel}
+              </span>
+            )}
             <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
               {rarityLabel[item.rarity]}
             </span>
@@ -100,6 +106,8 @@ function ItemCard({
                   {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
                   {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
                   {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
+                  {getEnhanceAttackBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒⚔+${getEnhanceAttackBonus(item)}`}</span>}
+                  {getEnhanceDefenseBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒🛡+${getEnhanceDefenseBonus(item)}`}</span>}
                 </>
             }
           </p>

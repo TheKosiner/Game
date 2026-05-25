@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
-import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange, getEnhanceAttackBonus, getEnhanceDefenseBonus } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
@@ -76,10 +76,22 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
         gap: 1, cursor: item ? 'pointer' : 'default',
         boxShadow: selected ? `0 0 14px ${color}44` : item ? `0 0 8px ${color}22` : 'none',
         transition: 'border-color 0.15s, box-shadow 0.15s',
+        position: 'relative',
       }}
     >
       {item
-        ? <ItemIcon item={item} size={size - 16} />
+        ? <>
+            <ItemIcon item={item} size={size - 16} />
+            {(item.enhanceLevel ?? 0) > 0 && (
+              <span style={{
+                position: 'absolute', bottom: 0, right: 0,
+                ...ORB, fontSize: 8, color: '#ffd700',
+                background: 'rgba(0,0,0,0.85)', border: '1px solid rgba(255,215,0,0.5)',
+                padding: '0 3px', lineHeight: '14px',
+                pointerEvents: 'none',
+              }}>+{item.enhanceLevel}</span>
+            )}
+          </>
         : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
       }
       <span style={{
@@ -120,7 +132,14 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <ItemIcon item={item} size={48} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}`, marginBottom: 3 }}>{getItemName(item, lang)}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <p style={{ ...ORB, fontSize: 10, color: rc, textShadow: `0 0 8px ${rc}` }}>{getItemName(item, lang)}</p>
+            {(item.enhanceLevel ?? 0) > 0 && (
+              <span style={{ ...ORB, fontSize: 11, color: '#ffd700', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.4)', padding: '1px 6px', flexShrink: 0 }}>
+                +{item.enhanceLevel}
+              </span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
             <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
               {rarityLabel[item.rarity]}
@@ -154,7 +173,19 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
-        {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
+        {getEnhanceAttackBonus(item) > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {lang === 'en' ? 'Enhance ATK' : 'Bonus kowal ATK'}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceAttackBonus(item)}</span>
+          </div>
+        )}
+        {getEnhanceDefenseBonus(item) > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {lang === 'en' ? 'Enhance DEF' : 'Bonus kowal DEF'}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceDefenseBonus(item)}</span>
+          </div>
+        )}
+        {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && getEnhanceAttackBonus(item) === 0 && getEnhanceDefenseBonus(item) === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No bonuses' : 'Brak bonusów'}</p>
         )}
       </div>
