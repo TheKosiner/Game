@@ -1,4 +1,4 @@
-import type { Hero, Enemy, Stats } from '../types';
+import type { Hero, Enemy, Stats, Item } from '../types';
 
 function softCap(stat: number): number {
   if (stat <= 100) return stat;
@@ -30,6 +30,16 @@ export function getEquipmentStats(equipment: Hero['equipment']): Stats {
   return r;
 }
 
+export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
+  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.6));
+}
+
+export function getEnhanceDefenseBonus(item: Item | undefined): number {
+  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.4));
+}
+
 export function getHeroAttack(hero: Hero): number {
   const eq = getEquipmentStats(hero.equipment);
   const weapon = hero.equipment.weapon;
@@ -37,16 +47,17 @@ export function getHeroAttack(hero: Hero): number {
   if (!weapon) {
     return Math.round(levelBase * (1 + softCap(hero.stats.strength + eq.strength) / 100));
   }
+  const enhBonus = getEnhanceAttackBonus(weapon);
   // Magic weapons scale with magic stat (steeper: /70)
   if (weapon.magicDamage) {
     const magicVal = softCap(hero.stats.magic + eq.magic);
-    return Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + magicVal / 70));
+    return Math.round((levelBase + (weapon.attackBonus ?? 0) + enhBonus) * (1 + magicVal / 70));
   }
   const scaleStat = (Object.entries(weapon.stats ?? {})
     .filter(([k]) => k !== 'vitality' && k !== 'magicResistance')
     .sort(([, a], [, b]) => (b as number ?? 0) - (a as number ?? 0))[0]?.[0] ?? 'strength') as keyof Stats;
   const heroStatVal = (hero.stats[scaleStat] ?? hero.stats.strength) + (eq[scaleStat] ?? 0);
-  const base = Math.round((levelBase + (weapon.attackBonus ?? 0)) * (1 + softCap(heroStatVal) / 100));
+  const base = Math.round((levelBase + (weapon.attackBonus ?? 0) + enhBonus) * (1 + softCap(heroStatVal) / 100));
   if (weapon.ranged) {
     const intVal = softCap(hero.stats.intelligence + eq.intelligence);
     return Math.round(base * (1 + intVal / 250));
@@ -66,7 +77,8 @@ export function getHeroDefense(hero: Hero): number {
   const boots = hero.equipment.boots;
   const base = 2 + (hero.stats.vitality + eq.vitality) + hero.level;
   const bonus = (armor?.defenseBonus ?? 0) + (helmet?.defenseBonus ?? 0) + (boots?.defenseBonus ?? 0);
-  return base + bonus;
+  const enhBonus = getEnhanceDefenseBonus(armor) + getEnhanceDefenseBonus(helmet) + getEnhanceDefenseBonus(boots);
+  return base + bonus + enhBonus;
 }
 
 export function getHeroMaxHp(stats: Stats, level: number, equipment?: Hero['equipment']): number {

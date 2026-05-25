@@ -27,6 +27,7 @@ export interface Item {
   emoji: string;
   healPercent?: number;
   color?: string;
+  enhanceLevel?: number;
 }
 
 export interface Equipment {
@@ -269,6 +270,7 @@ export interface GameState {
   clearChallengeResult: () => void;
   takeDamageInGuildRaid: (amount: number) => void;
   recordTerritoryClaimAt: (territoryId: string) => void;
+  enhanceItem: (source: 'inventory' | 'equipment', idxOrSlot: number | ItemSlot) => void;
   addToInventory: (item: Item) => void;
   openMysteryBoxModal: (box: Item, invIdx: number) => void;
   collectMysteryBoxReward: (box: Item, invIdx: number, wonItem: Item) => boolean;

@@ -180,6 +180,8 @@ export default function DesktopSidebar({
             onClick={() => { onTab('play'); onPlay('challenge'); }} />
           <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
             onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
+          <NavItem icon="⚒" label={t.nav.smith} active={tab === 'play' && playSub === 'smith'}
+            onClick={() => { onTab('play'); onPlay('smith'); }} />
         </>}
 
         {/* Social */}

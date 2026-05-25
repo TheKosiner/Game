@@ -24,6 +24,7 @@ import PvpPanel from './components/PvpPanel';
 import GuildPanel from './components/GuildPanel';
 import MailPanel from './components/MailPanel';
 import ChallengePanel from './components/ChallengePanel';
+import SmithPanel from './components/SmithPanel';
 import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
 import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
@@ -325,6 +326,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+              {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
               {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
               {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}
@@ -463,6 +465,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+          {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
           {tab === 'shop'   && shopSub === 'shop'  && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'  && <GemsPanel />}
           {tab === 'social' && socialSub === 'pvp'     && <PvpPanel />}

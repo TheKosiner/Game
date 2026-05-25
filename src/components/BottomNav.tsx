@@ -1,7 +1,7 @@
 import { useT } from '../hooks/useT';
 
 export type MainTab = 'hero' | 'play' | 'social' | 'shop';
-export type PlaySub   = 'dungeon' | 'challenge' | 'quests';
+export type PlaySub   = 'dungeon' | 'challenge' | 'quests' | 'smith';
 export type SocialSub = 'guild' | 'pvp' | 'ranking' | 'mail' | 'chat';
 export type ShopSub   = 'shop' | 'gems';
 

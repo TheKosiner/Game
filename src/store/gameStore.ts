@@ -1012,6 +1012,56 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  enhanceItem: (source, idxOrSlot) => {
+    const { hero } = get();
+    const ENHANCE_COSTS = [200, 500, 1000, 2000, 4000, 8000, 15000, 25000, 40000];
+    const ENHANCE_CHANCES = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+    const MAX_ENHANCE = 9;
+
+    let item: Item | undefined;
+    if (source === 'inventory') {
+      item = hero.inventory[idxOrSlot as number];
+    } else {
+      item = hero.equipment[idxOrSlot as ItemSlot] as Item | undefined;
+    }
+    if (!item) return;
+    if (item.slot === 'consumable' || item.slot === 'mystery_box') return;
+
+    const currentLevel = item.enhanceLevel ?? 0;
+    if (currentLevel >= MAX_ENHANCE) return;
+
+    const cost = ENHANCE_COSTS[currentLevel];
+    if (hero.gold < cost) return;
+
+    const chance = ENHANCE_CHANCES[currentLevel];
+    const success = Math.random() < chance;
+    const newLevel = success ? currentLevel + 1 : Math.max(0, currentLevel - 1);
+    const updatedItem: Item = { ...item, enhanceLevel: newLevel };
+
+    const t = getT();
+    const itemName = getLang() === 'en' ? (item.nameEn ?? item.name) : item.name;
+    const plusBefore = currentLevel > 0 ? `+${currentLevel}` : '';
+    const plusAfter = `+${newLevel}`;
+
+    if (success) {
+      get().addCombatLog(`⚒ ${t.smith.success(itemName, plusBefore, plusAfter)}`, 'system');
+    } else {
+      get().addCombatLog(`⚒ ${t.smith.fail(itemName, plusBefore, plusAfter)}`, 'system');
+    }
+
+    let updatedHero = { ...hero, gold: hero.gold - cost };
+    if (source === 'inventory') {
+      const inv = [...hero.inventory];
+      inv[idxOrSlot as number] = updatedItem;
+      updatedHero = { ...updatedHero, inventory: inv };
+      // Also update equipped copy if it was synced
+    } else {
+      updatedHero = { ...updatedHero, equipment: { ...hero.equipment, [idxOrSlot as ItemSlot]: updatedItem } };
+    }
+    set({ hero: updatedHero });
+    get().saveGame();
+  },
+
   addToInventory: (item) => {
     const { hero } = get();
     if (hero.inventory.length >= 20) return;
