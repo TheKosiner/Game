@@ -147,7 +147,7 @@ export default function App() {
       tickPassiveRegen();
       saveGame();
       if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
-    }, 30_000);
+    }, 10_000);
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
 

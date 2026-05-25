@@ -7,6 +7,7 @@ import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
 import { collectBeggingServer } from '../lib/serverActions';
+import { syncToCloud } from '../lib/cloudSync';
 import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 import { useLangStore } from '../store/langStore';
@@ -602,7 +603,7 @@ export default function HeroCard() {
           <ItemDetailPanel
             item={hero.equipment[selectedSlot]!}
             onClose={() => setSelectedSlot(null)}
-            onUnequip={() => { unequipItem(selectedSlot as ItemSlot); setSelectedSlot(null); }}
+            onUnequip={() => { unequipItem(selectedSlot as ItemSlot); setSelectedSlot(null); const u = useAuthStore.getState().user; if (u) syncToCloud(u.uid, u.username).catch(() => {}); }}
           />
         )}
 

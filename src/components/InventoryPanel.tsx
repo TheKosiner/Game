@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
+import { useAuthStore } from '../store/authStore';
+import { syncToCloud } from '../lib/cloudSync';
 import ItemIcon from './ItemIcon';
 import type { Item } from '../types';
 import { useT } from '../hooks/useT';
@@ -177,7 +179,7 @@ export default function InventoryPanel() {
               item={item}
               selected={selectedIdx === idx}
               onToggle={() => setSelectedIdx(prev => prev === idx ? null : idx)}
-              onEquip={() => { equipItem(item, idx); setSelectedIdx(null); }}
+              onEquip={() => { equipItem(item, idx); setSelectedIdx(null); const u = useAuthStore.getState().user; if (u) syncToCloud(u.uid, u.username).catch(() => {}); }}
               onSell={() => { setSellConfirm({ item, idx }); setSelectedIdx(null); }}
               onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
               onOpen={() => { setBoxConfirm({ item, idx }); setSelectedIdx(null); }}

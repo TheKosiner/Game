@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
+import { useAuthStore } from '../store/authStore';
+import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import type { Item, Equipment, Stats } from '../types';
@@ -193,6 +195,8 @@ export default function SmithPanel() {
     const itemEmoji = selected.item.emoji;
 
     enhanceItem(selected.source, selected.idxOrSlot);
+    const u = useAuthStore.getState().user;
+    if (u) syncToCloud(u.uid, u.username).catch(() => {});
 
     setTimeout(() => {
       const updatedHero = useGameStore.getState().hero;
