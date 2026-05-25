@@ -1,5 +1,5 @@
 import { useT } from '../hooks/useT';
-import type { PlaySub, SocialSub, ShopSub } from './BottomNav';
+import type { PlaySub, GuildSub, ShopSub } from './BottomNav';
 import { ORB } from '../utils/styles';
 
 interface SubNavProps<T extends string> {
@@ -79,6 +79,7 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
         { id: 'challenge' as PlaySub, label: t.nav.boss },
         { id: 'quests'    as PlaySub, label: t.nav.quests, badge: questBadge ? 1 : 0 },
         { id: 'smith'     as PlaySub, label: t.nav.smith },
+        { id: 'pvp'       as PlaySub, label: t.nav.arena },
       ]}
       active={active}
       onChange={onChange}
@@ -86,11 +87,11 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
   );
 }
 
-export function SocialSubNav({
+export function GuildSubNav({
   active, onChange, mailBadge, chatBadge,
 }: {
-  active: SocialSub;
-  onChange: (t: SocialSub) => void;
+  active: GuildSub;
+  onChange: (t: GuildSub) => void;
   mailBadge?: number;
   chatBadge?: boolean;
 }) {
@@ -98,17 +99,19 @@ export function SocialSubNav({
   return (
     <SubNavBar
       tabs={[
-        { id: 'guild'   as SocialSub, label: t.nav.guild },
-        { id: 'pvp'     as SocialSub, label: t.nav.arena },
-        { id: 'ranking' as SocialSub, label: t.nav.ranking },
-        { id: 'chat'    as SocialSub, label: t.nav.chat, badge: chatBadge ? 1 : 0 },
-        { id: 'mail'    as SocialSub, label: t.nav.mail, badge: mailBadge },
+        { id: 'guild'   as GuildSub, label: t.nav.guild },
+        { id: 'ranking' as GuildSub, label: t.nav.ranking },
+        { id: 'chat'    as GuildSub, label: t.nav.chat, badge: chatBadge ? 1 : 0 },
+        { id: 'mail'    as GuildSub, label: t.nav.mail, badge: mailBadge },
       ]}
       active={active}
       onChange={onChange}
     />
   );
 }
+
+// legacy alias
+export const SocialSubNav = GuildSubNav;
 
 export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t: ShopSub) => void }) {
   const t = useT();

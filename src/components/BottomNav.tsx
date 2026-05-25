@@ -1,12 +1,14 @@
 import { useT } from '../hooks/useT';
 
-export type MainTab = 'hero' | 'play' | 'social' | 'shop';
-export type PlaySub   = 'dungeon' | 'challenge' | 'quests' | 'smith';
-export type SocialSub = 'guild' | 'pvp' | 'ranking' | 'mail' | 'chat';
+export type MainTab = 'hero' | 'play' | 'guild' | 'shop';
+export type PlaySub   = 'dungeon' | 'challenge' | 'quests' | 'smith' | 'pvp';
+export type GuildSub  = 'guild' | 'ranking' | 'mail' | 'chat';
 export type ShopSub   = 'shop' | 'gems';
 
 // legacy alias for any code that still imports Tab
 export type Tab = MainTab;
+// legacy alias
+export type SocialSub = GuildSub;
 
 interface Props {
   active: MainTab;
@@ -38,12 +40,10 @@ export function TabIcon({ id, color }: { id: MainTab; color: string }) {
         <line x1="4" y1="13" x2="18" y2="13"/>
       </svg>
     );
-    case 'social': return (
+    case 'guild': return (
       <svg {...p}>
-        <circle cx="8" cy="8" r="3.5"/>
-        <circle cx="16" cy="8" r="3"/>
-        <path d="M1 20Q1 14 8 14Q15 14 15 20"/>
-        <path d="M16 11Q20 12 20 17"/>
+        <path d="M11 2L4 6v5c0 4.4 3 8.5 7 9.5 4-1 7-5.1 7-9.5V6z"/>
+        <path d="M8 11l2 2 4-4"/>
       </svg>
     );
     case 'shop': return (
@@ -61,10 +61,10 @@ export default function BottomNav({ active, onChange, badges }: Props) {
   const t = useT();
 
   const TABS: { id: MainTab; label: string }[] = [
-    { id: 'hero',   label: t.nav.hero },
-    { id: 'play',   label: t.nav.play },
-    { id: 'social', label: t.nav.social },
-    { id: 'shop',   label: t.nav.shop },
+    { id: 'hero',  label: t.nav.hero },
+    { id: 'play',  label: t.nav.play },
+    { id: 'guild', label: t.nav.guild },
+    { id: 'shop',  label: t.nav.shop },
   ];
 
   return (
