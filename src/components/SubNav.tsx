@@ -1,5 +1,5 @@
 import { useT } from '../hooks/useT';
-import type { PlaySub, SocialSub, ShopSub } from './BottomNav';
+import type { PlaySub, SocialSub, GuildTabSub, ShopSub } from './BottomNav';
 import { ORB } from '../utils/styles';
 
 interface SubNavProps<T extends string> {
@@ -109,6 +109,22 @@ export function SocialSubNav({
 }
 
 export const GuildSubNav = SocialSubNav;
+
+export function GuildTabSubNav({ active, onChange }: { active: GuildTabSub; onChange: (t: GuildTabSub) => void }) {
+  return (
+    <SubNavBar
+      tabs={[
+        { id: 'info'      as GuildTabSub, label: 'INFO' },
+        { id: 'boss'      as GuildTabSub, label: '💀 BOSS' },
+        { id: 'chat'      as GuildTabSub, label: '💬 CHAT' },
+        { id: 'territory' as GuildTabSub, label: '🗺 MAPA' },
+        { id: 'ops'       as GuildTabSub, label: '⚔ RAJD' },
+      ]}
+      active={active}
+      onChange={onChange}
+    />
+  );
+}
 
 export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t: ShopSub) => void }) {
   const t = useT();

@@ -17,7 +17,6 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
-import { SubNavBar } from './SubNav';
 
 // ── Create Guild Form ────────────────────────────────────────────────────────
 
@@ -366,12 +365,12 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
   );
 }
 
-function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number> }) {
+function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuildTabChange }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGuildTabChange: (t: import('./BottomNav').GuildTabSub) => void }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
-  const [guildTab, setGuildTab] = useState<'info' | 'boss' | 'chat' | 'territory' | 'ops'>('info');
+  const setGuildTab = onGuildTabChange;
   const [leaderWarn, setLeaderWarn] = useState(false);
   const isLeader = guild.leaderUid === myUid;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
@@ -417,18 +416,6 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
         </div>
       )}
 
-      {/* INFO / BOSS / CHAT / TERRITORY / OPS tabs */}
-      <SubNavBar
-        tabs={[
-          { id: 'info',      label: 'INFO' },
-          { id: 'boss',      label: '💀 BOSS' },
-          { id: 'chat',      label: '💬 CHAT' },
-          { id: 'territory', label: '🗺 MAPA' },
-          { id: 'ops',       label: '⚔ RAJD' },
-        ]}
-        active={guildTab}
-        onChange={setGuildTab}
-      />
 
       {/* CHAT view */}
       {guildTab === 'chat' && (
@@ -529,7 +516,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits }: { guild: Guild;
 
 // ── Main Panel ───────────────────────────────────────────────────────────────
 
-export default function GuildPanel() {
+export default function GuildPanel({ guildTab, onGuildTabChange }: { guildTab: import('./BottomNav').GuildTabSub; onGuildTabChange: (t: import('./BottomNav').GuildTabSub) => void }) {
   const user = useAuthStore(s => s.user);
   const t = useT();
   const setGuildBonuses = useGameStore(s => s.setGuildBonuses);
@@ -605,7 +592,7 @@ export default function GuildPanel() {
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} guildTab={guildTab} onGuildTabChange={onGuildTabChange} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
