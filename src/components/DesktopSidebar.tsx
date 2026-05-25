@@ -180,8 +180,6 @@ export default function DesktopSidebar({
             onClick={() => { onTab('play'); onPlay('challenge'); }} />
           <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
             onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
-          <NavItem icon="⚒" label={t.nav.smith} active={tab === 'play' && playSub === 'smith'}
-            onClick={() => { onTab('play'); onPlay('smith'); }} />
           <NavItem icon="⚔" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
             onClick={() => { onTab('play'); onPlay('pvp'); }} />
         </>}
@@ -216,6 +214,8 @@ export default function DesktopSidebar({
             onClick={() => { onTab('shop'); onShop('shop'); }} />
           <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
             onClick={() => { onTab('shop'); onShop('gems'); }} />
+          <NavItem icon="⚒" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
+            onClick={() => { onTab('shop'); onShop('smith'); }} />
         </>}
 
       </nav>

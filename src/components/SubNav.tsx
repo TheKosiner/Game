@@ -78,7 +78,6 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
         { id: 'dungeon'   as PlaySub, label: t.nav.dungeon },
         { id: 'challenge' as PlaySub, label: t.nav.boss },
         { id: 'quests'    as PlaySub, label: t.nav.quests, badge: questBadge ? 1 : 0 },
-        { id: 'smith'     as PlaySub, label: t.nav.smith },
         { id: 'pvp'       as PlaySub, label: t.nav.arena },
       ]}
       active={active}
@@ -117,8 +116,9 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
     <SubNavBar
       centered
       tabs={[
-        { id: 'shop' as ShopSub, label: t.nav.shop },
-        { id: 'gems' as ShopSub, label: t.nav.gems },
+        { id: 'shop'  as ShopSub, label: t.nav.shop },
+        { id: 'gems'  as ShopSub, label: t.nav.gems },
+        { id: 'smith' as ShopSub, label: t.nav.smith },
       ]}
       active={active}
       onChange={onChange}

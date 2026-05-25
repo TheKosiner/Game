@@ -349,11 +349,11 @@ export default function App() {
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
-              {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
               {tab === 'guild'  && <GuildPanel />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
+              {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
               {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
               {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
               {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
@@ -488,11 +488,11 @@ export default function App() {
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
-          {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
           {tab === 'guild'  && <GuildPanel />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
+          {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
           {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
           {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
           {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
