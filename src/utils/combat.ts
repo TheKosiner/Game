@@ -32,12 +32,12 @@ export function getEquipmentStats(equipment: Hero['equipment']): Stats {
 
 export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
   if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.6));
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.1));
 }
 
 export function getEnhanceDefenseBonus(item: Item | undefined): number {
   if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.4));
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.07));
 }
 
 export function getHeroAttack(hero: Hero): number {
