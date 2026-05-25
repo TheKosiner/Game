@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import type { Item, Equipment } from '../types';
+import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -238,6 +238,26 @@ export default function SmithPanel() {
   const hasGold = freshCost !== null && hero.gold >= freshCost;
   const isWeapon = freshSelected?.item.slot === 'weapon';
   const isDefense = freshSelected?.item.slot === 'armor' || freshSelected?.item.slot === 'helmet' || freshSelected?.item.slot === 'boots';
+  const isCore = freshSelected?.item.slot === 'ring' || freshSelected?.item.slot === 'amulet';
+
+  const STAT_LABEL: Record<keyof Stats, string> = {
+    strength: lang === 'en' ? 'STR' : 'SIŁ',
+    dexterity: lang === 'en' ? 'DEX' : 'ZRĘ',
+    intelligence: lang === 'en' ? 'ACC' : 'CEL',
+    vitality: lang === 'en' ? 'VIT' : 'ŻYW',
+    magic: 'MAG',
+    magicResistance: lang === 'en' ? 'RES' : 'ODP',
+  };
+
+  const coreBonus = (() => {
+    if (!isCore || !freshSelected) return null;
+    const entries = (Object.entries(freshSelected.item.stats) as [keyof Stats, number][])
+      .filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
+    if (!entries.length) return null;
+    const [stat] = entries[0];
+    const perLevel = Math.max(1, Math.round(freshSelected.item.level * 0.07));
+    return { stat, perLevel, label: STAT_LABEL[stat] };
+  })();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -357,16 +377,28 @@ export default function SmithPanel() {
               ) : (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    {(isWeapon || isDefense) && (
+                    {isWeapon && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>ATK bonus/lv</span>
+                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
+                          +{Math.max(1, Math.round(freshSelected!.item.level * 0.1))}
+                        </span>
+                      </div>
+                    )}
+                    {isDefense && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>DEF bonus/lv</span>
+                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
+                          +{Math.max(1, Math.round(freshSelected!.item.level * 0.07))}
+                        </span>
+                      </div>
+                    )}
+                    {isCore && coreBonus && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                          {isWeapon ? 'ATK bonus/lv' : 'DEF bonus/lv'}
+                          {coreBonus.label} bonus/lv
                         </span>
-                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
-                          +{isWeapon
-                            ? Math.max(1, Math.round(freshSelected.item.level * 0.1))
-                            : Math.max(1, Math.round(freshSelected.item.level * 0.07))}
-                        </span>
+                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>+{coreBonus.perLevel}</span>
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>

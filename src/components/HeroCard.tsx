@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
-import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange, getEnhanceAttackBonus, getEnhanceDefenseBonus } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange, getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
 import { useT } from '../hooks/useT';
@@ -185,7 +185,19 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceDefenseBonus(item)}</span>
           </div>
         )}
-        {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && getEnhanceAttackBonus(item) === 0 && getEnhanceDefenseBonus(item) === 0 && (
+        {(() => {
+          const sb = getEnhanceStatBonus(item);
+          const enhStatEntries = (Object.entries(sb) as [string, number][]).filter(([, v]) => v > 0);
+          if (!enhStatEntries.length) return null;
+          const STAT_NAMES: Record<string, string> = { strength: lang === 'en' ? 'Strength' : 'Siła', dexterity: lang === 'en' ? 'Dexterity' : 'Zręczność', intelligence: lang === 'en' ? 'Accuracy' : 'Celność', vitality: lang === 'en' ? 'Vitality' : 'Żywotność', magic: 'Magic', magicResistance: lang === 'en' ? 'Mag. Res.' : 'Odp. Mag.' };
+          return enhStatEntries.map(([stat, val]) => (
+            <div key={stat} style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {STAT_NAMES[stat] ?? stat}</span>
+              <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{val}</span>
+            </div>
+          ));
+        })()}
+        {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && getEnhanceAttackBonus(item) === 0 && getEnhanceDefenseBonus(item) === 0 && Object.values(getEnhanceStatBonus(item)).every(v => !v) && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No bonuses' : 'Brak bonusów'}</p>
         )}
       </div>

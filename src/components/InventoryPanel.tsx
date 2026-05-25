@@ -7,7 +7,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB } from '../utils/styles';
-import { getEnhanceAttackBonus, getEnhanceDefenseBonus } from '../utils/combat';
+import { getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
@@ -108,6 +108,14 @@ function ItemCard({
                   {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
                   {getEnhanceAttackBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒⚔+${getEnhanceAttackBonus(item)}`}</span>}
                   {getEnhanceDefenseBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒🛡+${getEnhanceDefenseBonus(item)}`}</span>}
+                  {(() => {
+                    const sb = getEnhanceStatBonus(item);
+                    const entries = Object.entries(sb).filter(([, v]) => (v ?? 0) > 0);
+                    if (!entries.length) return null;
+                    const [stat, val] = entries[0];
+                    const abbr: Record<string, string> = { strength: 'STR', dexterity: 'DEX', intelligence: 'ACC', vitality: 'VIT', magic: 'MAG', magicResistance: 'RES' };
+                    return <span style={{ color: '#ffd700' }}>{`  ⚒${abbr[stat] ?? stat}+${val}`}</span>;
+                  })()}
                 </>
             }
           </p>

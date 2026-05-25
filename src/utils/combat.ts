@@ -16,6 +16,29 @@ export function calcCritChance(totalDex: number, heroLevel: number): number {
   return Math.min(0.40, 0.05 + (totalDex / (totalDex + cap)) * 0.35);
 }
 
+export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
+  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.1));
+}
+
+export function getEnhanceDefenseBonus(item: Item | undefined): number {
+  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
+  if (item.slot !== 'armor' && item.slot !== 'helmet' && item.slot !== 'boots') return 0;
+  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.07));
+}
+
+export function getEnhanceStatBonus(item: Item | undefined): Partial<Stats> {
+  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return {};
+  if (item.slot !== 'ring' && item.slot !== 'amulet') return {};
+  const entries = (Object.entries(item.stats) as [keyof Stats, number][])
+    .filter(([, v]) => v > 0)
+    .sort(([, a], [, b]) => b - a);
+  if (entries.length === 0) return {};
+  const [dominantStat] = entries[0];
+  const bonusPerLevel = Math.max(1, Math.round(item.level * 0.07));
+  return { [dominantStat]: item.enhanceLevel * bonusPerLevel };
+}
+
 export function getEquipmentStats(equipment: Hero['equipment']): Stats {
   const r: Stats = { strength: 0, dexterity: 0, intelligence: 0, vitality: 0, magic: 0, magicResistance: 0 };
   for (const item of Object.values(equipment)) {
@@ -26,18 +49,15 @@ export function getEquipmentStats(equipment: Hero['equipment']): Stats {
     r.vitality        += item.stats.vitality        ?? 0;
     r.magic           += item.stats.magic           ?? 0;
     r.magicResistance += item.stats.magicResistance ?? 0;
+    const enh = getEnhanceStatBonus(item as Item);
+    r.strength        += enh.strength        ?? 0;
+    r.dexterity       += enh.dexterity       ?? 0;
+    r.intelligence    += enh.intelligence    ?? 0;
+    r.vitality        += enh.vitality        ?? 0;
+    r.magic           += enh.magic           ?? 0;
+    r.magicResistance += enh.magicResistance ?? 0;
   }
   return r;
-}
-
-export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
-  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.1));
-}
-
-export function getEnhanceDefenseBonus(item: Item | undefined): number {
-  if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.07));
 }
 
 export function getHeroAttack(hero: Hero): number {
