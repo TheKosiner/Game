@@ -74,7 +74,6 @@ function ResultModal({ result, onClose, onRetry }: {
   onClose: () => void;
   onRetry: () => void;
 }) {
-  const t = useT();
   const lang = useLangStore(s => s.lang);
   const success = result.success;
   const color = success ? '#00e676' : '#ff4444';
