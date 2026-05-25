@@ -197,11 +197,6 @@ export default function GemsPanel() {
                   )}
                 </div>
 
-                <span style={{
-                  ...ORB, fontSize: 10,
-                  color: isEquipped ? '#ff2d78' : isOwned ? '#00e5ff' : 'var(--text-dim)',
-                  textAlign: 'center',
-                }}>{p.label}</span>
 
                 {isEquipped ? (
                   <span style={{ ...MONO, fontSize: 10, color: '#ff2d78' }}>{t.gems.portraitEquipped}</span>

@@ -85,11 +85,6 @@ export default function CharacterCreation() {
                   }}>
                     <img src={p.src} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </div>
-                  <span style={{
-                    fontFamily: "'Orbitron', monospace", fontWeight: 700, fontSize: 10,
-                    color: portrait === p.index ? '#ff2d78' : '#475569',
-                    textShadow: portrait === p.index ? '0 0 8px rgba(255,45,120,0.5)' : 'none',
-                  }}>{p.label}</span>
                 </button>
               ))}
             </div>
