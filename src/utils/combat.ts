@@ -16,16 +16,22 @@ export function calcCritChance(totalDex: number, heroLevel: number): number {
   return Math.min(0.40, 0.05 + (totalDex / (totalDex + cap)) * 0.35);
 }
 
+// Progressive multiplier: +1→1, +2→3, +3→8, +4→16, +5→27, +6→41, +7→58, +8→78, +9→102
+export function enhanceMultiplier(level: number): number {
+  if (level <= 0) return 0;
+  return Math.round(level ** 1.8);
+}
+
 export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
   if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
   if (item.slot !== 'weapon') return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.1));
+  return enhanceMultiplier(item.enhanceLevel) * Math.max(1, Math.round(item.level * 0.1));
 }
 
 export function getEnhanceDefenseBonus(item: Item | undefined): number {
   if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
   if (item.slot !== 'armor' && item.slot !== 'helmet' && item.slot !== 'boots') return 0;
-  return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.07));
+  return enhanceMultiplier(item.enhanceLevel) * Math.max(1, Math.round(item.level * 0.07));
 }
 
 export function getEnhanceStatBonus(item: Item | undefined): Partial<Stats> {
@@ -37,7 +43,7 @@ export function getEnhanceStatBonus(item: Item | undefined): Partial<Stats> {
   if (entries.length === 0) return {};
   const [dominantStat] = entries[0];
   const bonusPerLevel = Math.max(1, Math.round(item.level * 0.07));
-  return { [dominantStat]: item.enhanceLevel * bonusPerLevel };
+  return { [dominantStat]: enhanceMultiplier(item.enhanceLevel) * bonusPerLevel };
 }
 
 export function getEquipmentStats(equipment: Hero['equipment']): Stats {

@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
+import { enhanceMultiplier } from '../utils/combat';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -381,30 +382,44 @@ export default function SmithPanel() {
               ) : (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    {isWeapon && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>ATK bonus/lv</span>
-                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
-                          +{Math.max(1, Math.round(freshSelected!.item.level * 0.1))}
-                        </span>
-                      </div>
-                    )}
-                    {isDefense && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>DEF bonus/lv</span>
-                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
-                          +{Math.max(1, Math.round(freshSelected!.item.level * 0.07))}
-                        </span>
-                      </div>
-                    )}
-                    {isCore && coreBonus && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                          {coreBonus.label} bonus/lv
-                        </span>
-                        <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>+{coreBonus.perLevel}</span>
-                      </div>
-                    )}
+                    {isWeapon && (() => {
+                      const base = Math.max(1, Math.round(freshSelected!.item.level * 0.1));
+                      const cur = enhanceMultiplier(freshEnh) * base;
+                      const nxt = enhanceMultiplier(freshEnh + 1) * base;
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>ATK bonus</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
+                            +{cur} → +{nxt}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    {isDefense && (() => {
+                      const base = Math.max(1, Math.round(freshSelected!.item.level * 0.07));
+                      const cur = enhanceMultiplier(freshEnh) * base;
+                      const nxt = enhanceMultiplier(freshEnh + 1) * base;
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>DEF bonus</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>
+                            +{cur} → +{nxt}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    {isCore && coreBonus && (() => {
+                      const cur = enhanceMultiplier(freshEnh) * coreBonus.perLevel;
+                      const nxt = enhanceMultiplier(freshEnh + 1) * coreBonus.perLevel;
+                      return (
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                            {coreBonus.label} bonus
+                          </span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#ff9632' }}>+{cur} → +{nxt}</span>
+                        </div>
+                      );
+                    })()}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
                         {lang === 'en' ? 'Success' : 'Szansa'}
