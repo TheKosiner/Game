@@ -6,6 +6,7 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { enhanceMultiplier } from '../utils/combat';
+import smithImg from '../assets/smith.png';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -274,6 +275,19 @@ export default function SmithPanel() {
           onRetry={handleRetry}
         />
       )}
+
+      {/* Banner image */}
+      <div style={{ borderRadius: 8, overflow: 'hidden', position: 'relative', lineHeight: 0 }}>
+        <img
+          src={smithImg}
+          alt="Kowal"
+          style={{ width: '100%', maxHeight: 220, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+        />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, transparent 40%, #040408 100%)',
+        }} />
+      </div>
 
       {/* Header */}
       <div style={{
