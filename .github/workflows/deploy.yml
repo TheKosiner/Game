@@ -73,7 +73,11 @@ jobs:
 
       - name: Copy APK to dist
         run: |
-          cp android/app/build/outputs/apk/debug/GlitchSoul-debug.apk dist/GlitchSoul.apk
+          echo "=== APK output files ==="
+          find android/app/build/outputs/apk/debug/ -type f
+          APK=$(find android/app/build/outputs/apk/debug/ -name "*.apk" | head -1)
+          echo "Copying $APK → dist/GlitchSoul.apk"
+          cp "$APK" dist/GlitchSoul.apk
 
       - uses: actions/upload-pages-artifact@v3
         with:
