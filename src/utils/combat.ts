@@ -18,6 +18,7 @@ export function calcCritChance(totalDex: number, heroLevel: number): number {
 
 export function getEnhanceAttackBonus(item: Hero['equipment']['weapon']): number {
   if (!item || !item.enhanceLevel || item.enhanceLevel <= 0) return 0;
+  if (item.slot !== 'weapon') return 0;
   return item.enhanceLevel * Math.max(1, Math.round(item.level * 0.1));
 }
 
