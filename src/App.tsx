@@ -27,9 +27,9 @@ import ChallengePanel from './components/ChallengePanel';
 import SmithPanel from './components/SmithPanel';
 import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
-import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
+import BottomNav, { type MainTab, type PlaySub, type SocialSub, type GuildTabSub, type ShopSub } from './components/BottomNav';
 import MysteryBoxModal from './components/MysteryBoxModal';
-import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
+import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './components/SubNav';
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 
@@ -56,6 +56,7 @@ export default function App() {
   const [playSub, setPlaySub]     = useState<PlaySub>('dungeon');
   const [socialSub, setSocialSub] = useState<SocialSub>('ranking');
   const [shopSub, setShopSub]     = useState<ShopSub>('shop');
+  const [guildTab, setGuildTab]   = useState<GuildTabSub>('info');
   const [gameLoaded, setGameLoaded] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
   const [chatHasNew, setChatHasNew] = useState(false);
@@ -337,6 +338,7 @@ export default function App() {
 
           {/* Scrollable content */}
           <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            {tab === 'guild' && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
             <main style={{
               padding: '20px 28px',
               display: tab === 'hero' ? 'grid' : 'flex',
@@ -350,7 +352,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
-              {tab === 'guild'  && <GuildPanel />}
+              {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
               {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
@@ -482,6 +484,9 @@ export default function App() {
         {tab === 'shop' && (
           <ShopSubNav active={shopSub} onChange={switchShop} />
         )}
+        {tab === 'guild' && (
+          <GuildTabSubNav active={guildTab} onChange={setGuildTab} />
+        )}
 
         <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
@@ -489,7 +494,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
-          {tab === 'guild'  && <GuildPanel />}
+          {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
           {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
