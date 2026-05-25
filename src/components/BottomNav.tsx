@@ -1,14 +1,13 @@
 import { useT } from '../hooks/useT';
 
-export type MainTab = 'hero' | 'play' | 'guild' | 'shop';
+export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop';
 export type PlaySub   = 'dungeon' | 'challenge' | 'quests' | 'smith' | 'pvp';
-export type GuildSub  = 'guild' | 'ranking' | 'mail' | 'chat';
+export type SocialSub = 'ranking' | 'mail' | 'chat';
+export type GuildSub  = SocialSub;
 export type ShopSub   = 'shop' | 'gems';
 
 // legacy alias for any code that still imports Tab
 export type Tab = MainTab;
-// legacy alias
-export type SocialSub = GuildSub;
 
 interface Props {
   active: MainTab;
@@ -46,6 +45,14 @@ export function TabIcon({ id, color }: { id: MainTab; color: string }) {
         <path d="M8 11l2 2 4-4"/>
       </svg>
     );
+    case 'social': return (
+      <svg {...p}>
+        <circle cx="8" cy="8" r="3.5"/>
+        <circle cx="16" cy="8" r="3"/>
+        <path d="M1 20Q1 14 8 14Q15 14 15 20"/>
+        <path d="M16 11Q20 12 20 17"/>
+      </svg>
+    );
     case 'shop': return (
       <svg {...p}>
         <path d="M3 8h16l-2 11H5Z"/>
@@ -61,10 +68,11 @@ export default function BottomNav({ active, onChange, badges }: Props) {
   const t = useT();
 
   const TABS: { id: MainTab; label: string }[] = [
-    { id: 'hero',  label: t.nav.hero },
-    { id: 'play',  label: t.nav.play },
-    { id: 'guild', label: t.nav.guild },
-    { id: 'shop',  label: t.nav.shop },
+    { id: 'hero',   label: t.nav.hero },
+    { id: 'play',   label: t.nav.play },
+    { id: 'guild',  label: t.nav.guild },
+    { id: 'social', label: t.nav.social },
+    { id: 'shop',   label: t.nav.shop },
   ];
 
   return (
@@ -87,7 +95,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
                 flex: 1,
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '10px 4px 14px',
+                padding: '8px 2px 12px',
                 background: isActive
                   ? 'linear-gradient(180deg, rgba(255,45,120,0.12) 0%, transparent 100%)'
                   : 'transparent',
@@ -120,7 +128,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
               </span>
               <span style={{
                 fontFamily: "'Orbitron', monospace",
-                fontSize: '11px',
+                fontSize: '9px',
                 fontWeight: isActive ? 700 : 400,
                 letterSpacing: '0.05em',
                 color,

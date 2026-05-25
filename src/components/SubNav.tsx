@@ -1,5 +1,5 @@
 import { useT } from '../hooks/useT';
-import type { PlaySub, GuildSub, ShopSub } from './BottomNav';
+import type { PlaySub, SocialSub, ShopSub } from './BottomNav';
 import { ORB } from '../utils/styles';
 
 interface SubNavProps<T extends string> {
@@ -87,11 +87,11 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
   );
 }
 
-export function GuildSubNav({
+export function SocialSubNav({
   active, onChange, mailBadge, chatBadge,
 }: {
-  active: GuildSub;
-  onChange: (t: GuildSub) => void;
+  active: SocialSub;
+  onChange: (t: SocialSub) => void;
   mailBadge?: number;
   chatBadge?: boolean;
 }) {
@@ -99,10 +99,9 @@ export function GuildSubNav({
   return (
     <SubNavBar
       tabs={[
-        { id: 'guild'   as GuildSub, label: t.nav.guild },
-        { id: 'ranking' as GuildSub, label: t.nav.ranking },
-        { id: 'chat'    as GuildSub, label: t.nav.chat, badge: chatBadge ? 1 : 0 },
-        { id: 'mail'    as GuildSub, label: t.nav.mail, badge: mailBadge },
+        { id: 'ranking' as SocialSub, label: t.nav.ranking },
+        { id: 'chat'    as SocialSub, label: t.nav.chat, badge: chatBadge ? 1 : 0 },
+        { id: 'mail'    as SocialSub, label: t.nav.mail, badge: mailBadge },
       ]}
       active={active}
       onChange={onChange}
@@ -110,8 +109,7 @@ export function GuildSubNav({
   );
 }
 
-// legacy alias
-export const SocialSubNav = GuildSubNav;
+export const GuildSubNav = SocialSubNav;
 
 export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t: ShopSub) => void }) {
   const t = useT();

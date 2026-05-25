@@ -27,9 +27,9 @@ import ChallengePanel from './components/ChallengePanel';
 import SmithPanel from './components/SmithPanel';
 import GemsPanel from './components/GemsPanel';
 import ChatPanel from './components/ChatPanel';
-import BottomNav, { type MainTab, type PlaySub, type GuildSub, type ShopSub } from './components/BottomNav';
+import BottomNav, { type MainTab, type PlaySub, type SocialSub, type ShopSub } from './components/BottomNav';
 import MysteryBoxModal from './components/MysteryBoxModal';
-import { PlaySubNav, GuildSubNav, ShopSubNav } from './components/SubNav';
+import { PlaySubNav, SocialSubNav, ShopSubNav } from './components/SubNav';
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 
@@ -52,9 +52,9 @@ export default function App() {
 
   const activeQuest = useGameStore(s => s.activeQuest);
 
-  const [tab, setTab]         = useState<MainTab>('hero');
+  const [tab, setTab]             = useState<MainTab>('hero');
   const [playSub, setPlaySub]     = useState<PlaySub>('dungeon');
-  const [guildSub, setGuildSub]   = useState<GuildSub>('guild');
+  const [socialSub, setSocialSub] = useState<SocialSub>('ranking');
   const [shopSub, setShopSub]     = useState<ShopSub>('shop');
   const [gameLoaded, setGameLoaded] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
@@ -73,8 +73,8 @@ export default function App() {
     setPlaySub(t);
     if (t === 'quests') { /* badge clears via questBadge derivation */ }
   }
-  function switchGuild(t: GuildSub) {
-    setGuildSub(t);
+  function switchSocial(t: SocialSub) {
+    setSocialSub(t);
     if (t === 'chat') {
       lastChatViewedAt.current = Date.now();
       setChatHasNew(false);
@@ -84,7 +84,7 @@ export default function App() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [tab]);
-  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [playSub, guildSub, shopSub]);
+  useEffect(() => { scrollRef.current?.scrollTo(0, 0); }, [playSub, socialSub, shopSub]);
   const isNative = Capacitor.isNativePlatform();
 
   const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 1024);
@@ -238,11 +238,11 @@ export default function App() {
 
   // Clear chat badge when user is already on chat tab
   useEffect(() => {
-    if (tab === 'guild' && guildSub === 'chat') {
+    if (tab === 'social' && socialSub === 'chat') {
       lastChatViewedAt.current = Date.now();
       setChatHasNew(false);
     }
-  }, [tab, guildSub]);
+  }, [tab, socialSub]);
 
   // Claim any pending gem credits from Stripe purchases
   useEffect(() => {
@@ -296,18 +296,19 @@ export default function App() {
   // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
   if (isDesktop && !isNative) {
     const sectionLabel: Record<MainTab, string> = {
-      hero: t.nav.hero,
-      play: t.nav.play,
-      guild: t.nav.guild,
-      shop: t.nav.shop,
+      hero:   t.nav.hero,
+      play:   t.nav.play,
+      guild:  t.nav.guild,
+      social: t.nav.social,
+      shop:   t.nav.shop,
     };
     return (
       <>
       <div className="desktop-layout" style={{ display: 'flex', background: '#040408', overflow: 'hidden' }}>
         <DesktopSidebar
-          tab={tab} playSub={playSub} guildSub={guildSub} shopSub={shopSub}
+          tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
           questBadge={questBadge} mailUnread={mailUnread} chatHasNew={chatHasNew}
-          onTab={switchTab} onPlay={switchPlay} onGuild={switchGuild} onShop={switchShop}
+          onTab={switchTab} onPlay={switchPlay} onSocial={switchSocial} onShop={switchShop}
           onLogout={() => logout()}
         />
 
@@ -345,17 +346,17 @@ export default function App() {
               maxWidth: tab === 'hero' ? 1400 : 960,
             }}>
               {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
-              {tab === 'play'  && playSub === 'dungeon'   && <DungeonPanel />}
-              {tab === 'play'  && playSub === 'challenge' && <ChallengePanel />}
-              {tab === 'play'  && playSub === 'quests'    && <QuestPanel />}
-              {tab === 'play'  && playSub === 'smith'     && <SmithPanel />}
-              {tab === 'play'  && playSub === 'pvp'       && <PvpPanel />}
-              {tab === 'shop'  && shopSub === 'shop'      && <ShopPanel />}
-              {tab === 'shop'  && shopSub === 'gems'      && <GemsPanel />}
-              {tab === 'guild' && guildSub === 'guild'    && <GuildPanel />}
-              {tab === 'guild' && guildSub === 'ranking'  && <LeaderboardPanel />}
-              {tab === 'guild' && guildSub === 'mail'     && <MailPanel onUnreadChange={setMailUnread} />}
-              {tab === 'guild' && guildSub === 'chat'     && <ChatPanel />}
+              {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+              {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+              {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+              {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
+              {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+              {tab === 'guild'  && <GuildPanel />}
+              {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
+              {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
+              {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+              {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+              {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
             </main>
           </div>
         </div>
@@ -475,8 +476,8 @@ export default function App() {
         {tab === 'play' && (
           <PlaySubNav active={playSub} onChange={switchPlay} questBadge={questBadge} />
         )}
-        {tab === 'guild' && (
-          <GuildSubNav active={guildSub} onChange={switchGuild} mailBadge={mailUnread} chatBadge={chatHasNew} />
+        {tab === 'social' && (
+          <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} chatBadge={chatHasNew} />
         )}
         {tab === 'shop' && (
           <ShopSubNav active={shopSub} onChange={switchShop} />
@@ -484,21 +485,21 @@ export default function App() {
 
         <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
-          {tab === 'play'  && playSub === 'dungeon'   && <DungeonPanel />}
-          {tab === 'play'  && playSub === 'challenge' && <ChallengePanel />}
-          {tab === 'play'  && playSub === 'quests'    && <QuestPanel />}
-          {tab === 'play'  && playSub === 'smith'     && <SmithPanel />}
-          {tab === 'play'  && playSub === 'pvp'       && <PvpPanel />}
-          {tab === 'shop'  && shopSub === 'shop'      && <ShopPanel />}
-          {tab === 'shop'  && shopSub === 'gems'      && <GemsPanel />}
-          {tab === 'guild' && guildSub === 'guild'    && <GuildPanel />}
-          {tab === 'guild' && guildSub === 'ranking'  && <LeaderboardPanel />}
-          {tab === 'guild' && guildSub === 'mail'     && <MailPanel onUnreadChange={setMailUnread} />}
-          {tab === 'guild' && guildSub === 'chat'     && <ChatPanel />}
+          {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+          {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+          {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+          {tab === 'play'   && playSub === 'smith'     && <SmithPanel />}
+          {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+          {tab === 'guild'  && <GuildPanel />}
+          {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
+          {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
+          {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+          {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+          {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
         </main>
       </div>
 
-      <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, guild: chatHasNew || mailUnread > 0 }} />
+      <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
       <MysteryBoxModal />
     </div>
   );

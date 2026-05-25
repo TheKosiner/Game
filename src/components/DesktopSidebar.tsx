@@ -3,7 +3,7 @@ import logoImg from '../assets/logo.png';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import { TabIcon, type MainTab, type PlaySub, type GuildSub, type ShopSub } from './BottomNav';
+import { TabIcon, type MainTab, type PlaySub, type SocialSub, type ShopSub } from './BottomNav';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -11,14 +11,14 @@ const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" }
 interface Props {
   tab: MainTab;
   playSub: PlaySub;
-  guildSub: GuildSub;
+  socialSub: SocialSub;
   shopSub: ShopSub;
   questBadge: boolean;
   mailUnread: number;
   chatHasNew: boolean;
   onTab: (t: MainTab) => void;
   onPlay: (t: PlaySub) => void;
-  onGuild: (t: GuildSub) => void;
+  onSocial: (t: SocialSub) => void;
   onShop: (t: ShopSub) => void;
   onLogout: () => void;
 }
@@ -115,9 +115,9 @@ function SectionNavItem({
 }
 
 export default function DesktopSidebar({
-  tab, playSub, guildSub, shopSub,
+  tab, playSub, socialSub, shopSub,
   questBadge, mailUnread, chatHasNew,
-  onTab, onPlay, onGuild, onShop,
+  onTab, onPlay, onSocial, onShop,
   onLogout,
 }: Props) {
   const hero = useGameStore(s => s.hero);
@@ -186,21 +186,23 @@ export default function DesktopSidebar({
             onClick={() => { onTab('play'); onPlay('pvp'); }} />
         </>}
 
-        {/* Guild */}
-        <SectionNavItem tabId="guild" label={t.nav.guild} active={tab === 'guild'} open={!!open['guild']}
+        {/* Guild — direct, no sub-nav */}
+        <SectionNavItem tabId="guild" label={t.nav.guild} active={tab === 'guild'} open={false}
+          onToggle={() => { onTab('guild'); setOpen(prev => ({ ...prev, guild: false })); }} />
+
+        {/* Social */}
+        <SectionNavItem tabId="social" label={t.nav.social} active={tab === 'social'} open={!!open['social']}
           onToggle={() => {
-            if (!open['guild']) expandAndNav('guild', () => { onTab('guild'); onGuild('guild'); });
-            else toggle('guild');
+            if (!open['social']) expandAndNav('social', () => { onTab('social'); onSocial('ranking'); });
+            else toggle('social');
           }} />
-        {open['guild'] && <>
-          <NavItem icon="🏛" label={t.nav.guild} active={tab === 'guild' && guildSub === 'guild'}
-            onClick={() => { onTab('guild'); onGuild('guild'); }} />
-          <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'guild' && guildSub === 'ranking'}
-            onClick={() => { onTab('guild'); onGuild('ranking'); }} />
-          <NavItem icon="💬" label={t.nav.chat} active={tab === 'guild' && guildSub === 'chat'}
-            onClick={() => { onTab('guild'); onGuild('chat'); }} badge={chatHasNew} />
-          <NavItem icon="✉" label={t.nav.mail} active={tab === 'guild' && guildSub === 'mail'}
-            onClick={() => { onTab('guild'); onGuild('mail'); }} badge={mailUnread || undefined} />
+        {open['social'] && <>
+          <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
+            onClick={() => { onTab('social'); onSocial('ranking'); }} />
+          <NavItem icon="💬" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
+            onClick={() => { onTab('social'); onSocial('chat'); }} badge={chatHasNew} />
+          <NavItem icon="✉" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
+            onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
         </>}
 
         {/* Shop */}
