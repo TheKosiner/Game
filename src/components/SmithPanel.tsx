@@ -217,7 +217,7 @@ export default function SmithPanel() {
 
   function handleRetry() {
     setResult(null);
-    // handleEnhance will be called by the button, so just close modal
+    handleEnhance();
   }
 
   // Sync selected item from store
