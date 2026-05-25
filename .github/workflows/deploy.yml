@@ -63,6 +63,14 @@ jobs:
 
       - run: chmod +x android/gradlew
 
+      - name: Set APK version
+        run: |
+          VERSION_CODE=${{ github.run_number }}
+          VERSION_NAME="$(date +'%Y.%m.%d')-$(echo '${{ github.sha }}' | cut -c1-7)"
+          sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION_NAME\"/" android/app/build.gradle
+          echo "Version: $VERSION_NAME ($VERSION_CODE)"
+
       - name: Build APK
         run: cd android && ./gradlew assembleDebug --no-daemon
 
