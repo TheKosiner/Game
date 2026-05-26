@@ -388,16 +388,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
+    const heroLvlScale = 1 + (hero.level - 1) * 0.1;
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
     const scaled = scaleEnemy(baseEnemy, 1);
     const enemy = {
       ...scaled,
-      hp: Math.round(scaled.hp * diffStatMult),
-      maxHp: Math.round(scaled.maxHp * diffStatMult),
-      attack: Math.round(scaled.attack * diffStatMult),
-      defense: Math.round(scaled.defense * diffStatMult),
+      hp: Math.round(scaled.hp * diffStatMult * heroLvlScale),
+      maxHp: Math.round(scaled.maxHp * diffStatMult * heroLvlScale),
+      attack: Math.round(scaled.attack * diffStatMult * heroLvlScale),
+      defense: Math.round(scaled.defense * diffStatMult * heroLvlScale),
     };
     set({
       currentDungeon: dungeon,
@@ -463,8 +464,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
+          const heroLvlScaleF = 1 + (hero.level - 1) * 0.1;
           const scaled = scaleEnemy(baseEnemy, nextFloor);
-          const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult), maxHp: Math.round(scaled.maxHp * diffStatMult), attack: Math.round(scaled.attack * diffStatMult), defense: Math.round(scaled.defense * diffStatMult) };
+          const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult * heroLvlScaleF), maxHp: Math.round(scaled.maxHp * diffStatMult * heroLvlScaleF), attack: Math.round(scaled.attack * diffStatMult * heroLvlScaleF), defense: Math.round(scaled.defense * diffStatMult * heroLvlScaleF) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
           get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }
@@ -544,8 +546,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
+          const heroLvlScaleF2 = 1 + (get().hero.level - 1) * 0.1;
           const scaled2 = scaleEnemy(baseEnemy, nextFloor);
-          const nextEnemy = { ...scaled2, hp: Math.round(scaled2.hp * diffStatMult2), maxHp: Math.round(scaled2.maxHp * diffStatMult2), attack: Math.round(scaled2.attack * diffStatMult2), defense: Math.round(scaled2.defense * diffStatMult2) };
+          const nextEnemy = { ...scaled2, hp: Math.round(scaled2.hp * diffStatMult2 * heroLvlScaleF2), maxHp: Math.round(scaled2.maxHp * diffStatMult2 * heroLvlScaleF2), attack: Math.round(scaled2.attack * diffStatMult2 * heroLvlScaleF2), defense: Math.round(scaled2.defense * diffStatMult2 * heroLvlScaleF2) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
           get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }

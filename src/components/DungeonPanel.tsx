@@ -351,7 +351,7 @@ function DungeonList() {
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{chosen.floors} {t.dungeon.floors}</span>
-                <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>{t.dungeon.level}{chosen.minLevel}</span>
+                <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>{t.dungeon.level}{hero.level}</span>
               </div>
             </div>
           </div>
