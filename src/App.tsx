@@ -32,6 +32,7 @@ import MysteryBoxModal from './components/MysteryBoxModal';
 import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './components/SubNav';
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const t = useT();
@@ -517,6 +518,7 @@ export default function App() {
 
       <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
       <MysteryBoxModal />
+      {user?.email && <AdminPanel userEmail={user.email} />}
     </div>
   );
 }
