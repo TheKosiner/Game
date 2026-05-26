@@ -6,7 +6,7 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { enhanceMultiplier } from '../utils/combat';
-import smithImg from '../assets/smith.png';
+import smithImg from '../assets/smith.webp';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
