@@ -388,7 +388,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       return;
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
-    const heroLvlScale = 1 + (hero.level - 1) * 0.01;
+    const heroLvlScale = 1 + (hero.level - 1) * 0.02;
+    const heroFloors = Math.min(15, Math.ceil(hero.level / 2));
     const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
@@ -401,7 +402,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       defense: Math.round(scaled.defense * diffStatMult * heroLvlScale),
     };
     set({
-      currentDungeon: dungeon,
+      currentDungeon: { ...dungeon, floors: heroFloors },
       dungeonMode: mode,
       dungeonDifficulty: difficulty,
       currentFloor: 1,
@@ -464,7 +465,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
-          const heroLvlScaleF = 1 + (hero.level - 1) * 0.01;
+          const heroLvlScaleF = 1 + (hero.level - 1) * 0.02;
           const scaled = scaleEnemy(baseEnemy, nextFloor);
           const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult * heroLvlScaleF), maxHp: Math.round(scaled.maxHp * diffStatMult * heroLvlScaleF), attack: Math.round(scaled.attack * diffStatMult * heroLvlScaleF), defense: Math.round(scaled.defense * diffStatMult * heroLvlScaleF) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
@@ -546,7 +547,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
         if (baseEnemy) {
-          const heroLvlScaleF2 = 1 + (get().hero.level - 1) * 0.01;
+          const heroLvlScaleF2 = 1 + (get().hero.level - 1) * 0.02;
           const scaled2 = scaleEnemy(baseEnemy, nextFloor);
           const nextEnemy = { ...scaled2, hp: Math.round(scaled2.hp * diffStatMult2 * heroLvlScaleF2), maxHp: Math.round(scaled2.maxHp * diffStatMult2 * heroLvlScaleF2), attack: Math.round(scaled2.attack * diffStatMult2 * heroLvlScaleF2), defense: Math.round(scaled2.defense * diffStatMult2 * heroLvlScaleF2) };
           set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
