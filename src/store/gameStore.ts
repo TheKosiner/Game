@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
+import { ALL_DUNGEONS } from '../data/dungeons';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import { MYSTERY_BOXES } from '../config/features';
@@ -390,7 +391,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const heroLvlScale = 1 + (hero.level - 1) * 0.02;
     const heroFloors = Math.min(15, Math.ceil(hero.level / 2));
-    const enemyId = dungeon.enemies[Math.floor(Math.random() * dungeon.enemies.length)];
+    const tierDungeon = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level).pop() ?? ALL_DUNGEONS[0];
+    const enemyId = tierDungeon.enemies[Math.floor(Math.random() * tierDungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
     const scaled = scaleEnemy(baseEnemy, 1);
@@ -402,7 +404,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       defense: Math.round(scaled.defense * diffStatMult * heroLvlScale),
     };
     set({
-      currentDungeon: { ...dungeon, floors: heroFloors },
+      currentDungeon: { ...dungeon, floors: heroFloors, enemies: tierDungeon.enemies },
       dungeonMode: mode,
       dungeonDifficulty: difficulty,
       currentFloor: 1,
@@ -445,8 +447,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const xpMult  = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
       const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
       const lvlMult = Math.pow(1.05, hero.level - 1);
-      const xpEarned   = Math.round(80 * xpMult * lvlMult);
-      const goldEarned = Math.round(45 * goldMult * lvlMult);
+      const xpEarned   = Math.round(currentEnemy.xpReward * xpMult * lvlMult);
+      const goldEarned = Math.round(currentEnemy.goldReward * goldMult * lvlMult);
       get().addXp(xpEarned);
       get().addGold(goldEarned);
       get().addCombatLog(t.combat.rewards(xpEarned, goldEarned), 'loot');
@@ -524,8 +526,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const xpMult2   = (mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
       const goldMult2 = (mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
       const lvlMult2 = Math.pow(1.05, hero.level - 1);
-      const xpEarned2   = Math.round(80 * xpMult2 * lvlMult2);
-      const goldEarned2 = Math.round(45 * goldMult2 * lvlMult2);
+      const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2 * lvlMult2);
+      const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2 * lvlMult2);
       get().addXp(xpEarned2);
       get().addGold(goldEarned2);
       get().addCombatLog(t.combat.rewards(xpEarned2, goldEarned2), 'loot');
