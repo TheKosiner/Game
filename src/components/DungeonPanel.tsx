@@ -284,7 +284,8 @@ function EnemyBattleCard() {
 type FullDungeon = (typeof ALL_DUNGEONS)[0];
 function pickDungeonForLevel(heroLevel: number): FullDungeon {
   const eligible = ALL_DUNGEONS.filter(d => d.minLevel <= heroLevel);
-  return eligible.length > 0 ? eligible[eligible.length - 1] : ALL_DUNGEONS[0];
+  const pool = eligible.length > 0 ? eligible : [ALL_DUNGEONS[0]];
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function DungeonList() {
