@@ -91,8 +91,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Authenticate to Google Cloud
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json" >> $GITHUB_ENV
       - name: Deploy Firestore rules
-        run: npx firebase-tools@13 deploy --only firestore:rules --project realm-of-valor --token "${{ secrets.FIREBASE_TOKEN }}" --non-interactive
+        run: npx firebase-tools@13 deploy --only firestore:rules --project realm-of-valor --non-interactive
 
   deploy:
     needs: build-apk
