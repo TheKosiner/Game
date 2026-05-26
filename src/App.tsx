@@ -360,7 +360,7 @@ export default function App() {
               gap: 16,
               maxWidth: tab === 'hero' ? 1400 : 960,
             }}>
-              {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
+              {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
