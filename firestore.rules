@@ -11,6 +11,10 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'thekosiner@gmail.com';
+    }
+
     // ── Time-based validation using SERVER time (request.time) ────────────────
     // These replace Cloud Functions for timer validation — work on Spark plan
 
@@ -118,9 +122,10 @@ service cloud.firestore {
 
     // Game saves — delta + time validation on every write
     match /saves/{userId} {
-      allow read:   if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId) && validSaveUpdate(resource.data, request.resource.data);
+      allow read:   if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin()
+        || (isOwner(userId) && validSaveUpdate(resource.data, request.resource.data));
     }
 
     // Public leaderboard profiles
