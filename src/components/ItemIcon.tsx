@@ -25,15 +25,21 @@ function getCategory(item: Item): string {
   if (id.startsWith('staff_')) return 'staff';
   if (id.startsWith('wand_')) return 'wand';
   if (id.startsWith('orb_')) return 'orb';
-  if (id.startsWith('blade_')) return 'sword';
   if (id === 'cannon_fusion') return 'fusion_cannon';
   if (id.startsWith('cannon_')) return 'cannon';
   if (id.startsWith('baton_') || id.startsWith('mace_') || id.startsWith('hammer_') || id.startsWith('maul_')) return 'hammer';
   if (id.startsWith('pike_') || id.startsWith('lance_')) return 'lance';
   if (id.startsWith('railgun_')) return 'railgun';
-  if (id.startsWith('knife_') || id.startsWith('shiv_') || id.startsWith('dagger_') || id.startsWith('cutter_')) return 'knife';
+  if (id.startsWith('pistol_')) return 'pistol';
+  if (id.startsWith('sniper_')) return 'sniper';
   if (id.startsWith('smg_') || id.startsWith('rifle_')) return 'rifle';
-  if (id.startsWith('pistol_') || id.startsWith('sniper_')) return 'sniper';
+  if (id.startsWith('knife_') || id.startsWith('shiv_') || id.startsWith('dagger_') || id.startsWith('cutter_')) return 'knife';
+  if (id.startsWith('whip_')) return 'whip';
+  if (id.startsWith('axe_') || id.startsWith('cleaver_')) return 'axe';
+  if (id.startsWith('bio_')) return 'knife';
+  // blade_ prefix: most are swords, but a few are knife-type (stealth/neurotox/ghost)
+  if (id === 'blade_stealth' || id === 'blade_neurotox' || id === 'blade_ghost') return 'knife';
+  if (id.startsWith('blade_')) return 'sword';
   if (id.startsWith('vest_')) return 'vest';
   if (id.startsWith('exo_')) return 'exo';
   if (id.startsWith('suit_') || id.startsWith('coat_')) return 'suit';
@@ -44,6 +50,13 @@ function getCategory(item: Item): string {
   if (id.startsWith('implant_') || id.startsWith('chip_') || id.startsWith('ring_')) return 'chip';
   if (id.startsWith('core_') || id.startsWith('pendant_') || id.startsWith('amulet_') || id.startsWith('amplifier_') || id.startsWith('signal_') || id.startsWith('data_')) return 'amulet';
   if (id.startsWith('medkit_')) return 'medkit';
+  // Fallback for procedurally generated items (gen_* IDs) — use item flags
+  if (item.ranged) {
+    if (item.emoji === '🎯') return 'sniper';
+    if (item.emoji === '🔱') return 'lance';
+    return 'rifle';
+  }
+  if (item.magicDamage) return 'orb';
   switch (item.slot) {
     case 'weapon': return 'sword';
     case 'armor': return 'vest';
@@ -615,6 +628,105 @@ function IconMedkit() {
   );
 }
 
+function IconPistol({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* hammer/back block */}
+      <rect x="10" y="17" width="5" height="9" rx="1" fill={c.dark} />
+      <rect x="11" y="18" width="3" height="7" rx="0.5" fill={c.primary} opacity="0.4" />
+      {/* slide / main body */}
+      <rect x="13" y="15" width="22" height="13" rx="2" fill={c.primary} />
+      <rect x="14" y="16" width="20" height="11" rx="1.5" fill={c.light} opacity="0.12" />
+      {/* tech panel on slide */}
+      <rect x="21" y="17" width="10" height="5" rx="0.5" fill={c.dark} opacity="0.35" />
+      {/* barrel */}
+      <rect x="35" y="18" width="10" height="7" rx="1.5" fill={c.dark} />
+      <rect x="36" y="19" width="8" height="5" rx="1" fill={c.primary} opacity="0.55" />
+      {/* muzzle energy */}
+      <circle cx="45" cy="21.5" r="2.5" fill={c.glow} opacity="0.9" />
+      <circle cx="45" cy="21.5" r="1.2" fill="white" opacity="0.55" />
+      {/* sight rail */}
+      <rect x="16" y="12" width="18" height="3" rx="1" fill={c.dark} />
+      <rect x="18" y="12" width="2" height="3" rx="0.5" fill={c.primary} opacity="0.6" />
+      <rect x="30" y="12" width="2" height="3" rx="0.5" fill={c.primary} opacity="0.6" />
+      {/* angled grip */}
+      <polygon points="15,28 22,28 19,44 12,44" fill={c.dark} />
+      <polygon points="16,29 21,29 18,43 13,43" fill={c.primary} opacity="0.45" />
+      {/* grip texture lines */}
+      <line x1="14" y1="34" x2="20.5" y2="34" stroke={c.light} strokeWidth="1" opacity="0.28" />
+      <line x1="13.5" y1="39" x2="19.5" y2="39" stroke={c.light} strokeWidth="1" opacity="0.28" />
+      {/* trigger guard arc */}
+      <path d="M22 28 Q23 36 16 36 L13 36 L13 28" fill="none" stroke={c.dark} strokeWidth="1.8" strokeLinecap="round" />
+    </>
+  );
+}
+
+function IconWhip({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* handle body */}
+      <rect x="4" y="35" width="13" height="8" rx="2" fill={c.dark} />
+      <rect x="5" y="36" width="11" height="6" rx="1.5" fill={c.primary} opacity="0.65" />
+      {/* grip bands */}
+      <line x1="5" y1="38.5" x2="16" y2="38.5" stroke={c.light} strokeWidth="1.2" opacity="0.3" />
+      <line x1="5" y1="40.5" x2="16" y2="40.5" stroke={c.light} strokeWidth="1.2" opacity="0.3" />
+      {/* emitter at tip of handle */}
+      <circle cx="17" cy="39" r="2.5" fill={c.glow} opacity="0.6" />
+      {/* whip cord — thick shadow pass */}
+      <path d="M17 39 C22 33 27 27 33 20 C37 15 40 10 43 4"
+            fill="none" stroke={c.dark} strokeWidth="4.5" strokeLinecap="round" />
+      {/* whip cord — main color */}
+      <path d="M17 39 C22 33 27 27 33 20 C37 15 40 10 43 4"
+            fill="none" stroke={c.primary} strokeWidth="2.5" strokeLinecap="round" />
+      {/* whip cord — energy glow overlay */}
+      <path d="M17 39 C22 33 27 27 33 20 C37 15 40 10 43 4"
+            fill="none" stroke={c.glow} strokeWidth="1.2" strokeLinecap="round" opacity="0.85" />
+      {/* energy nodes along cord */}
+      <circle cx="24" cy="31" r="2" fill={c.glow} opacity="0.7" />
+      <circle cx="31" cy="22" r="1.8" fill={c.glow} opacity="0.75" />
+      <circle cx="38" cy="13" r="1.5" fill={c.glow} opacity="0.8" />
+      {/* electric arcs off cord */}
+      <line x1="24" y1="31" x2="28" y2="27" stroke={c.glow} strokeWidth="1.5" opacity="0.5" strokeLinecap="round" />
+      <line x1="32" y1="21" x2="36" y2="17" stroke={c.glow} strokeWidth="1.5" opacity="0.5" strokeLinecap="round" />
+      {/* crackling tip */}
+      <circle cx="43" cy="4" r="4" fill={c.glow} opacity="0.3" />
+      <circle cx="43" cy="4" r="2.5" fill={c.glow} opacity="0.65" />
+      <circle cx="43" cy="4" r="1.2" fill={c.light} opacity="0.95" />
+      {/* tip sparks */}
+      <line x1="43" y1="4" x2="47" y2="1" stroke={c.glow} strokeWidth="1.5" opacity="0.8" strokeLinecap="round" />
+      <line x1="43" y1="4" x2="46" y2="7" stroke={c.glow} strokeWidth="1.5" opacity="0.7" strokeLinecap="round" />
+      <line x1="43" y1="4" x2="39" y2="1" stroke={c.glow} strokeWidth="1.5" opacity="0.6" strokeLinecap="round" />
+    </>
+  );
+}
+
+function IconAxe({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* shaft */}
+      <rect x="21" y="20" width="6" height="26" rx="2" fill={c.dark} />
+      <rect x="22.5" y="22" width="3" height="22" rx="1" fill={c.primary} opacity="0.42" />
+      {/* shaft grip bands */}
+      <rect x="21" y="29" width="6" height="2" rx="0.5" fill={c.primary} opacity="0.55" />
+      <rect x="21" y="37" width="6" height="2" rx="0.5" fill={c.primary} opacity="0.55" />
+      {/* pommel */}
+      <ellipse cx="24" cy="47" rx="4.5" ry="2" fill={c.primary} />
+      {/* axe head — wide blade extending left from shaft */}
+      <path d="M24 3 L30 4 L28 22 L20 22 Q7 21 5 13 Q3 5 24 3 Z" fill={c.primary} />
+      <path d="M24 6 L28 7 L26 20 L21 20 Q10 19 9 13 Q7 7 24 6 Z" fill={c.dark} />
+      {/* cutting edge plasma glow */}
+      <path d="M5 13 Q3 5 24 3" fill="none" stroke={c.glow} strokeWidth="3" opacity="0.95" strokeLinecap="round" />
+      {/* secondary glow line (inner edge) */}
+      <path d="M8 16 Q7 8 22 5" fill="none" stroke={c.glow} strokeWidth="1.2" opacity="0.45" strokeLinecap="round" />
+      {/* blade surface etch lines */}
+      <line x1="22" y1="9" x2="13" y2="13" stroke={c.light} strokeWidth="1" opacity="0.4" strokeLinecap="round" />
+      <line x1="22" y1="15" x2="10" y2="17" stroke={c.light} strokeWidth="1" opacity="0.35" strokeLinecap="round" />
+      {/* top spike of blade */}
+      <polygon points="24,3 31,4 28,0 23,0" fill={c.light} opacity="0.75" />
+    </>
+  );
+}
+
 const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
   sword:         (c) => <IconSword c={c} />,
   cannon:        (c) => <IconCannon c={c} />,
@@ -623,6 +735,9 @@ const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
   lance:   (c) => <IconLance c={c} />,
   railgun: (c) => <IconRailgun c={c} />,
   knife:   (c) => <IconKnife c={c} />,
+  pistol:  (c) => <IconPistol c={c} />,
+  whip:    (c) => <IconWhip c={c} />,
+  axe:     (c) => <IconAxe c={c} />,
   rifle:   (c) => <IconRifle c={c} />,
   sniper:  (c) => <IconSniper c={c} />,
   staff:   (c) => <IconStaff c={c} />,
