@@ -142,12 +142,15 @@ export default function App() {
     tickPassiveRegen();
     // Save immediately so initial regen/daily-reset changes aren't lost on quick reload
     saveGame();
-    const id = setInterval(() => {
+    const id = setInterval(async () => {
       const currentUser = useAuthStore.getState().user;
       checkDailyReset();
       tickPassiveRegen();
       saveGame();
-      if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
+      if (currentUser) {
+        await loadFromCloud(currentUser.uid).catch(() => {});
+        syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
+      }
     }, 10_000);
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);

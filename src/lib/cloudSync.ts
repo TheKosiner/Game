@@ -148,10 +148,14 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     ? (saveSnap.data().updatedAt ?? 0)
     : (legacySnap?.data()?.updatedAt ?? 0);
 
+  // Admin override: if updatedAt is far in the future (e.g. 9999999999999),
+  // always load from cloud regardless of local state.
+  const adminOverride = typeof cloudTs === 'number' && cloudTs > Date.now() + 3_600_000;
+
   // Prefer local state when it's newer than the cloud snapshot.
   // Skip this check when force=true (called after a rejected save to revert a cheat).
   // Use a 60s buffer to account for slow network writes and clock drift.
-  if (!force) {
+  if (!force && !adminOverride) {
     try {
       // First check in-memory store (always up-to-date, even if localStorage fails)
       const inMemoryLastSaved = (await import('../store/gameStore')).useGameStore.getState().lastSaved ?? 0;
