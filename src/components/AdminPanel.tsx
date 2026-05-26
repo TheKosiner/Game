@@ -72,6 +72,34 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
       }
     }
   } catch {}
+
+  // Try by heroName
+  try {
+    const q = query(collection(db, 'players'), where('heroName', '==', nameOrUid));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const playerDoc = snap.docs[0];
+      const uid = playerDoc.id;
+      const saveSnap = await getDoc(doc(db, 'saves', uid));
+      if (saveSnap.exists()) {
+        const d = saveSnap.data();
+        return {
+          uid,
+          username: playerDoc.data().username ?? playerDoc.data().heroName,
+          level: d.hero?.level ?? 0,
+          gold: d.hero?.gold ?? 0,
+          gems: d.hero?.gems ?? 0,
+          hp: d.hero?.hp ?? 0,
+          maxHp: d.hero?.maxHp ?? 0,
+          dungeonRunsToday: d.hero?.dungeonRunsToday ?? 0,
+          questsCompletedToday: d.hero?.questsCompletedToday ?? 0,
+          activeQuest: !!d.activeQuest,
+          restingUntil: d.hero?.restingUntil ?? null,
+          voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+        };
+      }
+    }
+  } catch {}
   return null;
 }
 
