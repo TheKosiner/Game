@@ -3,6 +3,7 @@ import { getLeaderboard, getGuildLeaderboard, type LeaderboardEntry, type GuildL
 import { useAuthStore } from '../store/authStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import { useT } from '../hooks/useT';
+import ItemIcon from './ItemIcon';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 import { PX, MONO, ORB } from '../utils/styles';
@@ -16,6 +17,114 @@ function StatBar({ label, value, max, color }: { label: string; value: number; m
         <div style={{ width: `${pct}%`, height: '100%', background: color, boxShadow: `0 0 6px ${color}` }} />
       </div>
       <span style={{ ...ORB, fontSize: 10, color, minWidth: 26, textAlign: 'right' }}>{value}</span>
+    </div>
+  );
+}
+
+type EquipItem = NonNullable<LeaderboardEntry['equipment']>[string];
+
+const RARITY_COLOR: Record<string, string> = {
+  common: '#8FA4B8', uncommon: '#4A9B5C', rare: '#3A78D4', epic: '#9040C8', legendary: '#D48020',
+};
+const SLOT_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'] as const;
+const STAT_NAMES: Record<string, string> = {
+  strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Celność',
+  vitality: 'Żywotność', magic: 'Magia', magicResistance: 'Odp. mag.',
+};
+
+function ItemDetailPopup({ item, onClose }: { item: EquipItem; onClose: () => void }) {
+  const col = RARITY_COLOR[item.rarity] ?? '#8FA4B8';
+  const stats = Object.entries(item.stats ?? {}).filter(([, v]) => (v as number) > 0);
+  const fakeItem = { ...item, stats: item.stats ?? {}, goldValue: 0, emoji: '' } as any;
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, rgba(10,10,20,0.98), rgba(5,5,15,0.99))',
+      border: `1px solid ${col}55`, padding: 12, marginTop: 4,
+      boxShadow: `0 0 20px ${col}18`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+        <div style={{
+          background: 'rgba(0,0,0,0.6)', border: `1px solid ${col}44`, padding: 8, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 10px ${col}22`,
+        }}>
+          <ItemIcon item={fakeItem} size={48} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <p style={{ ...ORB, fontSize: 10, color: col, marginBottom: 4 }}>
+            {item.name}{item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}
+          </p>
+          <span style={{ ...MONO, fontSize: 9, color: col, background: `${col}18`, border: `1px solid ${col}33`, padding: '1px 5px' }}>
+            {item.rarity}
+          </span>
+        </div>
+        <button onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {item.attackBonus ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>⚔ Atak</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ff2d78' }}>+{item.attackBonus}</span>
+          </div>
+        ) : null}
+        {item.defenseBonus ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>🛡 Obrona</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
+          </div>
+        ) : null}
+        {stats.map(([k, v]) => (
+          <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{STAT_NAMES[k] ?? k}</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>+{v as number}</span>
+          </div>
+        ))}
+        {!item.attackBonus && !item.defenseBonus && stats.length === 0 && (
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>Brak bonusów</p>
+        )}
+      </div>
+      <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 8 }}>Min. poz. {item.level}</p>
+    </div>
+  );
+}
+
+function EquipmentSection({ equipment }: { equipment: NonNullable<LeaderboardEntry['equipment']> }) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const toggle = (slot: string) => setSelected(s => s === slot ? null : slot);
+  const items = SLOT_ORDER.map(slot => ({ slot, item: equipment[slot] })).filter(x => x.item);
+  if (items.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Ekwipunek</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {items.map(({ slot, item }) => {
+          const col = RARITY_COLOR[item!.rarity] ?? '#8FA4B8';
+          const isOpen = selected === slot;
+          const fakeItem = { ...item!, stats: item!.stats ?? {}, goldValue: 0, emoji: '' } as any;
+          return (
+            <div
+              key={slot}
+              role="button"
+              tabIndex={0}
+              onClick={() => toggle(slot)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggle(slot); }}
+              title={`${item!.name}${item!.enhanceLevel ? ` +${item!.enhanceLevel}` : ''}`}
+              style={{
+                background: isOpen ? `${col}20` : `${col}10`,
+                border: `1px solid ${isOpen ? col : col + '55'}`,
+                borderRadius: 3, padding: '6px 8px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', transition: 'border-color 0.15s, background 0.15s',
+                boxShadow: isOpen ? `0 0 10px ${col}30` : 'none',
+              }}
+            >
+              <ItemIcon item={fakeItem} size={36} />
+            </div>
+          );
+        })}
+      </div>
+      {selected && equipment[selected] && (
+        <ItemDetailPopup item={equipment[selected]!} onClose={() => setSelected(null)} />
+      )}
     </div>
   );
 }
@@ -90,41 +199,9 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
       </div>
 
       {/* equipment */}
-      {entry.equipment && Object.keys(entry.equipment).length > 0 && (() => {
-        const SLOT_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'] as const;
-        const RARITY_COLOR: Record<string, string> = {
-          common: '#8FA4B8', uncommon: '#4A9B5C', rare: '#3A78D4', epic: '#9040C8', legendary: '#D48020',
-        };
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Ekwipunek</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {SLOT_ORDER.map(slot => {
-                const item = entry.equipment![slot];
-                if (!item) return null;
-                const col = RARITY_COLOR[item.rarity] ?? '#8FA4B8';
-                return (
-                  <div key={slot} title={`${item.name}${item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}`} style={{
-                    background: `rgba(${col === '#D48020' ? '212,128,32' : col === '#9040C8' ? '144,64,200' : col === '#3A78D4' ? '58,120,212' : col === '#4A9B5C' ? '74,155,92' : '143,164,184'},0.1)`,
-                    border: `1px solid ${col}55`,
-                    borderRadius: 3, padding: '4px 6px',
-                    display: 'flex', alignItems: 'center', gap: 4,
-                    minWidth: 0,
-                  }}>
-                    <span style={{ fontSize: 14 }}>{item.emoji}</span>
-                    <div>
-                      <p style={{ ...MONO, fontSize: 9, color: col, lineHeight: 1.2 }}>
-                        {item.name}{item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}
-                      </p>
-                      <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', lineHeight: 1.2 }}>lvl {item.level}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+      {entry.equipment && Object.keys(entry.equipment).length > 0 && (
+        <EquipmentSection equipment={entry.equipment} />
+      )}
 
       {/* pvp */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

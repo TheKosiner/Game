@@ -24,7 +24,10 @@ export interface LeaderboardEntry {
   pvpRating?: number;
   guildId?: string;
   guildTag?: string;
-  equipment?: Record<string, { id: string; name: string; slot: string; rarity: string; emoji: string; level: number; enhanceLevel?: number }>;
+  equipment?: Record<string, {
+    id: string; name: string; slot: string; rarity: string; level: number; enhanceLevel?: number;
+    stats?: Record<string, number>; attackBonus?: number; defenseBonus?: number;
+  }>;
 }
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
@@ -89,7 +92,13 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     equipment: Object.fromEntries(
       Object.entries(hero.equipment).map(([slot, item]) => [
         slot,
-        item ? { id: item.id, name: item.name, slot: item.slot, rarity: item.rarity, emoji: item.emoji, level: item.level, enhanceLevel: item.enhanceLevel ?? 0 } : null,
+        item ? {
+          id: item.id, name: item.name, slot: item.slot, rarity: item.rarity, level: item.level,
+          enhanceLevel: item.enhanceLevel ?? 0,
+          stats: Object.fromEntries(Object.entries(item.stats ?? {}).filter(([, v]) => (v as number) > 0)),
+          attackBonus: item.attackBonus ?? 0,
+          defenseBonus: item.defenseBonus ?? 0,
+        } : null,
       ]).filter(([, v]) => v !== null)
     ),
     updatedAt: savedAt,
