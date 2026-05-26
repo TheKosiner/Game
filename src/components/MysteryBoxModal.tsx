@@ -15,9 +15,7 @@ const RARITY_LABEL: Record<Rarity, string> = {
   common: 'ZWYKŁY', uncommon: 'ULEPSZ.', rare: 'RZADKI', epic: 'EPICKI', legendary: 'LEGENDA',
 };
 
-interface SpinEntry { name: string; emoji: string; rarity: Rarity }
-
-function pickSpinItem(boxRarity: Rarity): SpinEntry {
+function pickSpinItem(boxRarity: Rarity): Item {
   const boxIdx = RARITY_ORDER.indexOf(boxRarity);
   // Bias toward items at or below box rarity — higher box = more exciting spins
   const weights = SPIN_POOL.map(item => {
@@ -39,7 +37,7 @@ export default function MysteryBoxModal() {
   const dismiss      = useGameStore(s => s.dismissMysteryBox);
 
   const [wonItem, setWonItem]       = useState<Item | null>(null);
-  const [display, setDisplay]       = useState<SpinEntry>(SPIN_POOL[0]);
+  const [display, setDisplay]       = useState<Item>(SPIN_POOL[0]);
   const [phase, setPhase]           = useState<'spinning' | 'done'>('spinning');
   const [fullInv, setFullInv]       = useState(false);
   const activeRef = useRef(false);
@@ -64,7 +62,7 @@ export default function MysteryBoxModal() {
       if (!activeRef.current) return;
       const elapsed = Date.now() - start;
       if (elapsed >= DURATION) {
-        setDisplay({ name: wonItem!.name, emoji: wonItem!.emoji, rarity: wonItem!.rarity });
+        setDisplay(wonItem!);
         setPhase('done');
         const ok = collectReward(pending!.box, pending!.invIdx, wonItem!);
         if (!ok) setFullInv(true);
@@ -73,11 +71,7 @@ export default function MysteryBoxModal() {
       }
       const t = elapsed / DURATION;
       const interval = Math.round(70 + t * t * 800);
-      if (t > 0.85) {
-        setDisplay({ name: wonItem!.name, emoji: wonItem!.emoji, rarity: wonItem!.rarity });
-      } else {
-        setDisplay(pickSpinItem(pending!.box.rarity));
-      }
+      setDisplay(t > 0.85 ? wonItem! : pickSpinItem(pending!.box.rarity));
       setTimeout(tick, interval);
     }
     tick();
@@ -88,7 +82,7 @@ export default function MysteryBoxModal() {
   function handleSkip() {
     if (!wonItem) return;
     activeRef.current = false;
-    setDisplay({ name: wonItem.name, emoji: wonItem.emoji, rarity: wonItem.rarity });
+    setDisplay(wonItem);
     setPhase('done');
     const ok = collectReward(pending!.box, pending!.invIdx, wonItem);
     if (!ok) setFullInv(true);
@@ -128,21 +122,13 @@ export default function MysteryBoxModal() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
 
-        {isDone && wonItem ? (
-          <div style={{
-            marginBottom: 10,
-            filter: `drop-shadow(0 0 12px ${rc})`,
-          }}>
-            <ItemIcon item={wonItem} size={100} />
-          </div>
-        ) : (
-          <span style={{
-            fontSize: 72, lineHeight: 1, marginBottom: 10,
-            transition: 'opacity 0.05s',
-          }}>
-            {display.emoji}
-          </span>
-        )}
+        <div style={{
+          marginBottom: 10,
+          filter: isDone ? `drop-shadow(0 0 14px ${rc})` : 'none',
+          transition: 'filter 0.3s',
+        }}>
+          <ItemIcon item={display} size={96} />
+        </div>
         <p style={{ ...MONO, fontSize: 11, color: rc, textAlign: 'center', padding: '0 10px', marginBottom: 6 }}>
           {display.name}
         </p>

@@ -62,21 +62,21 @@ export function openMysteryBox(box: Item): Item {
   return generateItem(itemLevel, dropRarity);
 }
 
-// Items shown during the spin animation (display only)
-export const SPIN_POOL: { name: string; emoji: string; rarity: Rarity }[] = [
-  { name: 'Wibro-Kling',       emoji: '⚡', rarity: 'common'    },
-  { name: 'Pancerz Miejski',   emoji: '🧥', rarity: 'common'    },
-  { name: 'Hełm Skanujący',    emoji: '⛑️', rarity: 'common'    },
-  { name: 'Nano-Dagger',       emoji: '🗡️', rarity: 'uncommon'  },
-  { name: 'Laser Blade',       emoji: '⚔️', rarity: 'uncommon'  },
-  { name: 'Cyber-Kolczuga',    emoji: '🦺', rarity: 'uncommon'  },
-  { name: 'Plasma Cannon',     emoji: '🔫', rarity: 'rare'      },
-  { name: 'Cyber Shield',      emoji: '🛡️', rarity: 'rare'      },
-  { name: 'Railgun MK-II',     emoji: '🎯', rarity: 'rare'      },
-  { name: 'Void Armor',        emoji: '🌑', rarity: 'epic'      },
-  { name: 'Quantum Blade',     emoji: '💠', rarity: 'epic'      },
-  { name: 'Psi-Amplifier',     emoji: '🔮', rarity: 'epic'      },
-  { name: 'Omega Blade',       emoji: '⭐', rarity: 'legendary'  },
-  { name: 'Singularity Cannon',emoji: '🌌', rarity: 'legendary'  },
-  { name: 'Nexus Gauntlet',    emoji: '💎', rarity: 'legendary'  },
+// Items shown during the spin animation (display only) — full Item so ItemIcon renders SVG
+export const SPIN_POOL: Item[] = [
+  { id: 'blade_vibro',       name: 'Wibro-Kling',        slot: 'weapon',  rarity: 'common',    stats: {}, level: 1, goldValue: 0, emoji: '⚡' },
+  { id: 'vest_urban',        name: 'Pancerz Miejski',    slot: 'armor',   rarity: 'common',    stats: {}, level: 1, goldValue: 0, emoji: '🧥' },
+  { id: 'helmet_scan',       name: 'Hełm Skanujący',     slot: 'helmet',  rarity: 'common',    stats: {}, level: 1, goldValue: 0, emoji: '⛑️' },
+  { id: 'knife_nano',        name: 'Nano-Dagger',        slot: 'weapon',  rarity: 'uncommon',  stats: {}, level: 1, goldValue: 0, emoji: '🗡️' },
+  { id: 'blade_laser',       name: 'Laser Blade',        slot: 'weapon',  rarity: 'uncommon',  stats: {}, level: 1, goldValue: 0, emoji: '⚔️' },
+  { id: 'exo_cyber',         name: 'Cyber-Kolczuga',     slot: 'armor',   rarity: 'uncommon',  stats: {}, level: 1, goldValue: 0, emoji: '🦺' },
+  { id: 'cannon_plasma',     name: 'Plasma Cannon',      slot: 'weapon',  rarity: 'rare',      stats: {}, level: 1, goldValue: 0, emoji: '🔫' },
+  { id: 'suit_cyber',        name: 'Cyber Shield',       slot: 'armor',   rarity: 'rare',      stats: {}, level: 1, goldValue: 0, emoji: '🛡️' },
+  { id: 'railgun_mk2',       name: 'Railgun MK-II',      slot: 'weapon',  rarity: 'rare',      stats: {}, level: 1, goldValue: 0, emoji: '🎯' },
+  { id: 'suit_void',         name: 'Void Armor',         slot: 'armor',   rarity: 'epic',      stats: {}, level: 1, goldValue: 0, emoji: '🌑' },
+  { id: 'blade_quantum',     name: 'Quantum Blade',      slot: 'weapon',  rarity: 'epic',      stats: {}, level: 1, goldValue: 0, emoji: '💠' },
+  { id: 'amplifier_psi',     name: 'Psi-Amplifier',      slot: 'amulet',  rarity: 'epic',      stats: {}, level: 1, goldValue: 0, emoji: '🔮' },
+  { id: 'blade_omega',       name: 'Omega Blade',        slot: 'weapon',  rarity: 'legendary', stats: {}, level: 1, goldValue: 0, emoji: '⭐' },
+  { id: 'cannon_singularity',name: 'Singularity Cannon', slot: 'weapon',  rarity: 'legendary', stats: {}, level: 1, goldValue: 0, emoji: '🌌' },
+  { id: 'ring_nexus',        name: 'Nexus Gauntlet',     slot: 'ring',    rarity: 'legendary', stats: {}, level: 1, goldValue: 0, emoji: '💎' },
 ];
