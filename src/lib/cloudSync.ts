@@ -24,6 +24,7 @@ export interface LeaderboardEntry {
   pvpRating?: number;
   guildId?: string;
   guildTag?: string;
+  equipment?: Record<string, { id: string; name: string; slot: string; rarity: string; emoji: string; level: number; enhanceLevel?: number }>;
 }
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
@@ -85,6 +86,12 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     pvpWins: pvpWins ?? 0,
     pvpLosses: pvpLosses ?? 0,
     pvpRating: pvpRating ?? 1000,
+    equipment: Object.fromEntries(
+      Object.entries(hero.equipment).map(([slot, item]) => [
+        slot,
+        item ? { id: item.id, name: item.name, slot: item.slot, rarity: item.rarity, emoji: item.emoji, level: item.level, enhanceLevel: item.enhanceLevel ?? 0 } : null,
+      ]).filter(([, v]) => v !== null)
+    ),
     updatedAt: savedAt,
   }, { merge: true });
 

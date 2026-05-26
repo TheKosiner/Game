@@ -89,6 +89,43 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
         <StatBar label={t.leaderboard.hp} value={hp}  max={Math.max(hp, 200)} color="#00ff88" />
       </div>
 
+      {/* equipment */}
+      {entry.equipment && Object.keys(entry.equipment).length > 0 && (() => {
+        const SLOT_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'] as const;
+        const RARITY_COLOR: Record<string, string> = {
+          common: '#8FA4B8', uncommon: '#4A9B5C', rare: '#3A78D4', epic: '#9040C8', legendary: '#D48020',
+        };
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>Ekwipunek</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {SLOT_ORDER.map(slot => {
+                const item = entry.equipment![slot];
+                if (!item) return null;
+                const col = RARITY_COLOR[item.rarity] ?? '#8FA4B8';
+                return (
+                  <div key={slot} title={`${item.name}${item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}`} style={{
+                    background: `rgba(${col === '#D48020' ? '212,128,32' : col === '#9040C8' ? '144,64,200' : col === '#3A78D4' ? '58,120,212' : col === '#4A9B5C' ? '74,155,92' : '143,164,184'},0.1)`,
+                    border: `1px solid ${col}55`,
+                    borderRadius: 3, padding: '4px 6px',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    minWidth: 0,
+                  }}>
+                    <span style={{ fontSize: 14 }}>{item.emoji}</span>
+                    <div>
+                      <p style={{ ...MONO, fontSize: 9, color: col, lineHeight: 1.2 }}>
+                        {item.name}{item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}
+                      </p>
+                      <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', lineHeight: 1.2 }}>lvl {item.level}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* pvp */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.leaderboard.pvpStats}</p>
