@@ -41,7 +41,7 @@ export default function LevelUpModal() {
           Wbiłeś kolejny poziom!!! 🎉
         </p>
         <p style={{ ...MONO, fontSize: 10, color: '#5a9040', marginBottom: 20 }}>
-          +3 gemy • +{(level > 1 ? 8 : 0)} MaxHP • +1 punkt atrybutów
+          +3 gemy • +{(level > 1 ? 8 : 0)} MaxHP
         </p>
         <button
           onClick={dismiss}
