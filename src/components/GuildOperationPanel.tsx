@@ -177,7 +177,7 @@ export default function GuildOperationPanel({
     if (!autoFight) return;
     const id = setInterval(() => {
       if (!attackingRef.current) handleAttack();
-    }, 1200);
+    }, 300);
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
 
