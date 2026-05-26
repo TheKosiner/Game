@@ -148,19 +148,24 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     ? (saveSnap.data().updatedAt ?? 0)
     : (legacySnap?.data()?.updatedAt ?? 0);
 
-  // Prefer localStorage only if it belongs to this user and is newer.
+  // Prefer local state when it's newer than the cloud snapshot.
   // Skip this check when force=true (called after a rejected save to revert a cheat).
-  try {
-    if (!force) {
+  // Use a 60s buffer to account for slow network writes and clock drift.
+  if (!force) {
+    try {
+      // First check in-memory store (always up-to-date, even if localStorage fails)
+      const inMemoryLastSaved = (await import('../store/gameStore')).useGameStore.getState().lastSaved ?? 0;
+      if (inMemoryLastSaved + 60_000 > cloudTs) return false;
+    } catch { /* fall through to localStorage check */ }
+
+    try {
       const localRaw = localStorage.getItem('glitchsoul_save');
       if (localRaw) {
         const localSave = JSON.parse(localRaw);
-        // Prefer local if it's within 10s of cloud — protects against minor clock
-        // drift and the brief window between local save and cloud sync write.
-        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 10_000 > cloudTs) return false;
+        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 60_000 > cloudTs) return false;
       }
-    }
-  } catch { /* ignore */ }
+    } catch { /* ignore */ }
+  }
 
   const hero = migrateHeroFromRaw(raw.hero);
 
