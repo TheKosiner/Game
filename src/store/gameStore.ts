@@ -391,7 +391,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const heroFloors = 10;
     const tierDungeon = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level).pop() ?? ALL_DUNGEONS[0];
-    const enemyId = tierDungeon.enemies[Math.floor(Math.random() * tierDungeon.enemies.length)];
+    const safeEnemyPool = tierDungeon.enemies.filter(id => {
+      const e = getEnemyById(id);
+      return e && e.level <= hero.level;
+    });
+    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : tierDungeon.enemies;
+    const enemyId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
     const scaled = scaleEnemy(baseEnemy, 1);
@@ -403,7 +408,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       defense: Math.round(scaled.defense * diffStatMult),
     };
     set({
-      currentDungeon: { ...dungeon, floors: heroFloors, enemies: tierDungeon.enemies },
+      currentDungeon: { ...dungeon, floors: heroFloors, enemies: enemyPool },
       dungeonMode: mode,
       dungeonDifficulty: difficulty,
       currentFloor: 1,
