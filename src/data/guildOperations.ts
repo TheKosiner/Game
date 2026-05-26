@@ -130,6 +130,22 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
   },
 ];
 
+/** Pick a random location appropriate for the given hero level.
+ *  Eligible = minLevel <= heroLevel. Weighted so higher-tier locations
+ *  are more likely (weight = index+1 among eligible). */
+export function pickLocationForLevel(heroLevel: number): GuildOpLocation {
+  const eligible = GUILD_OP_LOCATIONS.filter(l => l.minLevel <= heroLevel);
+  const pool = eligible.length > 0 ? eligible : [GUILD_OP_LOCATIONS[0]];
+  const weights = pool.map((_, i) => i + 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let rnd = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    rnd -= weights[i];
+    if (rnd <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
 export function getFloorEnemy(
   location: GuildOpLocation,
   floor: number,

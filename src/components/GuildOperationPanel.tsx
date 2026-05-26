@@ -117,10 +117,10 @@ export default function GuildOperationPanel({
     setTimeout(() => setNotification(null), 3500);
   }
 
-  async function handleStart(locationId: string) {
+  async function handleStart() {
     setStarting(true);
     try {
-      const ok = await startGuildOperation(guildId, myUid, locationId, memberCount);
+      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount);
       if (ok) setLog([]);
       else notify('Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
@@ -532,65 +532,44 @@ export default function GuildOperationPanel({
     );
   }
 
-  // ── LOCATION SELECTION ───────────────────────────────────────────────────────
+  // ── START SCREEN ─────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
-      <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)', marginBottom: 2 }}>WYBIERZ OPERACJĘ</p>
-      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>
-        Trudność skaluje się z liczbą członków ({memberCount}).
-        {!isLeader && ' Tylko władca może uruchomić operację.'}
-      </p>
-      <p style={{ ...MONO, fontSize: 10, color: '#f59e0b', marginBottom: 6 }}>
-        ⚡ Każdy atakuje raz dziennie swoim pełnym HP. Operacja musi zakończyć się przed północą (UTC).
-      </p>
+      <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)', marginBottom: 2 }}>OPERACJA GILDYJNA</p>
 
-      {GUILD_OP_LOCATIONS.map(location => {
-        const rarColor = RARITY_COLOR[location.finalRarity] ?? '#aaa';
-        return (
-          <div key={location.id} style={{
-            background: 'rgba(5,10,25,0.8)',
-            border: `1px solid ${rarColor}33`,
-            padding: '10px 12px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <p style={{ ...ORB, fontSize: 9, color: rarColor }}>
-                    {location.emoji} {location.name}
-                  </p>
-                  <span style={{
-                    ...MONO, fontSize: 8, padding: '1px 5px',
-                    background: `${rarColor}22`, border: `1px solid ${rarColor}55`, color: rarColor,
-                  }}>
-                    POZ. {location.minLevel}+
-                  </span>
-                </div>
-                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 4 }}>
-                  {location.floors} pięter · {location.enemiesPerFloor} wrogów/piętro · [{location.finalRarity.toUpperCase()}]
-                </p>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{ ...MONO, fontSize: 10, color: '#4ade80' }}>+{location.baseXpPerFloor * location.floors}+ XP</p>
-                <p style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{location.baseGoldPerFloor * location.floors}+ 🪙</p>
-              </div>
-            </div>
-            <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', marginBottom: 8 }}>
-              {location.description}
-            </p>
-            {canStart && (
-              <button
-                onClick={() => handleStart(location.id)}
-                disabled={starting}
-                className="btn btn-primary"
-                style={{ fontSize: 9, padding: '6px 10px', width: '100%' }}
-              >
-                ▶ ROZPOCZNIJ
-              </button>
-            )}
-          </div>
-        );
-      })}
+      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>
+          🗺 Lokacja dobierana automatycznie wg Twojego poziomu ({hero.level}).
+        </p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>
+          👥 Liczba członków: {memberCount} · Im wyższy poziom, tym lepsze nagrody.
+        </p>
+        <p style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
+          ⚡ Operacja kończy się o północy UTC. Każdy walczy swoim HP.
+        </p>
+      </div>
+
+      {inCooldown && op ? (
+        <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '10px', textAlign: 'center' }}>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
+            ⏳ Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
+          </p>
+        </div>
+      ) : canStart ? (
+        <button
+          onClick={handleStart}
+          disabled={starting}
+          className="btn btn-primary"
+          style={{ fontSize: 10 }}
+        >
+          {starting ? '⏳ Uruchamianie...' : '▶ ROZPOCZNIJ OPERACJĘ'}
+        </button>
+      ) : !isLeader ? (
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
+          Tylko władca gildii może uruchomić operację.
+        </p>
+      ) : null}
     </div>
   );
 }

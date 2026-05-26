@@ -2,7 +2,7 @@ import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getD
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
-import { GUILD_OP_LOCATIONS, getFloorEnemy } from '../data/guildOperations';
+import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -303,6 +303,7 @@ export interface GuildOperationState {
   startedAt: number;
   deadline: number;
   memberCount: number;
+  heroLevel: number;
   participants: Record<string, GuildOpParticipant>;
   cooldownUntil: number;
   status: 'active' | 'failed' | 'completed';
@@ -949,12 +950,10 @@ function nextMidnightUtc(): number {
 export async function startGuildOperation(
   guildId: string,
   uid: string,
-  locationId: string,
+  heroLevel: number,
   memberCount: number,
 ): Promise<boolean> {
   if (!db) return false;
-  const location = GUILD_OP_LOCATIONS.find(l => l.id === locationId);
-  if (!location) return false;
 
   const snap = await getDoc(doc(db, 'guilds', guildId));
   if (!snap.exists()) return false;
@@ -967,9 +966,10 @@ export async function startGuildOperation(
   const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
   if (isActiveAndValid || isInCooldown) return false;
 
+  const location = pickLocationForLevel(heroLevel);
   const first = getFloorEnemy(location, 1, memberCount);
   const op: GuildOperationState = {
-    locationId,
+    locationId: location.id,
     floor: 1,
     maxFloors: location.floors,
     enemyHp: first.hp,
@@ -982,6 +982,7 @@ export async function startGuildOperation(
     startedAt: now,
     deadline: nextMidnightUtc(),
     memberCount,
+    heroLevel,
     participants: {},
     cooldownUntil: 0,
     status: 'active',
@@ -1041,8 +1042,9 @@ export async function attackGuildEnemy(
         txn.update(ref, updates);
         return 'enemy_killed';
       } else if (op.floor >= op.maxFloors) {
-        const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12));
-        const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08));
+        const lvlMult = 1 + ((op.heroLevel ?? 1) - 1) * 0.04;
+        const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12) * lvlMult);
+        const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08) * lvlMult);
         updates['guildOperation.pendingReward'] = {
           xp, gold, rarity: loc.finalRarity, completedAt: now, claimedBy: {},
         };
