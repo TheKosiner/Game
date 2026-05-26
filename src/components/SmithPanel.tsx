@@ -282,7 +282,7 @@ export default function SmithPanel() {
         <img
           src={smithImg}
           alt="Kowal"
-          style={{ width: '100%', maxHeight: 220, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          style={{ width: '100%', display: 'block', objectFit: 'contain' }}
         />
         <div style={{
           position: 'absolute', inset: 0,
