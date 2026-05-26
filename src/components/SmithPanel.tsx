@@ -7,6 +7,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { enhanceMultiplier } from '../utils/combat';
 import smithImg from '../assets/smith.webp';
+import ItemIcon from './ItemIcon';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -34,7 +35,7 @@ interface Selection {
 interface EnhanceResult {
   success: boolean;
   itemName: string;
-  itemEmoji: string;
+  item: Item;
   fromLevel: number;
   toLevel: number;
 }
@@ -54,7 +55,7 @@ function ItemCard({ item, selected, onClick }: { item: Item; selected: boolean; 
         transition: 'all 0.15s',
       }}
     >
-      <span style={{ fontSize: 22, flexShrink: 0 }}>{item.emoji}</span>
+      <div style={{ flexShrink: 0 }}><ItemIcon item={item} size={32} /></div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ ...ORB, fontSize: 10, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -121,7 +122,7 @@ function ResultModal({ result, onClose, onRetry }: {
           borderRadius: 8, padding: '12px 20px',
           display: 'flex', alignItems: 'center', gap: 12, width: '100%',
         }}>
-          <span style={{ fontSize: 28 }}>{result.itemEmoji}</span>
+          <ItemIcon item={result.item} size={44} />
           <div>
             <p style={{ ...ORB, fontSize: 10, color: 'rgba(255,255,255,0.8)', margin: 0 }}>{result.itemName}</p>
             <p style={{ ...ORB, fontSize: 14, color, margin: '4px 0 0' }}>{levelText}</p>
@@ -194,7 +195,7 @@ export default function SmithPanel() {
     if (hero.gold < selected.item.level * ENHANCE_COST_PER_LV[enh]) return;
 
     const itemName = lang === 'en' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
-    const itemEmoji = selected.item.emoji;
+    const originalItem = selected.item;
 
     enhanceItem(selected.source, selected.idxOrSlot);
     const u = useAuthStore.getState().user;
@@ -210,7 +211,7 @@ export default function SmithPanel() {
       }
       const newLevel = updatedItem?.enhanceLevel ?? 0;
       const didSucceed = newLevel > enh;
-      setResult({ success: didSucceed, itemName, itemEmoji, fromLevel: enh, toLevel: newLevel });
+      setResult({ success: didSucceed, itemName, item: updatedItem ?? originalItem, fromLevel: enh, toLevel: newLevel });
       if (updatedItem) {
         setSelected(prev => prev ? { ...prev, item: updatedItem! } : null);
       }
@@ -360,7 +361,7 @@ export default function SmithPanel() {
             }}>
               {/* Item preview */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 28 }}>{freshSelected.item.emoji}</span>
+                <ItemIcon item={freshSelected.item} size={44} />
                 <div>
                   <div style={{ ...ORB, fontSize: 11, color: RARITY_COLOR[freshSelected.item.rarity] ?? 'white' }}>
                     {lang === 'en' ? (freshSelected.item.nameEn ?? freshSelected.item.name) : freshSelected.item.name}
