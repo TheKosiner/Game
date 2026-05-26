@@ -242,7 +242,7 @@ function EnemyBattleCard() {
           <EnemyIcon id={enemy.id} size={64} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(10), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
-            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {enemy.level}</p>
+            <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {hero.level}</p>
             <p style={{ ...PX(6), color: '#903040' }}>{enemy.hp} / {enemy.maxHp} HP</p>
           </div>
         </div>
