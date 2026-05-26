@@ -225,6 +225,7 @@ export interface GameState {
   challengeLastHit: ChallengeHitEvent | null;
   guildExpBonus: number;
   guildGoldBonus: number;
+  levelUpPending: number | null;
 
   // actions
   setGuildBonuses: (exp: number, gold: number) => void;

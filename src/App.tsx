@@ -33,6 +33,7 @@ import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './componen
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
+import LevelUpModal from './components/LevelUpModal';
 
 export default function App() {
   const t = useT();
@@ -518,6 +519,7 @@ export default function App() {
 
       <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
       <MysteryBoxModal />
+      <LevelUpModal />
     </div>
   );
 }

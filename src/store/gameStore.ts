@@ -199,6 +199,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   challengeLastHit: null,
   guildExpBonus: 0,
   guildGoldBonus: 0,
+  levelUpPending: null,
   mysteryBoxPending: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
@@ -252,6 +253,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(t.combat.levelUp(level), 'system');
       get().addGems(3);
       get().addCombatLog(t.gems.levelUpLog(3), 'system');
+      set({ levelUpPending: level });
     }
   },
 
