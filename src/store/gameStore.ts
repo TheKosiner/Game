@@ -390,7 +390,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const heroLvlScale = 1 + (hero.level - 1) * 0.015;
-    const heroFloors = Math.min(15, Math.ceil(hero.level / 2));
+    const heroFloors = 10;
     const tierDungeon = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level).pop() ?? ALL_DUNGEONS[0];
     const enemyId = tierDungeon.enemies[Math.floor(Math.random() * tierDungeon.enemies.length)];
     const baseEnemy = getEnemyById(enemyId);

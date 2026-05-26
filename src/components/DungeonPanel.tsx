@@ -351,7 +351,7 @@ function DungeonList() {
                 {isEn ? (chosen as typeof chosen & { descEn?: string }).descEn ?? chosen.description : chosen.description}
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{Math.min(15, Math.ceil(hero.level / 2))} {t.dungeon.floors}</span>
+                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>10 {t.dungeon.floors}</span>
                 <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>{t.dungeon.level}{hero.level}</span>
               </div>
             </div>
