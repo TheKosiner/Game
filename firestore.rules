@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-18 v4
+// Last deployed: 2026-05-26 v5
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -14,23 +14,27 @@ service cloud.firestore {
     // ── Time-based validation using SERVER time (request.time) ────────────────
     // These replace Cloud Functions for timer validation — work on Spark plan
 
-    // Quest collection: if activeQuest is cleared, server time must be past endsAt
+    // Quest collection: if activeQuest is cleared, server time must be past endsAt.
+    // If endsAt is >1 h in the future, the value is corrupted — allow correction.
     // (skips check if quest is being abandoned mid-run — same null result but
     //  questsCompletedToday won't increment on abandon, so reward can't be gamed)
     function validQuestClear(old, nw) {
       return old.activeQuest == null
         || nw.activeQuest != null
-        || request.time.toMillis() >= old.activeQuest.endsAt;
+        || request.time.toMillis() >= old.activeQuest.endsAt
+        || old.activeQuest.endsAt > request.time.toMillis() + 3600000;
     }
 
-    // Begging: if beggingUntil cleared AND beggingReward consumed, time must be past
+    // Begging: if beggingUntil cleared AND beggingReward consumed, time must be past.
+    // If beggingUntil is >48 h in the future, the value is corrupted — allow correction.
     function validBeggingClear(old, nw) {
       return old.hero.beggingUntil == null
         || nw.hero.beggingUntil != null
         // cancelled early (reward nulled too — no gold awarded at full rate)
         || nw.hero.beggingReward == null
         // completed: server time past end
-        || request.time.toMillis() >= old.hero.beggingUntil;
+        || request.time.toMillis() >= old.hero.beggingUntil
+        || old.hero.beggingUntil > request.time.toMillis() + 172800000;
     }
 
     // lastDailyReset: if changed, new value must be ≈ server time (blocks backdating).
@@ -42,7 +46,8 @@ service cloud.firestore {
             && nw.hero.lastDailyReset <= request.time.toMillis() + 10000);
     }
 
-    // Voluntary rest: voluntaryRestUntil can only be cleared after server time passes it
+    // Voluntary rest: voluntaryRestUntil can only be cleared after server time passes it.
+    // If voluntaryRestUntil is >48 h in the future, the value is corrupted — allow correction.
     function validRestClear(old, nw) {
       return old.hero.voluntaryRestUntil == null
         || nw.hero.voluntaryRestUntil != null
@@ -50,7 +55,8 @@ service cloud.firestore {
         || (nw.hero.voluntaryRestHp == null && nw.hero.voluntaryRestStartAt == null
             && request.time.toMillis() < old.hero.voluntaryRestUntil)
         // completed: server time must be past the rest end
-        || request.time.toMillis() >= old.hero.voluntaryRestUntil;
+        || request.time.toMillis() >= old.hero.voluntaryRestUntil
+        || old.hero.voluntaryRestUntil > request.time.toMillis() + 172800000;
     }
 
     // Challenge cooldown: lastChallengeAt can only increase after 1 h from server's view.
