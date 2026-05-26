@@ -6,6 +6,8 @@ import type { Dungeon } from '../types';
 import EnemyIcon from './EnemyIcon';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
+import { syncToCloud } from '../lib/cloudSync';
+import { useAuthStore } from '../store/authStore';
 import { PX, MONO, ORB } from '../utils/styles';
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
@@ -234,6 +236,11 @@ function EnemyBattleCard() {
   const attackEnemy = useGameStore(s => s.attackEnemy);
   const autoFightEnemy = useGameStore(s => s.autoFightEnemy);
   const exitDungeon = useGameStore(s => s.exitDungeon);
+  const battleUser  = useAuthStore(s => s.user);
+  const handleFleeExit = () => {
+    exitDungeon();
+    if (battleUser) syncToCloud(battleUser.uid, battleUser.username).catch(() => {});
+  };
 
   if (!enemy || !dungeon) return null;
 
@@ -290,7 +297,7 @@ function EnemyBattleCard() {
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.attack}</button>
         <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.quickFight}</button>
-        <button onClick={exitDungeon} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}>🚪</button>
+        <button onClick={handleFleeExit} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}>🚪</button>
       </div>
 
       <div className="combat-log">
@@ -781,6 +788,11 @@ export default function DungeonPanel() {
   const combatLog         = useGameStore(s => s.combatLog);
   const defeatedAtDungeon = useGameStore(s => s.defeatedAtDungeon);
   const clearDefeat       = useGameStore(s => s.clearDefeat);
+  const dungeonUser       = useAuthStore(s => s.user);
+  const handleExit = () => {
+    exitDungeon();
+    if (dungeonUser) syncToCloud(dungeonUser.uid, dungeonUser.username).catch(() => {});
+  };
 
   if (defeatedAtDungeon) {
     return (
@@ -831,7 +843,7 @@ export default function DungeonPanel() {
             <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
           ))}
         </div>
-        <button onClick={exitDungeon} className="btn btn-primary" style={{ width: '100%', fontSize: 10 }}>
+        <button onClick={handleExit} className="btn btn-primary" style={{ width: '100%', fontSize: 10 }}>
           {t.dungeon.backToCity2}
         </button>
       </div>

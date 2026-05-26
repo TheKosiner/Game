@@ -102,16 +102,15 @@ export default function QuestPanel() {
         try {
           await collectQuestServer();
         } catch (err: any) {
-          // CF explicitly said quest isn't done yet — respect that
           if (err?.code === 'functions/failed-precondition') {
             setCollecting(false);
             return;
           }
-          // Any other error (not deployed, network, quest not in Firestore yet) —
-          // fall back to local time check so the game still works
         }
       }
       collectQuest();
+      // Sync immediately — iOS kills tabs before the 10s interval fires
+      if (user) syncToCloud(user.uid, user.username).catch(() => {});
     } finally {
       setCollecting(false);
     }

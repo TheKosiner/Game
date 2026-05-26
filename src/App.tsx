@@ -152,13 +152,21 @@ export default function App() {
     return () => clearInterval(id);
   }, [gameLoaded, user?.uid]);
 
-  // Flush save to localStorage before the page unloads so the last 30s of
-  // progress isn't lost when the user closes/refreshes the app mid-interval.
+  // Flush save + cloud sync before the page unloads / is hidden by iOS.
+  // 'pagehide' is more reliable than 'beforeunload' on iOS Safari.
   useEffect(() => {
     if (!gameLoaded) return;
-    const flush = () => useGameStore.getState().saveGame();
+    const flush = () => {
+      useGameStore.getState().saveGame();
+      const u = useAuthStore.getState().user;
+      if (u) syncToCloud(u.uid, u.username).catch(() => {});
+    };
     window.addEventListener('beforeunload', flush);
-    return () => window.removeEventListener('beforeunload', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      window.removeEventListener('pagehide', flush);
+    };
   }, [gameLoaded]);
 
   // Sync to cloud immediately when the player leaves the tab/app so that
