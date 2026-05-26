@@ -501,7 +501,7 @@ export default function App() {
         )}
 
         <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {tab === 'hero'   && <><HeroCard /><InventoryPanel /></>}
+          {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
@@ -518,7 +518,6 @@ export default function App() {
 
       <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
       <MysteryBoxModal />
-      {user?.email && <AdminPanel userEmail={user.email} />}
     </div>
   );
 }

@@ -186,11 +186,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   };
 
   const s: React.CSSProperties = {
-    position: 'fixed', bottom: 80, right: 12, zIndex: 9999,
     background: '#0a0a12', border: '2px solid #ff4466',
-    borderRadius: 4, padding: 12, width: 300,
+    borderRadius: 4, padding: 12,
     boxShadow: '0 0 20px rgba(255,68,102,0.3)',
-    maxHeight: '80vh', overflowY: 'auto',
   };
 
   return (
