@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { openMysteryBox, SPIN_POOL, RARITY_ORDER } from '../data/mysteryBoxes';
+import ItemIcon from './ItemIcon';
 import type { Item, Rarity } from '../types';
 import { MONO, ORB } from '../utils/styles';
 
@@ -127,13 +128,21 @@ export default function MysteryBoxModal() {
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: rc, opacity: 0.7 }} />
 
-        <span style={{
-          fontSize: 72, lineHeight: 1, marginBottom: 10,
-          transition: isDone ? 'none' : 'opacity 0.05s',
-          filter: isDone ? `drop-shadow(0 0 12px ${rc})` : 'none',
-        }}>
-          {display.emoji}
-        </span>
+        {isDone && wonItem ? (
+          <div style={{
+            marginBottom: 10,
+            filter: `drop-shadow(0 0 12px ${rc})`,
+          }}>
+            <ItemIcon item={wonItem} size={100} />
+          </div>
+        ) : (
+          <span style={{
+            fontSize: 72, lineHeight: 1, marginBottom: 10,
+            transition: 'opacity 0.05s',
+          }}>
+            {display.emoji}
+          </span>
+        )}
         <p style={{ ...MONO, fontSize: 11, color: rc, textAlign: 'center', padding: '0 10px', marginBottom: 6 }}>
           {display.name}
         </p>
