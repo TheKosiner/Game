@@ -33,9 +33,11 @@ service cloud.firestore {
         || request.time.toMillis() >= old.hero.beggingUntil;
     }
 
-    // lastDailyReset: if changed, new value must be ≈ server time (blocks backdating)
+    // lastDailyReset: if changed, new value must be ≈ server time (blocks backdating).
+    // If old value is in the future (corrupted clock), allow correction.
     function validDailyReset(old, nw) {
       return nw.hero.lastDailyReset == old.hero.lastDailyReset
+        || old.hero.lastDailyReset > request.time.toMillis()
         || (nw.hero.lastDailyReset >= request.time.toMillis() - 300000
             && nw.hero.lastDailyReset <= request.time.toMillis() + 10000);
     }
@@ -51,11 +53,13 @@ service cloud.firestore {
         || request.time.toMillis() >= old.hero.voluntaryRestUntil;
     }
 
-    // Challenge cooldown: lastChallengeAt can only increase after 1 h from server's view
+    // Challenge cooldown: lastChallengeAt can only increase after 1 h from server's view.
+    // If old value is in the future (corrupted clock), allow correction to any value.
     function validChallengeCooldown(old, nw) {
       let COOLDOWN_MS = 3600000; // 1 hour
       return nw.lastChallengeAt <= old.lastChallengeAt
         || old.lastChallengeAt == 0
+        || old.lastChallengeAt > request.time.toMillis()
         || request.time.toMillis() - old.lastChallengeAt >= COOLDOWN_MS;
     }
 
