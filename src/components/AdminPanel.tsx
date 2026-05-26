@@ -179,10 +179,10 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     flash(`Wyczyszczono aktywną misję dla ${player.username}`);
   };
 
-  const clearRest = async () => {
+  const healFull = async () => {
     if (!player) return;
-    await patch({ 'hero.restingUntil': null, 'hero.voluntaryRestUntil': null, 'hero.voluntaryRestHp': null, 'hero.voluntaryRestStartAt': null });
-    flash(`Wyczyszczono odpoczynek dla ${player.username}`);
+    await patch({ 'hero.hp': player.maxHp });
+    flash(`HP ${player.username} → ${player.maxHp}/${player.maxHp}`);
   };
 
   const s: React.CSSProperties = {
@@ -269,8 +269,8 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             <button onClick={clearQuest} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #664444', color: '#cc8888', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Wyczyść misję
             </button>
-            <button onClick={clearRest} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #664444', color: '#cc8888', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
-              Wyczyść odpoczynek
+            <button onClick={healFull} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
+              Heal do pełna
             </button>
           </div>
         </>
