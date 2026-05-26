@@ -462,7 +462,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(currentDungeon.minLevel, mode, diff, set, get);
+        tryDungeonLoot(hero.level, mode, diff, set, get);
         const freshHero = get().hero;
         const prevCompleted = freshHero.completedDungeons ?? [];
         if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
