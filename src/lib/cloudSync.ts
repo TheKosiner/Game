@@ -310,6 +310,7 @@ export interface GuildOpParticipant {
   heroName: string;
   damage: number;
   attackedAt: number;
+  maxHp: number; // HP pool recorded on first attack — caps total contribution
 }
 
 export interface GuildOperationState {
@@ -1016,12 +1017,13 @@ export async function startGuildOperation(
   });
 }
 
-export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'already_used';
+export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'hp_depleted';
 
 export async function attackGuildEnemy(
   guildId: string,
   uid: string,
   heroDamage: number,
+  heroMaxHp: number,
   info: { username: string; heroName: string },
 ): Promise<{ status: AttackGuildResult; damage: number }> {
   if (!db) return { status: 'no_op', damage: 0 };
@@ -1044,19 +1046,24 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
-    const existing = (op.participants ?? {})[uid];
-    // Each player may only contribute once per raid
-    if (existing) return 'already_used';
+    // Each player's total contribution is capped at their maxHp (recorded on first attack).
+    // They can attack many times but cannot exceed that pool.
+    const existing = (op.participants ?? {})[uid] as GuildOpParticipant | undefined;
+    const playerMaxHp = existing?.maxHp ?? Math.max(1, Math.min(heroMaxHp, 500_000));
+    const alreadyDealt = existing?.damage ?? 0;
+    const budgetLeft = playerMaxHp - alreadyDealt;
+    if (budgetLeft <= 0) return { status: 'hp_depleted' as AttackGuildResult, damage: 0 };
 
-    const newHp = Math.max(0, op.enemyHp - MAX_HERO_DAMAGE);
-    const prevDmg = 0; // first (and only) contribution
+    const cappedDamage = Math.min(MAX_HERO_DAMAGE, budgetLeft);
+    const newHp = Math.max(0, op.enemyHp - cappedDamage);
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {
         username: info.username,
         heroName: info.heroName,
-        damage: prevDmg + MAX_HERO_DAMAGE,
+        damage: alreadyDealt + cappedDamage,
         attackedAt: now,
+        maxHp: playerMaxHp,
       },
     };
 
@@ -1070,7 +1077,7 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
         updates['guildOperation.enemyHp']      = same.hp;
         txn.update(ref, updates);
-        return 'enemy_killed';
+        return { status: 'enemy_killed' as AttackGuildResult, damage: cappedDamage };
       } else if (op.floor >= op.maxFloors) {
         const lvlMult = 1 + ((op.heroLevel ?? 1) - 1) * 0.04;
         const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12) * lvlMult);
@@ -1082,7 +1089,7 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyHp']       = 0;
         updates['guildOperation.status']        = 'completed';
         txn.update(ref, updates);
-        return 'completed';
+        return { status: 'completed' as AttackGuildResult, damage: cappedDamage };
       } else {
         const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
         updates['guildOperation.floor']          = op.floor + 1;
@@ -1093,14 +1100,14 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyInFloor']   = 0;
         updates['guildOperation.enemiesOnFloor'] = next.count;
         txn.update(ref, updates);
-        return 'advanced';
+        return { status: 'advanced' as AttackGuildResult, damage: cappedDamage };
       }
     }
     txn.update(ref, updates);
-    return 'attacked';
-  }) as AttackGuildResult;
+    return { status: 'attacked' as AttackGuildResult, damage: cappedDamage };
+  });
 
-  return { status, damage: MAX_HERO_DAMAGE };
+  return status as { status: AttackGuildResult; damage: number };
 }
 
 export async function claimGuildOperationReward(
