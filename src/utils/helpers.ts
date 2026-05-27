@@ -1,5 +1,4 @@
 import type { Hero } from '../types';
-import { ENERGY_REGEN_MS } from './constants';
 
 export function isHeroResting(hero: Hero): boolean {
   return hero.restingUntil !== null && Date.now() < hero.restingUntil;
@@ -31,29 +30,6 @@ export function canStartQuest(hero: Hero, _minLevel: number, maxDailyQuests: num
   }
 
   return { canStart: true };
-}
-
-/** Returns current energy (float) accounting for passive regen since lastEnergyRegen. */
-export function calcCurrentEnergy(hero: Hero, now = Date.now()): number {
-  const elapsed = Math.max(0, now - hero.lastEnergyRegen);
-  const gained  = elapsed / ENERGY_REGEN_MS;
-  return Math.min(hero.maxEnergy, hero.energy + gained);
-}
-
-/** Returns a hero with energy settled to `now` (used before consuming). */
-export function settleEnergy(hero: Hero, now = Date.now()): Hero {
-  const newEnergy = calcCurrentEnergy(hero, now);
-  if (newEnergy === hero.energy) return hero;
-  return { ...hero, energy: newEnergy, lastEnergyRegen: now };
-}
-
-/** ms until 1 more energy point arrives. */
-export function msUntilNextEnergy(hero: Hero, now = Date.now()): number {
-  const current = calcCurrentEnergy(hero, now);
-  if (current >= hero.maxEnergy) return 0;
-  const fractional = current - Math.floor(current);
-  const remainder  = 1 - fractional;
-  return Math.ceil(remainder * ENERGY_REGEN_MS);
 }
 
 export function formatTime(ms: number): string {
