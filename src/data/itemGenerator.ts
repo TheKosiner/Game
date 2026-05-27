@@ -68,21 +68,22 @@ const SUFFIX_EN = [
   'of the Void', 'of Chaos', 'of Fate', 'of Destruction', 'of Glory', 'of Doom',
 ];
 
+// ORDER must match WEAPON_TEMPLATES exactly — index N here = template N there
 const WEAPON_NAMES_EN: string[][] = [
-  ['Sword', 'Blade', 'Axe', 'Saber'],
-  ['Dagger', 'Knife', 'Mono-Knife', 'Razor'],
-  ['Rifle', 'Shotgun', 'Cannon', 'Assault Rifle'],
-  ['Electro-Pike', 'Lance', 'Harpoon', 'Spear'],
-  ['Wand', 'Staff', 'Scepter', 'Power Crystal'],
-  ['Nano-Dagger', 'Bio-Blade', 'Plasma Cutter'],
-  ['Sniper Rifle', 'Precision Rifle', 'Long Rifle'],
-  ['Cyber-Bat', 'Club', 'Baton'],
-  ['Pistol', 'Blaster', 'Plasma Pistol', 'Disintegrator'],
-  ['Battle Axe', 'Cleaver', 'Plasma Axe', 'Nano-Axe'],
-  ['Energy Whip', 'Arc Whip', 'Neural Lash'],
-  ['Grenade Launcher', 'Frag Launcher', 'Void Launcher', 'Cluster Gun'],
-  ['Energy Bow', 'Pulse Bow', 'Quantum Bow', 'Plasma Bow'],
-  ['Flamethrower', 'Plasma Flamer', 'Acid Sprayer', 'Void Burner'],
+  ['Sword', 'Blade', 'Saber', 'Claymore'],                              // 0: Miecz
+  ['Dagger', 'Knife', 'Mono-Knife', 'Razor'],                           // 1: Sztylet
+  ['Nano-Dagger', 'Bio-Blade', 'Plasma Cutter'],                        // 2: Nano-Sztylet
+  ['Cyber-Bat', 'Club', 'Baton'],                                       // 3: Cyber-Bat
+  ['Battle Axe', 'Cleaver', 'Plasma Axe', 'Nano-Axe'],                  // 4: Siekiera
+  ['Energy Whip', 'Arc Whip', 'Neural Lash'],                           // 5: Bicz
+  ['Rifle', 'Shotgun', 'Cannon', 'Assault Rifle'],                      // 6: Karabin
+  ['Pistol', 'Blaster', 'Plasma Pistol', 'Disintegrator'],              // 7: Pistolet
+  ['Sniper Rifle', 'Precision Rifle', 'Long Rifle'],                    // 8: Snajperka
+  ['Electro-Pike', 'Lance', 'Harpoon', 'Spear'],                        // 9: Elektro-Pika
+  ['Grenade Launcher', 'Frag Launcher', 'Void Launcher', 'Cluster Gun'],// 10: Granatnik
+  ['Energy Bow', 'Pulse Bow', 'Quantum Bow', 'Plasma Bow'],             // 11: Łuk
+  ['Wand', 'Staff', 'Scepter', 'Power Crystal'],                        // 12: Różdżka
+  ['Flamethrower', 'Plasma Flamer', 'Acid Sprayer', 'Void Burner'],     // 13: Miotacz
 ];
 
 // ── Weapon type templates ─────────────────────────────────────────────────────

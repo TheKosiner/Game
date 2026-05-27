@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
@@ -7,7 +7,6 @@ import {
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
 import { createMysteryBox } from '../data/mysteryBoxes';
-import { MYSTERY_BOXES } from '../config/features';
 import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
 import { ORB, MONO } from '../utils/styles';
@@ -177,7 +176,7 @@ export default function GuildOperationPanel({
     if (!autoFight) return;
     const id = setInterval(() => {
       if (!attackingRef.current) handleAttack();
-    }, 100);
+    }, 500);
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
 
@@ -189,15 +188,11 @@ export default function GuildOperationPanel({
     if (!reward) { notify('Brak nagrody do odebrania.', false); return; }
     addXp(reward.xp);
     addGold(reward.gold);
-    if (MYSTERY_BOXES) {
-      const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
-      const boxLevel = opLoc?.minLevel ?? hero.level;
-      const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
-      addToInventory(box);
-      notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
-    } else {
-      notify(`+${reward.xp} XP  +${reward.gold} 🪙  [${reward.rarity.toUpperCase()}]`, true);
-    }
+    const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
+    const boxLevel = opLoc?.minLevel ?? hero.level;
+    const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
+    addToInventory(box);
+    notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
   }
 
   const deadline   = op?.deadline ?? 0;
@@ -219,10 +214,14 @@ export default function GuildOperationPanel({
     if (!isActive) healedRef.current = false;
   }, [isActive]);
 
-  const participants = op
-    ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage)
-    : [];
-  const totalDmg = participants.reduce((s, [, p]) => s + p.damage, 0);
+  const participants = useMemo(
+    () => op ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage) : [],
+    [op],
+  );
+  const totalDmg = useMemo(
+    () => participants.reduce((s, [, p]) => s + p.damage, 0),
+    [participants],
+  );
 
   const myEntry    = op?.participants?.[myUid];
   const isDead     = hero.hp <= 0;

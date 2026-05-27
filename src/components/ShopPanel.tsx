@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { generateShopItems } from '../data/items';
@@ -54,18 +54,21 @@ export default function ShopPanel() {
   const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
   const shopPurchased   = useGameStore(s => s.shopPurchased);
 
-  const SLOT_LABEL: Record<string, string> = {
+  const SLOT_LABEL = useMemo<Record<string, string>>(() => ({
     weapon: t.shop.slotWeapon, armor: t.shop.slotArmor,
     helmet: t.shop.slotHelmet, boots: t.shop.slotBoots,
     ring: t.shop.slotRing, amulet: t.shop.slotAmulet,
     consumable: t.inventory.slotConsumable,
-  };
+  }), [t]);
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const allItems = generateShopItems(hero.level, shopSeed);
-  const shopItems = allItems.map((s, idx) => ({ ...s, idx })).filter(({ idx }) => !shopPurchased.includes(idx));
+  const allItems = useMemo(() => generateShopItems(hero.level, shopSeed), [hero.level, shopSeed]);
+  const shopItems = useMemo(
+    () => allItems.map((s, idx) => ({ ...s, idx })).filter(({ idx }) => !shopPurchased.includes(idx)),
+    [allItems, shopPurchased],
+  );
 
   const cooldownEnd = lastShopRefresh + SHOP_REFRESH_COOLDOWN;
   const canRefresh  = Date.now() >= cooldownEnd;

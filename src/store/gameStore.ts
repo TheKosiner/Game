@@ -5,7 +5,6 @@ import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { createMysteryBox } from '../data/mysteryBoxes';
-import { MYSTERY_BOXES } from '../config/features';
 import { getLang } from './langStore';
 import { CHALLENGE_BOSSES } from '../data/challengeBosses';
 import { heroAttackEnemy, enemyAttackHero, getHeroMaxHp, calcXpToNext, getHeroAttack, getHeroDefense, calcCritChance, getEquipmentStats } from '../utils/combat';
@@ -56,7 +55,6 @@ function tryBumpRarity(rarity: Rarity, difficulty: 'easy' | 'normal' | 'hard'): 
   return { rarity, bumped: false };
 }
 
-const LOOT_SLOTS: ItemSlot[] = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'];
 
 function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
   const hero = get().hero;
@@ -66,16 +64,9 @@ function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', dif
   const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
   const itemLevel = Math.max(1, heroLevel + levelBonus);
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
-  if (MYSTERY_BOXES) {
-    const box = createMysteryBox(rarity, itemLevel);
-    set({ hero: { ...hero, inventory: [...hero.inventory, box] } });
-    get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${box.emoji} ${box.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
-  } else {
-    const slot = LOOT_SLOTS[Math.floor(Math.random() * LOOT_SLOTS.length)];
-    const item = generateItem(itemLevel, rarity, slot);
-    set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
-    get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${item.emoji} ${getItemName(item, getLang())}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
-  }
+  const box = createMysteryBox(rarity, itemLevel);
+  set({ hero: { ...hero, inventory: [...hero.inventory, box] } });
+  get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${box.emoji} ${box.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
 }
 
 function rollInt(min: number, max: number): number {
@@ -104,7 +95,10 @@ function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: n
 function isSameDay(ts: number): boolean {
   const a = new Date(ts);
   const b = new Date();
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  // Use UTC to stay consistent with guild operation deadlines (nextMidnightUtc)
+  return a.getUTCFullYear() === b.getUTCFullYear()
+    && a.getUTCMonth() === b.getUTCMonth()
+    && a.getUTCDate() === b.getUTCDate();
 }
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
@@ -247,7 +241,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = leveled ? newMaxHp - maxHp : 0;
-    set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints } });
+    const newAttributePoints = leveled ? attributePoints + 1 : attributePoints;
+    set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints: newAttributePoints } });
     if (leveled) {
       const t = getT();
       get().addCombatLog(t.combat.levelUp(level), 'system');
@@ -382,7 +377,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   enterDungeon: (dungeon: Dungeon, mode: 'xp' | 'balanced' | 'loot' = 'balanced', difficulty: 'easy' | 'normal' | 'hard' = 'normal') => {
     const { hero } = get();
     const t = getT();
-    if (hero.restingUntil !== null && Date.now() < hero.restingUntil) {
+    const now = Date.now();
+    if ((hero.restingUntil !== null && now < hero.restingUntil) ||
+        (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil)) {
       get().addCombatLog(t.combat.restingWait, 'system');
       return;
     }
@@ -462,13 +459,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(hero.level, mode, diff, set, get);
+        tryDungeonLoot(get().hero.level, mode, diff, set, get);
         const freshHero = get().hero;
         const prevCompleted = freshHero.completedDungeons ?? [];
         if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
           set({ hero: { ...freshHero, completedDungeons: [...prevCompleted, currentDungeon.id] } });
         }
         set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
+        get().saveGame(); // save on dungeon complete (significant event)
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
         const baseEnemy = getEnemyById(enemyId);
@@ -494,11 +492,12 @@ export const useGameStore = create<GameState>((set, get) => ({
           inCombat: false,
           defeatedAtDungeon: currentDungeon.name,
         });
+        get().saveGame(); // save on defeat
       } else {
         set({ hero: { ...hero, hp: newHeroHp }, currentEnemy: { ...currentEnemy, hp: newEnemyHp } });
+        // no save per-round — App.tsx 10s interval and pagehide handle it
       }
     }
-    get().saveGame();
   },
 
   autoFightEnemy: () => {
@@ -577,13 +576,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   collectQuest: () => {
-    const { activeQuest, hero } = get();
+    const { activeQuest } = get();
     if (!activeQuest) return;
     if (Date.now() < activeQuest.endsAt) return;
     cancelQuestNotification();
     get().addXp(activeQuest.quest.xpReward);
     get().addGold(activeQuest.quest.goldReward);
-    set({ activeQuest: null, hero: { ...get().hero, questsCompletedToday: hero.questsCompletedToday + 1 } });
+    // Read hero AFTER addXp/addGold so level-up results are not overwritten
+    const freshHero = get().hero;
+    set({ activeQuest: null, hero: { ...freshHero, questsCompletedToday: freshHero.questsCompletedToday + 1 } });
     get().saveGame();
   },
 
@@ -908,19 +909,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     // ── Boss death? ──
     if (bossHp <= 0) {
       log.push(t.combat.bossVictory(boss.name, r));
-      const loot = challengeLoot(challengeFight.bossIdx, hero.level, hero.inventory);
-      const newInventory = [...hero.inventory, ...loot];
+      // Add XP/gold FIRST so level-up updates hero before we spread it with loot
+      get().addXp(boss.xpReward);
+      get().addGold(boss.goldReward);
+      const freshHero = get().hero;
+      const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
+      const newInventory = [...freshHero.inventory, ...loot];
       const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
       set({
-        hero: { ...hero, inventory: newInventory },
+        hero: { ...freshHero, inventory: newInventory },
         challengeUnlocked: newUnlocked,
         challengeFight: null,
         challengeFightLog: [],
         challengeLastHit: { ...event, ts: Date.now() },
         challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot },
       });
-      get().addXp(boss.xpReward);
-      get().addGold(boss.goldReward);
       get().saveGame();
       return;
     }

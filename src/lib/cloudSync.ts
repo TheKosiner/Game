@@ -370,6 +370,7 @@ export function guildUpgradeCost(currentLevel: number): number {
 
 export async function depositToTreasury(guildId: string, uid: string, amount: number): Promise<void> {
   if (!db) throw new Error('No DB');
+  if (amount <= 0) throw new Error('Amount must be positive');
   await updateDoc(doc(db, 'guilds', guildId), {
     treasury: increment(amount),
     [`contributions.${uid}`]: increment(amount),
@@ -903,10 +904,6 @@ export async function abandonTerritory(territoryId: string, guildId: string): Pr
   await updateDoc(doc(db, 'guilds', guildId), { lastSiegeAt: Date.now() });
 }
 
-export async function recordGuildSiegeAttempt(guildId: string): Promise<void> {
-  if (!db) return;
-  await updateDoc(doc(db, 'guilds', guildId), { lastSiegeAt: Date.now() });
-}
 
 export async function claimTerritoryReward(
   territoryId: string,
@@ -974,42 +971,46 @@ export async function startGuildOperation(
   memberCount: number,
 ): Promise<boolean> {
   if (!db) return false;
+  const _db = db;
 
-  const snap = await getDoc(doc(db, 'guilds', guildId));
-  if (!snap.exists()) return false;
-  const data = snap.data();
-  if (data.leaderUid !== uid) return false;
+  return runTransaction(_db, async (txn) => {
+    const ref = doc(_db, 'guilds', guildId);
+    const snap = await txn.get(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data();
+    if (data.leaderUid !== uid) return false;
 
-  const now = Date.now();
-  const existing = data.guildOperation as GuildOperationState | null | undefined;
-  const isActiveAndValid = existing?.status === 'active' && (existing.deadline ?? 0) > now;
-  const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
-  if (isActiveAndValid || isInCooldown) return false;
+    const now = Date.now();
+    const existing = data.guildOperation as GuildOperationState | null | undefined;
+    const isActiveAndValid = existing?.status === 'active' && (existing.deadline ?? 0) > now;
+    const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
+    if (isActiveAndValid || isInCooldown) return false;
 
-  const location = pickLocationForLevel(heroLevel);
-  const first = getFloorEnemy(location, 1, memberCount);
-  const op: GuildOperationState = {
-    locationId: location.id,
-    floor: 1,
-    maxFloors: location.floors,
-    enemyHp: first.hp,
-    enemyMaxHp: first.maxHp,
-    enemyName: first.name,
-    enemyEmoji: first.emoji,
-    enemyInFloor: 0,
-    enemiesOnFloor: first.count,
-    startedBy: uid,
-    startedAt: now,
-    deadline: nextMidnightUtc(),
-    memberCount,
-    heroLevel,
-    participants: {},
-    cooldownUntil: 0,
-    status: 'active',
-    pendingReward: null,
-  };
-  await updateDoc(doc(db, 'guilds', guildId), { guildOperation: op });
-  return true;
+    const location = pickLocationForLevel(heroLevel);
+    const first = getFloorEnemy(location, 1, memberCount);
+    const op: GuildOperationState = {
+      locationId: location.id,
+      floor: 1,
+      maxFloors: location.floors,
+      enemyHp: first.hp,
+      enemyMaxHp: first.maxHp,
+      enemyName: first.name,
+      enemyEmoji: first.emoji,
+      enemyInFloor: 0,
+      enemiesOnFloor: first.count,
+      startedBy: uid,
+      startedAt: now,
+      deadline: nextMidnightUtc(),
+      memberCount,
+      heroLevel,
+      participants: {},
+      cooldownUntil: 0,
+      status: 'active',
+      pendingReward: null,
+    };
+    txn.update(ref, { guildOperation: op });
+    return true;
+  });
 }
 
 export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed';
@@ -1022,6 +1023,9 @@ export async function attackGuildEnemy(
 ): Promise<{ status: AttackGuildResult; damage: number }> {
   if (!db) return { status: 'no_op', damage: 0 };
   const _db = db;
+
+  // Cap client-supplied damage to a sane maximum to limit cheating impact
+  const MAX_HERO_DAMAGE = (heroDamage > 0 ? Math.min(heroDamage, 500_000) : 0);
 
   const status = await runTransaction(_db, async (txn) => {
     const ref = doc(_db, 'guilds', guildId);
@@ -1038,14 +1042,14 @@ export async function attackGuildEnemy(
     }
 
     const existing = (op.participants ?? {})[uid];
-    const newHp = Math.max(0, op.enemyHp - heroDamage);
+    const newHp = Math.max(0, op.enemyHp - MAX_HERO_DAMAGE);
     const prevDmg = existing?.damage ?? 0;
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {
         username: info.username,
         heroName: info.heroName,
-        damage: prevDmg + heroDamage,
+        damage: prevDmg + MAX_HERO_DAMAGE,
         attackedAt: now,
       },
     };
@@ -1090,7 +1094,7 @@ export async function attackGuildEnemy(
     return 'attacked';
   }) as AttackGuildResult;
 
-  return { status, damage: heroDamage };
+  return { status, damage: MAX_HERO_DAMAGE };
 }
 
 export async function claimGuildOperationReward(
@@ -1098,14 +1102,19 @@ export async function claimGuildOperationReward(
   uid: string,
 ): Promise<{ xp: number; gold: number; rarity: string } | null> {
   if (!db) return null;
-  const snap = await getDoc(doc(db, 'guilds', guildId));
-  if (!snap.exists()) return null;
-  const op = snap.data().guildOperation as GuildOperationState | null | undefined;
-  if (!op?.pendingReward) return null;
-  if (op.pendingReward.claimedBy[uid]) return null;
-  const { xp, gold, rarity } = op.pendingReward;
-  await updateDoc(doc(db, 'guilds', guildId), {
-    [`guildOperation.pendingReward.claimedBy.${uid}`]: true,
+  const _db = db;
+
+  return runTransaction(_db, async (txn) => {
+    const ref = doc(_db, 'guilds', guildId);
+    const snap = await txn.get(ref);
+    if (!snap.exists()) return null;
+    const op = snap.data().guildOperation as GuildOperationState | null | undefined;
+    if (!op?.pendingReward) return null;
+    if (op.pendingReward.claimedBy[uid]) return null;
+    const { xp, gold, rarity } = op.pendingReward;
+    txn.update(ref, {
+      [`guildOperation.pendingReward.claimedBy.${uid}`]: true,
+    });
+    return { xp, gold, rarity };
   });
-  return { xp, gold, rarity };
 }

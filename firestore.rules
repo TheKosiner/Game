@@ -133,7 +133,8 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
       allow update: if isOwner(userId) && validPlayerUpdate(resource.data, request.resource.data);
-      allow update: if isAuthenticated()
+      // Only the document owner may update their own guild membership fields
+      allow update: if isOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['guildId', 'guildTag']);
     }
@@ -150,16 +151,23 @@ service cloud.firestore {
     // Guilds
     match /guilds/{guildId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      // Creator must set themselves as leader
+      allow create: if isAuthenticated()
+        && request.resource.data.leaderUid == request.auth.uid;
+      // Guild leader can update anything
       allow update: if isAuthenticated()
-        && request.auth.uid in resource.data.members;
+        && resource.data.leaderUid == request.auth.uid;
+      // Regular members may only touch treasury, contributions, and operation state
       allow update: if isAuthenticated()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt']);
-      // Joining via invite: user adds only themselves to members
+        && request.auth.uid in resource.data.members
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt']);
+      // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
         && !(request.auth.uid in resource.data.members)
-        && request.auth.uid in request.resource.data.members;
+        && request.auth.uid in request.resource.data.members
+        && request.resource.data.members[request.auth.uid].role == 'member';
       allow delete: if isAuthenticated()
         && request.auth.uid in resource.data.members;
     }
@@ -170,7 +178,9 @@ service cloud.firestore {
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
       );
-      allow create: if isAuthenticated();
+      // Sender must be the authenticated user
+      allow create: if isAuthenticated()
+        && request.resource.data.fromUid == request.auth.uid;
       allow delete: if isAuthenticated() && (
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
