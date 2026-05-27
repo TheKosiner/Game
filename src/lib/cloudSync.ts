@@ -1013,7 +1013,7 @@ export async function startGuildOperation(
   });
 }
 
-export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed';
+export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'already_used';
 
 export async function attackGuildEnemy(
   guildId: string,
@@ -1042,8 +1042,11 @@ export async function attackGuildEnemy(
     }
 
     const existing = (op.participants ?? {})[uid];
+    // Each player may only contribute once per raid
+    if (existing) return 'already_used';
+
     const newHp = Math.max(0, op.enemyHp - MAX_HERO_DAMAGE);
-    const prevDmg = existing?.damage ?? 0;
+    const prevDmg = 0; // first (and only) contribution
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
       [`guildOperation.participants.${uid}`]: {

@@ -149,6 +149,9 @@ export default function GuildOperationPanel({
       if (status === 'failed') {
         notify('Operacja wygasła — czas minął.', false);
         setAutoFight(false);
+      } else if (status === 'already_used') {
+        notify('Już wziąłeś udział w tym rajdzie.', false);
+        setAutoFight(false);
       } else if (status === 'no_op') {
         notify('Brak aktywnej operacji.', false);
         setAutoFight(false);
@@ -223,8 +226,9 @@ export default function GuildOperationPanel({
     [participants],
   );
 
-  const myEntry    = op?.participants?.[myUid];
-  const isDead     = hero.hp <= 0;
+  const myEntry       = op?.participants?.[myUid];
+  const alreadyAttacked = isActive && !!myEntry;
+  const isDead        = hero.hp <= 0;
   const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (hero.hp / hero.maxHp) * 100) : 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
@@ -337,6 +341,15 @@ export default function GuildOperationPanel({
           }}>
             <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
               💀 Jesteś pokonany! Odpocznij żeby wrócić do walki.
+            </p>
+          </div>
+        ) : alreadyAttacked ? (
+          <div style={{
+            background: 'rgba(5,20,10,0.9)', border: '1px solid rgba(34,197,94,0.3)',
+            padding: '10px 12px', textAlign: 'center',
+          }}>
+            <p style={{ ...MONO, fontSize: 10, color: '#4ade80' }}>
+              ✅ Wziąłeś już udział w tym rajdzie — zadano {fmtNum(myEntry!.damage)} dmg
             </p>
           </div>
         ) : (
