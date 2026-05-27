@@ -14,10 +14,14 @@ import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
 import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
+import mysteryBoxRareSrc from '../assets/mystery-box-rare.png';
 
 const BOX_IMG: Partial<Record<string, string>> = {
-  common:   mysteryBoxCommonSrc,
-  uncommon: mysteryBoxUncommonSrc,
+  common:    mysteryBoxCommonSrc,
+  uncommon:  mysteryBoxUncommonSrc,
+  rare:      mysteryBoxRareSrc,
+  epic:      mysteryBoxRareSrc,
+  legendary: mysteryBoxRareSrc,
 };
 function getBoxImg(rarity: string) {
   return BOX_IMG[rarity] ?? mysteryBoxSrc;

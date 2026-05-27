@@ -4,6 +4,7 @@ import cannonFusionSrc from '../assets/cannon_fusion.png';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
 import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
+import mysteryBoxRareSrc from '../assets/mystery-box-rare.png';
 
 interface Colors {
   primary: string;
@@ -903,6 +904,9 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
     const BOX_IMG: Partial<Record<string, string>> = {
       common:   mysteryBoxCommonSrc,
       uncommon: mysteryBoxUncommonSrc,
+      rare:     mysteryBoxRareSrc,
+      epic:     mysteryBoxRareSrc,
+      legendary: mysteryBoxRareSrc,
     };
     const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
     return (
