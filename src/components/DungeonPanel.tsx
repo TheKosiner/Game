@@ -430,10 +430,25 @@ function DungeonList() {
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
-  // Default selection: highest-tier unlocked dungeon
+  const completed = hero.completedDungeons ?? [];
+
+  // Unlock rule: first dungeon is free; each next requires the previous completed on normal/hard.
+  // Backward compat: also unlock if hero.level >= dungeon.minLevel (existing saves).
+  const isDungeonUnlocked = (idx: number): boolean => {
+    if (idx === 0) return true;
+    if (completed.includes(ALL_DUNGEONS[idx - 1].id)) return true;
+    return hero.level >= ALL_DUNGEONS[idx].minLevel; // legacy gate for existing saves
+  };
+
+  // Default selection: highest unlocked dungeon
   const [selected, setSelected] = useState<FullDungeon>(() => {
-    const unlocked = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level);
-    return unlocked.length > 0 ? unlocked[unlocked.length - 1] : ALL_DUNGEONS[0];
+    let last = ALL_DUNGEONS[0];
+    for (let i = 1; i < ALL_DUNGEONS.length; i++) {
+      if (completed.includes(ALL_DUNGEONS[i - 1].id) || hero.level >= ALL_DUNGEONS[i].minLevel) {
+        last = ALL_DUNGEONS[i];
+      } else break;
+    }
+    return last;
   });
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
   const blocked = isResting || limitReached;
@@ -473,14 +488,23 @@ function DungeonList() {
 
       {/* ── Dungeon map grid ──────────────────────────────────────────────── */}
       <div>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6, letterSpacing: '0.08em' }}>
-          WYBIERZ LOKACJĘ
-        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+            WYBIERZ LOKACJĘ
+          </p>
+          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
+            🔒 ukończ poprzedni na ⚔/💀
+          </p>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          {ALL_DUNGEONS.map(d => {
-            const unlocked = d.minLevel <= hero.level;
+          {ALL_DUNGEONS.map((d, idx) => {
+            const unlocked = isDungeonUnlocked(idx);
             const isSelected = selected.id === d.id;
             const dName = isEn ? (d as typeof d & { nameEn?: string }).nameEn ?? d.name : d.name;
+            const prevName = idx > 0
+              ? (isEn ? (ALL_DUNGEONS[idx - 1] as typeof d & { nameEn?: string }).nameEn ?? ALL_DUNGEONS[idx - 1].name : ALL_DUNGEONS[idx - 1].name)
+              : '';
+            const isCompleted = completed.includes(d.id);
             return (
               <button
                 key={d.id}
@@ -492,29 +516,34 @@ function DungeonList() {
                     : unlocked
                     ? 'var(--bg-inset)'
                     : 'rgba(10,10,15,0.6)',
-                  border: `1px solid ${isSelected ? 'rgba(255,45,120,0.5)' : unlocked ? 'rgba(51,65,85,0.5)' : 'rgba(30,30,40,0.4)'}`,
+                  border: `1px solid ${isSelected ? 'rgba(255,45,120,0.5)' : isCompleted ? 'rgba(34,197,94,0.3)' : unlocked ? 'rgba(51,65,85,0.5)' : 'rgba(30,30,40,0.4)'}`,
                   padding: '8px 4px',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
                   cursor: unlocked ? 'pointer' : 'not-allowed',
-                  opacity: unlocked ? 1 : 0.4,
-                  boxShadow: isSelected ? '0 0 10px rgba(255,45,120,0.2)' : 'none',
+                  opacity: unlocked ? 1 : 0.38,
+                  boxShadow: isSelected ? '0 0 10px rgba(255,45,120,0.2)' : isCompleted ? '0 0 6px rgba(34,197,94,0.1)' : 'none',
                   transition: 'border-color 0.15s, box-shadow 0.15s',
                   position: 'relative',
                 }}
               >
                 {unlocked ? (
-                  <LocationIcon id={d.id} size={22} color={isSelected ? '#ff2d78' : 'var(--gold-main)'} />
+                  <>
+                    <LocationIcon id={d.id} size={22} color={isSelected ? '#ff2d78' : isCompleted ? '#4ade80' : 'var(--gold-main)'} />
+                    {isCompleted && (
+                      <span style={{ position: 'absolute', top: 2, right: 3, fontSize: 7, color: '#4ade80' }}>✓</span>
+                    )}
+                  </>
                 ) : (
                   <span style={{ fontSize: 16, lineHeight: 1 }}>🔒</span>
                 )}
                 <span style={{
                   ...MONO, fontSize: 7,
-                  color: isSelected ? '#ff2d78' : unlocked ? 'var(--text-dim)' : 'var(--text-muted)',
+                  color: isSelected ? '#ff2d78' : isCompleted ? '#4ade80' : unlocked ? 'var(--text-dim)' : 'var(--text-muted)',
                   textAlign: 'center', lineHeight: 1.3,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   width: '100%',
                 }}>
-                  {unlocked ? dName : `POZ. ${d.minLevel}`}
+                  {unlocked ? dName : prevName.split(' ')[0]}
                 </span>
               </button>
             );
@@ -532,15 +561,22 @@ function DungeonList() {
           <LocationIcon id={selected.id} size={48} color="#ff2d78" />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>
-            {isEn ? (selected as typeof selected & { nameEn?: string }).nameEn ?? selected.name : selected.name}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)' }}>
+              {isEn ? (selected as typeof selected & { nameEn?: string }).nameEn ?? selected.name : selected.name}
+            </p>
+            {completed.includes(selected.id) && (
+              <span style={{ ...MONO, fontSize: 8, color: '#4ade80' }}>✓ ukończony</span>
+            )}
+          </div>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>
             {isEn ? (selected as typeof selected & { descEn?: string }).descEn ?? selected.description : selected.description}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{selected.floors} {t.dungeon.floors}</span>
-            <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>POZ. {selected.minLevel}+</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>
+              {isEn ? 'Rec.' : 'Pol.'} POZ. {selected.minLevel}
+            </span>
           </div>
         </div>
       </div>
