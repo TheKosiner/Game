@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { ALL_DUNGEONS } from '../data/dungeons';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import { getLang } from './langStore';
@@ -389,12 +388,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const heroFloors = 10;
-    const tierDungeon = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level).pop() ?? ALL_DUNGEONS[0];
-    const safeEnemyPool = tierDungeon.enemies.filter(id => {
+    // Use the selected dungeon's enemy pool, not the highest-tier dungeon by hero level
+    const safeEnemyPool = dungeon.enemies.filter(id => {
       const e = getEnemyById(id);
       return e && e.level <= hero.level;
     });
-    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : tierDungeon.enemies;
+    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : dungeon.enemies;
     const enemyId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
