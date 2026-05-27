@@ -264,8 +264,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   gemHeal: () => {
-    const { hero } = get();
+    const { hero, currentDungeon } = get();
     const COST = 30;
+    if (currentDungeon) return false;
     if (hero.gems < COST || hero.hp >= hero.maxHp) return false;
     const t = getT();
     set({ hero: { ...hero, gems: hero.gems - COST, hp: hero.maxHp } });
@@ -595,8 +596,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   useItem: (item: Item, invIdx: number) => {
-    const hero = get().hero;
+    const { hero, currentDungeon } = get();
     if (item.slot !== 'consumable') return;
+    if (currentDungeon) return;
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
     const healAmount = Math.round(hero.maxHp * (item.healPercent ?? 1));
     const actualHeal = Math.min(healAmount, hero.maxHp - hero.hp);
@@ -699,8 +701,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   restHero: (minutes: number) => {
-    const { hero, inCombat, activeQuest } = get();
-    if (inCombat) return;
+    const { hero, inCombat, currentDungeon, activeQuest } = get();
+    if (inCombat || currentDungeon) return;
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
     if (activeQuest) return;
