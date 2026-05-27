@@ -8,6 +8,7 @@ import { useLangStore } from '../store/langStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { PX, MONO, ORB } from '../utils/styles';
+import DungeonMapView from './DungeonMapView';
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
 type DungeonMode = 'xp' | 'balanced' | 'loot';
@@ -486,70 +487,14 @@ function DungeonList() {
         </div>
       )}
 
-      {/* ── Dungeon map grid ──────────────────────────────────────────────── */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
-            WYBIERZ LOKACJĘ
-          </p>
-          <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>
-            🔒 ukończ poprzedni na ⚔/💀
-          </p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          {ALL_DUNGEONS.map((d, idx) => {
-            const unlocked = isDungeonUnlocked(idx);
-            const isSelected = selected.id === d.id;
-            const dName = isEn ? (d as typeof d & { nameEn?: string }).nameEn ?? d.name : d.name;
-            const prevName = idx > 0
-              ? (isEn ? (ALL_DUNGEONS[idx - 1] as typeof d & { nameEn?: string }).nameEn ?? ALL_DUNGEONS[idx - 1].name : ALL_DUNGEONS[idx - 1].name)
-              : '';
-            const isCompleted = completed.includes(d.id);
-            return (
-              <button
-                key={d.id}
-                onClick={() => unlocked && setSelected(d)}
-                disabled={!unlocked}
-                style={{
-                  background: isSelected
-                    ? 'rgba(255,45,120,0.12)'
-                    : unlocked
-                    ? 'var(--bg-inset)'
-                    : 'rgba(10,10,15,0.6)',
-                  border: `1px solid ${isSelected ? 'rgba(255,45,120,0.5)' : isCompleted ? 'rgba(34,197,94,0.3)' : unlocked ? 'rgba(51,65,85,0.5)' : 'rgba(30,30,40,0.4)'}`,
-                  padding: '8px 4px',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                  cursor: unlocked ? 'pointer' : 'not-allowed',
-                  opacity: unlocked ? 1 : 0.38,
-                  boxShadow: isSelected ? '0 0 10px rgba(255,45,120,0.2)' : isCompleted ? '0 0 6px rgba(34,197,94,0.1)' : 'none',
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                  position: 'relative',
-                }}
-              >
-                {unlocked ? (
-                  <>
-                    <LocationIcon id={d.id} size={22} color={isSelected ? '#ff2d78' : isCompleted ? '#4ade80' : 'var(--gold-main)'} />
-                    {isCompleted && (
-                      <span style={{ position: 'absolute', top: 2, right: 3, fontSize: 7, color: '#4ade80' }}>✓</span>
-                    )}
-                  </>
-                ) : (
-                  <span style={{ fontSize: 16, lineHeight: 1 }}>🔒</span>
-                )}
-                <span style={{
-                  ...MONO, fontSize: 7,
-                  color: isSelected ? '#ff2d78' : isCompleted ? '#4ade80' : unlocked ? 'var(--text-dim)' : 'var(--text-muted)',
-                  textAlign: 'center', lineHeight: 1.3,
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  width: '100%',
-                }}>
-                  {unlocked ? dName : prevName.split(' ')[0]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {/* ── Interactive dungeon map ───────────────────────────────────────── */}
+      <DungeonMapView
+        isDungeonUnlocked={isDungeonUnlocked}
+        completed={completed}
+        selected={selected}
+        onSelect={setSelected}
+        isEn={isEn}
+      />
 
       {/* ── Selected dungeon details ─────────────────────────────────────────── */}
       <div style={{
