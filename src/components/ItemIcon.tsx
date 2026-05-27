@@ -53,13 +53,20 @@ function getCategory(item: Item): string {
   if (id.startsWith('implant_') || id.startsWith('chip_') || id.startsWith('ring_')) return 'chip';
   if (id.startsWith('core_') || id.startsWith('pendant_') || id.startsWith('amulet_') || id.startsWith('amplifier_') || id.startsWith('signal_') || id.startsWith('data_')) return 'amulet';
   if (id.startsWith('medkit_')) return 'medkit';
-  // Fallback for procedurally generated items (gen_* IDs) — use item flags
+  // Fallback for procedurally generated items (gen_* IDs) — use item flags + emoji
   if (item.ranged) {
     if (item.emoji === '🎯') return 'sniper';
     if (item.emoji === '🔱') return 'lance';
+    if (item.emoji === '💥') return 'grenade_launcher';
+    if (item.emoji === '🏹') return 'bow';
+    if (item.emoji === '🔥') return 'flamer';
+    if (item.emoji === '💢') return 'pistol';
     return 'rifle';
   }
   if (item.magicDamage) return 'orb';
+  // Melee fallback by emoji
+  if (item.emoji === '🪓') return 'axe';
+  if (item.emoji === '〰')  return 'whip';
   switch (item.slot) {
     case 'weapon': return 'sword';
     case 'armor': return 'vest';
