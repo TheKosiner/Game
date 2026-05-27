@@ -19,9 +19,9 @@ import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.png';
 
 const BOX_IMG: Partial<Record<string, string>> = {
   common:    mysteryBoxCommonSrc,
-  uncommon:  mysteryBoxUncommonSrc,
-  rare:      mysteryBoxRareSrc,
-  epic:      mysteryBoxRareSrc,
+  uncommon:  mysteryBoxRareSrc,
+  rare:      mysteryBoxUncommonSrc,
+  epic:      mysteryBoxUncommonSrc,
   legendary: mysteryBoxLegendarySrc,
 };
 function getBoxImg(rarity: string) {

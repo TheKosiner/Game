@@ -903,10 +903,10 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
 
   if (item.slot === 'mystery_box') {
     const BOX_IMG: Partial<Record<string, string>> = {
-      common:   mysteryBoxCommonSrc,
-      uncommon: mysteryBoxUncommonSrc,
-      rare:      mysteryBoxRareSrc,
-      epic:      mysteryBoxRareSrc,
+      common:    mysteryBoxCommonSrc,
+      uncommon:  mysteryBoxRareSrc,
+      rare:      mysteryBoxUncommonSrc,
+      epic:      mysteryBoxUncommonSrc,
       legendary: mysteryBoxLegendarySrc,
     };
     const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
