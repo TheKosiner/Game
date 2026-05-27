@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { TERRITORY_LIST, type TerritoryDef } from '../data/territories';
 import {
   getTerritories, captureTerritory, claimTerritoryReward,
@@ -18,25 +18,6 @@ const SIEGE_DURATION_MS = 5 * 60 * 60 * 1000; // 5h siege window
 
 // ── Map constants ─────────────────────────────────────────────────────────────
 
-const MAP_POS: Record<string, { x: number; y: number }> = {
-  // Original 5
-  misty_forest:  { x: 28, y: 76 },
-  ruined_keep:   { x: 60, y: 62 },
-  dark_mountain: { x: 78, y: 36 },
-  cursed_tomb:   { x: 14, y: 44 },
-  dragon_peak:   { x: 50, y: 14 },
-  // New 10
-  data_slums:    { x: 18, y: 92 },
-  neon_bridge:   { x: 44, y: 94 },
-  black_market:  { x: 82, y: 86 },
-  hacker_den:    { x: 38, y: 56 },
-  cyber_temple:  { x: 22, y: 26 },
-  ghost_district:{ x: 70, y: 48 },
-  megacorp_hq:   { x: 92, y: 28 },
-  quantum_lab:   { x: 62, y: 22 },
-  orbital_relay: { x: 32, y: 6  },
-  nexus_core:    { x: 80, y: 8  },
-};
 const MAP_EDGES: [string, string][] = [
   // Original
   ['misty_forest', 'ruined_keep'],
@@ -64,19 +45,44 @@ const MAP_EDGES: [string, string][] = [
   ['nexus_core', 'quantum_lab'],
   ['nexus_core', 'megacorp_hq'],
 ];
-const BUILDINGS = [
-  { x: 3,  y: 3,  w: 13, h: 8  },
-  { x: 63, y: 3,  w: 16, h: 9  },
-  { x: 85, y: 18, w: 10, h: 6  },
-  { x: 7,  y: 25, w: 4,  h: 14 },
-  { x: 86, y: 56, w: 9,  h: 13 },
-  { x: 66, y: 76, w: 14, h: 9  },
-  { x: 3,  y: 80, w: 10, h: 14 },
-  { x: 34, y: 30, w: 9,  h: 5  },
-  { x: 37, y: 83, w: 17, h: 8  },
-];
 
-// ── City Map SVG ──────────────────────────────────────────────────────────────
+// ── City Map SVG ─────────────────────────────────────────────────────────────
+// viewBox 160 × 90, same aesthetic as DungeonMapView
+
+// Rescaled positions (from 100×100 → 160×90, margins preserved)
+const TM_POS: Record<string, [number, number]> = {
+  data_slums:    [17,  80],
+  misty_forest:  [35,  67],
+  neon_bridge:   [64,  82],
+  black_market:  [132, 75],
+  hacker_den:    [53,  50],
+  cursed_tomb:   [10,  40],
+  ruined_keep:   [93,  55],
+  ghost_district:[111, 43],
+  cyber_temple:  [24,  25],
+  dark_mountain: [125, 33],
+  dragon_peak:   [75,  15],
+  orbital_relay: [42,   8],
+  quantum_lab:   [96,  21],
+  megacorp_hq:   [150, 27],
+  nexus_core:    [129, 10],
+};
+
+// Deterministic city-block noise (different seed from DungeonMapView)
+function trng(i: number): number {
+  return Math.abs((Math.sin(i * 6271 + 31337) * 233280) % 1);
+}
+const T_BLOCKS = Array.from({ length: 210 }, (_, i) => ({
+  x: trng(i) * 160,
+  y: trng(i + 100) * 90,
+  w: 0.4 + trng(i + 200) * 1.8,
+  h: 0.3 + trng(i + 300) * 1.4,
+  cyan: trng(i + 400) > 0.52,
+  op: 0.1 + trng(i + 500) * 0.32,
+}));
+
+const TW = 160, TH = 90;
+const T_NODE_R = 2.9;
 
 function CityMap({
   territories, guild, heroLevel, focused, onFocus, isEn,
@@ -88,167 +94,347 @@ function CityMap({
   onFocus: (id: string) => void;
   isEn: boolean;
 }) {
-  return (
-    <div style={{
-      background: '#020210',
-      border: '1px solid rgba(255,45,120,0.2)',
-      boxShadow: '0 0 20px rgba(255,45,120,0.05), inset 0 0 40px rgba(0,0,0,0.5)',
-      position: 'relative',
-    }}>
-      {/* Map title */}
-      <div style={{ padding: '6px 10px', borderBottom: '1px solid rgba(255,45,120,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--pink)', textShadow: '0 0 8px rgba(255,45,120,0.5)', letterSpacing: '0.1em' }}>
-          ◈ NEON-WARSZAWA 2087
-        </span>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{isEn ? 'ZONE MAP' : 'MAPA STREF'}</span>
-      </div>
+  const wrapRef = useRef<HTMLDivElement>(null);
 
-      <svg viewBox="0 0 100 100" style={{ width: '100%', display: 'block' }}
-        xmlns="http://www.w3.org/2000/svg">
+  type Popup = { id: string; left: number; top: number };
+  const [popup, setPopup] = useState<Popup | null>(null);
+
+  function nodeColor(id: string): string {
+    const state = territories[id];
+    if (focused === id) return '#ff2d78';
+    const ownedByMe    = guild && state?.guildId === guild.id;
+    const ownedByEnemy = !!state?.guildId && state.guildId !== guild?.id;
+    const def = TERRITORY_LIST.find(d => d.id === id);
+    const locked = def ? heroLevel < def.minLevel : false;
+    if (ownedByMe)    return '#00ff88';
+    if (ownedByEnemy) return '#ff4444';
+    if (locked)       return '#5a4a78';
+    return '#ffc83a';
+  }
+
+  function edgeInfo(a: string, b: string) {
+    const sa = territories[a]; const sb = territories[b];
+    const myA = guild && sa?.guildId === guild.id;
+    const myB = guild && sb?.guildId === guild.id;
+    if (myA && myB) return { color: 'rgba(0,255,136,0.7)', flow: true };
+    const hasA = !!sa?.guildId; const hasB = !!sb?.guildId;
+    if (hasA || hasB) return { color: 'rgba(255,68,68,0.45)', flow: false };
+    return { color: 'rgba(74,31,122,0.3)', flow: false };
+  }
+
+  function handleNodeClick(id: string, e: React.MouseEvent<SVGGElement>) {
+    e.stopPropagation();
+    onFocus(id);
+    if (popup?.id === id) { setPopup(null); return; }
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const W_px = wrap.clientWidth;
+    const H_px = wrap.clientHeight;
+    const [sx, sy] = TM_POS[id] ?? [80, 45];
+    const px = (sx / TW) * W_px;
+    const py = (sy / TH) * H_px;
+    const PW = 200, PH = 160;
+    let left = px + 18;
+    let top  = py - 50;
+    if (left + PW > W_px - 8) left = px - PW - 18;
+    if (top  + PH > H_px - 8) top  = H_px - PH - 8;
+    if (top < 8) top = 8;
+    if (left < 8) left = 8;
+    setPopup({ id, left, top });
+  }
+
+  const pd   = popup ? TERRITORY_LIST.find(d => d.id === popup.id) : null;
+  const pSt  = popup ? territories[popup.id] : undefined;
+  const pCol = popup ? nodeColor(popup.id) : '#ffc83a';
+
+  return (
+    <div
+      ref={wrapRef}
+      style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden',
+        background: 'rgba(6,3,13,0.97)', border: '1px solid rgba(74,31,122,0.5)' }}
+      onClick={() => setPopup(null)}
+    >
+      <svg viewBox={`0 0 ${TW} ${TH}`} width="100%" height="100%" style={{ display: 'block' }}>
         <defs>
-          <pattern id="tgrid" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,45,120,0.07)" strokeWidth="0.3"/>
+          <filter id="tm-glow" x="-200%" y="-200%" width="500%" height="500%">
+            <feGaussianBlur stdDeviation="0.55" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <pattern id="tm-dots" x="0" y="0" width="2" height="2" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.13" fill="rgba(142,122,168,0.18)" />
           </pattern>
-          <filter id="tglow-g" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.2" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <filter id="tglow-r" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.2" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <filter id="tglow-y" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.0" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
+          <radialGradient id="tm-hot-pink" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="rgba(255,45,143,0.35)" />
+            <stop offset="100%" stopColor="rgba(255,45,143,0)" />
+          </radialGradient>
+          <radialGradient id="tm-hot-green" cx="50%" cy="50%" r="50%">
+            <stop offset="0%"   stopColor="rgba(0,255,136,0.28)" />
+            <stop offset="100%" stopColor="rgba(0,255,136,0)" />
+          </radialGradient>
         </defs>
 
-        {/* Background */}
-        <rect x="0" y="0" width="100" height="100" fill="#020210"/>
-        <rect x="0" y="0" width="100" height="100" fill="url(#tgrid)"/>
+        {/* Dot-grid base */}
+        <rect width={TW} height={TH} fill="url(#tm-dots)" />
 
-        {/* City buildings */}
-        {BUILDINGS.map((b, i) => (
-          <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h}
-            fill="rgba(8,8,22,0.9)" stroke="rgba(255,45,120,0.12)" strokeWidth="0.3"
-          />
-        ))}
-
-        {/* Connection lines */}
-        {MAP_EDGES.map(([a, b]) => {
-          const pa = MAP_POS[a]; const pb = MAP_POS[b];
-          if (!pa || !pb) return null;
+        {/* Location glows */}
+        {TERRITORY_LIST.map(def => {
+          const [nx, ny] = TM_POS[def.id] ?? [0, 0];
+          const ownedByMe = guild && territories[def.id]?.guildId === guild.id;
           return (
-            <line key={`${a}-${b}`}
-              x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}
-              stroke="rgba(255,45,120,0.2)"
-              strokeWidth="0.6"
-              strokeDasharray="3 2"
-              style={{ animation: 'mapFlow 2s linear infinite' }}
+            <circle key={def.id} cx={nx} cy={ny} r={14}
+              fill={ownedByMe ? 'url(#tm-hot-green)' : 'url(#tm-hot-pink)'}
+              opacity={ownedByMe ? 0.5 : 0.18}
             />
           );
         })}
 
-        {/* Territory nodes */}
-        {TERRITORY_LIST.map(def => {
-          const state = territories[def.id];
-          const pos = MAP_POS[def.id];
-          if (!pos) return null;
+        {/* City blocks */}
+        {T_BLOCKS.map((b, i) => (
+          <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h}
+            fill={b.cyan ? 'rgba(45,229,255,1)' : 'rgba(255,45,143,1)'}
+            opacity={b.op * 0.5}
+          />
+        ))}
 
-          const ownedByMe  = guild && state?.guildId === guild.id;
-          const ownedByEnemy = !!state?.guildId && state.guildId !== guild?.id;
-          const locked = heroLevel < def.minLevel;
-          const isFocused = focused === def.id;
+        {/* Grid roads */}
+        <g stroke="rgba(45,229,255,0.09)" strokeWidth="0.11" fill="none">
+          {[12, 26, 40, 54, 68, 80].map(y => <line key={y} x1={0} y1={y} x2={TW} y2={y} />)}
+          {[16, 32, 48, 64, 80, 96, 112, 128, 144].map(x => <line key={x} x1={x} y1={0} x2={x} y2={TH} />)}
+        </g>
 
-          const color = ownedByMe
-            ? '#00ff88'
-            : ownedByEnemy
-            ? '#ff4444'
-            : locked
-            ? '#333355'
-            : '#ffd700';
+        {/* River */}
+        <path d="M -2 78 Q 20 72 40 62 Q 60 52 82 46 Q 108 40 130 32 Q 148 26 162 22"
+          stroke="rgba(45,229,255,0.14)" strokeWidth="2.1" fill="none" />
+        <path d="M -2 78 Q 20 72 40 62 Q 60 52 82 46 Q 108 40 130 32 Q 148 26 162 22"
+          stroke="rgba(45,229,255,0.38)" strokeWidth="0.17" fill="none" strokeDasharray="0.3 0.6" />
 
-          const filterId = ownedByMe ? 'tglow-g' : ownedByEnemy ? 'tglow-r' : 'tglow-y';
+        {/* District labels */}
+        <g fontFamily="'Press Start 2P', monospace" fontSize="1.05" letterSpacing="0.2"
+          fill="rgba(90,74,120,0.7)" textAnchor="middle"
+          paintOrder="stroke" stroke="rgba(6,3,13,0.9)" strokeWidth="0.3">
+          <text x="22"  y="89">{isEn ? 'SLUMS'  : 'SLUMSY'}</text>
+          <text x="75"  y="88">{isEn ? 'MID CITY' : 'ŚRODMIEŚCIE'}</text>
+          <text x="80"  y="10">{isEn ? 'CORP DISTRICT' : 'DZIELNICA KORPORACYJNA'}</text>
+          <text x="145" y="84">{isEn ? 'BLACK MARKET' : 'CZARNY RYNEK'}</text>
+        </g>
 
+        {/* Edges */}
+        {MAP_EDGES.map(([a, b], i) => {
+          const pa = TM_POS[a]; const pb = TM_POS[b];
+          if (!pa || !pb) return null;
+          const mx = (pa[0] + pb[0]) / 2;
+          const my = (pa[1] + pb[1]) / 2 - 3.5;
+          const pathD = `M ${pa[0]} ${pa[1]} Q ${mx} ${my} ${pb[0]} ${pb[1]}`;
+          const { color, flow } = edgeInfo(a, b);
           return (
-            <g
-              key={def.id}
-              onClick={() => onFocus(def.id)}
-              role="button"
-              tabIndex={0}
-              aria-label={`${isEn ? (def.nameEn ?? def.name) : def.name}${ownedByMe ? ' (your guild)' : ownedByEnemy ? ` (${state.guildTag})` : locked ? ' (locked)' : ''}`}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFocus(def.id); } }}
-              style={{ cursor: locked ? 'default' : 'pointer', outline: 'none' }}
-            >
-              {/* Outer pulse ring */}
-              {!locked && (
-                <circle cx={pos.x} cy={pos.y} r={5} fill="none" stroke={color} strokeWidth="0.5" opacity={0}
-                  style={{ animation: 'mapPulse 2.4s ease-out infinite' }}
-                />
-              )}
-              {/* Focus ring */}
-              {isFocused && (
-                <circle cx={pos.x} cy={pos.y} r={7.5} fill="none" stroke={color} strokeWidth="0.8" opacity={0.7}/>
-              )}
-              {/* Main node */}
-              <circle
-                cx={pos.x} cy={pos.y} r={isFocused ? 4.5 : 3.5}
-                fill={color}
-                opacity={locked ? 0.25 : 1}
-                filter={!locked ? `url(#${filterId})` : undefined}
-              />
-              {/* Ownership tag */}
-              {ownedByMe && (
-                <text x={pos.x} y={pos.y - 7} textAnchor="middle"
-                  fill="#00ff88" fontSize="3" opacity={0.9} fontFamily="monospace">
-                  [{guild?.tag}]
-                </text>
-              )}
-              {ownedByEnemy && (
-                <text x={pos.x} y={pos.y - 7} textAnchor="middle"
-                  fill="#ff4444" fontSize="3" opacity={0.9} fontFamily="monospace">
-                  [{state.guildTag}]
-                </text>
-              )}
-              {/* Zone name */}
-              <text x={pos.x} y={pos.y + 8.5} textAnchor="middle"
-                fill={color} fontSize="3.2"
-                opacity={locked ? 0.3 : 0.9}
-                fontFamily="monospace">
-                {def.name}
-              </text>
-              {/* Level lock */}
-              {locked && (
-                <text x={pos.x} y={pos.y + 13} textAnchor="middle"
-                  fill="#555577" fontSize="2.8" fontFamily="monospace">
-                  [POZ.{def.minLevel}]
-                </text>
+            <g key={i}>
+              <path d={pathD} stroke={color} strokeWidth="0.2" fill="none" opacity={0.7} />
+              {flow && (
+                <path d={pathD} stroke={color} strokeWidth="0.42" fill="none" opacity={0.55}
+                  strokeDasharray="1.2 1.4">
+                  <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.4s" repeatCount="indefinite" />
+                </path>
               )}
             </g>
           );
         })}
 
-        {/* Bottom credit */}
-        <text x="50" y="99" textAnchor="middle"
-          fill="rgba(255,45,120,0.2)" fontSize="2.5" fontFamily="monospace">
-          GlitchSoul · {isEn ? 'CONTROL ZONES MAP' : 'MAPA STREF KONTROLI'}
-        </text>
+        {/* Territory nodes */}
+        {TERRITORY_LIST.map(def => {
+          const pos = TM_POS[def.id];
+          if (!pos) return null;
+          const [nx, ny] = pos;
+          const state     = territories[def.id];
+          const ownedByMe = guild && state?.guildId === guild.id;
+          const ownedByEnemy = !!state?.guildId && state.guildId !== guild?.id;
+          const locked    = heroLevel < def.minLevel;
+          const isFocused = focused === def.id;
+          const col       = nodeColor(def.id);
+          const r         = T_NODE_R;
+          const pts       = `0,${-r} ${r},0 0,${r} ${-r},0`;
+          const dispName  = (isEn ? ((def as any).nameEn ?? def.name) : def.name) as string;
+          const shortName = dispName.length > 11 ? dispName.slice(0, 10) + '…' : dispName;
+
+          return (
+            <g key={def.id}
+              transform={`translate(${nx} ${ny})`}
+              style={{ cursor: locked ? 'not-allowed' : 'pointer' }}
+              onClick={e => handleNodeClick(def.id, e)}
+            >
+              <circle r={r + 4} fill="transparent" />
+
+              {/* Pulse ring when focused */}
+              {isFocused && (
+                <polygon points={pts} fill="none" stroke={col} strokeWidth="0.22" opacity="0.85">
+                  <animateTransform attributeName="transform" type="scale" values="1;3.0" dur="2s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.85;0" dur="2s" repeatCount="indefinite" />
+                </polygon>
+              )}
+
+              {/* Outer diamond */}
+              <polygon points={pts}
+                fill={locked ? 'rgba(18,10,34,0.92)' : 'rgba(10,5,22,0.97)'}
+                stroke={col}
+                strokeWidth={isFocused ? 0.50 : 0.30}
+                filter={!locked ? 'url(#tm-glow)' : undefined}
+                opacity={locked ? 0.55 : 1}
+              />
+              {/* Inner diamond */}
+              <polygon points={`0,${-r*0.55} ${r*0.55},0 0,${r*0.55} ${-r*0.55},0`}
+                fill="none" stroke={col} strokeWidth="0.12"
+                opacity={locked ? 0.2 : 0.6}
+              />
+
+              {/* Emoji */}
+              <text x={0} y={r * 0.40} textAnchor="middle"
+                fontSize={r * 1.10} opacity={locked ? 0.35 : 1}
+                style={!locked ? { filter: `drop-shadow(0 0 1.2px ${col})` } : undefined}
+              >
+                {def.emoji}
+              </text>
+
+              {/* Guild tag badge */}
+              {(ownedByMe || ownedByEnemy) && state.guildTag && (
+                <text x={r + 0.7} y={-r + 1.3} textAnchor="start" fontSize="1.4"
+                  fill={ownedByMe ? '#4ade80' : '#f87171'}
+                  paintOrder="stroke" stroke="rgba(6,3,13,0.9)" strokeWidth="0.4">
+                  [{state.guildTag}]
+                </text>
+              )}
+
+              {/* Name label */}
+              <text y={r + 2.1} textAnchor="middle"
+                fontFamily="'Share Tech Mono', monospace"
+                fontSize="1.2" letterSpacing="0.07"
+                fill={isFocused ? '#ff2d78' : locked ? '#8e7aa8' : '#e8d8ff'}
+                paintOrder="stroke" stroke="rgba(6,3,13,0.95)" strokeWidth="0.38"
+                style={{ textTransform: 'uppercase' }}
+              >
+                {shortName}
+              </text>
+
+              {/* Level / siege indicator */}
+              <text y={r + 3.5} textAnchor="middle"
+                fontFamily="'VT323', monospace" fontSize="1.3"
+                fill={locked ? '#5a4a78' : col}
+                paintOrder="stroke" stroke="rgba(6,3,13,0.95)" strokeWidth="0.3"
+              >
+                {locked ? `⌧ ${def.minLevel}` : state?.siegeCurrentHp != null && (state.siegeCurrentHp ?? 0) > 0 ? '⚔' : ''}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Radar decoration */}
+        <g transform="translate(156 86)">
+          <circle r="2.5"  fill="rgba(10,4,22,0.7)" stroke="rgba(45,229,255,0.35)" strokeWidth="0.10" />
+          <circle r="1.65" fill="none" stroke="rgba(45,229,255,0.20)" strokeWidth="0.07" />
+          <circle r="0.80" fill="none" stroke="rgba(45,229,255,0.15)" strokeWidth="0.06" />
+          <line x1="0" y1="0" x2="2.5" y2="0" stroke="rgba(45,229,255,0.55)" strokeWidth="0.13">
+            <animateTransform attributeName="transform" type="rotate" from="0 0 0" to="360 0 0" dur="4s" repeatCount="indefinite" />
+          </line>
+          <circle r="0.22" fill="rgba(45,229,255,0.75)" />
+        </g>
+
+        {/* Header tag */}
+        <g transform="translate(4 5)">
+          <rect x="0" y="-3.5" width="42" height="5" fill="rgba(10,4,22,0.75)" stroke="rgba(255,45,143,0.3)" strokeWidth="0.12" />
+          <text x="2" y="0.2" fontFamily="'Press Start 2P', monospace" fontSize="1.6" fill="rgba(255,45,143,0.9)" letterSpacing="0.3">
+            {isEn ? '// TERRITORY MAP' : '// MAPA TERYTORIÓW'}
+          </text>
+        </g>
       </svg>
 
-      {/* Legend */}
-      <div style={{ display: 'flex', gap: 14, padding: '6px 10px', borderTop: '1px solid rgba(255,45,120,0.1)', flexWrap: 'wrap' }}>
-        {([
-          { color: '#00ff88', label: isEn ? 'Your zone'  : 'Twoja strefa' },
-          { color: '#ff4444', label: isEn ? 'Enemy zone' : 'Strefa wroga' },
-          { color: '#ffd700', label: isEn ? 'Free'       : 'Wolna'        },
-          { color: '#333355', label: isEn ? 'Locked'     : 'Zablokowana'  },
-        ]).map(({ color, label }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, boxShadow: `0 0 5px ${color}` }} />
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{label}</span>
+      {/* CRT scanline overlay */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
+        backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px)',
+        opacity: 0.65,
+      }} />
+
+      {/* Popup */}
+      {popup && pd && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute', left: popup.left, top: popup.top,
+            width: 200,
+            background: 'rgba(8,3,20,0.97)',
+            border: `1px solid ${pCol}`,
+            padding: '10px 12px',
+            zIndex: 20,
+            backdropFilter: 'blur(6px)',
+            boxShadow: `0 0 0 1px ${pCol}22, 0 0 26px rgba(0,0,0,0.65)`,
+          }}
+        >
+          <button
+            onClick={() => setPopup(null)}
+            style={{ position: 'absolute', top: 4, right: 6, background: 'none', border: 'none',
+              color: '#5a4a78', fontSize: 13, cursor: 'pointer', padding: 0, lineHeight: 1 }}
+          >✕</button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, paddingRight: 20 }}>
+            <div style={{ width: 34, height: 34, display: 'grid', placeItems: 'center',
+              fontSize: 18, border: `1px solid ${pCol}`, background: 'rgba(8,3,18,0.85)', flexShrink: 0 }}>
+              {pd.emoji}
+            </div>
+            <div>
+              <p style={{ fontFamily: 'monospace', fontSize: 10, color: pCol, marginBottom: 2, letterSpacing: '0.05em' }}>
+                {(isEn ? ((pd as any).nameEn ?? pd.name) : pd.name) as string}
+              </p>
+              <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#5a4a78' }}>
+                {isEn ? 'MIN.' : 'MIN.'} LVL {pd.minLevel}
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
+
+          {/* Ownership */}
+          <div style={{ marginBottom: 8 }}>
+            {pSt?.guildId ? (
+              <span style={{ fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.1em',
+                color: guild && pSt.guildId === guild.id ? '#4ade80' : '#f87171',
+                border: `1px solid ${guild && pSt.guildId === guild.id ? '#4ade80' : '#f87171'}`,
+                padding: '2px 6px' }}>
+                [{pSt.guildTag}] {guild && pSt.guildId === guild.id
+                  ? (isEn ? 'YOUR GUILD' : 'WASZA GILDIA')
+                  : (isEn ? 'ENEMY' : 'WRÓG')}
+              </span>
+            ) : heroLevel < pd.minLevel ? (
+              <span style={{ fontSize: 9, fontFamily: 'monospace', color: '#5a4a78',
+                border: '1px solid #5a4a78', padding: '2px 6px' }}>
+                ⌧ {isEn ? 'LOCKED' : 'ZABLOKOWANA'}
+              </span>
+            ) : (
+              <span style={{ fontSize: 9, fontFamily: 'monospace', color: '#ffc83a',
+                border: '1px solid #ffc83a', padding: '2px 6px' }}>
+                {isEn ? 'NEUTRAL' : 'NEUTRALNA'}
+              </span>
+            )}
+          </div>
+
+          {/* Siege indicator */}
+          {pSt?.siegeCurrentHp != null && (pSt.siegeCurrentHp ?? 0) > 0 && (
+            <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#f87171', marginBottom: 8 }}>
+              ⚔ {isEn ? 'SIEGE IN PROGRESS' : 'OBLĘŻENIE W TOKU'} — {pSt.siegeGuildTag}
+            </p>
+          )}
+
+          {/* Details button */}
+          <button
+            onClick={() => { onFocus(popup.id); setPopup(null); }}
+            style={{
+              display: 'block', width: '100%', padding: '7px 4px',
+              background: focused === popup.id ? `rgba(255,45,120,0.12)` : 'transparent',
+              border: `1px solid ${pCol}`,
+              color: pCol,
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: 9, cursor: 'pointer', letterSpacing: '0.1em',
+            }}
+          >
+            {focused === popup.id ? '◆ SZCZEGÓŁY' : '► SZCZEGÓŁY'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
