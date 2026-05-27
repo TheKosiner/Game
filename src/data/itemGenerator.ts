@@ -85,14 +85,6 @@ const WEAPON_NAMES_EN: string[][] = [
   ['Flamethrower', 'Plasma Flamer', 'Acid Sprayer', 'Void Burner'],
 ];
 
-const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, string[]> = {
-  armor:  ['Armor', 'Vest', 'Cuirass', 'Suit', 'Exoskeleton'],
-  helmet: ['Helmet', 'Visor', 'Mask', 'Hood', 'Face Shield'],
-  boots:  ['Boots', 'Combat Boots', 'Greaves', 'Battle Shoes', 'Sabatons'],
-  ring:   ['Main Core', 'Implant', 'Chip', 'Module', 'Processor'],
-  amulet: ['Aux Core', 'Transmitter', 'Crystal', 'Amplifier', 'Node'],
-};
-
 // ── Weapon type templates ─────────────────────────────────────────────────────
 interface WeaponTemplate {
   names: string[];
@@ -122,22 +114,58 @@ const WEAPON_TEMPLATES: WeaponTemplate[] = [
   { names: ['Miotacz Ognia', 'Plazmo-Miotacz', 'Rozpylacz Kwasowy', 'Spopielacz'], emoji: '🔥', ranged: true, magicDamage: true, primaryStat: 'magic' },
 ];
 
-// ── Slot name pools ───────────────────────────────────────────────────────────
-const SLOT_NAMES: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, { names: string[]; emoji: string }> = {
-  armor:  { names: ['Pancerz', 'Kamizelka', 'Zbroja', 'Kombinezon', 'Egzoszkielet'], emoji: '🦺' },
-  helmet: { names: ['Hełm', 'Wizjer', 'Maska', 'Kaptur', 'Visor'],                   emoji: '⛑' },
-  boots:  { names: ['Buty', 'Boty', 'Nagolenniki', 'Buty Bojowe', 'Saboty'],          emoji: '👟' },
-  ring:   { names: ['Rdzeń Główny', 'Implant', 'Chip', 'Moduł', 'Procesor'],           emoji: '💉' },
-  amulet: { names: ['Rdzeń Dodatkowy', 'Nadajnik', 'Kryształ', 'Wzmacniacz', 'Węzeł'], emoji: '📿' },
-};
+// ── Slot templates (name → primaryStat, replaces SLOT_NAMES + SLOT_STATS) ────
+interface SlotTemplate {
+  name: string;
+  nameEn: string;
+  primaryStat: keyof Stats;
+  /** extra stat pool — always includes primaryStat */
+  extraPool: (keyof Stats)[];
+  defScale?: number; // defence bonus multiplier (armor/helmet/boots)
+  emoji: string;
+}
 
-// ── Stat pools per slot ───────────────────────────────────────────────────────
-const SLOT_STATS: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, (keyof Stats)[]> = {
-  armor:  ['vitality', 'strength', 'magicResistance', 'dexterity'],
-  helmet: ['intelligence', 'vitality', 'magicResistance', 'magic'],
-  boots:  ['dexterity', 'strength', 'vitality', 'intelligence'],
-  ring:   ['strength', 'dexterity', 'intelligence', 'vitality', 'magic'],
-  amulet: ['magic', 'intelligence', 'strength', 'vitality', 'magicResistance'],
+const SLOT_TEMPLATES: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, SlotTemplate[]> = {
+  armor: [
+    { name: 'Pancerz Siły',        nameEn: 'Strength Armor',     primaryStat: 'strength',        extraPool: ['strength','vitality','dexterity','magicResistance'],      defScale: 0.9, emoji: '🦺' },
+    { name: 'Zbroja Witalności',   nameEn: 'Vitality Armor',     primaryStat: 'vitality',        extraPool: ['vitality','strength','magicResistance','dexterity'],       defScale: 0.9, emoji: '🦺' },
+    { name: 'Pancerz Odporności',  nameEn: 'Resistance Armor',   primaryStat: 'magicResistance', extraPool: ['magicResistance','vitality','magic','strength'],            defScale: 0.9, emoji: '🦺' },
+    { name: 'Kombinezon Zręczności',nameEn: 'Agility Suit',      primaryStat: 'dexterity',       extraPool: ['dexterity','vitality','strength','intelligence'],           defScale: 0.9, emoji: '🦺' },
+    { name: 'Egzoszkielet Magii',  nameEn: 'Magic Exosuit',      primaryStat: 'magic',           extraPool: ['magic','intelligence','vitality','magicResistance'],        defScale: 0.9, emoji: '🦺' },
+  ],
+  helmet: [
+    { name: 'Hełm Celności',       nameEn: 'Accuracy Helmet',    primaryStat: 'intelligence',    extraPool: ['intelligence','dexterity','vitality','magic'],             defScale: 0.45, emoji: '⛑' },
+    { name: 'Hełm Witalności',     nameEn: 'Vitality Helmet',    primaryStat: 'vitality',        extraPool: ['vitality','intelligence','magicResistance','strength'],     defScale: 0.45, emoji: '⛑' },
+    { name: 'Hełm Odporności',     nameEn: 'Resistance Helmet',  primaryStat: 'magicResistance', extraPool: ['magicResistance','vitality','magic','intelligence'],        defScale: 0.45, emoji: '⛑' },
+    { name: 'Hełm Magii',          nameEn: 'Magic Helmet',       primaryStat: 'magic',           extraPool: ['magic','intelligence','vitality','magicResistance'],        defScale: 0.45, emoji: '⛑' },
+    { name: 'Maska Zręczności',    nameEn: 'Agility Mask',       primaryStat: 'dexterity',       extraPool: ['dexterity','intelligence','vitality','strength'],           defScale: 0.45, emoji: '⛑' },
+  ],
+  boots: [
+    { name: 'Buty Zręczności',     nameEn: 'Agility Boots',      primaryStat: 'dexterity',       extraPool: ['dexterity','strength','vitality','intelligence'],           defScale: 0.35, emoji: '👟' },
+    { name: 'Buty Siły',           nameEn: 'Strength Boots',     primaryStat: 'strength',        extraPool: ['strength','dexterity','vitality','intelligence'],           defScale: 0.35, emoji: '👟' },
+    { name: 'Buty Witalności',     nameEn: 'Vitality Boots',     primaryStat: 'vitality',        extraPool: ['vitality','dexterity','strength','magicResistance'],        defScale: 0.35, emoji: '👟' },
+    { name: 'Buty Celności',       nameEn: 'Accuracy Boots',     primaryStat: 'intelligence',    extraPool: ['intelligence','dexterity','vitality','magic'],             defScale: 0.35, emoji: '👟' },
+  ],
+  ring: [
+    { name: 'Rdzeń Siły',          nameEn: 'Strength Core',      primaryStat: 'strength',        extraPool: ['strength','vitality','dexterity','intelligence','magic'],  emoji: '💉' },
+    { name: 'Rdzeń Zręczności',    nameEn: 'Dexterity Core',     primaryStat: 'dexterity',       extraPool: ['dexterity','intelligence','strength','vitality','magic'],   emoji: '💉' },
+    { name: 'Rdzeń Celności',      nameEn: 'Accuracy Core',      primaryStat: 'intelligence',    extraPool: ['intelligence','dexterity','vitality','magic','strength'],   emoji: '💉' },
+    { name: 'Rdzeń Witalności',    nameEn: 'Vitality Core',      primaryStat: 'vitality',        extraPool: ['vitality','strength','intelligence','dexterity','magic'],   emoji: '💉' },
+    { name: 'Rdzeń Magii',         nameEn: 'Magic Core',         primaryStat: 'magic',           extraPool: ['magic','intelligence','vitality','strength','dexterity'],   emoji: '💉' },
+    { name: 'Implant Refleksów',   nameEn: 'Reflex Implant',     primaryStat: 'dexterity',       extraPool: ['dexterity','strength','intelligence','vitality'],           emoji: '💉' },
+    { name: 'Chip Siły',           nameEn: 'Strength Chip',      primaryStat: 'strength',        extraPool: ['strength','vitality','dexterity'],                         emoji: '💉' },
+    { name: 'Moduł Celności',      nameEn: 'Accuracy Module',    primaryStat: 'intelligence',    extraPool: ['intelligence','magic','dexterity'],                        emoji: '💉' },
+    { name: 'Procesor Witalności', nameEn: 'Vitality Processor', primaryStat: 'vitality',        extraPool: ['vitality','strength','magicResistance'],                   emoji: '💉' },
+    { name: 'Procesor Magii',      nameEn: 'Magic Processor',    primaryStat: 'magic',           extraPool: ['magic','intelligence','vitality'],                         emoji: '💉' },
+  ],
+  amulet: [
+    { name: 'Kryształ Magii',      nameEn: 'Magic Crystal',      primaryStat: 'magic',           extraPool: ['magic','intelligence','vitality','magicResistance'],        emoji: '📿' },
+    { name: 'Wzmacniacz Siły',     nameEn: 'Strength Amplifier', primaryStat: 'strength',        extraPool: ['strength','vitality','dexterity','magic'],                 emoji: '📿' },
+    { name: 'Nadajnik Celności',   nameEn: 'Accuracy Transmitter',primaryStat: 'intelligence',   extraPool: ['intelligence','magic','dexterity','vitality'],             emoji: '📿' },
+    { name: 'Węzeł Witalności',    nameEn: 'Vitality Node',      primaryStat: 'vitality',        extraPool: ['vitality','strength','magicResistance','intelligence'],     emoji: '📿' },
+    { name: 'Rdzeń Odporności',    nameEn: 'Resistance Core',    primaryStat: 'magicResistance', extraPool: ['magicResistance','vitality','magic','intelligence'],        emoji: '📿' },
+    { name: 'Kryształ Zręczności', nameEn: 'Dexterity Crystal',  primaryStat: 'dexterity',       extraPool: ['dexterity','intelligence','strength','vitality'],           emoji: '📿' },
+  ],
 };
 
 // ── Core generator ────────────────────────────────────────────────────────────
@@ -195,25 +223,26 @@ export function generateItem(
     }
 
   } else {
-    type NonWeaponSlot = keyof typeof SLOT_NAMES;
-    const s      = slot as NonWeaponSlot;
-    const tplDef = SLOT_NAMES[s];
-    const nameIdx = Math.floor(rng() * tplDef.names.length);
-    name   = `${prefix} ${tplDef.names[nameIdx]} ${suffix}`;
-    nameEn = `${PREFIX_EN[rarity][prefixIdx]} ${SLOT_NAMES_EN[s][nameIdx]} ${SUFFIX_EN[suffixIdx]}`;
-    emoji = tplDef.emoji;
+    type NonWeaponSlot = keyof typeof SLOT_TEMPLATES;
+    const s   = slot as NonWeaponSlot;
+    const tpl = pick(SLOT_TEMPLATES[s], rng);
 
-    const defScale: Record<NonWeaponSlot, number> = { armor: 0.9, helmet: 0.45, boots: 0.35, ring: 0, amulet: 0 };
-    if (defScale[s] > 0) {
-      defenseBonus = Math.max(1, Math.round((level * defScale[s] + 1) * mult * v()));
+    name   = `${prefix} ${tpl.name} ${suffix}`;
+    nameEn = `${PREFIX_EN[rarity][prefixIdx]} ${tpl.nameEn} ${SUFFIX_EN[suffixIdx]}`;
+    emoji  = tpl.emoji;
+
+    // Defense bonus only for armor/helmet/boots
+    if (tpl.defScale && tpl.defScale > 0) {
+      defenseBonus = Math.max(1, Math.round((level * tpl.defScale + 1) * mult * v()));
     }
 
-    const pool = SLOT_STATS[s];
-    const primaryStat = pick(pool, rng);
-    stats[primaryStat] = Math.max(1, Math.round(level * 1.2 * mult * v()));
+    // Primary stat — always the one implied by the template name
+    stats[tpl.primaryStat] = Math.max(1, Math.round(level * 1.2 * mult * v()));
 
+    // Extra stats drawn from the template's own pool (excludes primaryStat duplication)
+    const extraPool = tpl.extraPool.filter(s => s !== tpl.primaryStat);
     for (let i = 0; i < extraCount; i++) {
-      const k = pick(pool, rng);
+      const k = pick(extraPool, rng);
       stats[k] = (stats[k] ?? 0) + Math.max(1, Math.round(level * 0.65 * mult * v()));
     }
   }
