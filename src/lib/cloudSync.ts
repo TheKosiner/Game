@@ -30,6 +30,9 @@ export interface LeaderboardEntry {
   }>;
 }
 
+// Throttle guild member stat updates to at most once per 60 s per uid
+const _lastGuildSync = new Map<string, number>();
+
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
   const savedAt = Date.now();
@@ -39,25 +42,33 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt } = useGameStore.getState();
   const { class: _cls, ...heroClean } = hero as any;
 
-  // Private save data FIRST — Firestore rules validate time-based fields here.
+  const playerRef = doc(db, 'players', uid);
+
+  // Batch A (parallel): write private save + read player doc for guildId
+  // Private save FIRST — Firestore rules validate time-based fields here.
   // If the write is rejected (clock manipulation detected), reload authoritative state.
+  let playerSnap: import('firebase/firestore').DocumentSnapshot;
   try {
-    await setDoc(doc(db, 'saves', uid), {
-      hero: heroClean,
-      activeQuest,
-      pvpWins: pvpWins ?? 0,
-      pvpLosses: pvpLosses ?? 0,
-      pvpRating: pvpRating ?? 1000,
-      pvpLog: pvpLog ?? [],
-      lastPvpFight: lastPvpFight ?? 0,
-      challengeUnlocked: challengeUnlocked ?? 0,
-      lastChallengeAt: lastChallengeAt ?? 0,
-      shopSeed: shopSeed ?? 0,
-      lastShopRefresh: lastShopRefresh ?? 0,
-      shopPurchased: shopPurchased ?? [],
-      lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
-      updatedAt: savedAt,
-    });
+    const results = await Promise.all([
+      setDoc(doc(db, 'saves', uid), {
+        hero: heroClean,
+        activeQuest,
+        pvpWins: pvpWins ?? 0,
+        pvpLosses: pvpLosses ?? 0,
+        pvpRating: pvpRating ?? 1000,
+        pvpLog: pvpLog ?? [],
+        lastPvpFight: lastPvpFight ?? 0,
+        challengeUnlocked: challengeUnlocked ?? 0,
+        lastChallengeAt: lastChallengeAt ?? 0,
+        shopSeed: shopSeed ?? 0,
+        lastShopRefresh: lastShopRefresh ?? 0,
+        shopPurchased: shopPurchased ?? [],
+        lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
+        updatedAt: savedAt,
+      }),
+      getDoc(playerRef),
+    ] as const);
+    playerSnap = results[1];
   } catch (err: any) {
     if (err?.code === 'permission-denied') {
       // Server rejected the save — clock was advanced or another rule violation.
@@ -67,53 +78,60 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     return;
   }
 
-  // Leaderboard update — only reached when save was accepted
-  const playerRef = doc(db, 'players', uid);
-  const playerSnap = await getDoc(playerRef);
   const existingGuildId = playerSnap.exists() ? (playerSnap.data().guildId as string | undefined) : undefined;
 
-  await setDoc(playerRef, {
-    username,
-    heroName: hero.name,
-    heroClass: deleteField(),
-    level: hero.level,
-    xp: hero.xp,
-    gold: hero.gold,
-    skinTone: hero.skinTone ?? 1,
-    hairColor: hero.hairColor ?? 2,
-    clothingColor: hero.clothingColor ?? 0,
-    portrait: hero.portrait ?? 0,
-    attack: getHeroAttack(hero),
-    defense: getHeroDefense(hero),
-    maxHp: hero.maxHp,
-    pvpWins: pvpWins ?? 0,
-    pvpLosses: pvpLosses ?? 0,
-    pvpRating: pvpRating ?? 1000,
-    equipment: Object.fromEntries(
-      Object.entries(hero.equipment).map(([slot, item]) => [
-        slot,
-        item ? {
-          id: item.id, name: item.name, slot: item.slot, rarity: item.rarity, level: item.level,
-          enhanceLevel: item.enhanceLevel ?? 0,
-          stats: Object.fromEntries(Object.entries(item.stats ?? {}).filter(([, v]) => (v as number) > 0)),
-          attackBonus: item.attackBonus ?? 0,
-          defenseBonus: item.defenseBonus ?? 0,
-        } : null,
-      ]).filter(([, v]) => v !== null)
-    ),
-    updatedAt: savedAt,
-  }, { merge: true });
+  // Batch B (parallel): update leaderboard entry + guild member stats
+  const now = Date.now();
+  const lastGuildSync = _lastGuildSync.get(uid) ?? 0;
+  const shouldSyncGuild = existingGuildId && (now - lastGuildSync >= 60_000);
 
-  // Keep guild member data in sync with current hero stats
-  if (existingGuildId) {
-    try {
-      await updateDoc(doc(db, 'guilds', existingGuildId), {
+  const batchB: Promise<unknown>[] = [
+    setDoc(playerRef, {
+      username,
+      heroName: hero.name,
+      heroClass: deleteField(),
+      level: hero.level,
+      xp: hero.xp,
+      gold: hero.gold,
+      skinTone: hero.skinTone ?? 1,
+      hairColor: hero.hairColor ?? 2,
+      clothingColor: hero.clothingColor ?? 0,
+      portrait: hero.portrait ?? 0,
+      attack: getHeroAttack(hero),
+      defense: getHeroDefense(hero),
+      maxHp: hero.maxHp,
+      pvpWins: pvpWins ?? 0,
+      pvpLosses: pvpLosses ?? 0,
+      pvpRating: pvpRating ?? 1000,
+      equipment: Object.fromEntries(
+        Object.entries(hero.equipment).map(([slot, item]) => [
+          slot,
+          item ? {
+            id: item.id, name: item.name, slot: item.slot, rarity: item.rarity, level: item.level,
+            enhanceLevel: item.enhanceLevel ?? 0,
+            stats: Object.fromEntries(Object.entries(item.stats ?? {}).filter(([, v]) => (v as number) > 0)),
+            attackBonus: item.attackBonus ?? 0,
+            defenseBonus: item.defenseBonus ?? 0,
+          } : null,
+        ]).filter(([, v]) => v !== null)
+      ),
+      updatedAt: savedAt,
+    }, { merge: true }),
+  ];
+
+  // Keep guild member data in sync with current hero stats (throttled)
+  if (shouldSyncGuild) {
+    _lastGuildSync.set(uid, now);
+    batchB.push(
+      updateDoc(doc(db, 'guilds', existingGuildId!), {
         [`members.${uid}.level`]: hero.level,
         [`members.${uid}.heroName`]: hero.name,
         [`members.${uid}.portrait`]: hero.portrait ?? 0,
-      });
-    } catch { /* non-critical, guild may no longer exist */ }
+      }).catch(() => { /* non-critical, guild may no longer exist */ })
+    );
   }
+
+  await Promise.all(batchB);
 }
 
 function migrateHeroFromRaw(raw: any) {
@@ -149,20 +167,22 @@ function migrateHeroFromRaw(raw: any) {
 export async function loadFromCloud(uid: string, force = false): Promise<boolean | null> {
   if (!db) return null;
 
-  // Read from private saves collection
-  const saveSnap = await getDoc(doc(db, 'saves', uid));
+  // Parallel reads — saves and players docs are independent
+  const [saveSnap, playerSnap] = await Promise.all([
+    getDoc(doc(db, 'saves', uid)),
+    getDoc(doc(db, 'players', uid)),
+  ]);
 
   // Fall back to legacy saveData in players doc if no saves doc yet
-  const legacySnap = !saveSnap.exists() ? await getDoc(doc(db, 'players', uid)) : null;
   const raw = saveSnap.exists()
     ? saveSnap.data()
-    : legacySnap?.data()?.saveData;
+    : playerSnap.exists() ? playerSnap.data().saveData : null;
 
   if (!raw?.hero) return null;
 
   const cloudTs: number = saveSnap.exists()
     ? (saveSnap.data().updatedAt ?? 0)
-    : (legacySnap?.data()?.updatedAt ?? 0);
+    : (playerSnap.data()?.updatedAt ?? 0);
 
   // Admin override: if updatedAt is far in the future (e.g. 9999999999999),
   // always load from cloud regardless of local state.
@@ -189,8 +209,7 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
 
   const hero = migrateHeroFromRaw(raw.hero);
 
-  // Read pvp stats — prefer saves doc, fall back to players doc for older saves
-  const playerSnap = await getDoc(doc(db, 'players', uid));
+  // Use already-fetched playerSnap for pvp stats — prefer saves doc, fall back to players doc for older saves
   const playerData = playerSnap.exists() ? playerSnap.data() : {};
 
   useGameStore.setState({

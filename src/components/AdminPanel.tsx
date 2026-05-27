@@ -24,10 +24,12 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
   if (!db) return null;
   // Try by UID first
   try {
-    const saveSnap = await getDoc(doc(db, 'saves', nameOrUid));
+    const [saveSnap, playerSnap] = await Promise.all([
+      getDoc(doc(db, 'saves', nameOrUid)),
+      getDoc(doc(db, 'players', nameOrUid)),
+    ]);
     if (saveSnap.exists()) {
       const d = saveSnap.data();
-      const playerSnap = await getDoc(doc(db, 'players', nameOrUid));
       return {
         uid: nameOrUid,
         username: playerSnap.data()?.username ?? '?',
@@ -128,10 +130,21 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const patch = async (data: Record<string, unknown>) => {
     if (!player || !db) return;
-    await updateDoc(doc(db, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
-    // Refresh
-    const p = await findPlayer(player.uid);
-    setPlayer(p);
+    await updateDoc(doc(db!, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
+    // Update local state directly from patched fields — avoids 2 extra Firestore reads
+    setPlayer(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev };
+      for (const [key, val] of Object.entries(data)) {
+        if (key === 'hero.gold')   updated.gold   = val as number;
+        if (key === 'hero.gems')   updated.gems   = val as number;
+        if (key === 'hero.level')  updated.level  = val as number;
+        if (key === 'hero.hp')     updated.hp     = val as number;
+        if (key === 'hero.dungeonRunsToday')    updated.dungeonRunsToday    = val as number;
+        if (key === 'hero.questsCompletedToday') updated.questsCompletedToday = val as number;
+      }
+      return updated;
+    });
   };
 
   const giveGold = async () => {
@@ -174,8 +187,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   const clearQuest = async () => {
     if (!player) return;
     await updateDoc(doc(db!, 'saves', player.uid), { activeQuest: null, updatedAt: 9999999999999 });
-    const p = await findPlayer(player.uid);
-    setPlayer(p);
+    setPlayer(prev => prev ? { ...prev, activeQuest: false } : prev);
     flash(`Wyczyszczono aktywną misję dla ${player.username}`);
   };
 
