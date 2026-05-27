@@ -189,6 +189,144 @@ function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?:
     );
   }
 
+  if (id === 'sewers') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* pionowa rura */}
+        <rect x="-5" y="-5.5" width="2.5" height="9" fill={color} opacity="0.85"/>
+        {/* pozioma rura */}
+        <rect x="-5" y="-1" width="10" height="2.2" fill={color} opacity="0.85"/>
+        {/* złącze lewe */}
+        <circle cx="-3.8" cy="-0.1" r="1.4" fill={color}/>
+        {/* złącze prawe */}
+        <circle cx="3.5" cy="-0.1" r="1.4" fill={color}/>
+        {/* kapie */}
+        <circle cx="3.5" cy="2.8" r="0.7" fill={color} opacity="0.7"/>
+        <line x1="3.5" y1="1.3" x2="3.5" y2="2.3" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'biotech_lab') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* szyjka kolby */}
+        <rect x="-0.7" y="-6" width="1.4" height="3.5" fill={color} opacity="0.9"/>
+        {/* kolba */}
+        <path d="M -2.2 -2.5 Q -4.5 0.5 -4 3 Q -3.5 5 0 5 Q 3.5 5 4 3 Q 4.5 0.5 2.2 -2.5 Z" fill={color} opacity="0.7"/>
+        {/* bąbelki */}
+        <circle cx="-1.5" cy="1" r="0.7" fill={color} opacity="0.9"/>
+        <circle cx="1.5" cy="2.5" r="0.7" fill={color} opacity="0.9"/>
+        <circle cx="0" cy="0.2" r="0.5" fill={color} opacity="0.9"/>
+        {/* DNA spirala lewa */}
+        <path d="M -0.8 -2.5 C -3 -1 -3 0 -0.8 1" fill="none" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+        {/* DNA spirala prawa */}
+        <path d="M 0.8 -2.5 C 3 -1 3 0 0.8 1" fill="none" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'corrupted_matrix') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* glitched pixel blocks */}
+        <rect x="-5" y="-5.5" width="2.2" height="1.5" fill={color}/>
+        <rect x="-1.5" y="-5.5" width="3.5" height="1.5" fill={color} opacity="0.55"/>
+        <rect x="2.5" y="-5.5" width="2.5" height="1.5" fill={color}/>
+        <rect x="-5" y="-2.8" width="4.5" height="1.5" fill={color} opacity="0.35"/>
+        <rect x="0.5" y="-2.8" width="2.2" height="1.5" fill={color}/>
+        <rect x="-5" y="-0.2" width="1.8" height="1.5" fill={color}/>
+        <rect x="-2" y="-0.2" width="5" height="1.5" fill={color} opacity="0.7"/>
+        <rect x="-5" y="2.5" width="3.2" height="1.5" fill={color} opacity="0.4"/>
+        <rect x="-0.5" y="2.5" width="5.5" height="1.5" fill={color}/>
+      </svg>
+    );
+  }
+
+  if (id === 'system_core') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* chip body */}
+        <rect x="-3.5" y="-3.5" width="7" height="7" fill={color} opacity="0.8"/>
+        {/* circuit inside */}
+        <rect x="-2" y="-2" width="4" height="4" fill="#000" opacity="0.55"/>
+        <circle cx="0" cy="0" r="1" fill={color} opacity="0.9"/>
+        {/* pins left */}
+        <rect x="-5.5" y="-2.5" width="2" height="0.8" fill={color}/>
+        <rect x="-5.5" y="-0.4" width="2" height="0.8" fill={color}/>
+        <rect x="-5.5" y="1.7" width="2" height="0.8" fill={color}/>
+        {/* pins right */}
+        <rect x="3.5" y="-2.5" width="2" height="0.8" fill={color}/>
+        <rect x="3.5" y="-0.4" width="2" height="0.8" fill={color}/>
+        <rect x="3.5" y="1.7" width="2" height="0.8" fill={color}/>
+        {/* pins top */}
+        <rect x="-2.5" y="-5.5" width="0.8" height="2" fill={color}/>
+        <rect x="-0.4" y="-5.5" width="0.8" height="2" fill={color}/>
+        <rect x="1.7" y="-5.5" width="0.8" height="2" fill={color}/>
+      </svg>
+    );
+  }
+
+  if (id === 'apocalypse_zone') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* base fireball */}
+        <circle cx="0" cy="1" r="3.8" fill={color} opacity="0.6"/>
+        {/* top spike */}
+        <polygon points="0,-6 1.1,-2 -1.1,-2" fill={color} opacity="0.95"/>
+        {/* left spike */}
+        <polygon points="-5.5,-2.5 -2,-0.8 -3,1.5" fill={color} opacity="0.75"/>
+        {/* right spike */}
+        <polygon points="5.5,-2.5 2,-0.8 3,1.5" fill={color} opacity="0.75"/>
+        {/* lower left */}
+        <polygon points="-4,4.5 -1,2.2 -2,5.5" fill={color} opacity="0.5"/>
+        {/* lower right */}
+        <polygon points="4,4.5 1,2.2 2,5.5" fill={color} opacity="0.5"/>
+        {/* hot center */}
+        <circle cx="0" cy="1" r="1.8" fill={color} opacity="0.95"/>
+      </svg>
+    );
+  }
+
+  if (id === 'void_nexus') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* outer ring */}
+        <circle cx="0" cy="0" r="5.5" fill="none" stroke={color} strokeWidth="0.9" opacity="0.9"/>
+        {/* mid ring */}
+        <circle cx="0" cy="0" r="3.8" fill="none" stroke={color} strokeWidth="0.6" opacity="0.7"/>
+        {/* inner ring */}
+        <circle cx="0" cy="0" r="2.2" fill="none" stroke={color} strokeWidth="0.5" opacity="0.55"/>
+        {/* center eye */}
+        <circle cx="0" cy="0" r="1" fill={color} opacity="0.95"/>
+        {/* spiral arms */}
+        <path d="M 0 -3.8 Q 2.2 -2 3.8 0" fill="none" stroke={color} strokeWidth="0.6" opacity="0.55"/>
+        <path d="M 0 3.8 Q -2.2 2 -3.8 0" fill="none" stroke={color} strokeWidth="0.6" opacity="0.55"/>
+        <path d="M 3.8 0 Q 2 2.5 0 3.8" fill="none" stroke={color} strokeWidth="0.4" opacity="0.35"/>
+      </svg>
+    );
+  }
+
+  if (id === 'network_end') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* terminal frame */}
+        <rect x="-5.5" y="-5.5" width="11" height="8.5" rx="0.5" fill={color} opacity="0.75"/>
+        <rect x="-4.5" y="-4.5" width="9" height="6.5" fill="#000" opacity="0.8"/>
+        {/* skull */}
+        <ellipse cx="0" cy="-1.8" rx="2.8" ry="2.3" fill={color} opacity="0.85"/>
+        <ellipse cx="-1.1" cy="-2.3" rx="0.85" ry="0.9" fill="#000" opacity="0.9"/>
+        <ellipse cx="1.1" cy="-2.3" rx="0.85" ry="0.9" fill="#000" opacity="0.9"/>
+        <rect x="-2.2" y="0.2" width="4.4" height="1.2" rx="0.3" fill={color} opacity="0.85"/>
+        <line x1="-1.5" y1="0.2" x2="-1.5" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        <line x1="-0.3" y1="0.2" x2="-0.3" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        <line x1="0.9" y1="0.2" x2="0.9" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        {/* base stand */}
+        <rect x="-2" y="3.5" width="4" height="0.9" fill={color} opacity="0.65"/>
+      </svg>
+    );
+  }
+
   // fallback — generic dot
   return (
     <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg">

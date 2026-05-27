@@ -85,14 +85,45 @@ export const ALL_ENEMIES: Enemy[] = [
   { id: 'zero_commander',     name: 'Komandant Strefy Zero',      emoji: '⭐',  level: 52, hp: 2800, maxHp: 2800, attack: 300, defense: 115,xpReward: 2200, goldReward: 1700,lootTable: [] },
   { id: 'psi_storm',          name: 'Burza Psi',                  emoji: '🌪️', level: 43, hp: 1400, maxHp: 1400, attack: 50,  defense: 60, xpReward: 1380, goldReward: 1000,lootTable: [], magicAttack: 290, magicResistance: 120 },
 
-  // ── Sieć Widm (lvl 55–70) ────────────────────────────────────────────────
-  { id: 'digital_phantom',    name: 'Cyfrowy Fantom',             emoji: '👁️', level: 55, hp: 3200, maxHp: 3200, attack: 340, defense: 125,xpReward: 2600, goldReward: 2000,lootTable: [] },
-  { id: 'quantum_assassin',   name: 'Kwantowy Zabójca',           emoji: '⚔️', level: 58, hp: 3600, maxHp: 3600, attack: 375, defense: 130,xpReward: 2900, goldReward: 2250,lootTable: [] },
-  { id: 'network_titan',      name: 'Tytan Sieci',                emoji: '🗼',  level: 62, hp: 4200, maxHp: 4200, attack: 420, defense: 140,xpReward: 3400, goldReward: 2700,lootTable: [] },
-  { id: 'code_reaper',        name: 'Żniwiarz Kodu',              emoji: '💀',  level: 65, hp: 5000, maxHp: 5000, attack: 480, defense: 152,xpReward: 4000, goldReward: 3200,lootTable: [] },
-  { id: 'ghost_overlord',     name: 'Władca Widm',                emoji: '👑',  level: 70, hp: 6500, maxHp: 6500, attack: 560, defense: 170,xpReward: 5200, goldReward: 4200,lootTable: [] },
-  { id: 'void_weaver',        name: 'Tkacz Próżni',               emoji: '🕸️', level: 60, hp: 3800, maxHp: 3800, attack: 80,  defense: 100,xpReward: 3100, goldReward: 2450,lootTable: [], magicAttack: 450, magicResistance: 175 },
-  { id: 'arcane_ghost',       name: 'Arkaiczny Duch',             emoji: '👻',  level: 68, hp: 5500, maxHp: 5500, attack: 100, defense: 130,xpReward: 4600, goldReward: 3700,lootTable: [], magicAttack: 600, magicResistance: 220 },
+  // ── Sieć Widm (lvl 50–58) ────────────────────────────────────────────────
+  { id: 'data_specter',        name: 'Widmo Danych',              emoji: '👁️', level: 50, hp: 2400, maxHp: 2400, attack: 290, defense: 115,xpReward: 1950, goldReward: 1500,lootTable: [] },
+  { id: 'network_hunter',      name: 'Łowca Sieci',               emoji: '🕵️', level: 52, hp: 2900, maxHp: 2900, attack: 320, defense: 120,xpReward: 2200, goldReward: 1700,lootTable: [] },
+  { id: 'cyber_overlord',      name: 'Cyber-Władca',              emoji: '🎭',  level: 54, hp: 3100, maxHp: 3100, attack: 338, defense: 123,xpReward: 2400, goldReward: 1850,lootTable: [] },
+  { id: 'digital_phantom',     name: 'Cyfrowy Fantom',            emoji: '💀',  level: 57, hp: 3200, maxHp: 3200, attack: 360, defense: 128,xpReward: 2650, goldReward: 2050,lootTable: [] },
+
+  // ── Zakażona Matryca (lvl 58–65) ─────────────────────────────────────────
+  { id: 'quantum_assassin',    name: 'Kwantowy Zabójca',          emoji: '⚔️', level: 58, hp: 3600, maxHp: 3600, attack: 380, defense: 132,xpReward: 2900, goldReward: 2250,lootTable: [] },
+  { id: 'void_weaver',         name: 'Tkacz Próżni',              emoji: '🕸️', level: 60, hp: 3800, maxHp: 3800, attack: 80,  defense: 100,xpReward: 3100, goldReward: 2450,lootTable: [], magicAttack: 450, magicResistance: 175 },
+  { id: 'glitch_entity',       name: 'Byt Glitchowy',             emoji: '🔴',  level: 62, hp: 4200, maxHp: 4200, attack: 425, defense: 140,xpReward: 3400, goldReward: 2700,lootTable: [] },
+  { id: 'matrix_reaper',       name: 'Żniwiarz Matrycy',          emoji: '💠',  level: 64, hp: 4800, maxHp: 4800, attack: 465, defense: 150,xpReward: 3800, goldReward: 3050,lootTable: [] },
+
+  // ── Jądro Systemu (lvl 65–72) ─────────────────────────────────────────────
+  { id: 'code_reaper',         name: 'Żniwiarz Kodu',             emoji: '🗜️', level: 65, hp: 5000, maxHp: 5000, attack: 485, defense: 155,xpReward: 4000, goldReward: 3200,lootTable: [] },
+  { id: 'network_titan',       name: 'Tytan Sieci',               emoji: '🗼',  level: 67, hp: 5600, maxHp: 5600, attack: 520, defense: 162,xpReward: 4400, goldReward: 3550,lootTable: [] },
+  { id: 'arcane_ghost',        name: 'Arkaiczny Duch',            emoji: '👻',  level: 68, hp: 5500, maxHp: 5500, attack: 100, defense: 130,xpReward: 4600, goldReward: 3700,lootTable: [], magicAttack: 600, magicResistance: 220 },
+  { id: 'ghost_overlord',      name: 'Władca Widm',               emoji: '👑',  level: 70, hp: 6500, maxHp: 6500, attack: 565, defense: 172,xpReward: 5200, goldReward: 4200,lootTable: [] },
+  { id: 'system_wraith',       name: 'Upiór Systemu',             emoji: '🌀',  level: 72, hp: 7200, maxHp: 7200, attack: 625, defense: 183,xpReward: 5800, goldReward: 4700,lootTable: [] },
+
+  // ── Strefa Apokalipsy (lvl 72–80) ─────────────────────────────────────────
+  { id: 'apocalypse_warrior',  name: 'Wojownik Apokalipsy',       emoji: '💥',  level: 72, hp: 7000, maxHp: 7000, attack: 640, defense: 188,xpReward: 5700, goldReward: 4600,lootTable: [] },
+  { id: 'bio_overlord',        name: 'Bio-Władca',                emoji: '🦠',  level: 74, hp: 8000, maxHp: 8000, attack: 705, defense: 202,xpReward: 6400, goldReward: 5200,lootTable: [] },
+  { id: 'plasma_titan',        name: 'Tytan Plazmowy',            emoji: '🔆',  level: 76, hp: 9100, maxHp: 9100, attack: 775, defense: 217,xpReward: 7200, goldReward: 5800,lootTable: [] },
+  { id: 'nuclear_overlord',    name: 'Jądrowy Władca',            emoji: '☢️',  level: 78, hp: 10300, maxHp: 10300, attack: 850, defense: 234,xpReward: 8100, goldReward: 6500,lootTable: [] },
+  { id: 'void_destroyer',      name: 'Niszczyciel Próżni',        emoji: '🌑',  level: 80, hp: 11500, maxHp: 11500, attack: 940, defense: 252,xpReward: 9100, goldReward: 7300,lootTable: [] },
+
+  // ── Nexus Próżni (lvl 82–90) ──────────────────────────────────────────────
+  { id: 'nexus_guard',         name: 'Strażnik Nexusa',           emoji: '🔮',  level: 82, hp: 13000, maxHp: 13000, attack: 1040, defense: 272,xpReward: 10300, goldReward: 8200,lootTable: [] },
+  { id: 'psi_annihilator',     name: 'Anihilator Psi',            emoji: '🌪️', level: 84, hp: 14800, maxHp: 14800, attack: 140, defense: 180,xpReward: 11600, goldReward: 9300,lootTable: [], magicAttack: 1150, magicResistance: 340 },
+  { id: 'quantum_giant',       name: 'Kwantowy Gigant',           emoji: '🗿',  level: 86, hp: 16500, maxHp: 16500, attack: 1260, defense: 310,xpReward: 13000, goldReward: 10400,lootTable: [] },
+  { id: 'void_sovereign',      name: 'Władca Próżni',             emoji: '🌑',  level: 88, hp: 18500, maxHp: 18500, attack: 1390, defense: 332,xpReward: 14500, goldReward: 11600,lootTable: [] },
+  { id: 'nexus_prime',         name: 'Nexus Prymarny',            emoji: '💠',  level: 90, hp: 21000, maxHp: 21000, attack: 1540, defense: 356,xpReward: 16200, goldReward: 13000,lootTable: [] },
+
+  // ── Koniec Sieci (lvl 92–100) ─────────────────────────────────────────────
+  { id: 'omega_destroyer',     name: 'Niszczyciel Omega',         emoji: '⚡',  level: 92, hp: 23500, maxHp: 23500, attack: 1700, defense: 380,xpReward: 18200, goldReward: 14600,lootTable: [] },
+  { id: 'null_entity',         name: 'Byt Null',                  emoji: '🔴',  level: 94, hp: 27000, maxHp: 27000, attack: 1880, defense: 408,xpReward: 20500, goldReward: 16400,lootTable: [] },
+  { id: 'zero_absolute',       name: 'Zero Absolutne',            emoji: '❄️',  level: 96, hp: 30500, maxHp: 30500, attack: 2080, defense: 436,xpReward: 23000, goldReward: 18500,lootTable: [] },
+  { id: 'void_prime',          name: 'Próżnia Prymaryczna',       emoji: '🌑',  level: 98, hp: 34500, maxHp: 34500, attack: 2300, defense: 466,xpReward: 26000, goldReward: 21000,lootTable: [] },
+  { id: 'end_entity',          name: 'Finalny Protokół',          emoji: '☠️',  level: 100,hp: 39000, maxHp: 39000, attack: 2550, defense: 498,xpReward: 29500, goldReward: 23800,lootTable: [] },
 ];
 
 export function getEnemyById(id: string): Enemy | undefined {
@@ -159,13 +190,40 @@ export const ENEMY_NAMES_EN: Record<string, string> = {
   apex_predator:        'Apex Predator',
   psi_storm:            'Psi Storm',
   zero_commander:       'Zero Zone Commander',
+  // Ghost Network / lv 50–57
+  data_specter:         'Data Specter',
+  network_hunter:       'Network Hunter',
+  cyber_overlord:       'Cyber Overlord',
   digital_phantom:      'Digital Phantom',
+  // Corrupted Matrix / lv 58–64
   quantum_assassin:     'Quantum Assassin',
-  network_titan:        'Network Titan',
-  code_reaper:          'Code Reaper',
   void_weaver:          'Void Weaver',
-  ghost_overlord:       'Ghost Overlord',
+  glitch_entity:        'Glitch Entity',
+  matrix_reaper:        'Matrix Reaper',
+  // System Core / lv 65–72
+  code_reaper:          'Code Reaper',
+  network_titan:        'Network Titan',
   arcane_ghost:         'Arcane Ghost',
+  ghost_overlord:       'Ghost Overlord',
+  system_wraith:        'System Wraith',
+  // Apocalypse Zone / lv 72–80
+  apocalypse_warrior:   'Apocalypse Warrior',
+  bio_overlord:         'Bio Overlord',
+  plasma_titan:         'Plasma Titan',
+  nuclear_overlord:     'Nuclear Overlord',
+  void_destroyer:       'Void Destroyer',
+  // Void Nexus / lv 82–90
+  nexus_guard:          'Nexus Guard',
+  psi_annihilator:      'Psi Annihilator',
+  quantum_giant:        'Quantum Giant',
+  void_sovereign:       'Void Sovereign',
+  nexus_prime:          'Nexus Prime',
+  // Network's End / lv 92–100
+  omega_destroyer:      'Omega Destroyer',
+  null_entity:          'Null Entity',
+  zero_absolute:        'Zero Absolute',
+  void_prime:           'Void Prime',
+  end_entity:           'The Final Protocol',
 };
 
 export function scaleEnemy(enemy: Enemy, floor: number): Enemy {
