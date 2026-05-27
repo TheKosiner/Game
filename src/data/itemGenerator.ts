@@ -71,12 +71,18 @@ const SUFFIX_EN = [
 const WEAPON_NAMES_EN: string[][] = [
   ['Sword', 'Blade', 'Axe', 'Saber'],
   ['Dagger', 'Knife', 'Mono-Knife', 'Razor'],
-  ['Rifle', 'Pistol', 'Shotgun', 'Cannon'],
+  ['Rifle', 'Shotgun', 'Cannon', 'Assault Rifle'],
   ['Electro-Pike', 'Lance', 'Harpoon', 'Spear'],
   ['Wand', 'Staff', 'Scepter', 'Power Crystal'],
   ['Nano-Dagger', 'Bio-Blade', 'Plasma Cutter'],
-  ['Sniper Rifle', 'Launcher', 'Precision Rifle'],
-  ['Cyber-Bat', 'Energy Whip', 'Club'],
+  ['Sniper Rifle', 'Precision Rifle', 'Long Rifle'],
+  ['Cyber-Bat', 'Club', 'Baton'],
+  ['Pistol', 'Blaster', 'Plasma Pistol', 'Disintegrator'],
+  ['Battle Axe', 'Cleaver', 'Plasma Axe', 'Nano-Axe'],
+  ['Energy Whip', 'Arc Whip', 'Neural Lash'],
+  ['Grenade Launcher', 'Frag Launcher', 'Void Launcher', 'Cluster Gun'],
+  ['Energy Bow', 'Pulse Bow', 'Quantum Bow', 'Plasma Bow'],
+  ['Flamethrower', 'Plasma Flamer', 'Acid Sprayer', 'Void Burner'],
 ];
 
 const SLOT_NAMES_EN: Record<Exclude<ItemSlot, 'weapon' | 'consumable' | 'mystery_box'>, string[]> = {
@@ -97,14 +103,23 @@ interface WeaponTemplate {
 }
 
 const WEAPON_TEMPLATES: WeaponTemplate[] = [
-  { names: ['Miecz', 'Ostrze', 'Siekiera', 'Szabla'],         emoji: '⚔',  primaryStat: 'strength' },
+  // ── Melee ──────────────────────────────────────────────────────────────────
+  { names: ['Miecz', 'Ostrze', 'Klinga', 'Szabla'],           emoji: '⚔',  primaryStat: 'strength' },
   { names: ['Sztylet', 'Nóż', 'Mono-Nóż', 'Żyletka'],        emoji: '🔪', primaryStat: 'dexterity' },
-  { names: ['Karabin', 'Pistolet', 'Strzelba', 'Działko'],    emoji: '🔫', ranged: true, primaryStat: 'dexterity' },
-  { names: ['Elektro-Pika', 'Lance', 'Harpun', 'Oszczep'],    emoji: '🔱', ranged: true, primaryStat: 'strength' },
-  { names: ['Różdżka', 'Laska', 'Berło', 'Kryształ Mocy'],   emoji: '🔮', magicDamage: true, primaryStat: 'magic' },
   { names: ['Nano-Sztylet', 'Bio-Ostrze', 'Plazmak'],         emoji: '⚡', primaryStat: 'intelligence' },
-  { names: ['Snajperka', 'Wyrzutnia', 'Karabin Precyzyjny'],  emoji: '🎯', ranged: true, primaryStat: 'intelligence' },
-  { names: ['Cyber-Bat', 'Bicz Energii', 'Pałka'],            emoji: '⚡', primaryStat: 'strength' },
+  { names: ['Cyber-Bat', 'Pałka', 'Buława'],                   emoji: '🪃', primaryStat: 'strength' },
+  { names: ['Siekiera Bojowa', 'Tasak', 'Plazmo-Siekiera', 'Nano-Siekiera'], emoji: '🪓', primaryStat: 'strength' },
+  { names: ['Bicz Energii', 'Łuk Łańcuchowy', 'Neuro-Bat'],   emoji: '〰',  primaryStat: 'dexterity' },
+  // ── Ranged ─────────────────────────────────────────────────────────────────
+  { names: ['Karabin', 'Strzelba', 'Działko', 'Karabin Szturmowy'], emoji: '🔫', ranged: true, primaryStat: 'dexterity' },
+  { names: ['Pistolet', 'Blaster', 'Plazmo-Pistolet', 'Dezyntegrator'], emoji: '💢', ranged: true, primaryStat: 'dexterity' },
+  { names: ['Snajperka', 'Karabin Precyzyjny', 'Karabin Dalekiego Zasięgu'], emoji: '🎯', ranged: true, primaryStat: 'intelligence' },
+  { names: ['Elektro-Pika', 'Lance', 'Harpun', 'Oszczep'],    emoji: '🔱', ranged: true, primaryStat: 'strength' },
+  { names: ['Granatnik', 'Wyrzutnia Odłamkowa', 'Wyrzutnia Próżniowa', 'Strzelec Klastrowy'], emoji: '💥', ranged: true, primaryStat: 'strength' },
+  { names: ['Łuk Energetyczny', 'Łuk Plazmowy', 'Łuk Kwantowy', 'Łuk Impulsowy'], emoji: '🏹', ranged: true, primaryStat: 'dexterity' },
+  // ── Magic / Hybrid ─────────────────────────────────────────────────────────
+  { names: ['Różdżka', 'Laska', 'Berło', 'Kryształ Mocy'],   emoji: '🔮', magicDamage: true, primaryStat: 'magic' },
+  { names: ['Miotacz Ognia', 'Plazmo-Miotacz', 'Rozpylacz Kwasowy', 'Spopielacz'], emoji: '🔥', ranged: true, magicDamage: true, primaryStat: 'magic' },
 ];
 
 // ── Slot name pools ───────────────────────────────────────────────────────────
