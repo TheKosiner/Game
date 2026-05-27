@@ -145,6 +145,10 @@ export default function App() {
     // Save immediately so initial regen/daily-reset changes aren't lost on quick reload
     saveGame();
     const id = setInterval(async () => {
+      // Skip when the tab/app is in the background — the pagehide/visibilitychange
+      // handlers already flush a sync when the device goes idle, and we must not
+      // overwrite a foreground device's cloud save with stale background data.
+      if (document.hidden) return;
       const currentUser = useAuthStore.getState().user;
       checkDailyReset();
       tickPassiveRegen();
@@ -186,7 +190,7 @@ export default function App() {
         hiddenAt = Date.now();
         if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       } else {
-        if (currentUser && Date.now() - hiddenAt > 30_000) {
+        if (currentUser && Date.now() - hiddenAt > 5_000) {
           loadFromCloud(currentUser.uid).catch(() => {});
         }
       }
