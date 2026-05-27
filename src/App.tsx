@@ -150,7 +150,6 @@ export default function App() {
       tickPassiveRegen();
       saveGame();
       if (currentUser) {
-        await loadFromCloud(currentUser.uid).catch(() => {});
         syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       }
     }, 10_000);
@@ -187,7 +186,7 @@ export default function App() {
         hiddenAt = Date.now();
         if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       } else {
-        if (currentUser && Date.now() - hiddenAt > 120_000) {
+        if (currentUser && Date.now() - hiddenAt > 30_000) {
           loadFromCloud(currentUser.uid).catch(() => {});
         }
       }

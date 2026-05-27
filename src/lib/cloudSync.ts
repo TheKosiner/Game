@@ -170,19 +170,19 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
 
   // Prefer local state when it's newer than the cloud snapshot.
   // Skip this check when force=true (called after a rejected save to revert a cheat).
-  // Use a 60s buffer to account for slow network writes and clock drift.
+  // Use a 5s buffer to account for clock drift (intentionally small to favour cross-device sync).
   if (!force && !adminOverride) {
     try {
       // First check in-memory store (always up-to-date, even if localStorage fails)
       const inMemoryLastSaved = (await import('../store/gameStore')).useGameStore.getState().lastSaved ?? 0;
-      if (inMemoryLastSaved + 60_000 > cloudTs) return false;
+      if (inMemoryLastSaved + 5_000 > cloudTs) return false;
     } catch { /* fall through to localStorage check */ }
 
     try {
       const localRaw = localStorage.getItem('glitchsoul_save');
       if (localRaw) {
         const localSave = JSON.parse(localRaw);
-        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 60_000 > cloudTs) return false;
+        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 5_000 > cloudTs) return false;
       }
     } catch { /* ignore */ }
   }
@@ -210,6 +210,9 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     lastShopRefresh:     raw.lastShopRefresh     ?? 0,
     shopPurchased:       raw.shopPurchased       ?? [],
     lastPassiveRegenAt:  raw.lastPassiveRegenAt  ?? Date.now(),
+    // Stamp local lastSaved with the cloud timestamp so subsequent loadFromCloud
+    // calls on the same device don't see stale local data as "newer".
+    lastSaved: cloudTs,
   });
   return true;
 }
