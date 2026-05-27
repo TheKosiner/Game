@@ -11,7 +11,7 @@ import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
 import { requestNotificationPermission, rescheduleActiveNotifications } from './lib/notifications';
-import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { onSnapshot, collection, query, orderBy, limit, doc } from 'firebase/firestore';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -197,6 +197,22 @@ export default function App() {
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [gameLoaded, user?.uid]);
+
+  // Listen for admin overrides on the player's save document.
+  // When admin sets updatedAt far in the future, force-reload from cloud
+  // so the player sees the admin's changes immediately without refreshing.
+  useEffect(() => {
+    if (!gameLoaded || !user || !db) return;
+    const ref = doc(db, 'saves', user.uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
+      const cloudTs: number = snap.data().updatedAt ?? 0;
+      if (cloudTs > Date.now() + 3_600_000) {
+        loadFromCloud(user.uid, true).catch(() => {});
+      }
+    }, () => {});
+    return () => unsub();
   }, [gameLoaded, user?.uid]);
 
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)

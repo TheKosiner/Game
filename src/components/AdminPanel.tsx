@@ -130,8 +130,12 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const patch = async (data: Record<string, unknown>) => {
     if (!player || !db) return;
-    await updateDoc(doc(db!, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
-    // Update local state directly from patched fields — avoids 2 extra Firestore reads
+    try {
+      await updateDoc(doc(db!, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
+    } catch (e: any) {
+      flash(`❌ Błąd zapisu: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
     setPlayer(prev => {
       if (!prev) return prev;
       const updated = { ...prev };
@@ -186,7 +190,12 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const clearQuest = async () => {
     if (!player) return;
-    await updateDoc(doc(db!, 'saves', player.uid), { activeQuest: null, updatedAt: 9999999999999 });
+    try {
+      await updateDoc(doc(db!, 'saves', player.uid), { activeQuest: null, updatedAt: 9999999999999 });
+    } catch (e: any) {
+      flash(`❌ Błąd zapisu: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
     setPlayer(prev => prev ? { ...prev, activeQuest: false } : prev);
     flash(`Wyczyszczono aktywną misję dla ${player.username}`);
   };
