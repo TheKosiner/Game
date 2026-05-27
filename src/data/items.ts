@@ -252,6 +252,71 @@ export const ALL_ITEMS: Item[] = [
   { id: 'pendant_mage',      name: 'Wisior Maga',               slot: 'amulet', rarity: 'rare',      stats: { magic: 10, magicResistance: 8 },                          level: 14, goldValue: 720,   emoji: '📿' },
   { id: 'core_void',         name: 'Rdzeń Próżni',              slot: 'amulet', rarity: 'epic',      stats: { magic: 20, magicResistance: 14 },                         level: 26, goldValue: 3800,  emoji: '⚛️' },
   { id: 'amulet_arcane',     name: 'Amulet Arkanów',            slot: 'amulet', rarity: 'legendary', stats: { magic: 28, magicResistance: 28 },                         level: 45, goldValue: 21000, emoji: '🔮' },
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // EXPANSION PACK — new weapon types + gap fillers
+  // ════════════════════════════════════════════════════════════════════════════
+
+  // ── Grenade Launchers (ranged, Siła + Żywotność) ─────────────────────────
+  { id: 'grenade_frag',     name: 'Granatnik Odłamkowy G-1',  slot: 'weapon', rarity: 'common',    stats: { strength: 2, vitality: 1 },            attackBonus: 7,   level: 3,  goldValue: 42,    emoji: '💣', ranged: true },
+  { id: 'grenade_plasma',   name: 'Plazmo-Granatnik PG-3',    slot: 'weapon', rarity: 'uncommon',  stats: { strength: 5, vitality: 3 },            attackBonus: 14,  level: 6,  goldValue: 140,   emoji: '💣', ranged: true },
+  { id: 'grenade_cluster',  name: 'Klastrowa Wyrzutnia KW-7', slot: 'weapon', rarity: 'rare',      stats: { strength: 12, vitality: 6 },           attackBonus: 30,  level: 13, goldValue: 530,   emoji: '💣', ranged: true },
+  { id: 'grenade_void',     name: 'Wyrzutnia Próżni VG-9',    slot: 'weapon', rarity: 'epic',      stats: { strength: 22, vitality: 10 },          attackBonus: 52,  level: 23, goldValue: 2300,  emoji: '💣', ranged: true },
+  { id: 'grenade_omega',    name: 'Omega-Granatnik Ω',         slot: 'weapon', rarity: 'legendary', stats: { strength: 38, vitality: 18 },          attackBonus: 100, level: 40, goldValue: 13000, emoji: '💥', ranged: true },
+
+  // ── Energy Bows (ranged, Zręczność + Celność) ────────────────────────────
+  { id: 'bow_pulse',        name: 'Łuk Impulsowy',            slot: 'weapon', rarity: 'common',    stats: { dexterity: 2, intelligence: 1 },        attackBonus: 6,   level: 2,  goldValue: 30,    emoji: '🏹', ranged: true },
+  { id: 'bow_plasma',       name: 'Łuk Plazmowy',             slot: 'weapon', rarity: 'uncommon',  stats: { dexterity: 5, intelligence: 3 },        attackBonus: 13,  level: 6,  goldValue: 145,   emoji: '🏹', ranged: true },
+  { id: 'bow_quantum',      name: 'Kwantowy Łuk',             slot: 'weapon', rarity: 'rare',      stats: { dexterity: 11, intelligence: 5 },       attackBonus: 28,  level: 12, goldValue: 510,   emoji: '🏹', ranged: true },
+  { id: 'bow_void',         name: 'Łuk Próżni',               slot: 'weapon', rarity: 'epic',      stats: { dexterity: 20, intelligence: 9 },       attackBonus: 50,  level: 22, goldValue: 2200,  emoji: '🏹', ranged: true },
+  { id: 'bow_stellar',      name: 'Gwiezdny Łuk',             slot: 'weapon', rarity: 'legendary', stats: { dexterity: 34, intelligence: 18 },      attackBonus: 92,  level: 38, goldValue: 10500, emoji: '✨', ranged: true },
+
+  // ── Flamethrowers (ranged, magic damage, Magia + Celność) ────────────────
+  { id: 'flamer_nano',      name: 'Nano-Miotacz MN-1',        slot: 'weapon', rarity: 'common',    stats: { magic: 3 },                            attackBonus: 9,   level: 4,  goldValue: 50,    emoji: '🔥', ranged: true, magicDamage: true },
+  { id: 'flamer_plasma',    name: 'Plazmo-Miotacz PM-3',      slot: 'weapon', rarity: 'uncommon',  stats: { magic: 5, intelligence: 2 },           attackBonus: 16,  level: 7,  goldValue: 165,   emoji: '🔥', ranged: true, magicDamage: true },
+  { id: 'flamer_acid',      name: 'Kwasowy Miotacz KM-7',     slot: 'weapon', rarity: 'rare',      stats: { magic: 12, intelligence: 4 },          attackBonus: 31,  level: 13, goldValue: 540,   emoji: '🔥', ranged: true, magicDamage: true },
+  { id: 'flamer_void',      name: 'Miotacz Próżni VM-9',      slot: 'weapon', rarity: 'epic',      stats: { magic: 22, intelligence: 8 },          attackBonus: 55,  level: 24, goldValue: 2400,  emoji: '🔥', ranged: true, magicDamage: true },
+  { id: 'flamer_omega',     name: 'Omega-Miotacz Ω',           slot: 'weapon', rarity: 'legendary', stats: { magic: 40, intelligence: 14 },         attackBonus: 100, level: 40, goldValue: 13500, emoji: '💥', ranged: true, magicDamage: true },
+
+  // ── Gap-filler Swords ─────────────────────────────────────────────────────
+  { id: 'blade_phantom',    name: 'Fantom-Kling FX',          slot: 'weapon', rarity: 'epic',      stats: { strength: 26, dexterity: 10 },         attackBonus: 64,  level: 26, goldValue: 3800,  emoji: '⚔️' },
+  { id: 'blade_abyss',      name: 'Ostrze Otchłani',          slot: 'weapon', rarity: 'legendary', stats: { strength: 42, intelligence: 18 },      attackBonus: 105, level: 45, goldValue: 18000, emoji: '⚔️' },
+
+  // ── Gap-filler Rifles ─────────────────────────────────────────────────────
+  { id: 'rifle_pulse',      name: 'Pulsacyjny Karabin PR-X',  slot: 'weapon', rarity: 'epic',      stats: { intelligence: 22, dexterity: 9 },      attackBonus: 56,  level: 25, goldValue: 2600,  emoji: '🎯', ranged: true },
+  { id: 'rifle_genesis',    name: 'Genesis Karabin Ω',         slot: 'weapon', rarity: 'legendary', stats: { intelligence: 42, dexterity: 18 },     attackBonus: 100, level: 44, goldValue: 16000, emoji: '🛰️', ranged: true },
+
+  // ── Gap-filler Staffs ─────────────────────────────────────────────────────
+  { id: 'staff_arcane',     name: 'Laska Arkanów',            slot: 'weapon', rarity: 'epic',      stats: { magic: 25, intelligence: 8 },          attackBonus: 65,  level: 23, goldValue: 2600,  emoji: '🪄', magicDamage: true },
+  { id: 'staff_genesis',    name: 'Genesis Laska Ω',           slot: 'weapon', rarity: 'legendary', stats: { magic: 50, intelligence: 18 },         attackBonus: 115, level: 46, goldValue: 26000, emoji: '🌟', magicDamage: true },
+
+  // ── Gap-filler Lances ─────────────────────────────────────────────────────
+  { id: 'lance_gravity',    name: 'Grawitacyjna Lanca GL-5',  slot: 'weapon', rarity: 'rare',      stats: { strength: 12, intelligence: 6 },       attackBonus: 30,  level: 14, goldValue: 560,   emoji: '🔱' },
+  { id: 'lance_titan',      name: 'Tytanowa Lanca T-9',       slot: 'weapon', rarity: 'epic',      stats: { strength: 22, intelligence: 12 },      attackBonus: 53,  level: 25, goldValue: 2500,  emoji: '🔱' },
+
+  // ── Gap-filler Hammers ────────────────────────────────────────────────────
+  { id: 'hammer_nano',      name: 'Nano-Młot N-3',            slot: 'weapon', rarity: 'uncommon',  stats: { strength: 7, vitality: 3 },            attackBonus: 14,  level: 8,  goldValue: 165,   emoji: '⚡' },
+  { id: 'hammer_juggernaut',name: 'Młot Juggernauta MJ-X',    slot: 'weapon', rarity: 'epic',      stats: { strength: 26, vitality: 14 },          attackBonus: 58,  level: 26, goldValue: 2800,  emoji: '⚡' },
+
+  // ── Gap-filler Armor ──────────────────────────────────────────────────────
+  { id: 'vest_energy',      name: 'Kamizelka Energetyczna',   slot: 'armor',  rarity: 'rare',      stats: { vitality: 14, dexterity: 5 },          defenseBonus: 22, level: 13, goldValue: 510,   emoji: '🦺' },
+  { id: 'exo_warden',       name: 'Egzoszkielet Strażnika',   slot: 'armor',  rarity: 'legendary', stats: { vitality: 45, strength: 15 },          defenseBonus: 72, level: 44, goldValue: 18000, emoji: '🛡️' },
+
+  // ── Gap-filler Helmets ────────────────────────────────────────────────────
+  { id: 'helmet_guardian',  name: 'Hełm Strażnika HG-5',      slot: 'helmet', rarity: 'rare',      stats: { vitality: 10, strength: 5 },           defenseBonus: 17, level: 13, goldValue: 560,   emoji: '⛑️' },
+  { id: 'helmet_genesis',   name: 'Genesis Hełm Ω',            slot: 'helmet', rarity: 'legendary', stats: { vitality: 22, intelligence: 20 },      defenseBonus: 44, level: 44, goldValue: 16000, emoji: '⛑️' },
+
+  // ── Gap-filler Boots ──────────────────────────────────────────────────────
+  { id: 'boots_phantom',    name: 'Buty Fantoma BF-3',        slot: 'boots',  rarity: 'rare',      stats: { dexterity: 12, vitality: 4 },          defenseBonus: 10, level: 13, goldValue: 540,   emoji: '🦿' },
+  { id: 'boots_omega',      name: 'Omega-Buty Ω',              slot: 'boots',  rarity: 'legendary', stats: { dexterity: 42, strength: 10 },         defenseBonus: 32, level: 44, goldValue: 14000, emoji: '✨' },
+
+  // ── Gap-filler Rings ──────────────────────────────────────────────────────
+  { id: 'chip_quantum',     name: 'Chip Kwantowy CQ-7',       slot: 'ring',   rarity: 'rare',      stats: { intelligence: 15, dexterity: 5 },                       level: 14, goldValue: 560,   emoji: '🔲' },
+  { id: 'implant_omega',    name: 'Implant Omega Ω',           slot: 'ring',   rarity: 'legendary', stats: { strength: 22, dexterity: 22, intelligence: 12 },        level: 44, goldValue: 20000, emoji: '🐉' },
+
+  // ── Gap-filler Amulets ────────────────────────────────────────────────────
+  { id: 'core_titan',       name: 'Rdzeń Tytana RT-5',        slot: 'amulet', rarity: 'rare',      stats: { strength: 12, vitality: 6 },                            level: 14, goldValue: 680,   emoji: '⚛️' },
+  { id: 'amulet_omega',     name: 'Amulet Omega Ω',            slot: 'amulet', rarity: 'legendary', stats: { strength: 22, intelligence: 22, vitality: 18 },         level: 45, goldValue: 22000, emoji: '🔮' },
 ];
 
 

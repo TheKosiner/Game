@@ -30,6 +30,9 @@ function getCategory(item: Item): string {
   if (id.startsWith('baton_') || id.startsWith('mace_') || id.startsWith('hammer_') || id.startsWith('maul_')) return 'hammer';
   if (id.startsWith('pike_') || id.startsWith('lance_')) return 'lance';
   if (id.startsWith('railgun_')) return 'railgun';
+  if (id.startsWith('grenade_')) return 'grenade_launcher';
+  if (id.startsWith('bow_')) return 'bow';
+  if (id.startsWith('flamer_')) return 'flamer';
   if (id.startsWith('pistol_')) return 'pistol';
   if (id.startsWith('sniper_')) return 'sniper';
   if (id.startsWith('smg_') || id.startsWith('rifle_')) return 'rifle';
@@ -628,6 +631,123 @@ function IconMedkit() {
   );
 }
 
+function IconGrenadeLauncher({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* stock */}
+      <rect x="4" y="19" width="8" height="10" rx="2" fill={c.dark} />
+      <rect x="5" y="20" width="6" height="8" rx="1" fill={c.primary} opacity="0.38" />
+      {/* receiver body */}
+      <rect x="10" y="16" width="26" height="14" rx="2" fill={c.primary} />
+      <rect x="11" y="17" width="24" height="12" rx="1.5" fill={c.light} opacity="0.1" />
+      {/* short fat barrel */}
+      <rect x="36" y="14" width="10" height="18" rx="2.5" fill={c.dark} />
+      <rect x="37" y="15" width="8" height="16" rx="2" fill={c.primary} opacity="0.5" />
+      {/* wide bore muzzle ring */}
+      <circle cx="45" cy="23" r="5.5" fill={c.dark} />
+      <circle cx="45" cy="23" r="4" fill={c.primary} opacity="0.25" />
+      <circle cx="45" cy="23" r="2.2" fill={c.glow} opacity="0.75" />
+      <circle cx="45" cy="23" r="1" fill="white" opacity="0.5" />
+      {/* drum magazine */}
+      <circle cx="22" cy="37" r="8.5" fill={c.dark} />
+      <circle cx="22" cy="37" r="7.5" fill={c.primary} opacity="0.72" />
+      <circle cx="22" cy="37" r="4.5" fill={c.dark} />
+      <circle cx="22" cy="37" r="2.5" fill={c.glow} opacity="0.45" />
+      {/* drum bolt holes */}
+      <circle cx="16" cy="32" r="1.5" fill={c.light} opacity="0.45" />
+      <circle cx="28" cy="32" r="1.5" fill={c.light} opacity="0.45" />
+      <circle cx="15" cy="41" r="1.5" fill={c.light} opacity="0.45" />
+      <circle cx="29" cy="41" r="1.5" fill={c.light} opacity="0.45" />
+      {/* grip */}
+      <rect x="30" y="29" width="7" height="12" rx="2" fill={c.dark} />
+      <rect x="31" y="30" width="5" height="10" rx="1" fill={c.primary} opacity="0.42" />
+      {/* top sight rail */}
+      <rect x="14" y="12" width="20" height="4" rx="1" fill={c.dark} />
+      <circle cx="24" cy="14" r="2" fill={c.glow} opacity="0.65" />
+    </>
+  );
+}
+
+function IconBow({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* top limb — curves right to tip */}
+      <path d="M22 18 C22 14 26 10 36 6"
+            fill="none" stroke={c.dark} strokeWidth="5" strokeLinecap="round" />
+      <path d="M22 18 C22 14 26 10 36 6"
+            fill="none" stroke={c.primary} strokeWidth="3" strokeLinecap="round" />
+      <path d="M23 18 C23 15 26.5 11 35 7"
+            fill="none" stroke={c.light} strokeWidth="1" strokeLinecap="round" opacity="0.4" />
+      {/* bottom limb */}
+      <path d="M22 30 C22 34 26 38 36 42"
+            fill="none" stroke={c.dark} strokeWidth="5" strokeLinecap="round" />
+      <path d="M22 30 C22 34 26 38 36 42"
+            fill="none" stroke={c.primary} strokeWidth="3" strokeLinecap="round" />
+      <path d="M23 30 C23 33 26.5 37 35 41"
+            fill="none" stroke={c.light} strokeWidth="1" strokeLinecap="round" opacity="0.4" />
+      {/* riser / grip center */}
+      <rect x="19" y="17" width="8" height="14" rx="2" fill={c.primary} />
+      <rect x="20" y="18" width="6" height="12" rx="1.5" fill={c.dark} opacity="0.55" />
+      {/* riser tech lines */}
+      <rect x="21" y="21" width="4" height="1.5" rx="0.5" fill={c.light} opacity="0.5" />
+      <rect x="21" y="25" width="4" height="1.5" rx="0.5" fill={c.light} opacity="0.5" />
+      {/* limb tips glow */}
+      <circle cx="36" cy="6"  r="3" fill={c.glow} opacity="0.8" />
+      <circle cx="36" cy="42" r="3" fill={c.glow} opacity="0.8" />
+      {/* energy string — drawn-back V shape */}
+      <line x1="36" y1="6"  x2="29" y2="24" stroke={c.glow} strokeWidth="2"   opacity="0.9" strokeLinecap="round" />
+      <line x1="36" y1="42" x2="29" y2="24" stroke={c.glow} strokeWidth="2"   opacity="0.9" strokeLinecap="round" />
+      {/* idle string segment (tip to tip, dashed) */}
+      <line x1="36" y1="6"  x2="36" y2="42" stroke={c.glow} strokeWidth="1" opacity="0.3" strokeDasharray="3,3" />
+      {/* nocked arrow shaft */}
+      <line x1="6" y1="24" x2="33" y2="24" stroke={c.light} strokeWidth="2" strokeLinecap="round" />
+      {/* arrow tip */}
+      <polygon points="35,24 31,22 31,26" fill={c.light} />
+      {/* arrow fletchings */}
+      <polygon points="6,24  8,21 10,24" fill={c.primary} opacity="0.85" />
+      <polygon points="6,24  8,27 10,24" fill={c.primary} opacity="0.85" />
+    </>
+  );
+}
+
+function IconFlamer({ c }: { c: Colors }) {
+  return (
+    <>
+      {/* fuel canister */}
+      <rect x="3" y="13" width="14" height="22" rx="4" fill={c.dark} />
+      <rect x="5" y="15" width="10" height="18" rx="3" fill={c.primary} opacity="0.68" />
+      {/* tank fuel-level bar */}
+      <rect x="6" y="17" width="8" height="3" rx="1" fill={c.dark} opacity="0.5" />
+      <rect x="6" y="17" width="6" height="3" rx="1" fill={c.glow} opacity="0.55" />
+      {/* tank cap/valve */}
+      <rect x="7" y="11" width="7" height="3" rx="1" fill={c.primary} />
+      <circle cx="10.5" cy="11" r="1.5" fill={c.light} opacity="0.6" />
+      {/* pressure hose */}
+      <path d="M17 23 Q20 20 23 23" fill="none" stroke={c.dark} strokeWidth="3.5" strokeLinecap="round" />
+      <path d="M17 23 Q20 20 23 23" fill="none" stroke={c.primary} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
+      {/* barrel body */}
+      <rect x="22" y="18" width="20" height="10" rx="2" fill={c.primary} />
+      <rect x="23" y="19" width="18" height="8" rx="1.5" fill={c.dark} opacity="0.38" />
+      {/* barrel vent slots */}
+      <rect x="28" y="20" width="8" height="1.5" rx="0.5" fill={c.light} opacity="0.3" />
+      <rect x="28" y="24" width="8" height="1.5" rx="0.5" fill={c.light} opacity="0.3" />
+      {/* nozzle flare */}
+      <path d="M42 17 L46 14 L46 32 L42 29 Z" fill={c.dark} />
+      <path d="M42 18 L45 15.5 L45 30.5 L42 28 Z" fill={c.primary} opacity="0.5" />
+      {/* flame burst outer */}
+      <ellipse cx="47" cy="24" rx="4.5" ry="9"  fill={c.glow} opacity="0.28" />
+      <ellipse cx="46" cy="24" rx="3.2" ry="6.5" fill={c.glow} opacity="0.55" />
+      <ellipse cx="45" cy="24" rx="2"   ry="4"   fill={c.light} opacity="0.8" />
+      {/* flame tendrils */}
+      <path d="M44 16 Q48 11 46 7"  fill="none" stroke={c.glow} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      <path d="M44 32 Q48 37 46 41" fill="none" stroke={c.glow} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      {/* grip */}
+      <rect x="28" y="27" width="7" height="12" rx="2" fill={c.dark} />
+      <rect x="29" y="28" width="5" height="10" rx="1" fill={c.primary} opacity="0.42" />
+    </>
+  );
+}
+
 function IconPistol({ c }: { c: Colors }) {
   return (
     <>
@@ -735,6 +855,9 @@ const ICON_MAP: Record<string, (c: Colors) => React.ReactElement> = {
   lance:   (c) => <IconLance c={c} />,
   railgun: (c) => <IconRailgun c={c} />,
   knife:   (c) => <IconKnife c={c} />,
+  grenade_launcher: (c) => <IconGrenadeLauncher c={c} />,
+  bow:     (c) => <IconBow c={c} />,
+  flamer:  (c) => <IconFlamer c={c} />,
   pistol:  (c) => <IconPistol c={c} />,
   whip:    (c) => <IconWhip c={c} />,
   axe:     (c) => <IconAxe c={c} />,
