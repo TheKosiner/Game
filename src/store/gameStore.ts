@@ -174,7 +174,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   combatLog: [],
   inCombat: false,
   defeatedAtDungeon: null,
-  lastSaved: Date.now(),
+  lastSaved: 0,
   shopSeed: Date.now(),
   lastShopRefresh: 0,
   shopPurchased: [],
@@ -1203,7 +1203,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         set({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
-          lastSaved: save.lastSaved ?? Date.now(),
+          lastSaved: save.lastSaved ?? 0,
           shopSeed: save.shopSeed ?? Date.now(),
           lastShopRefresh: save.lastShopRefresh ?? 0,
           shopPurchased: save.shopPurchased ?? [],
