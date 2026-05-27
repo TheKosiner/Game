@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS, DUNGEON_ENERGY_COST, QUEST_ENERGY_COST, ENERGY_GEMS_REFILL_COST } from '../store/gameStore';
+import { calcCurrentEnergy, msUntilNextEnergy } from '../utils/helpers';
 import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange, getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
@@ -451,9 +452,10 @@ export default function HeroCard() {
   const lang           = useLangStore(s => s.lang);
   const hero           = useGameStore(s => s.hero);
   const upgradeAttribute = useGameStore(s => s.upgradeAttribute);
-  const restHero       = useGameStore(s => s.restHero);
-  const cancelRest     = useGameStore(s => s.cancelRest);
-  const gemSpeedupRest = useGameStore(s => s.gemSpeedupRest);
+  const restHero              = useGameStore(s => s.restHero);
+  const cancelRest            = useGameStore(s => s.cancelRest);
+  const gemSpeedupRest        = useGameStore(s => s.gemSpeedupRest);
+  const refillEnergyWithGems  = useGameStore(s => s.refillEnergyWithGems);
   const startBegging   = useGameStore(s => s.startBegging);
   const cancelBegging  = useGameStore(s => s.cancelBegging);
   const collectBegging = useGameStore(s => s.collectBegging);
@@ -511,6 +513,22 @@ export default function HeroCard() {
   const critPct    = Math.round(critChance * 100);
   const dungeonPct = (hero.dungeonRunsToday / MAX_DAILY_DUNGEONS) * 100;
   const questPct   = (hero.questsCompletedToday / MAX_DAILY_QUESTS) * 100;
+
+  const now           = Date.now();
+  const currentEnergy = calcCurrentEnergy(hero, now);
+  const displayEnergy = Math.floor(currentEnergy);
+  const energyPct     = (currentEnergy / hero.maxEnergy) * 100;
+  const energyFull    = currentEnergy >= hero.maxEnergy;
+  const msToNext      = msUntilNextEnergy(hero, now);
+  const msToFull      = energyFull ? 0 : Math.ceil((hero.maxEnergy - currentEnergy) * (5 * 60 * 1000));
+  const fmtMins       = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    if (h > 0) return `${h}h ${m % 60}m`;
+    return `${m}m`;
+  };
+  const energyColor   = energyPct > 50 ? '#00f5ff' : energyPct > 20 ? '#f59e0b' : '#f87171';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -679,6 +697,44 @@ export default function HeroCard() {
           ? <BeggingCollect reward={hero.beggingReward ?? 0} onCollect={handleCollectBegging} />
           : <BeggingSlider onBeg={startBegging} inCombat={inCombat} blocked={!!beggingBlockReason} blockedReason={beggingBlockReason} />
       }
+
+      {/* ENERGIA */}
+      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#00f5ff', textShadow: '0 0 8px rgba(0,245,255,0.5)' }}>
+            {t.hero.energy}
+          </p>
+          {!energyFull && hero.gems >= ENERGY_GEMS_REFILL_COST && (
+            <button
+              onClick={refillEnergyWithGems}
+              style={{
+                ...MONO, fontSize: 9, padding: '2px 8px',
+                background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)',
+                color: '#00f5ff', cursor: 'pointer',
+              }}
+            >
+              {t.gems.energyRefillBtn(ENERGY_GEMS_REFILL_COST)}
+            </button>
+          )}
+        </div>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{t.hero.energyLabel}</span>
+            <span style={{ ...ORB, fontSize: 10, color: energyColor, textShadow: `0 0 6px ${energyColor}` }}>
+              {displayEnergy}/{hero.maxEnergy}
+            </span>
+          </div>
+          <NeonBar pct={energyPct} color={energyColor} height={10} />
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 3 }}>
+            {energyFull
+              ? t.hero.energyFull
+              : `${t.hero.energyRegenIn(fmtMins(msToNext))} · ${t.hero.energyRegenFull(fmtMins(msToFull))}`}
+          </p>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 1 }}>
+            ⚔ −{DUNGEON_ENERGY_COST} · 📜 −{QUEST_ENERGY_COST} za operację/zadanie
+          </p>
+        </div>
+      </div>
 
       {/* DZIENNY LIMIT */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

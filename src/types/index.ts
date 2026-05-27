@@ -56,6 +56,9 @@ export interface Hero {
   dungeonRunsToday: number;
   questsCompletedToday: number;
   lastDailyReset: number;
+  energy: number;
+  maxEnergy: number;
+  lastEnergyRegen: number;
   stats: Stats;
   equipment: Equipment;
   inventory: Item[];
@@ -238,6 +241,7 @@ export interface GameState {
   gemHeal: () => boolean;
   gemSpeedupQuest: () => boolean;
   gemSpeedupRest: () => boolean;
+  refillEnergyWithGems: () => boolean;
   gemBuyPortrait: (portraitIndex: number, price: number) => boolean;
   equipItem: (item: Item, invIdx?: number) => void;
   unequipItem: (slot: ItemSlot) => void;

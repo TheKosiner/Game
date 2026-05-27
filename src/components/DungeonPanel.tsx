@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
+import { MAX_DAILY_DUNGEONS, DUNGEON_ENERGY_COST } from '../store/gameStore';
+import { calcCurrentEnergy } from '../utils/helpers';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import EnemyIcon from './EnemyIcon';
 import { useT } from '../hooks/useT';
@@ -297,10 +298,11 @@ function DungeonList() {
   const isResting    = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
+  const noEnergy     = calcCurrentEnergy(hero, Date.now()) < DUNGEON_ENERGY_COST;
 
   const [chosen] = useState<FullDungeon>(() => pickDungeonForLevel(hero.level));
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
-  const blocked = isResting || limitReached;
+  const blocked = isResting || limitReached || noEnergy;
 
   const DIFFICULTY_OPTIONS: DifficultyOption[] = [
     { key: 'easy',   label: t.dungeon.diffEasy,   badge: '🌿', desc: t.dungeon.diffEasyDesc,   color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
@@ -332,6 +334,13 @@ function DungeonList() {
       {!isResting && limitReached && (
         <div style={{ background: 'rgba(16,6,6,0.95)', border: '1px solid rgba(80,20,20,0.5)', padding: 8, textAlign: 'center' }}>
           <p style={{ ...PX(6), color: 'var(--hp-bright)' }}>{t.dungeon.limitReached}</p>
+        </div>
+      )}
+      {!isResting && !limitReached && noEnergy && (
+        <div style={{ background: 'rgba(8,10,20,0.95)', border: '1px solid rgba(0,245,255,0.2)', padding: 8, textAlign: 'center' }}>
+          <p style={{ ...PX(6), color: '#00f5ff' }}>
+            ⚡ {isEn ? `Not enough energy (need ${DUNGEON_ENERGY_COST})` : `Za mało energii (potrzeba ${DUNGEON_ENERGY_COST} ⚡)`}
+          </p>
         </div>
       )}
 
@@ -404,7 +413,7 @@ function DungeonList() {
                   className="btn btn-primary"
                   style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
                 >
-                  {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
+                  {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : noEnergy ? `⚡ −${DUNGEON_ENERGY_COST}` : t.dungeon.enter}
                 </button>
               </div>
             ))}

@@ -1,4 +1,9 @@
 export const MAX_INVENTORY = 20;
+export const MAX_ENERGY = 100;
+export const ENERGY_REGEN_MS = 5 * 60 * 1000; // 1 energy per 5 minutes
+export const DUNGEON_ENERGY_COST = 10;
+export const QUEST_ENERGY_COST = 5;
+export const ENERGY_GEMS_REFILL_COST = 30; // gems to fully refill energy
 export const MAX_COMBAT_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_QUESTS = 5;

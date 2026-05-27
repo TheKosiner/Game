@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
+import { MAX_DAILY_QUESTS, scaledQuestDuration, QUEST_ENERGY_COST } from '../store/gameStore';
+import { calcCurrentEnergy } from '../utils/helpers';
 import { requestNotificationPermission, getWebNotificationStatus } from '../lib/notifications';
 import { Capacitor } from '@capacitor/core';
 import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
@@ -134,6 +135,7 @@ export default function QuestPanel() {
     ? Math.min(100, ((now - activeQuest.startedAt) / (activeQuest.endsAt - activeQuest.startedAt)) * 100)
     : 0;
   const limitReached = hero.questsCompletedToday >= MAX_DAILY_QUESTS;
+  const noEnergy     = !activeQuest && calcCurrentEnergy(hero, now) < QUEST_ENERGY_COST;
 
   const isNative = Capacitor.isNativePlatform();
   const notifStatus = !isNative ? getWebNotificationStatus() : 'unsupported';
@@ -261,7 +263,15 @@ export default function QuestPanel() {
         </div>
       )}
 
-      {!activeQuest && !limitReached && !isResting && (
+      {!activeQuest && !limitReached && !isResting && noEnergy && (
+        <div style={{ background: 'rgba(8,10,20,0.95)', border: '1px solid rgba(0,245,255,0.2)', padding: 8, textAlign: 'center' }}>
+          <p style={{ ...PX(6), color: '#00f5ff' }}>
+            ⚡ {lang === 'en' ? `Not enough energy (need ${QUEST_ENERGY_COST})` : `Za mało energii (potrzeba ${QUEST_ENERGY_COST} ⚡)`}
+          </p>
+        </div>
+      )}
+
+      {!activeQuest && !limitReached && !isResting && !noEnergy && (
         <>
           {!base ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>
