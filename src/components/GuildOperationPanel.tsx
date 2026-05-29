@@ -68,7 +68,8 @@ export default function GuildOperationPanel({
   const addXp          = useGameStore(s => s.addXp);
   const addGold        = useGameStore(s => s.addGold);
   const addToInventory = useGameStore(s => s.addToInventory);
-  const isLeader    = guild.leaderUid === myUid;
+  const isLeader         = guild.leaderUid === myUid;
+  const isLeaderOrOfficer = isLeader || guild.members[myUid]?.role === 'officer';
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
 
@@ -215,7 +216,7 @@ export default function GuildOperationPanel({
   const isFailed    = !!op && (op.status === 'failed' || (op.status === 'active' && isExpired));
   const isCompleted = !!op && op.status === 'completed';
   const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
-  const canStart    = isLeader && !isActive && !inCooldown;
+  const canStart    = isLeaderOrOfficer && !isActive && !inCooldown;
 
   const participants = useMemo(
     () => op ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage) : [],
@@ -627,9 +628,9 @@ export default function GuildOperationPanel({
         >
           {starting ? '⏳ Uruchamianie...' : `▶ ROZPOCZNIJ — ${selectedLoc.emoji} ${selectedLoc.name}`}
         </button>
-      ) : !isLeader ? (
+      ) : !isLeaderOrOfficer ? (
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-          Tylko władca gildii może uruchomić operację.
+          Tylko władca lub oficer może uruchomić operację.
         </p>
       ) : null}
     </div>

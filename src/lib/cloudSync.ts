@@ -364,9 +364,13 @@ export interface GuildMemberData {
   username: string;
   heroName: string;
   level: number;
-  role: 'leader' | 'member';
+  role: 'leader' | 'officer' | 'member';
   joinedAt: number;
   portrait?: number;
+}
+
+function isLeaderOrOfficer(guild: { leaderUid: string; members: Record<string, GuildMemberData> }, uid: string): boolean {
+  return guild.leaderUid === uid || guild.members[uid]?.role === 'officer';
 }
 
 export interface Guild {
@@ -401,10 +405,22 @@ export async function depositToTreasury(guildId: string, uid: string, amount: nu
   });
 }
 
-export async function upgradeGuildStat(guildId: string, leaderUid: string, type: 'exp' | 'gold'): Promise<void> {
+export async function setMemberRole(
+  guildId: string,
+  callerUid: string,
+  targetUid: string,
+  role: 'officer' | 'member',
+): Promise<void> {
+  if (!db) throw new Error('No DB');
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists() || snap.data().leaderUid !== callerUid) throw new Error('Not leader');
+  await updateDoc(doc(db, 'guilds', guildId), { [`members.${targetUid}.role`]: role });
+}
+
+export async function upgradeGuildStat(guildId: string, callerUid: string, type: 'exp' | 'gold'): Promise<void> {
   if (!db) throw new Error('No DB');
   const guild = await getGuild(guildId);
-  if (!guild || guild.leaderUid !== leaderUid) throw new Error('Not leader');
+  if (!guild || !isLeaderOrOfficer(guild, callerUid)) throw new Error('Not officer');
   const currentLevel = type === 'exp' ? (guild.expUpgrade ?? 0) : (guild.goldUpgrade ?? 0);
   if (currentLevel >= 50) throw new Error('Max level');
   const cost = guildUpgradeCost(currentLevel);
@@ -415,10 +431,12 @@ export async function upgradeGuildStat(guildId: string, leaderUid: string, type:
   });
 }
 
-export async function updateGuildDescription(guildId: string, leaderUid: string, description: string): Promise<void> {
+export async function updateGuildDescription(guildId: string, callerUid: string, description: string): Promise<void> {
   if (!db) throw new Error('No DB');
   const snap = await getDoc(doc(db, 'guilds', guildId));
-  if (!snap.exists() || snap.data().leaderUid !== leaderUid) throw new Error('Not leader');
+  if (!snap.exists()) throw new Error('Guild not found');
+  const data = snap.data() as Guild;
+  if (!isLeaderOrOfficer(data, callerUid)) throw new Error('Not officer');
   await updateDoc(doc(db, 'guilds', guildId), { description });
 }
 
@@ -1002,8 +1020,8 @@ export async function startGuildOperation(
     const ref = doc(_db, 'guilds', guildId);
     const snap = await txn.get(ref);
     if (!snap.exists()) return false;
-    const data = snap.data();
-    if (data.leaderUid !== uid) return false;
+    const data = snap.data() as Guild;
+    if (!isLeaderOrOfficer(data, uid)) return false;
 
     const now = Date.now();
     const existing = data.guildOperation as GuildOperationState | null | undefined;

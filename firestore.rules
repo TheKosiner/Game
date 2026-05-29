@@ -157,6 +157,11 @@ service cloud.firestore {
       // Guild leader can update anything
       allow update: if isAuthenticated()
         && resource.data.leaderUid == request.auth.uid;
+      // Officers can update anything except leaderUid (prevents self-promotion to leader)
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.members
+        && resource.data.members[request.auth.uid].role == 'officer'
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
       // Regular members may only touch treasury, contributions, and operation state
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
