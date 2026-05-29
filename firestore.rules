@@ -95,6 +95,10 @@ service cloud.firestore {
         // Challenge unlock: only increases, max +1 per write
         && nw.challengeUnlocked >= old.challengeUnlocked
         && nw.challengeUnlocked <= old.challengeUnlocked + 1
+        // Gold: must be non-negative and below hard cap (1 billion)
+        // Delta is not capped — casino 35:1 payouts make per-write delta unbounded
+        && nw.hero.gold >= 0
+        && nw.hero.gold <= 1000000000
         // Time-based: server validates all timers (blocks clock-manipulation cheats)
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)
