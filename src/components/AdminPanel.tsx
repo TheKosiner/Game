@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { MONO } from '../utils/styles';
 
@@ -18,6 +18,7 @@ interface PlayerInfo {
   activeQuest: boolean;
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
+  guildId: string | null;
 }
 
 async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
@@ -30,9 +31,10 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
     ]);
     if (saveSnap.exists()) {
       const d = saveSnap.data();
+      const pd = playerSnap.exists() ? playerSnap.data() : null;
       return {
         uid: nameOrUid,
-        username: playerSnap.data()?.username ?? '?',
+        username: pd?.username ?? '?',
         level: d.hero?.level ?? 0,
         gold: d.hero?.gold ?? 0,
         gems: d.hero?.gems ?? 0,
@@ -43,6 +45,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
         activeQuest: !!d.activeQuest,
         restingUntil: d.hero?.restingUntil ?? null,
         voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+        guildId: pd?.guildId ?? null,
       };
     }
   } catch {}
@@ -57,9 +60,10 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
       const saveSnap = await getDoc(doc(db, 'saves', uid));
       if (saveSnap.exists()) {
         const d = saveSnap.data();
+        const pd = playerDoc.data();
         return {
           uid,
-          username: playerDoc.data().username,
+          username: pd.username,
           level: d.hero?.level ?? 0,
           gold: d.hero?.gold ?? 0,
           gems: d.hero?.gems ?? 0,
@@ -70,6 +74,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           activeQuest: !!d.activeQuest,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+          guildId: pd.guildId ?? null,
         };
       }
     }
@@ -85,9 +90,10 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
       const saveSnap = await getDoc(doc(db, 'saves', uid));
       if (saveSnap.exists()) {
         const d = saveSnap.data();
+        const pd = playerDoc.data();
         return {
           uid,
-          username: playerDoc.data().username ?? playerDoc.data().heroName,
+          username: pd.username ?? pd.heroName,
           level: d.hero?.level ?? 0,
           gold: d.hero?.gold ?? 0,
           gems: d.hero?.gems ?? 0,
@@ -98,6 +104,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           activeQuest: !!d.activeQuest,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+          guildId: pd.guildId ?? null,
         };
       }
     }
@@ -206,6 +213,17 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     flash(`HP ${player.username} → ${player.maxHp}/${player.maxHp}`);
   };
 
+  const resetGuildRaid = async () => {
+    if (!player?.guildId || !db) return;
+    try {
+      await updateDoc(doc(db, 'guilds', player.guildId), { guildOperation: deleteField() });
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
+    flash(`Zresetowano rajd gildyjny (${player.guildId.slice(0, 8)}...)`);
+  };
+
   const s: React.CSSProperties = {
     background: '#0a0a12', border: '2px solid #ff4466',
     borderRadius: 4, padding: 12,
@@ -247,6 +265,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </p>
             <p style={{ ...MONO, fontSize: 9, color: (player.restingUntil || player.voluntaryRestUntil) ? '#ff8844' : '#666' }}>
               Odpoczynek: {(player.restingUntil || player.voluntaryRestUntil) ? '⚠ aktywny' : 'brak'}
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: player.guildId ? '#88aaff' : '#444' }}>
+              Gildia: {player.guildId ? player.guildId.slice(0, 12) + '...' : 'brak'}
             </p>
           </div>
 
@@ -290,6 +311,13 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </button>
             <button onClick={healFull} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Heal do pełna
+            </button>
+            <button
+              onClick={resetGuildRaid}
+              disabled={!player.guildId}
+              style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #4466aa', color: player.guildId ? '#88aaff' : '#444', padding: '4px 8px', borderRadius: 3, cursor: player.guildId ? 'pointer' : 'not-allowed' }}
+            >
+              Reset rajdu gildii
             </button>
           </div>
         </>
