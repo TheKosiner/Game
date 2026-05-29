@@ -132,9 +132,10 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
     <SubNavBar
       centered
       tabs={[
-        { id: 'shop'  as ShopSub, label: t.nav.shop },
-        { id: 'gems'  as ShopSub, label: t.nav.gems },
-        { id: 'smith' as ShopSub, label: t.nav.smith },
+        { id: 'shop'   as ShopSub, label: t.nav.shop },
+        { id: 'gems'   as ShopSub, label: t.nav.gems },
+        { id: 'smith'  as ShopSub, label: t.nav.smith },
+        { id: 'casino' as ShopSub, label: t.nav.casino },
       ]}
       active={active}
       onChange={onChange}

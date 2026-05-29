@@ -335,7 +335,6 @@ export default function App() {
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.shop,
-      casino: t.nav.casino,
     };
     return (
       <>
@@ -390,10 +389,10 @@ export default function App() {
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
               {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
+              {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
               {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
               {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
               {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
-              {tab === 'casino' && <CasinoPanel />}
             </main>
           </div>
         </div>
@@ -533,10 +532,10 @@ export default function App() {
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
           {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
+          {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
           {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
           {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
           {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
-          {tab === 'casino' && <CasinoPanel />}
         </main>
       </div>
 

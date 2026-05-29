@@ -1,11 +1,11 @@
 import { useT } from '../hooks/useT';
 
-export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop' | 'casino';
+export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop';
 export type PlaySub     = 'dungeon' | 'challenge' | 'quests' | 'pvp';
 export type SocialSub   = 'ranking' | 'mail' | 'chat';
 export type GuildSub    = SocialSub;
 export type GuildTabSub = 'info' | 'boss' | 'chat' | 'territory' | 'ops';
-export type ShopSub     = 'shop' | 'gems' | 'smith';
+export type ShopSub     = 'shop' | 'gems' | 'smith' | 'casino';
 
 // legacy alias for any code that still imports Tab
 export type Tab = MainTab;
@@ -62,16 +62,6 @@ export function TabIcon({ id, color }: { id: MainTab; color: string }) {
         <circle cx="13" cy="13" r="1.2" fill={color} stroke="none"/>
       </svg>
     );
-    case 'casino': return (
-      <svg {...p}>
-        <circle cx="11" cy="11" r="8"/>
-        <circle cx="11" cy="11" r="3"/>
-        <line x1="11" y1="3" x2="11" y2="8"/>
-        <line x1="11" y1="14" x2="11" y2="19"/>
-        <line x1="3" y1="11" x2="8" y2="11"/>
-        <line x1="14" y1="11" x2="19" y2="11"/>
-      </svg>
-    );
   }
 }
 
@@ -84,7 +74,6 @@ export default function BottomNav({ active, onChange, badges }: Props) {
     { id: 'guild',  label: t.nav.guild },
     { id: 'social', label: t.nav.social },
     { id: 'shop',   label: t.nav.shop },
-    { id: 'casino', label: t.nav.casino },
   ];
 
   return (
