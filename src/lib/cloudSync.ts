@@ -329,7 +329,8 @@ export interface GuildOpParticipant {
   heroName: string;
   damage: number;
   attackedAt: number;
-  maxHp: number; // HP pool recorded on first attack — caps total contribution
+  maxHp: number; // stored for ranking display only — not a hard cap
+
 }
 
 export interface GuildOperationState {
@@ -992,6 +993,7 @@ export async function startGuildOperation(
   uid: string,
   heroLevel: number,
   memberCount: number,
+  locationId?: string,
 ): Promise<boolean> {
   if (!db) return false;
   const _db = db;
@@ -1009,7 +1011,9 @@ export async function startGuildOperation(
     const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
     if (isActiveAndValid || isInCooldown) return false;
 
-    const location = pickLocationForLevel(heroLevel);
+    const location = locationId
+      ? (GUILD_OP_LOCATIONS.find(l => l.id === locationId) ?? pickLocationForLevel(heroLevel))
+      : pickLocationForLevel(heroLevel);
     const first = getFloorEnemy(location, 1, memberCount);
     const op: GuildOperationState = {
       locationId: location.id,
@@ -1065,15 +1069,11 @@ export async function attackGuildEnemy(
       return 'failed';
     }
 
-    // Each player's total contribution is capped at their maxHp (recorded on first attack).
-    // They can attack many times but cannot exceed that pool.
     const existing = (op.participants ?? {})[uid] as GuildOpParticipant | undefined;
     const playerMaxHp = existing?.maxHp ?? Math.max(1, Math.min(heroMaxHp, 500_000));
     const alreadyDealt = existing?.damage ?? 0;
-    const budgetLeft = playerMaxHp - alreadyDealt;
-    if (budgetLeft <= 0) return { status: 'hp_depleted' as AttackGuildResult, damage: 0 };
 
-    const cappedDamage = Math.min(MAX_HERO_DAMAGE, budgetLeft);
+    const cappedDamage = MAX_HERO_DAMAGE;
     const newHp = Math.max(0, op.enemyHp - cappedDamage);
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
