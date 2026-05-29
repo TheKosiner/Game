@@ -45,6 +45,8 @@ export const pl: Translations = {
     errCode: (code: string) => `Błąd: ${code}`,
     errDisposableEmail: 'Tymczasowe adresy email są niedozwolone',
     errUsernameTaken: 'Ten nick jest już zajęty',
+    errUsernameInvalidChars: 'Nick może zawierać tylko litery, cyfry, _ i - (bez spacji)',
+    errUsernameTooShort: 'Nick musi mieć minimum 3 znaki',
     errNotVerified: 'Email nie został jeszcze zweryfikowany — sprawdź skrzynkę i kliknij link',
     resetTitle: 'RESET HASŁA',
     resetDesc: 'Podaj email, a wyślemy Ci link do zresetowania hasła.',

@@ -43,6 +43,8 @@ export const en = {
     errCode: (code: string) => `Error: ${code}`,
     errDisposableEmail: 'Temporary email addresses are not allowed',
     errUsernameTaken: 'This username is already taken',
+    errUsernameInvalidChars: 'Username can only contain letters, digits, _ and - (no spaces)',
+    errUsernameTooShort: 'Username must be at least 3 characters',
     errNotVerified: 'Email not yet verified — check your inbox and click the link',
     resetTitle: 'RESET PASSWORD',
     resetDesc: 'Enter your email and we\'ll send you a reset link.',
