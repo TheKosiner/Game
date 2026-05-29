@@ -59,10 +59,13 @@ export default function GuildOperationPanel({
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
 
+  // Local combat HP — arena-style: starts at maxHp, drains during raid, never touches hero.hp
+  const [raidHp, setRaidHp] = useState(() => useGameStore.getState().hero.maxHp);
+  const raidHpRef = useRef(raidHp);
+
   const hero           = useGameStore(s => s.hero);
   const addXp          = useGameStore(s => s.addXp);
   const addGold        = useGameStore(s => s.addGold);
-  const takeDamage     = useGameStore(s => s.takeDamageInGuildRaid);
   const addToInventory = useGameStore(s => s.addToInventory);
   const isLeader    = guild.leaderUid === myUid;
   const memberCount = Object.keys(guild.members).length;
@@ -129,7 +132,7 @@ export default function GuildOperationPanel({
     if (attackingRef.current) return;
     const currentOp = op;
     const currentHero = useGameStore.getState().hero;
-    if (!currentOp || currentHero.hp <= 0) return;
+    if (!currentOp || raidHpRef.current <= 0) return;
 
     attackingRef.current = true;
     setAttacking(true);
@@ -150,20 +153,22 @@ export default function GuildOperationPanel({
         notify('Operacja wygasła — czas minął.', false);
         setAutoFight(false);
       } else if (status === 'hp_depleted') {
-        notify('Twoja pula życia w tym rajdzie jest wyczerpana. Odpocznij i wróć do następnego.', false);
+        notify('Twoja pula HP w tym rajdzie jest wyczerpana.', false);
         setAutoFight(false);
       } else if (status === 'no_op') {
         notify('Brak aktywnej operacji.', false);
         setAutoFight(false);
       } else {
+        const newRaidHp = Math.max(0, raidHpRef.current - enemyDmg);
+        raidHpRef.current = newRaidHp;
+        setRaidHp(newRaidHp);
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
           { text: `⚔ Ty → ${fmtNum(damage)} dmg na ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
         setLog(l => [...l, ...newLines]);
-        takeDamage(enemyDmg);
-        if (Math.max(0, currentHero.hp - enemyDmg) <= 0) {
-          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Pula życia w rajdzie wyczerpana.`, type: 'kill' }]);
+        if (newRaidHp <= 0) {
+          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Wejdź ponownie żeby zaatakować.`, type: 'kill' }]);
           setAutoFight(false);
         }
         if (status === 'completed') setAutoFight(false);
@@ -173,7 +178,7 @@ export default function GuildOperationPanel({
       setAttacking(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [op, guildId, myUid, myUsername, takeDamage]);
+  }, [op, guildId, myUid, myUsername]);
 
   useEffect(() => {
     if (!autoFight) return;
@@ -183,8 +188,14 @@ export default function GuildOperationPanel({
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
 
-  // Heal to full when entering an active operation
-  const healedRef = useRef(false);
+  // Reset local combat HP when a new operation starts
+  useEffect(() => {
+    if (!op?.startedAt) return;
+    const maxHp = useGameStore.getState().hero.maxHp;
+    raidHpRef.current = maxHp;
+    setRaidHp(maxHp);
+    setLog([]);
+  }, [op?.startedAt]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -208,15 +219,6 @@ export default function GuildOperationPanel({
   const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
   const canStart    = isLeader && !isActive && !inCooldown;
 
-  useEffect(() => {
-    if (isActive && !healedRef.current) {
-      healedRef.current = true;
-      useGameStore.setState(s => ({ hero: { ...s.hero, hp: s.hero.maxHp } }));
-      useGameStore.getState().saveGame();
-    }
-    if (!isActive) healedRef.current = false;
-  }, [isActive]);
-
   const participants = useMemo(
     () => op ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage) : [],
     [op],
@@ -226,13 +228,8 @@ export default function GuildOperationPanel({
     [participants],
   );
 
-  const myEntry         = op?.participants?.[myUid];
-  const myBudgetMax     = myEntry?.maxHp ?? hero.maxHp;
-  const myBudgetUsed    = myEntry?.damage ?? 0;
-  const myBudgetLeft    = Math.max(0, myBudgetMax - myBudgetUsed);
-  const hpPoolDepleted  = isActive && !!myEntry && myBudgetLeft <= 0;
-  const isDead          = hero.hp <= 0;
-  const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (hero.hp / hero.maxHp) * 100) : 0;
+  const isDead          = raidHp <= 0;
+  const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (raidHp / hero.maxHp) * 100) : 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
@@ -310,19 +307,18 @@ export default function GuildOperationPanel({
           </div>
         </div>
 
-        {/* Hero HP + HP budget */}
+        {/* Hero combat HP (local, like arena — doesn't affect real hero HP) */}
         <div style={{
           background: 'var(--bg-inset)',
           border: `1px solid ${isDead ? 'rgba(239,68,68,0.4)' : 'var(--border-dark)'}`,
           padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
         }}>
-          {/* Current HP */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
               {isDead ? '💀' : '❤'} {hero.name}
             </span>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : '#86efac' }}>
-              {hero.hp} / {hero.maxHp} HP
+              {fmtNum(raidHp)} / {fmtNum(hero.maxHp)} HP
             </span>
           </div>
           <div className="pixel-bar">
@@ -335,27 +331,6 @@ export default function GuildOperationPanel({
                 : 'linear-gradient(90deg, #7f1d1d, #dc2626)',
             }} />
           </div>
-          {/* HP budget (raid contribution cap) */}
-          {myEntry && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>
-                  PULA RAJDU
-                </span>
-                <span style={{ ...MONO, fontSize: 9, color: myBudgetLeft <= 0 ? '#f87171' : '#fbbf24' }}>
-                  {fmtNum(myBudgetUsed)} / {fmtNum(myBudgetMax)} dmg · zostało: {fmtNum(myBudgetLeft)}
-                </span>
-              </div>
-              <div className="pixel-bar">
-                <div className="pixel-bar-fill" style={{
-                  width: `${Math.min(100, (myBudgetUsed / myBudgetMax) * 100)}%`,
-                  background: myBudgetLeft <= 0
-                    ? 'linear-gradient(90deg, #7f1d1d, #dc2626)'
-                    : 'linear-gradient(90deg, #78350f, #f59e0b)',
-                }} />
-              </div>
-            </>
-          )}
         </div>
 
         {/* Buttons */}
@@ -365,16 +340,7 @@ export default function GuildOperationPanel({
             padding: '10px 12px', textAlign: 'center',
           }}>
             <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
-              💀 Jesteś pokonany! Odpocznij żeby wrócić do walki.
-            </p>
-          </div>
-        ) : hpPoolDepleted ? (
-          <div style={{
-            background: 'rgba(30,10,5,0.9)', border: '1px solid rgba(239,68,68,0.3)',
-            padding: '10px 12px', textAlign: 'center',
-          }}>
-            <p style={{ ...MONO, fontSize: 10, color: '#fbbf24' }}>
-              🔥 Pula życia w tym rajdzie wyczerpana — zadano {fmtNum(myEntry!.damage)} dmg. Wróć w następnym!
+              💀 Pokonany! Wejdź ponownie żeby wrócić do walki z pełnym HP.
             </p>
           </div>
         ) : (
