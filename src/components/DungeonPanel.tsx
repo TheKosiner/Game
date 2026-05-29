@@ -441,8 +441,15 @@ function DungeonList() {
     return hero.level >= ALL_DUNGEONS[idx].minLevel; // legacy gate for existing saves
   };
 
-  // Default selection: highest unlocked dungeon
+  // Default selection: last played dungeon (from localStorage), fallback to highest unlocked
   const [selected, setSelected] = useState<FullDungeon>(() => {
+    try {
+      const lastId = localStorage.getItem('glitchsoul_last_dungeon');
+      if (lastId) {
+        const found = ALL_DUNGEONS.find(d => d.id === lastId);
+        if (found) return found;
+      }
+    } catch {}
     let last = ALL_DUNGEONS[0];
     for (let i = 1; i < ALL_DUNGEONS.length; i++) {
       if (completed.includes(ALL_DUNGEONS[i - 1].id) || hero.level >= ALL_DUNGEONS[i].minLevel) {
@@ -451,6 +458,11 @@ function DungeonList() {
     }
     return last;
   });
+
+  const handleSelectDungeon = (d: FullDungeon) => {
+    setSelected(d);
+    try { localStorage.setItem('glitchsoul_last_dungeon', d.id); } catch {}
+  };
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
   const blocked = isResting || limitReached;
 
@@ -492,7 +504,7 @@ function DungeonList() {
         isDungeonUnlocked={isDungeonUnlocked}
         completed={completed}
         selected={selected}
-        onSelect={setSelected}
+        onSelect={handleSelectDungeon}
         isEn={isEn}
       />
 
