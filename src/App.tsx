@@ -34,6 +34,7 @@ import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
 import LevelUpModal from './components/LevelUpModal';
+import CasinoPanel from './components/CasinoPanel';
 
 export default function App() {
   const t = useT();
@@ -334,6 +335,7 @@ export default function App() {
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.shop,
+      casino: t.nav.casino,
     };
     return (
       <>
@@ -391,6 +393,7 @@ export default function App() {
               {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
               {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
               {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+              {tab === 'casino' && <CasinoPanel />}
             </main>
           </div>
         </div>
@@ -533,6 +536,7 @@ export default function App() {
           {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
           {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
           {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+          {tab === 'casino' && <CasinoPanel />}
         </main>
       </div>
 

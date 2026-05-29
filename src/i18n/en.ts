@@ -68,6 +68,7 @@ export const en = {
     ranking: 'TOP',
     mail: 'MAIL',
     chat: 'CHAT',
+    casino: 'CASINO',
   },
   creation: {
     subtitle: 'Create your character and start the adventure',

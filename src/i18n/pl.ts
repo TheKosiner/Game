@@ -70,6 +70,7 @@ export const pl: Translations = {
     ranking: 'TOP',
     mail: 'POCZTA',
     chat: 'CHAT',
+    casino: 'KASYNO',
   },
   creation: {
     subtitle: 'Stwórz postać i zacznij przygodę',
