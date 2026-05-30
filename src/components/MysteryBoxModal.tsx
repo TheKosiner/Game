@@ -33,7 +33,7 @@ function pickSpinItem(boxRarity: Rarity): Item {
 
 export default function MysteryBoxModal() {
   const pending      = useGameStore(s => s.mysteryBoxPending);
-  const collectReward = useGameStore(s => s.collectMysteryBoxReward);
+  const addItem      = useGameStore(s => s.addInventoryItem);
   const dismiss      = useGameStore(s => s.dismissMysteryBox);
 
   const [wonItem, setWonItem]       = useState<Item | null>(null);
@@ -64,8 +64,8 @@ export default function MysteryBoxModal() {
       if (elapsed >= DURATION) {
         setDisplay(wonItem!);
         setPhase('done');
-        const ok = collectReward(pending!.box, pending!.invIdx, wonItem!);
-        if (!ok) setFullInv(true);
+        const full = useGameStore.getState().hero.inventory.length >= 20;
+        if (!full) addItem(wonItem!); else setFullInv(true);
         setTimeout(() => dismiss(), 2000);
         return;
       }
@@ -84,9 +84,12 @@ export default function MysteryBoxModal() {
     activeRef.current = false;
     setDisplay(wonItem);
     setPhase('done');
-    const ok = collectReward(pending!.box, pending!.invIdx, wonItem);
-    if (!ok) setFullInv(true);
-    setTimeout(() => dismiss(), 2000);
+    // Add item immediately so it's safe even if user closes tab during the brief show window.
+    // Use addItem (not collectReward) so pending stays set and the modal remains visible
+    // long enough to show the result before dismissing.
+    const full = useGameStore.getState().hero.inventory.length >= 20;
+    if (!full) addItem(wonItem); else setFullInv(true);
+    setTimeout(() => dismiss(), 600);
   }
 
   if (!pending) return null;
