@@ -65,6 +65,7 @@ export default function App() {
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
   const lastChatViewedAt = useRef(Date.now());
+  const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
 
@@ -104,8 +105,14 @@ export default function App() {
     if (authLoading) return;
     async function load() {
       if (user) {
+        // Force-reload from cloud on every fresh session start (uid first seen) and on
+        // account switches. The initial store state has lastSaved=Date.now() which always
+        // looks "newer" than any cloud timestamp, so without force the in-memory guard
+        // would skip the cloud load and fall back to potentially stale localStorage data.
+        const force = loadedUidRef.current !== user.uid;
+        loadedUidRef.current = user.uid;
         try {
-          const loaded = await loadFromCloud(user.uid);
+          const loaded = await loadFromCloud(user.uid, force);
           if (loaded === null) {
             try { localStorage.removeItem('glitchsoul_save'); } catch {}
             initHero('Hero', 1, 2, true);
@@ -114,6 +121,7 @@ export default function App() {
           }
         } catch { loadGame(); }
       } else {
+        loadedUidRef.current = null;
         loadGame();
       }
       setGameLoaded(true);
