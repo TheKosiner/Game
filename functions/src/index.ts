@@ -39,28 +39,33 @@ const NUM_BET_RE = /^num_([0-9]|[12][0-9]|3[0-6])$/;
 // Fully server-side: RNG, stake validation, and Firestore update all happen here.
 // Client receives only the result — cannot influence spin outcome or gold amount.
 export const spinRoulette = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const uid = context.auth.uid;
+  const { betType, stake } = data as { betType: BetType; stake: number };
+
+  if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
+  if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
+
+  const saveRef = db.doc(`saves/${uid}`);
+
+  // Return error codes as values — throwing HttpsError inside runTransaction
+  // gets swallowed by the Firestore SDK and replaced with a generic INTERNAL error.
+  type TxOk  = { ok: true; result: number; won: boolean; net: number; newGold: number };
+  type TxErr = { ok: false; code: functions.https.FunctionsErrorCode; msg: string };
+
+  let txResult: TxOk | TxErr;
   try {
-    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
-
-    const uid = context.auth.uid;
-    const { betType, stake } = data as { betType: BetType; stake: number };
-
-    if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
-    if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
-
-    const saveRef = db.doc(`saves/${uid}`);
-
-    return await db.runTransaction(async tx => {
+    txResult = await db.runTransaction(async tx => {
       const snap = await tx.get(saveRef);
-      if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+      if (!snap.exists) return { ok: false, code: 'not-found' as const, msg: 'No save found' };
 
       const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
       const gold: number = hero.gold ?? 0;
 
-      if (stake > gold)
-        throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
+      if (stake > gold) return { ok: false, code: 'failed-precondition' as const, msg: 'Not enough gold' };
 
       const result = Math.floor(Math.random() * 37);
       const won = rouletteWin(betType, result);
@@ -76,13 +81,14 @@ export const spinRoulette = functions.https.onCall(async (data, context) => {
         updatedAt: now,
       });
 
-      return { result, won, net: netProfit, newGold };
+      return { ok: true, result, won, net: netProfit, newGold };
     });
   } catch (err: any) {
-    // Re-throw HttpsErrors as-is; wrap unexpected errors so message is visible
-    if (err instanceof functions.https.HttpsError) throw err;
-    throw new functions.https.HttpsError('internal', err?.message ?? String(err));
+    throw new functions.https.HttpsError('internal', `Transaction failed: ${err?.message ?? err}`);
   }
+
+  if (!txResult.ok) throw new functions.https.HttpsError(txResult.code, txResult.msg);
+  return { result: txResult.result, won: txResult.won, net: txResult.net, newGold: txResult.newGold };
 });
 
 // ── Gem packages ─────────────────────────────────────────────────────────────
