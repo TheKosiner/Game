@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-26 v5
+// Last deployed: 2026-05-30 v6
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -83,12 +83,15 @@ service cloud.firestore {
 
     // Casino spin: lastCasinoSpinAt can only increase, and if it changed it must
     // match server time (blocks backdating wins and bulk-simulating offline spins).
-    // Same pattern as validDailyReset / validTimestamp for quest timers.
+    // Treat null (field never set) as 0 so players who have never used the casino
+    // are not blocked on every save write.
     function validCasinoSpin(old, nw) {
-      return nw.hero.lastCasinoSpinAt >= old.hero.lastCasinoSpinAt
-        && (nw.hero.lastCasinoSpinAt == old.hero.lastCasinoSpinAt
-            || (nw.hero.lastCasinoSpinAt <= request.time.toMillis() + 10000
-                && nw.hero.lastCasinoSpinAt >= request.time.toMillis() - 300000));
+      let oldTs = old.hero.lastCasinoSpinAt == null ? 0 : old.hero.lastCasinoSpinAt;
+      let newTs = nw.hero.lastCasinoSpinAt == null ? 0 : nw.hero.lastCasinoSpinAt;
+      return newTs >= oldTs
+        && (newTs == oldTs
+            || (newTs <= request.time.toMillis() + 10000
+                && newTs >= request.time.toMillis() - 300000));
     }
 
     // Gold earned today: shared counter for ALL gold sources (dungeons, quests, casino, etc.).
