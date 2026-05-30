@@ -6,6 +6,81 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+// ── Roulette helpers (server-side, matches CasinoPanel logic) ─────────────────
+const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
+type BetType = 'red'|'black'|'odd'|'even'|'low'|'high'|'dozen1'|'dozen2'|'dozen3'|string;
+
+function rouletteWin(bet: BetType, n: number): boolean {
+  if (n === 0) return false;
+  switch (bet) {
+    case 'red':    return RED_NUMS.has(n);
+    case 'black':  return !RED_NUMS.has(n);
+    case 'odd':    return n % 2 === 1;
+    case 'even':   return n % 2 === 0;
+    case 'low':    return n >= 1 && n <= 18;
+    case 'high':   return n >= 19 && n <= 36;
+    case 'dozen1': return n >= 1  && n <= 12;
+    case 'dozen2': return n >= 13 && n <= 24;
+    case 'dozen3': return n >= 25 && n <= 36;
+    default: return bet === `num_${n}`;
+  }
+}
+
+function rouletteReturn(bet: BetType, stake: number): number {
+  if (typeof bet === 'string' && bet.startsWith('num_')) return stake * 36;
+  if (['dozen1','dozen2','dozen3'].includes(bet)) return stake * 3;
+  return stake * 2;
+}
+
+const VALID_BETS: BetType[] = ['red','black','odd','even','low','high','dozen1','dozen2','dozen3'];
+const NUM_BET_RE = /^num_([0-9]|[12][0-9]|3[0-6])$/;
+
+// ── spinRoulette ──────────────────────────────────────────────────────────────
+// Fully server-side: RNG, stake validation, and Firestore update all happen here.
+// Client receives only the result — cannot influence spin outcome or gold amount.
+export const spinRoulette = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const uid = context.auth.uid;
+  const { betType, stake } = data as { betType: BetType; stake: number };
+
+  if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
+  if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
+
+  const saveRef = db.doc(`saves/${uid}`);
+
+  return db.runTransaction(async tx => {
+    const snap = await tx.get(saveRef);
+    if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+
+    const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
+    const gold: number = hero.gold ?? 0;
+
+    if (stake > gold)
+      throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
+
+    // Server-side RNG — client has zero influence over this
+    const result = Math.floor(Math.random() * 37);
+    const won = rouletteWin(betType, result);
+    const back = won ? rouletteReturn(betType, stake) : 0;
+    const newGold = gold - stake + back;
+    const netProfit = back - stake;
+    const newGoldEarnedToday = Math.max(0, (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit));
+    const now = Date.now();
+
+    tx.update(saveRef, {
+      'hero.gold': newGold,
+      'hero.goldEarnedToday': newGoldEarnedToday,
+      'hero.lastCasinoSpinAt': now,
+      updatedAt: now,
+    });
+
+    return { result, won, net: netProfit, newGold, newGoldEarnedToday };
+  });
+});
+
 // ── Gem packages ─────────────────────────────────────────────────────────────
 const GEM_PACKAGES: Record<string, { gems: number; priceUsd: number }> = {
   '100':  { gems: 100,  priceUsd:  99 },   // $0.99

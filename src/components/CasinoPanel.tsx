@@ -1,6 +1,10 @@
 import { useState, useRef, useCallback } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
 import { MONO, ORB } from '../utils/styles';
+
+interface SpinResult { result: number; won: boolean; net: number; newGold: number; newGoldEarnedToday: number }
 
 // ── Roulette helpers ──────────────────────────────────────────────────────────
 
@@ -101,70 +105,83 @@ function BetBtn({
 // ── Main panel ────────────────────────────────────────────────────────────────
 
 export default function CasinoPanel() {
-  const hero    = useGameStore(s => s.hero);
+  const hero     = useGameStore(s => s.hero);
   const saveGame = useGameStore(s => s.saveGame);
 
-  const [betType, setBetType]     = useState<BetType | null>(null);
+  const [betType, setBetType]       = useState<BetType | null>(null);
   const [stakeInput, setStakeInput] = useState('100');
-  const [spinning, setSpinning]   = useState(false);
-  const [displayed, setDisplayed] = useState<number | null>(null);
+  const [spinning, setSpinning]     = useState(false);
+  const [displayed, setDisplayed]   = useState<number | null>(null);
   const [lastResult, setLastResult] = useState<{ n: number; won: boolean; net: number } | null>(null);
-  const [history, setHistory]     = useState<HistEntry[]>([]);
-  const [showNums, setShowNums]   = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [history, setHistory]       = useState<HistEntry[]>([]);
+  const [showNums, setShowNums]     = useState(false);
+  const [spinError, setSpinError]   = useState<string | null>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const resultRef = useRef<SpinResult | null>(null);
 
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
 
-  const spin = useCallback(() => {
-    if (spinning || !betType || stake <= 0 || stake > hero.gold) return;
-
-    // Deduct stake immediately so gold is correct during animation
-    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
-
-    const finalN = Math.floor(Math.random() * 37); // 0–36
+  const spin = useCallback(async () => {
+    if (spinning || !betType || stake <= 0 || stake > hero.gold || !functions) return;
     setSpinning(true);
     setLastResult(null);
+    setSpinError(null);
+    resultRef.current = null;
 
+    // Deduct stake immediately for responsive UI; restored if function fails
+    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
+
+    // Fast-spin animation runs while waiting for Cloud Function response
+    const fastSpin = setInterval(() => {
+      setDisplayed(Math.floor(Math.random() * 37));
+    }, 75);
+
+    // Call Cloud Function — server generates RNG and writes result to Firestore atomically
+    let res: SpinResult;
+    try {
+      const fn = httpsCallable<{ betType: string; stake: number }, SpinResult>(functions, 'spinRoulette');
+      const r = await fn({ betType, stake });
+      res = r.data;
+    } catch (err: any) {
+      clearInterval(fastSpin);
+      // Restore stake if function rejected (e.g. not enough gold race condition)
+      useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
+      setSpinning(false);
+      setDisplayed(null);
+      setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
+      return;
+    }
+
+    clearInterval(fastSpin);
+
+    // Slow landing animation onto the server-determined result number
     let tick = 0;
-    const FAST = 20;
     const SLOW = 9;
-
-    const animate = () => {
+    const land = () => {
       tick++;
-      if (tick <= FAST) {
+      if (tick < SLOW) {
         setDisplayed(Math.floor(Math.random() * 37));
-        timerRef.current = setTimeout(animate, 75);
-      } else if (tick <= FAST + SLOW) {
-        setDisplayed(Math.floor(Math.random() * 37));
-        timerRef.current = setTimeout(animate, 140 + (tick - FAST) * 55);
+        timerRef.current = setTimeout(land, 100 + tick * 55);
       } else {
-        setDisplayed(finalN);
-        const won = isWin(betType, finalN);
-        let net = -stake;
-        const spinAt = Date.now();
-        if (won) {
-          const back = totalReturn(betType, stake);
-          const netProfit = back - stake;
-          useGameStore.setState(s => ({
-            hero: {
-              ...s.hero,
-              gold: s.hero.gold + back,
-              goldEarnedToday: s.hero.goldEarnedToday + netProfit,
-              lastCasinoSpinAt: spinAt,
-            },
-          }));
-          net = netProfit;
-        } else {
-          useGameStore.setState(s => ({ hero: { ...s.hero, lastCasinoSpinAt: spinAt } }));
-        }
-        setLastResult({ n: finalN, won, net });
-        setHistory(h => [{ n: finalN }, ...h].slice(0, 20));
+        // Apply authoritative server state to local store
+        useGameStore.setState(s => ({
+          hero: {
+            ...s.hero,
+            gold: res.newGold,
+            goldEarnedToday: res.newGoldEarnedToday,
+            lastCasinoSpinAt: Date.now(),
+          },
+        }));
+        setDisplayed(res.result);
+        setLastResult({ n: res.result, won: res.won, net: res.net });
+        setHistory(h => [{ n: res.result }, ...h].slice(0, 20));
         setSpinning(false);
+        // Sync local state so subsequent dungeons/quests don't overwrite server gold
         saveGame();
       }
     };
-    setTimeout(animate, 75);
+    setTimeout(land, 120);
   }, [spinning, betType, stake, hero.gold, saveGame]);
 
   const c = displayed !== null ? numColor(displayed) : '#334155';
@@ -463,6 +480,12 @@ export default function CasinoPanel() {
           ? `🎰 ZAKRĘĆ — 🪙 ${stake.toLocaleString()}`
           : '← WYBIERZ ZAKŁAD'}
       </button>
+
+      {spinError && (
+        <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center' }}>
+          ⚠ {spinError}
+        </p>
+      )}
     </div>
   );
 }
