@@ -216,6 +216,8 @@ export default function DesktopSidebar({
             onClick={() => { onTab('shop'); onShop('gems'); }} />
           <NavItem icon="⚒" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
             onClick={() => { onTab('shop'); onShop('smith'); }} />
+          <NavItem icon="🎰" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
+            onClick={() => { onTab('shop'); onShop('casino'); }} />
         </>}
 
       </nav>
