@@ -65,19 +65,21 @@ export const spinRoulette = functions.https.onCall(async (data, context) => {
     const result = Math.floor(Math.random() * 37);
     const won = rouletteWin(betType, result);
     const back = won ? rouletteReturn(betType, stake) : 0;
-    const newGold = gold - stake + back;
+    // Cap at 1B — admin SDK bypasses Firestore rules so we enforce the cap here
+    const newGold = Math.min(gold - stake + back, 1_000_000_000);
     const netProfit = back - stake;
-    const newGoldEarnedToday = Math.max(0, (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit));
     const now = Date.now();
 
     tx.update(saveRef, {
       'hero.gold': newGold,
-      'hero.goldEarnedToday': newGoldEarnedToday,
+      // Use increment so concurrent dungeon/quest earnings aren't overwritten by a stale read
+      'hero.goldEarnedToday': admin.firestore.FieldValue.increment(Math.max(0, netProfit)),
       'hero.lastCasinoSpinAt': now,
       updatedAt: now,
     });
 
-    return { result, won, net: netProfit, newGold, newGoldEarnedToday };
+    // Return net profit so client can apply the delta to its local counters
+    return { result, won, net: netProfit, newGold };
   });
 });
 
@@ -322,6 +324,7 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
       'hero.lastDailyReset': now,
       'hero.dungeonRunsToday': 0,
       'hero.questsCompletedToday': 0,
+      'hero.goldEarnedToday': 0,
       'hero.gems': newGems,
       updatedAt: now,
     });
@@ -398,7 +401,7 @@ export const resetAllDailyLimits = functions.https.onCall(async (_data, context)
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
 
   const adminUid = functions.config().admin?.uid as string | undefined;
-  if (adminUid && context.auth.uid !== adminUid) {
+  if (!adminUid || context.auth.uid !== adminUid) {
     throw new functions.https.HttpsError('permission-denied', 'Admin only');
   }
 

@@ -4,7 +4,7 @@ import { functions } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
 import { MONO, ORB } from '../utils/styles';
 
-interface SpinResult { result: number; won: boolean; net: number; newGold: number; newGoldEarnedToday: number }
+interface SpinResult { result: number; won: boolean; net: number; newGold: number }
 
 // ── Roulette helpers ──────────────────────────────────────────────────────────
 
@@ -140,12 +140,12 @@ export default function CasinoPanel() {
         setDisplayed(Math.floor(Math.random() * 37));
         timerRef.current = setTimeout(land, 100 + tick * 55);
       } else {
-        // Apply authoritative server state to local store
+        // Apply casino result as delta so concurrent dungeon/quest gold isn't overwritten
         useGameStore.setState(s => ({
           hero: {
             ...s.hero,
-            gold: res.newGold,
-            goldEarnedToday: res.newGoldEarnedToday,
+            gold: s.hero.gold + (res.won ? res.net + stake : 0),
+            goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
             lastCasinoSpinAt: Date.now(),
           },
         }));

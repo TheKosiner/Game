@@ -41,13 +41,15 @@ service cloud.firestore {
         || old.hero.beggingUntil > request.time.toMillis() + 172800000;
     }
 
-    // lastDailyReset: if changed, new value must be ≈ server time (blocks backdating).
-    // If old value is in the future (corrupted clock), allow correction.
+    // lastDailyReset: if changed, new value must be ≈ server time AND at least 23 h must have
+    // elapsed since the previous reset (blocks spamming daily resets for repeated gold injection).
+    // If old value is in the future (corrupted clock), allow correction without the cooldown.
     function validDailyReset(old, nw) {
       return nw.hero.lastDailyReset == old.hero.lastDailyReset
         || old.hero.lastDailyReset > request.time.toMillis()
         || (nw.hero.lastDailyReset >= request.time.toMillis() - 300000
-            && nw.hero.lastDailyReset <= request.time.toMillis() + 10000);
+            && nw.hero.lastDailyReset <= request.time.toMillis() + 10000
+            && request.time.toMillis() - old.hero.lastDailyReset >= 82800000);
     }
 
     // Voluntary rest: voluntaryRestUntil can only be cleared after server time passes it.
@@ -96,8 +98,12 @@ service cloud.firestore {
     //   This makes gold gains auditable: every increase must be declared in earnedToday.
     function validGoldEarned(old, nw) {
       let dailyReset = nw.hero.lastDailyReset != old.hero.lastDailyReset;
+      // On daily reset: earnedDelta = 0. The reset itself grants no gold — it just zeroes the
+      // counter. Gold can only stay the same or decrease on the write that triggers the reset.
+      // BUG FIX: previously used nw.goldEarnedToday as earnedDelta on reset, allowing a client to
+      // inject up to 250 M gold by setting goldEarnedToday=250M in the same write as lastDailyReset.
       let earnedDelta = dailyReset
-        ? nw.hero.goldEarnedToday
+        ? 0
         : nw.hero.goldEarnedToday - old.hero.goldEarnedToday;
       return
         (dailyReset
@@ -195,11 +201,12 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members
         && resource.data.members[request.auth.uid].role == 'officer'
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
-      // Regular members may only touch treasury, contributions, and operation state
+      // Regular members may only touch treasury (deposit only), contributions, and operation state
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt']);
+             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt'])
+        && request.resource.data.treasury >= resource.data.treasury;
       // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
@@ -232,10 +239,25 @@ service cloud.firestore {
         && request.resource.data.attackerUid == request.auth.uid;
     }
 
-    // Guild territories
+    // Guild territories — write requires membership in the guild claiming/updating the territory
     match /territories/{territoryId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      // Allow write only if the caller is a member of the guild referenced in the document.
+      // Covers both creating a new claim and updating/sieging an existing territory.
+      allow write: if isAuthenticated()
+        && (
+          // New territory claim: caller must be in the guild they are claiming for
+          (resource == null
+            && request.resource.data.guildId != null
+            && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.guildId)).data.members)
+          // Update / siege: caller must be in the defending guild OR the attacking guild
+          || (resource != null
+              && resource.data.guildId != null
+              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.guildId)).data.members)
+          || (resource != null
+              && request.resource.data.siegeGuildId != null
+              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.siegeGuildId)).data.members)
+        );
     }
 
     // In-game mail

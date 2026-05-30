@@ -769,7 +769,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const t = getT();
     cancelBeggingNotification();
-    set({ hero: { ...hero, gold: hero.gold + earned, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    if (earned > 0) get().addGold(earned);
+    const freshHero = get().hero;
+    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     if (earned > 0) get().addCombatLog(t.combat.beggingCancelledWithGold(earned), 'loot');
     else get().addCombatLog(t.combat.beggingCancelled, 'system');
     get().saveGame();
@@ -781,7 +783,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const reward = hero.beggingReward ?? 0;
     const t = getT();
     cancelBeggingNotification();
-    set({ hero: { ...hero, gold: hero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    get().addGold(reward);
+    const freshHero = get().hero;
+    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
   },
