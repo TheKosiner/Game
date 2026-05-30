@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { loadFromCloud } from '../lib/cloudSync';
+import { useAuthStore } from '../store/authStore';
 import { MONO } from '../utils/styles';
 
 const ADMIN_EMAIL = 'thekosiner@gmail.com';
@@ -122,6 +124,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   const [goldAmount, setGoldAmount] = useState('');
   const [gemsAmount, setGemsAmount] = useState('');
   const [levelAmount, setLevelAmount] = useState('');
+  const [selfInfo, setSelfInfo] = useState<{ cloudLevel: number } | null>(null);
 
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
@@ -213,6 +216,23 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     flash(`HP ${player.username} → ${player.maxHp}/${player.maxHp}`);
   };
 
+  const forceReloadSelf = async () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid || !db) return;
+    flash('Ładowanie z chmury...');
+    try {
+      const snap = await getDoc(doc(db, 'saves', uid));
+      const cloudLevel = snap.exists() ? (snap.data().hero?.level ?? '?') : '❌ brak';
+      setSelfInfo({ cloudLevel: cloudLevel as number });
+      const result = await loadFromCloud(uid, true);
+      if (result === true) flash(`✅ Załadowano z chmury (level w chmurze: ${cloudLevel})`);
+      else if (result === null) flash('❌ Brak zapisu w chmurze!');
+      else flash('ℹ️ Lokalny zapis był nowszy (ale force pominął)');
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.message ?? e}`);
+    }
+  };
+
   const resetGuildRaid = async () => {
     if (!player?.guildId || !db) return;
     try {
@@ -233,6 +253,19 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   return (
     <div style={s}>
       <p style={{ ...MONO, fontSize: 11, color: '#ff4466', marginBottom: 8, letterSpacing: '0.1em' }}>⚙ ADMIN PANEL</p>
+
+      {/* Self recovery */}
+      <div style={{ marginBottom: 10, padding: '6px 8px', background: '#110022', border: '1px solid #6644aa', borderRadius: 3 }}>
+        <p style={{ ...MONO, fontSize: 9, color: '#aa88ff', marginBottom: 4 }}>MÓJ ZAPIS</p>
+        {selfInfo && (
+          <p style={{ ...MONO, fontSize: 9, color: '#eee', marginBottom: 4 }}>
+            Level w chmurze: <span style={{ color: '#ffd700' }}>{selfInfo.cloudLevel}</span>
+          </p>
+        )}
+        <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
+          🔄 Force reload z chmury
+        </button>
+      </div>
 
       {/* Search */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
