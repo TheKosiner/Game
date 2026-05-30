@@ -1,32 +1,14 @@
 import { useState, useRef, useCallback } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
 import { MONO, ORB } from '../utils/styles';
+
+interface SpinResult { result: number; won: boolean; net: number; newGold: number }
 
 // ── Roulette helpers ──────────────────────────────────────────────────────────
 
 const RED_NUMS = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
-
-function rouletteWin(bet: BetType, n: number): boolean {
-  if (n === 0) return false;
-  switch (bet) {
-    case 'red':    return RED_NUMS.has(n);
-    case 'black':  return !RED_NUMS.has(n);
-    case 'odd':    return n % 2 === 1;
-    case 'even':   return n % 2 === 0;
-    case 'low':    return n >= 1 && n <= 18;
-    case 'high':   return n >= 19 && n <= 36;
-    case 'dozen1': return n >= 1  && n <= 12;
-    case 'dozen2': return n >= 13 && n <= 24;
-    case 'dozen3': return n >= 25 && n <= 36;
-    default:       return bet === `num_${n}`;
-  }
-}
-
-function rouletteReturn(bet: BetType, stake: number): number {
-  if (typeof bet === 'string' && bet.startsWith('num_')) return stake * 36;
-  if (['dozen1','dozen2','dozen3'].includes(bet)) return stake * 3;
-  return stake * 2;
-}
 
 function numColor(n: number): string {
   if (n === 0) return '#22c55e';
@@ -116,56 +98,62 @@ export default function CasinoPanel() {
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
 
-  const spin = useCallback(() => {
-    if (spinning || !betType || stake <= 0 || stake > hero.gold) return;
+  const spin = useCallback(async () => {
+    if (spinning || !betType || stake <= 0 || stake > hero.gold || !functions) return;
     setSpinning(true);
     setLastResult(null);
     setSpinError(null);
 
-    // Client-side RNG
-    const result = Math.floor(Math.random() * 37);
-    const won    = rouletteWin(betType, result);
-    const back   = won ? rouletteReturn(betType, stake) : 0;
-    const net    = back - stake;
-
-    // Deduct stake immediately for responsive UI
+    // Deduct stake immediately for responsive UI; restored if function fails
     useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
-    // Fast-spin animation for ~1.5s
+    // Fast-spin animation while waiting for Cloud Function
     const fastSpin = setInterval(() => {
       setDisplayed(Math.floor(Math.random() * 37));
     }, 75);
 
-    setTimeout(() => {
+    let res: SpinResult;
+    try {
+      const fn = httpsCallable<{ betType: string; stake: number }, SpinResult>(functions, 'spinRoulette');
+      const r = await fn({ betType, stake });
+      res = r.data;
+    } catch (err: any) {
       clearInterval(fastSpin);
+      useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
+      setSpinning(false);
+      setDisplayed(null);
+      setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
+      return;
+    }
 
-      // Slow landing animation
-      let tick = 0;
-      const SLOW = 9;
-      const land = () => {
-        tick++;
-        if (tick < SLOW) {
-          setDisplayed(Math.floor(Math.random() * 37));
-          timerRef.current = setTimeout(land, 100 + tick * 55);
-        } else {
-          // stake already deducted; add back gross return + track net in goldEarnedToday
-          useGameStore.setState(s => ({
-            hero: {
-              ...s.hero,
-              gold: s.hero.gold + back,
-              goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, net),
-              lastCasinoSpinAt: Date.now(),
-            },
-          }));
-          setDisplayed(result);
-          setLastResult({ n: result, won, net });
-          setHistory(h => [{ n: result }, ...h].slice(0, 20));
-          setSpinning(false);
-          saveGame();
+    clearInterval(fastSpin);
+
+    // Slow landing animation onto server-determined result
+    let tick = 0;
+    const SLOW = 9;
+    const land = () => {
+      tick++;
+      if (tick < SLOW) {
+        setDisplayed(Math.floor(Math.random() * 37));
+        timerRef.current = setTimeout(land, 100 + tick * 55);
+      } else {
+        // Delta-based update — concurrent dungeon/quest earnings are preserved
+        useGameStore.setState(s => ({
+          hero: {
+            ...s.hero,
+            gold: s.hero.gold + (res.won ? res.net + stake : 0),
+            goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
+            lastCasinoSpinAt: Date.now(),
+          },
+        }));
+        setDisplayed(res.result);
+        setLastResult({ n: res.result, won: res.won, net: res.net });
+        setHistory(h => [{ n: res.result }, ...h].slice(0, 20));
+        setSpinning(false);
+        saveGame();
         }
       };
       setTimeout(land, 120);
-    }, 1500);
   }, [spinning, betType, stake, hero.gold, saveGame]);
 
   const c = displayed !== null ? numColor(displayed) : '#334155';

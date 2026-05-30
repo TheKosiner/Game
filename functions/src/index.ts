@@ -4,7 +4,6 @@ import Stripe from 'stripe';
 
 admin.initializeApp();
 
-
 const db = admin.firestore();
 
 // ── Roulette helpers (server-side, matches CasinoPanel logic) ─────────────────
