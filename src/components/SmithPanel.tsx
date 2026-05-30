@@ -129,6 +129,42 @@ function ResultModal({ result, onClose, onRetry }: {
           </div>
         </div>
 
+        {(() => {
+          const nextEnh = result.item.enhanceLevel ?? 0;
+          if (nextEnh >= MAX_ENHANCE) return null;
+          const nextCost = result.item.level * ENHANCE_COST_PER_LV[nextEnh];
+          const nextChance = ENHANCE_CHANCES[nextEnh];
+          const chanceColor = nextChance >= 50 ? '#4caf50' : nextChance >= 30 ? '#ff9632' : '#ff4444';
+          return (
+            <div style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8, padding: '10px 16px',
+              width: '100%', display: 'flex', flexDirection: 'column', gap: 6,
+            }}>
+              <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1 }}>
+                {lang === 'en' ? 'NEXT ATTEMPT' : 'NASTĘPNA PRÓBA'}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                  {lang === 'en' ? 'Cost' : 'Koszt'}
+                </span>
+                <span style={{ ...ORB, fontSize: 11, color: '#ffd700' }}>
+                  🪙 {nextCost.toLocaleString()}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
+                  {lang === 'en' ? 'Success chance' : 'Szansa sukcesu'}
+                </span>
+                <span style={{ ...ORB, fontSize: 11, color: chanceColor }}>
+                  {nextChance}%
+                </span>
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{ display: 'flex', gap: 8, width: '100%' }}>
           <button
             onClick={onRetry}
