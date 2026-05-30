@@ -122,7 +122,7 @@ export default function CasinoPanel() {
       useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
       setSpinning(false);
       setDisplayed(null);
-      setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
+      setSpinError(`[${err?.code ?? '?'}] ${err?.message ?? 'Błąd serwera'}`);
       return;
     }
 
