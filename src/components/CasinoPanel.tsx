@@ -48,29 +48,6 @@ function betOdds(bet: BetType): string {
   return '1:1';
 }
 
-function isWin(bet: BetType, n: number): boolean {
-  switch (bet) {
-    case 'red':    return RED_NUMS.has(n);
-    case 'black':  return n !== 0 && !RED_NUMS.has(n);
-    case 'odd':    return n % 2 === 1;
-    case 'even':   return n !== 0 && n % 2 === 0;
-    case 'low':    return n >= 1 && n <= 18;
-    case 'high':   return n >= 19 && n <= 36;
-    case 'dozen1': return n >= 1 && n <= 12;
-    case 'dozen2': return n >= 13 && n <= 24;
-    case 'dozen3': return n >= 25 && n <= 36;
-    default:
-      if (bet.startsWith('num_')) return parseInt(bet.slice(4)) === n;
-      return false;
-  }
-}
-
-// Returns total amount paid back to player (including original stake)
-function totalReturn(bet: BetType, stake: number): number {
-  if (bet.startsWith('num_')) return stake * 36;  // 35:1
-  if (bet.startsWith('dozen')) return stake * 3;  // 2:1
-  return stake * 2;                               // 1:1
-}
 
 const QUICK_STAKES = [10, 50, 100, 500, 1000];
 
@@ -116,8 +93,7 @@ export default function CasinoPanel() {
   const [history, setHistory]       = useState<HistEntry[]>([]);
   const [showNums, setShowNums]     = useState(false);
   const [spinError, setSpinError]   = useState<string | null>(null);
-  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resultRef = useRef<SpinResult | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
