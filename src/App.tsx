@@ -104,9 +104,11 @@ export default function App() {
     if (authLoading) return;
     async function load() {
       if (user) {
-        // Force-reload from cloud when switching accounts so that stale in-memory
-        // state from the previous account doesn't fool the "local is newer" check.
-        const force = loadedUidRef.current !== null && loadedUidRef.current !== user.uid;
+        // Force-reload from cloud on every fresh session start (uid first seen) and on
+        // account switches. The initial store state has lastSaved=Date.now() which always
+        // looks "newer" than any cloud timestamp, so without force the in-memory guard
+        // would skip the cloud load and fall back to potentially stale localStorage data.
+        const force = loadedUidRef.current !== user.uid;
         loadedUidRef.current = user.uid;
         try {
           const loaded = await loadFromCloud(user.uid, force);
