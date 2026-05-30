@@ -161,6 +161,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     lastRespecAt: null,
     completedDungeons: [],
     lastCasinoSpinAt: 0,
+    goldEarnedToday: 0,
   };
 }
 
@@ -256,7 +257,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const bonus = get().guildGoldBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
-    set({ hero: { ...hero, gold: hero.gold + amount } });
+    set({ hero: { ...hero, gold: hero.gold + amount, goldEarnedToday: hero.goldEarnedToday + amount } });
   },
 
   addGems: (amount) => {
@@ -800,6 +801,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...hero,
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
+          goldEarnedToday: 0,
           lastDailyReset: now,
           gems: hero.gems + DAILY_GEMS,
         },
@@ -1200,6 +1202,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           lastRespecAt: save.hero.lastRespecAt ?? null,
           completedDungeons: save.hero.completedDungeons ?? inferCompletedDungeons(save.hero.level ?? 1),
           lastCasinoSpinAt: save.hero.lastCasinoSpinAt ?? 0,
+          goldEarnedToday: save.hero.goldEarnedToday ?? 0,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({

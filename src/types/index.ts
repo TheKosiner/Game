@@ -71,6 +71,7 @@ export interface Hero {
   completedDungeons: string[];
   lastTerritoryClaimAt?: Record<string, number>;
   lastCasinoSpinAt: number;
+  goldEarnedToday: number;
 }
 
 export interface Enemy {

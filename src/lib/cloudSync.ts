@@ -160,6 +160,7 @@ function migrateHeroFromRaw(raw: any) {
     lastRespecAt: raw.lastRespecAt ?? null,
     completedDungeons: raw.completedDungeons ?? [],
     lastCasinoSpinAt: raw.lastCasinoSpinAt ?? 0,
+    goldEarnedToday: raw.goldEarnedToday ?? 0,
   };
 }
 

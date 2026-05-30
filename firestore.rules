@@ -89,6 +89,26 @@ service cloud.firestore {
                 && nw.hero.lastCasinoSpinAt >= request.time.toMillis() - 300000));
     }
 
+    // Gold earned today: shared counter for ALL gold sources (dungeons, quests, casino, etc.).
+    // - Only increases within a day; resets to 0 with lastDailyReset.
+    // - Capped at 250 M / day — covers max legitimate dungeon+begging+casino play.
+    // - KEY: gold can only increase this write by as much as goldEarnedToday increased.
+    //   This makes gold gains auditable: every increase must be declared in earnedToday.
+    function validGoldEarned(old, nw) {
+      let dailyReset = nw.hero.lastDailyReset != old.hero.lastDailyReset;
+      let earnedDelta = dailyReset
+        ? nw.hero.goldEarnedToday
+        : nw.hero.goldEarnedToday - old.hero.goldEarnedToday;
+      return
+        (dailyReset
+          ? nw.hero.goldEarnedToday >= 0
+          : nw.hero.goldEarnedToday >= old.hero.goldEarnedToday)
+        && nw.hero.goldEarnedToday <= 250000000
+        && nw.hero.gold >= 0
+        && nw.hero.gold <= 1000000000
+        && nw.hero.gold <= old.hero.gold + earnedDelta;
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
@@ -105,13 +125,8 @@ service cloud.firestore {
         // Challenge unlock: only increases, max +1 per write
         && nw.challengeUnlocked >= old.challengeUnlocked
         && nw.challengeUnlocked <= old.challengeUnlocked + 1
-        // Gold: non-negative, hard cap 1 billion, and multiplicative delta bound.
-        // Max legitimate gain per write = full stake × 36 (casino single-number 35:1 payout)
-        // + 50 000 flat base covers quest/dungeon rewards for low-level players with near-zero gold.
-        // This blocks: gold 0 → 999 999 999 in one write; allows: win entire stake on a number.
-        && nw.hero.gold >= 0
-        && nw.hero.gold <= 1000000000
-        && nw.hero.gold <= old.hero.gold * 36 + 50000
+        // Gold: validated via goldEarnedToday counter (see validGoldEarned above)
+        && validGoldEarned(old, nw)
         // Time-based: server validates all timers (blocks clock-manipulation cheats)
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)

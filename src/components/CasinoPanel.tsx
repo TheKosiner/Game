@@ -145,8 +145,16 @@ export default function CasinoPanel() {
         const spinAt = Date.now();
         if (won) {
           const back = totalReturn(betType, stake);
-          useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + back, lastCasinoSpinAt: spinAt } }));
-          net = back - stake;
+          const netProfit = back - stake;
+          useGameStore.setState(s => ({
+            hero: {
+              ...s.hero,
+              gold: s.hero.gold + back,
+              goldEarnedToday: s.hero.goldEarnedToday + netProfit,
+              lastCasinoSpinAt: spinAt,
+            },
+          }));
+          net = netProfit;
         } else {
           useGameStore.setState(s => ({ hero: { ...s.hero, lastCasinoSpinAt: spinAt } }));
         }
