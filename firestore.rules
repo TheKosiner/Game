@@ -243,6 +243,15 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 200;
     }
 
+    // Casino spin history (global feed)
+    match /casinoSpins/{spinId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.stake >= 1
+        && request.resource.data.stake <= 10000000;
+    }
+
     // Guild chat
     match /guilds/{guildId}/messages/{msgId} {
       allow read: if isAuthenticated()
