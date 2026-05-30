@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
-  startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
+  startGuildOperation, attackGuildEnemy, claimGuildOperationReward, setKnockedOut,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -60,8 +60,12 @@ export default function GuildOperationPanel({
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
 
-  // Local combat HP — arena-style: starts at maxHp, drains during raid, never touches hero.hp
-  const [raidHp, setRaidHp] = useState(() => useGameStore.getState().hero.maxHp);
+  // Local combat HP — arena-style: starts at maxHp, drains during raid, never touches hero.hp.
+  // Starts at 0 if the player was already knocked out in this operation (handles re-navigation).
+  const [raidHp, setRaidHp] = useState(() => {
+    if (guild.guildOperation?.participants?.[myUid]?.knockedOut) return 0;
+    return useGameStore.getState().hero.maxHp;
+  });
   const raidHpRef = useRef(raidHp);
 
   const hero           = useGameStore(s => s.hero);
@@ -167,8 +171,9 @@ export default function GuildOperationPanel({
         ];
         setLog(l => [...l, ...newLines]);
         if (newRaidHp <= 0) {
-          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Wejdź ponownie żeby zaatakować.`, type: 'kill' }]);
+          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Nie możesz już atakować w tej operacji.`, type: 'kill' }]);
           setAutoFight(false);
+          setKnockedOut(guildId, myUid).catch(() => {});
         }
         if (status === 'completed') setAutoFight(false);
       }
@@ -195,6 +200,16 @@ export default function GuildOperationPanel({
     setRaidHp(maxHp);
     setLog([]);
   }, [op?.startedAt]);
+
+  // Sync knocked-out state arriving from Firestore (e.g. after a page re-open)
+  useEffect(() => {
+    if (op?.participants?.[myUid]?.knockedOut && raidHpRef.current > 0) {
+      raidHpRef.current = 0;
+      setRaidHp(0);
+      setAutoFight(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op?.participants?.[myUid]?.knockedOut]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -338,8 +353,11 @@ export default function GuildOperationPanel({
             background: 'rgba(30,5,5,0.9)', border: '1px solid rgba(239,68,68,0.3)',
             padding: '10px 12px', textAlign: 'center',
           }}>
-            <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
-              💀 Pokonany! Wejdź ponownie żeby wrócić do walki z pełnym HP.
+            <p style={{ ...MONO, fontSize: 10, color: '#f87171', marginBottom: 2 }}>
+              💀 Pokonany!
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: 'rgba(248,113,113,0.6)' }}>
+              Nie możesz już atakować w tej operacji.
             </p>
           </div>
         ) : (

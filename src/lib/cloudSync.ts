@@ -332,7 +332,7 @@ export interface GuildOpParticipant {
   damage: number;
   attackedAt: number;
   maxHp: number; // stored for ranking display only — not a hard cap
-
+  knockedOut?: boolean; // set permanently when raid HP reaches 0; blocks further attacks
 }
 
 export interface GuildOperationState {
@@ -1060,7 +1060,7 @@ export async function startGuildOperation(
   });
 }
 
-export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'hp_depleted';
+export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'hp_depleted' | 'knocked_out';
 
 export async function attackGuildEnemy(
   guildId: string,
@@ -1090,6 +1090,8 @@ export async function attackGuildEnemy(
     }
 
     const existing = (op.participants ?? {})[uid] as GuildOpParticipant | undefined;
+    // Player was knocked out in this raid — block further attacks server-side.
+    if (existing?.knockedOut === true) return 'knocked_out';
     const playerMaxHp = existing?.maxHp ?? Math.max(1, Math.min(heroMaxHp, 500_000));
     const alreadyDealt = existing?.damage ?? 0;
 
@@ -1169,4 +1171,14 @@ export async function claimGuildOperationReward(
     });
     return { xp, gold, rarity };
   });
+}
+
+/** Permanently mark a participant as knocked out for the current raid. */
+export async function setKnockedOut(guildId: string, uid: string): Promise<void> {
+  if (!db) return;
+  try {
+    await updateDoc(doc(db, 'guilds', guildId), {
+      [`guildOperation.participants.${uid}.knockedOut`]: true,
+    });
+  } catch { /* non-critical — server-side transaction already blocks further attacks */ }
 }
