@@ -351,7 +351,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx === -1) return;
     newInventory.splice(idx, 1);
-    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
+    set({ hero: { ...hero, gold: hero.gold + item.goldValue, goldEarnedToday: hero.goldEarnedToday + item.goldValue, inventory: newInventory } });
     get().saveGame();
   },
 
