@@ -33,7 +33,7 @@ function pickSpinItem(boxRarity: Rarity): Item {
 
 export default function MysteryBoxModal() {
   const pending      = useGameStore(s => s.mysteryBoxPending);
-  const addItem      = useGameStore(s => s.addInventoryItem);
+  const addItem      = useGameStore(s => s.addToInventory);
   const dismiss      = useGameStore(s => s.dismissMysteryBox);
 
   const [wonItem, setWonItem]       = useState<Item | null>(null);
