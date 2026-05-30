@@ -50,45 +50,28 @@ export const spinRoulette = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
 
   const saveRef = db.doc(`saves/${uid}`);
+  const snap = await saveRef.get();
+  if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
 
-  // Return error codes as values — throwing HttpsError inside runTransaction
-  // gets swallowed by the Firestore SDK and replaced with a generic INTERNAL error.
-  type TxOk  = { ok: true; result: number; won: boolean; net: number; newGold: number };
-  type TxErr = { ok: false; code: functions.https.FunctionsErrorCode; msg: string };
+  const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
+  const gold: number = hero.gold ?? 0;
+  if (stake > gold) throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
 
-  let txResult: TxOk | TxErr;
-  try {
-    txResult = await db.runTransaction(async tx => {
-      const snap = await tx.get(saveRef);
-      if (!snap.exists) return { ok: false, code: 'not-found' as const, msg: 'No save found' };
+  const result = Math.floor(Math.random() * 37);
+  const won = rouletteWin(betType, result);
+  const back = won ? rouletteReturn(betType, stake) : 0;
+  const newGold = Math.min(gold - stake + back, 1_000_000_000);
+  const netProfit = back - stake;
+  const now = Date.now();
 
-      const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
-      const gold: number = hero.gold ?? 0;
+  await saveRef.update({
+    'hero.gold': newGold,
+    'hero.goldEarnedToday': (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit),
+    'hero.lastCasinoSpinAt': now,
+    updatedAt: now,
+  });
 
-      if (stake > gold) return { ok: false, code: 'failed-precondition' as const, msg: 'Not enough gold' };
-
-      const result = Math.floor(Math.random() * 37);
-      const won = rouletteWin(betType, result);
-      const back = won ? rouletteReturn(betType, stake) : 0;
-      const newGold = Math.min(gold - stake + back, 1_000_000_000);
-      const netProfit = back - stake;
-      const now = Date.now();
-
-      tx.update(saveRef, {
-        'hero.gold': newGold,
-        'hero.goldEarnedToday': admin.firestore.FieldValue.increment(Math.max(0, netProfit)),
-        'hero.lastCasinoSpinAt': now,
-        updatedAt: now,
-      });
-
-      return { ok: true, result, won, net: netProfit, newGold };
-    });
-  } catch (err: any) {
-    throw new functions.https.HttpsError('internal', `Transaction failed: ${err?.message ?? err}`);
-  }
-
-  if (!txResult.ok) throw new functions.https.HttpsError(txResult.code, txResult.msg);
-  return { result: txResult.result, won: txResult.won, net: txResult.net, newGold: txResult.newGold };
+  return { result, won, net: netProfit, newGold };
 });
 
 // ── Gem packages ─────────────────────────────────────────────────────────────
