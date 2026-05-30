@@ -103,7 +103,7 @@ export default function CasinoPanel() {
     setSpinning(true);
     setLastResult(null);
     setSpinError(null);
-    resultRef.current = null;
+
 
     // Deduct stake immediately for responsive UI; restored if function fails
     useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
