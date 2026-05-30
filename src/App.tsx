@@ -64,6 +64,7 @@ export default function App() {
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
   const lastChatViewedAt = useRef(Date.now());
+  const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
 
@@ -103,8 +104,12 @@ export default function App() {
     if (authLoading) return;
     async function load() {
       if (user) {
+        // Force-reload from cloud when switching accounts so that stale in-memory
+        // state from the previous account doesn't fool the "local is newer" check.
+        const force = loadedUidRef.current !== null && loadedUidRef.current !== user.uid;
+        loadedUidRef.current = user.uid;
         try {
-          const loaded = await loadFromCloud(user.uid);
+          const loaded = await loadFromCloud(user.uid, force);
           if (loaded === null) {
             try { localStorage.removeItem('glitchsoul_save'); } catch {}
             initHero('Hero', 1, 2, true);
@@ -113,6 +118,7 @@ export default function App() {
           }
         } catch { loadGame(); }
       } else {
+        loadedUidRef.current = null;
         loadGame();
       }
       setGameLoaded(true);
