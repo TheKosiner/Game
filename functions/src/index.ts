@@ -39,47 +39,39 @@ const NUM_BET_RE = /^num_([0-9]|[12][0-9]|3[0-6])$/;
 // Fully server-side: RNG, stake validation, and Firestore update all happen here.
 // Client receives only the result — cannot influence spin outcome or gold amount.
 export const spinRoulette = functions.https.onCall(async (data, context) => {
-  try {
-    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
 
-    const uid = context.auth.uid;
-    const { betType, stake } = data as { betType: BetType; stake: number };
+  const uid = context.auth.uid;
+  const { betType, stake } = data as { betType: BetType; stake: number };
 
-    if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
-    if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
-      throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
+  if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
+  if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
 
-    const saveRef = db.doc(`saves/${uid}`);
-    const snap = await saveRef.get();
-    if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+  const saveRef = db.doc(`saves/${uid}`);
+  const snap = await saveRef.get();
+  if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
 
-    const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
-    const gold: number = hero.gold ?? 0;
-    if (stake > gold) throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
+  const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
+  const gold: number = hero.gold ?? 0;
+  if (stake > gold) throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
 
-    const result = Math.floor(Math.random() * 37);
-    const won = rouletteWin(betType, result);
-    const back = won ? rouletteReturn(betType, stake) : 0;
-    const newGold = Math.min(gold - stake + back, 1_000_000_000);
-    const netProfit = back - stake;
-    const now = Date.now();
+  const result = Math.floor(Math.random() * 37);
+  const won = rouletteWin(betType, result);
+  const back = won ? rouletteReturn(betType, stake) : 0;
+  const newGold = Math.min(gold - stake + back, 1_000_000_000);
+  const netProfit = back - stake;
+  const now = Date.now();
 
-    await saveRef.update({
-      'hero.gold': newGold,
-      'hero.goldEarnedToday': (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit),
-      'hero.lastCasinoSpinAt': now,
-      updatedAt: now,
-    });
+  await saveRef.update({
+    'hero.gold': newGold,
+    'hero.goldEarnedToday': (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit),
+    'hero.lastCasinoSpinAt': now,
+    updatedAt: now,
+  });
 
-    return { result, won, net: netProfit, newGold };
-  } catch (err: any) {
-    if (err instanceof functions.https.HttpsError) throw err;
-    throw new functions.https.HttpsError(
-      'internal',
-      `[${err?.constructor?.name}] code=${err?.code} msg=${err?.message}`
-    );
-  }
+  return { result, won, net: netProfit, newGold };
 });
 
 // ── Gem packages ─────────────────────────────────────────────────────────────
