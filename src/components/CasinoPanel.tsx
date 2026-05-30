@@ -142,10 +142,13 @@ export default function CasinoPanel() {
         setDisplayed(finalN);
         const won = isWin(betType, finalN);
         let net = -stake;
+        const spinAt = Date.now();
         if (won) {
           const back = totalReturn(betType, stake);
-          useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + back } }));
+          useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + back, lastCasinoSpinAt: spinAt } }));
           net = back - stake;
+        } else {
+          useGameStore.setState(s => ({ hero: { ...s.hero, lastCasinoSpinAt: spinAt } }));
         }
         setLastResult({ n: finalN, won, net });
         setHistory(h => [{ n: finalN }, ...h].slice(0, 20));

@@ -159,6 +159,7 @@ function migrateHeroFromRaw(raw: any) {
     clothingColor: raw.clothingColor ?? 0,
     lastRespecAt: raw.lastRespecAt ?? null,
     completedDungeons: raw.completedDungeons ?? [],
+    lastCasinoSpinAt: raw.lastCasinoSpinAt ?? 0,
   };
 }
 

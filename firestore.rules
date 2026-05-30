@@ -79,6 +79,16 @@ service cloud.firestore {
         && nw.updatedAt >= request.time.toMillis() - 300000;
     }
 
+    // Casino spin: lastCasinoSpinAt can only increase, and if it changed it must
+    // match server time (blocks backdating wins and bulk-simulating offline spins).
+    // Same pattern as validDailyReset / validTimestamp for quest timers.
+    function validCasinoSpin(old, nw) {
+      return nw.hero.lastCasinoSpinAt >= old.hero.lastCasinoSpinAt
+        && (nw.hero.lastCasinoSpinAt == old.hero.lastCasinoSpinAt
+            || (nw.hero.lastCasinoSpinAt <= request.time.toMillis() + 10000
+                && nw.hero.lastCasinoSpinAt >= request.time.toMillis() - 300000));
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
@@ -108,6 +118,7 @@ service cloud.firestore {
         && validDailyReset(old, nw)
         && validRestClear(old, nw)
         && validChallengeCooldown(old, nw)
+        && validCasinoSpin(old, nw)
         && validTimestamp(nw);
     }
 

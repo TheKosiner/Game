@@ -160,6 +160,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     unlockedPortraits: [],
     lastRespecAt: null,
     completedDungeons: [],
+    lastCasinoSpinAt: 0,
   };
 }
 
@@ -1198,6 +1199,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           unlockedPortraits: save.hero.unlockedPortraits ?? [],
           lastRespecAt: save.hero.lastRespecAt ?? null,
           completedDungeons: save.hero.completedDungeons ?? inferCompletedDungeons(save.hero.level ?? 1),
+          lastCasinoSpinAt: save.hero.lastCasinoSpinAt ?? 0,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({

@@ -70,6 +70,7 @@ export interface Hero {
   lastRespecAt: number | null;
   completedDungeons: string[];
   lastTerritoryClaimAt?: Record<string, number>;
+  lastCasinoSpinAt: number;
 }
 
 export interface Enemy {
