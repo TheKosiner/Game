@@ -54,11 +54,11 @@ const QUICK_STAKES = [10, 50, 100, 500, 1000];
 
 // ── Reel animation constants ──────────────────────────────────────────────────
 
-// Cell heights (px) for positions: outer, adjacent, center, adjacent, outer
-const CELL_H = [36, 52, 74, 52, 36];
+const CELL_H = [36, 52, 74, 52, 36]; // outer → center → outer
 const CELL_GAP = 6;
-// Total step from one center to the next (center cell height + gap)
-const STEP_PX = CELL_H[2] + CELL_GAP; // 80px
+const STEP_PX = CELL_H[2] + CELL_GAP; // 80px per tape slot
+const SPIN_VEL  = 9;    // cells/sec while freewheeling (slow enough to read)
+const DECEL_MS  = 1200; // ms for deceleration phase
 
 const rnd37 = () => Math.floor(Math.random() * 37);
 
@@ -115,61 +115,52 @@ export default function CasinoPanel() {
   const [showNums, setShowNums]     = useState(false);
   const [spinError, setSpinError]   = useState<string | null>(null);
 
-  // ── Reel state (mutable ref — not React state for perf) ──────────────────
+  // ── Reel state ────────────────────────────────────────────────────────────
   const reelRef = useRef({
-    tape: Array.from({ length: 60 }, rnd37) as number[],
-    pos: 30,      // float — tape[round(pos)] is in center
-    vel: 0,       // cells per second
-    targetPos: -1 as number, // -1 = freewheel
+    tape:       Array.from({ length: 80 }, rnd37) as number[],
+    pos:        30,              // tape index at center (float)
+    phase:      'idle' as 'idle' | 'spin' | 'decel',
+    decelStart: 0,               // performance.now() when decel began
+    decelFrom:  30,              // pos at decel start
+    targetPos:  30,              // tape index to land on
   });
+  const prevTimeRef = useRef(performance.now());
   const [renderPos, setRenderPos] = useState(30);
-  const rafRef     = useRef<number | undefined>(undefined);
-  const onDoneRef  = useRef<(() => void) | null>(null);
-  const histRef    = useRef<number[]>([]); // local session history
+  const rafRef    = useRef<number | undefined>(undefined);
+  const onDoneRef = useRef<(() => void) | null>(null);
+  const histRef   = useRef<number[]>([]);
 
   // ── RAF animation loop (always running) ──────────────────────────────────
   useEffect(() => {
-    let prev = performance.now();
-
     const frame = (now: number) => {
-      const dt = Math.min((now - prev) / 1000, 0.05);
-      prev = now;
+      const dt = Math.min((now - prevTimeRef.current) / 1000, 0.05);
+      prevTimeRef.current = now;
       const r = reelRef.current;
 
-      if (r.vel > 0.005) {
-        r.pos += r.vel * dt;
-
-        // Extend tape on the fly
-        while (r.pos + 10 > r.tape.length) {
-          r.tape.push(rnd37());
-        }
-
-        if (r.targetPos >= 0) {
-          const dist = r.targetPos - r.pos;
-          if (dist <= 0.04 && r.vel < 0.5) {
-            // Snap to target — done
-            r.pos = r.targetPos;
-            r.vel = 0;
-            r.targetPos = -1;
-            setRenderPos(r.pos);
-            const cb = onDoneRef.current;
-            onDoneRef.current = null;
-            cb?.();
-          } else {
-            // Smooth exponential deceleration toward target
-            const wantedVel = Math.max(dist * 3.5, 0.8);
-            r.vel += (wantedVel - r.vel) * Math.min(dt * 6, 1);
-            r.vel  = Math.max(r.vel, 0.8);
-            setRenderPos(r.pos);
-          }
-        } else {
+      if (r.phase === 'spin') {
+        r.pos += SPIN_VEL * dt;
+        while (r.pos + 15 > r.tape.length) r.tape.push(rnd37());
+        setRenderPos(r.pos);
+      } else if (r.phase === 'decel') {
+        const t = Math.min((now - r.decelStart) / DECEL_MS, 1);
+        // ease-out cubic: fast start, smooth stop
+        const ease = 1 - Math.pow(1 - t, 3);
+        r.pos = r.decelFrom + (r.targetPos - r.decelFrom) * ease;
+        setRenderPos(r.pos);
+        if (t >= 1) {
+          r.pos = r.targetPos;
+          r.phase = 'idle';
           setRenderPos(r.pos);
+          const cb = onDoneRef.current;
+          onDoneRef.current = null;
+          cb?.();
         }
       }
 
       rafRef.current = requestAnimationFrame(frame);
     };
 
+    prevTimeRef.current = performance.now();
     rafRef.current = requestAnimationFrame(frame);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, []);
@@ -202,9 +193,8 @@ export default function CasinoPanel() {
     setLastResult(null);
     setSpinError(null);
 
-    // Kick the reel into fast spin
-    reelRef.current.vel = 28;
-    reelRef.current.targetPos = -1;
+    // Start freewheeling
+    reelRef.current.phase = 'spin';
 
     useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
@@ -214,21 +204,23 @@ export default function CasinoPanel() {
       const r = await fn({ betType, stake });
       res = r.data;
     } catch (err: any) {
-      reelRef.current.vel = 0;
+      reelRef.current.phase = 'idle';
       useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
       setSpinning(false);
       setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
       return;
     }
 
-    // Plant result 14 cells ahead so the reel has room to decelerate
+    // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;
-    const plantAt = Math.ceil(r.pos) + 14;
+    const plantAt = Math.ceil(r.pos) + 5;
     while (r.tape.length <= plantAt + 6) r.tape.push(rnd37());
     r.tape[plantAt] = res.result;
-    // Randomise a few cells after the result so it doesn't look planted
-    for (let i = plantAt + 1; i < plantAt + 5; i++) r.tape[i] = rnd37();
-    r.targetPos = plantAt;
+    for (let i = plantAt + 1; i <= plantAt + 4; i++) r.tape[i] = rnd37();
+    r.decelFrom  = r.pos;
+    r.targetPos  = plantAt;
+    r.decelStart = performance.now();
+    r.phase      = 'decel';
 
     onDoneRef.current = () => {
       useGameStore.setState(s => ({
@@ -259,13 +251,10 @@ export default function CasinoPanel() {
 
   // ── Reel rendering ────────────────────────────────────────────────────────
   const centerIdx = Math.floor(renderPos);
-  const frac      = renderPos - centerIdx;         // 0.0 → 1.0
-  const shiftY    = frac * STEP_PX;                // pixels the strip has scrolled up
+  const frac      = renderPos - centerIdx; // 0.0 → 1.0
 
   // We render 7 cells (-3 … +3) to keep the viewport full during transitions
   const OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
-  // Map offset to visual size index (clamp to 0–4)
-  const sizeIdx = (off: number) => Math.min(4, Math.abs(off) + (Math.abs(off) > 2 ? 99 : 0));
 
   // The center number (landed or mid-spin)
   const centerNum = reelRef.current.tape[centerIdx] ?? 0;
@@ -362,8 +351,8 @@ export default function CasinoPanel() {
             display: 'flex', flexDirection: 'column',
             alignItems: 'center',
             gap: CELL_GAP,
-            // Shift up by frac so the reel scrolls continuously
-            transform: `translateY(${shiftY - STEP_PX}px)`,
+            // Shift strip upward as frac increases (new numbers enter from below)
+            transform: `translateY(${-frac * STEP_PX}px)`,
             // No CSS transition — RAF handles the smoothness
           }}>
             {OFFSETS.map((offset) => {
