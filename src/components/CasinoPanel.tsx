@@ -58,7 +58,7 @@ const CELL_H = [36, 52, 74, 52, 36]; // outer → center → outer
 const CELL_GAP = 6;
 const STEP_PX = CELL_H[2] + CELL_GAP; // 80px per tape slot
 const SPIN_VEL  = 9;    // cells/sec while freewheeling (slow enough to read)
-const DECEL_MS  = 1200; // ms for deceleration phase
+const DECEL_MS  = 3000; // ms for deceleration phase
 
 const rnd37 = () => Math.floor(Math.random() * 37);
 
@@ -143,8 +143,8 @@ export default function CasinoPanel() {
         setRenderPos(r.pos);
       } else if (r.phase === 'decel') {
         const t = Math.min((now - r.decelStart) / DECEL_MS, 1);
-        // ease-out cubic: fast start, smooth stop
-        const ease = 1 - Math.pow(1 - t, 3);
+        // quintic ease-out: stays fast longer, then crawls slowly to a stop
+        const ease = 1 - Math.pow(1 - t, 5);
         r.pos = r.decelFrom + (r.targetPos - r.decelFrom) * ease;
         setRenderPos(r.pos);
         if (t >= 1) {
@@ -213,7 +213,8 @@ export default function CasinoPanel() {
 
     // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;
-    const plantAt = Math.ceil(r.pos) + 5;
+    // distance = SPIN_VEL * DECEL_MS_s / easing_power = 9 * 3 / 5 ≈ 5.4 → 6 cells
+    const plantAt = Math.ceil(r.pos) + 6;
     while (r.tape.length <= plantAt + 6) r.tape.push(rnd37());
     r.tape[plantAt] = res.result;
     for (let i = plantAt + 1; i <= plantAt + 4; i++) r.tape[i] = rnd37();
