@@ -115,7 +115,7 @@ export default function CasinoPanel() {
   const [showNums, setShowNums]     = useState(false);
   const [spinError, setSpinError]   = useState<string | null>(null);
 
-  // ── Reel state (mutable ref — not React state for perf) ────────────────
+  // ── Reel state (mutable ref — not React state for perf) ──────────────────
   const reelRef = useRef({
     tape: Array.from({ length: 60 }, rnd37) as number[],
     pos: 30,      // float — tape[round(pos)] is in center
@@ -123,11 +123,11 @@ export default function CasinoPanel() {
     targetPos: -1 as number, // -1 = freewheel
   });
   const [renderPos, setRenderPos] = useState(30);
-  const rafRef     = useRef<number>();
+  const rafRef     = useRef<number | undefined>(undefined);
   const onDoneRef  = useRef<(() => void) | null>(null);
   const histRef    = useRef<number[]>([]); // local session history
 
-  // ── RAF animation loop (always running) ────────────────────────────
+  // ── RAF animation loop (always running) ──────────────────────────────────
   useEffect(() => {
     let prev = performance.now();
 
@@ -174,7 +174,7 @@ export default function CasinoPanel() {
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, []);
 
-  // ── Firestore feed ────────────────────────────────────────────────────────────
+  // ── Firestore feed ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!db) return;
     const qFeed = query(collection(db, 'casinoSpins'), orderBy('ts',  'desc'), limit(25));
@@ -195,7 +195,7 @@ export default function CasinoPanel() {
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
 
-  // ── Spin ─────────────────────────────────────────────────────────────────────
+  // ── Spin ─────────────────────────────────────────────────────────────────
   const spin = useCallback(async () => {
     if (spinning || !betType || stake <= 0 || stake > hero.gold || !functions) return;
     setSpinning(true);
@@ -257,13 +257,15 @@ export default function CasinoPanel() {
     };
   }, [spinning, betType, stake, hero.gold, saveGame, user]);
 
-  // ── Reel rendering ────────────────────────────────────────────────────────────
+  // ── Reel rendering ────────────────────────────────────────────────────────
   const centerIdx = Math.floor(renderPos);
   const frac      = renderPos - centerIdx;         // 0.0 → 1.0
   const shiftY    = frac * STEP_PX;                // pixels the strip has scrolled up
 
   // We render 7 cells (-3 … +3) to keep the viewport full during transitions
   const OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
+  // Map offset to visual size index (clamp to 0–4)
+  const sizeIdx = (off: number) => Math.min(4, Math.abs(off) + (Math.abs(off) > 2 ? 99 : 0));
 
   // The center number (landed or mid-spin)
   const centerNum = reelRef.current.tape[centerIdx] ?? 0;
@@ -360,7 +362,9 @@ export default function CasinoPanel() {
             display: 'flex', flexDirection: 'column',
             alignItems: 'center',
             gap: CELL_GAP,
+            // Shift up by frac so the reel scrolls continuously
             transform: `translateY(${shiftY - STEP_PX}px)`,
+            // No CSS transition — RAF handles the smoothness
           }}>
             {OFFSETS.map((offset) => {
               const tapeIdx = centerIdx + offset;
