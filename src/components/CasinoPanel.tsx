@@ -1,7 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { functions } from '../lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, addDoc, where } from 'firebase/firestore';
+import { functions, db } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
+import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
 
 interface SpinResult { result: number; won: boolean; net: number; newGold: number }
@@ -53,6 +55,16 @@ const QUICK_STAKES = [10, 50, 100, 500, 1000];
 
 interface HistEntry { n: number }
 
+interface FeedEntry {
+  id: string;
+  username: string;
+  won: boolean;
+  net: number;
+  result: number;
+  stake: number;
+  ts: number;
+}
+
 // ── Subcomponents ─────────────────────────────────────────────────────────────
 
 function BetBtn({
@@ -84,6 +96,7 @@ function BetBtn({
 export default function CasinoPanel() {
   const hero     = useGameStore(s => s.hero);
   const saveGame = useGameStore(s => s.saveGame);
+  const user     = useAuthStore(s => s.user);
 
   const [betType, setBetType]       = useState<BetType | null>(null);
   const [stakeInput, setStakeInput] = useState('100');
@@ -91,9 +104,23 @@ export default function CasinoPanel() {
   const [strip, setStrip]           = useState<number[]>([]);
   const [lastResult, setLastResult] = useState<{ n: number; won: boolean; net: number } | null>(null);
   const [history, setHistory]       = useState<HistEntry[]>([]);
+  const [feed, setFeed]             = useState<FeedEntry[]>([]);
+  const [topWin, setTopWin]         = useState<FeedEntry | null>(null);
+  const [topLoss, setTopLoss]       = useState<FeedEntry | null>(null);
   const [showNums, setShowNums]     = useState(false);
   const [spinError, setSpinError]   = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!db) return;
+    const qFeed = query(collection(db, 'casinoSpins'), orderBy('ts', 'desc'), limit(25));
+    const qWin  = query(collection(db, 'casinoSpins'), where('won', '==', true),  orderBy('net', 'desc'), limit(1));
+    const qLoss = query(collection(db, 'casinoSpins'), where('won', '==', false), orderBy('net', 'asc'),  limit(1));
+    const u1 = onSnapshot(qFeed, snap => setFeed(snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedEntry))));
+    const u2 = onSnapshot(qWin,  snap => setTopWin(snap.docs[0]  ? { id: snap.docs[0].id,  ...snap.docs[0].data()  } as FeedEntry : null));
+    const u3 = onSnapshot(qLoss, snap => setTopLoss(snap.docs[0] ? { id: snap.docs[0].id,  ...snap.docs[0].data()  } as FeedEntry : null));
+    return () => { u1(); u2(); u3(); };
+  }, []);
 
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
@@ -150,6 +177,17 @@ export default function CasinoPanel() {
           setHistory(h => [{ n: res.result }, ...h].slice(0, 20));
           setSpinning(false);
           saveGame();
+          if (db && user) {
+            addDoc(collection(db, 'casinoSpins'), {
+              uid: user.uid,
+              username: user.username,
+              result: res.result,
+              won: res.won,
+              net: res.net,
+              stake,
+              ts: Date.now(),
+            }).catch(() => {});
+          }
         }
       }, cum);
     });
@@ -486,6 +524,84 @@ export default function CasinoPanel() {
         <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center' }}>
           ⚠ {spinError}
         </p>
+      )}
+
+      {/* All-time records */}
+      {(topWin || topLoss) && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
+            🏆 REKORDY WSZECH CZASÓW
+          </p>
+          <div style={{ display: 'flex', gap: 5 }}>
+            {topWin && (
+              <div style={{
+                flex: 1, padding: '7px 8px',
+                background: 'rgba(34,197,94,0.06)',
+                border: '1px solid rgba(34,197,94,0.3)',
+              }}>
+                <p style={{ ...MONO, fontSize: 8, color: '#6ee7b7', marginBottom: 3 }}>▲ NAJWIĘKSZA WYGRANA</p>
+                <p style={{ ...MONO, fontSize: 11, color: '#4ade80' }}>+{topWin.net.toLocaleString()} 🪙</p>
+                <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topWin.username}</p>
+              </div>
+            )}
+            {topLoss && (
+              <div style={{
+                flex: 1, padding: '7px 8px',
+                background: 'rgba(239,68,68,0.06)',
+                border: '1px solid rgba(239,68,68,0.25)',
+              }}>
+                <p style={{ ...MONO, fontSize: 8, color: '#fca5a5', marginBottom: 3 }}>▼ NAJWIĘKSZA PRZEGRANA</p>
+                <p style={{ ...MONO, fontSize: 11, color: '#f87171' }}>−{Math.abs(topLoss.net).toLocaleString()} 🪙</p>
+                <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topLoss.username}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Global spin feed */}
+      {feed.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 5 }}>
+            OSTATNIE 25 LOSOWAŃ GRACZY
+          </p>
+          {feed.map((e, i) => {
+            const rc = numColor(e.result);
+            const won = e.won;
+            return (
+              <div key={e.id} style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '5px 8px',
+                background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
+                borderBottom: '1px solid rgba(255,255,255,0.04)',
+              }}>
+                {/* Result bubble */}
+                <span style={{
+                  ...MONO, fontSize: 9, minWidth: 22, textAlign: 'center',
+                  color: rc, background: rc + '18',
+                  border: `1px solid ${rc}44`,
+                  padding: '1px 4px', flexShrink: 0,
+                }}>
+                  {e.result}
+                </span>
+                {/* Username */}
+                <span style={{
+                  ...MONO, fontSize: 9, color: 'var(--text-dim)',
+                  flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {e.username}
+                </span>
+                {/* Win / loss */}
+                <span style={{
+                  ...MONO, fontSize: 9, flexShrink: 0,
+                  color: won ? '#4ade80' : '#f87171',
+                }}>
+                  {won ? `+${e.net.toLocaleString()}` : `−${Math.abs(e.net).toLocaleString()}`} 🪙
+                </span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
