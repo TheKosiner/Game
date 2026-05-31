@@ -50,20 +50,17 @@ function betOdds(bet: BetType): string {
   return '1:1';
 }
 
-
 const QUICK_STAKES = [10, 50, 100, 500, 1000];
 
-interface HistEntry { n: number }
+// ── Reel animation constants ──────────────────────────────────────────────────
 
-interface FeedEntry {
-  id: string;
-  username: string;
-  won: boolean;
-  net: number;
-  result: number;
-  stake: number;
-  ts: number;
-}
+// Cell heights (px) for positions: outer, adjacent, center, adjacent, outer
+const CELL_H = [36, 52, 74, 52, 36];
+const CELL_GAP = 6;
+// Total step from one center to the next (center cell height + gap)
+const STEP_PX = CELL_H[2] + CELL_GAP; // 80px
+
+const rnd37 = () => Math.floor(Math.random() * 37);
 
 // ── Subcomponents ─────────────────────────────────────────────────────────────
 
@@ -91,6 +88,16 @@ function BetBtn({
   );
 }
 
+interface FeedEntry {
+  id: string;
+  username: string;
+  won: boolean;
+  net: number;
+  result: number;
+  stake: number;
+  ts: number;
+}
+
 // ── Main panel ────────────────────────────────────────────────────────────────
 
 export default function CasinoPanel() {
@@ -101,16 +108,73 @@ export default function CasinoPanel() {
   const [betType, setBetType]       = useState<BetType | null>(null);
   const [stakeInput, setStakeInput] = useState('100');
   const [spinning, setSpinning]     = useState(false);
-  const [strip, setStrip]           = useState<number[]>([]);
   const [lastResult, setLastResult] = useState<{ n: number; won: boolean; net: number } | null>(null);
-  const [history, setHistory]       = useState<HistEntry[]>([]);
   const [feed, setFeed]             = useState<FeedEntry[]>([]);
   const [topWin, setTopWin]         = useState<FeedEntry | null>(null);
   const [topLoss, setTopLoss]       = useState<FeedEntry | null>(null);
   const [showNums, setShowNums]     = useState(false);
   const [spinError, setSpinError]   = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── Reel state (mutable ref — not React state for perf) ────────────────
+  const reelRef = useRef({
+    tape: Array.from({ length: 60 }, rnd37) as number[],
+    pos: 30,      // float — tape[round(pos)] is in center
+    vel: 0,       // cells per second
+    targetPos: -1 as number, // -1 = freewheel
+  });
+  const [renderPos, setRenderPos] = useState(30);
+  const rafRef     = useRef<number>();
+  const onDoneRef  = useRef<(() => void) | null>(null);
+  const histRef    = useRef<number[]>([]); // local session history
+
+  // ── RAF animation loop (always running) ────────────────────────────
+  useEffect(() => {
+    let prev = performance.now();
+
+    const frame = (now: number) => {
+      const dt = Math.min((now - prev) / 1000, 0.05);
+      prev = now;
+      const r = reelRef.current;
+
+      if (r.vel > 0.005) {
+        r.pos += r.vel * dt;
+
+        // Extend tape on the fly
+        while (r.pos + 10 > r.tape.length) {
+          r.tape.push(rnd37());
+        }
+
+        if (r.targetPos >= 0) {
+          const dist = r.targetPos - r.pos;
+          if (dist <= 0.04 && r.vel < 0.5) {
+            // Snap to target — done
+            r.pos = r.targetPos;
+            r.vel = 0;
+            r.targetPos = -1;
+            setRenderPos(r.pos);
+            const cb = onDoneRef.current;
+            onDoneRef.current = null;
+            cb?.();
+          } else {
+            // Smooth exponential deceleration toward target
+            const wantedVel = Math.max(dist * 3.5, 0.8);
+            r.vel += (wantedVel - r.vel) * Math.min(dt * 6, 1);
+            r.vel  = Math.max(r.vel, 0.8);
+            setRenderPos(r.pos);
+          }
+        } else {
+          setRenderPos(r.pos);
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(frame);
+    };
+
+    rafRef.current = requestAnimationFrame(frame);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, []);
+
+  // ── Firestore feed ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!db) return;
     const qFeed = query(collection(db, 'casinoSpins'), orderBy('ts',  'desc'), limit(25));
@@ -130,21 +194,19 @@ export default function CasinoPanel() {
 
   const maxStake = hero.gold;
   const stake    = Math.max(1, Math.min(parseInt(stakeInput) || 0, maxStake));
-  const rnd = () => Math.floor(Math.random() * 37);
 
+  // ── Spin ─────────────────────────────────────────────────────────────────────
   const spin = useCallback(async () => {
     if (spinning || !betType || stake <= 0 || stake > hero.gold || !functions) return;
     setSpinning(true);
     setLastResult(null);
     setSpinError(null);
 
-    setStrip(Array.from({ length: 5 }, rnd));
-    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
+    // Kick the reel into fast spin
+    reelRef.current.vel = 28;
+    reelRef.current.targetPos = -1;
 
-    // Fast scroll while waiting for Cloud Function
-    const fastSpin = setInterval(() => {
-      setStrip(prev => [...prev.slice(1), rnd()]);
-    }, 80);
+    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
     let res: SpinResult;
     try {
@@ -152,55 +214,63 @@ export default function CasinoPanel() {
       const r = await fn({ betType, stake });
       res = r.data;
     } catch (err: any) {
-      clearInterval(fastSpin);
+      reelRef.current.vel = 0;
       useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
       setSpinning(false);
-      setStrip([]);
       setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
       return;
     }
 
-    clearInterval(fastSpin);
+    // Plant result 14 cells ahead so the reel has room to decelerate
+    const r = reelRef.current;
+    const plantAt = Math.ceil(r.pos) + 14;
+    while (r.tape.length <= plantAt + 6) r.tape.push(rnd37());
+    r.tape[plantAt] = res.result;
+    // Randomise a few cells after the result so it doesn't look planted
+    for (let i = plantAt + 1; i < plantAt + 5; i++) r.tape[i] = rnd37();
+    r.targetPos = plantAt;
 
-    // Landing: 5 shifts — result enters on shift 3, sits in middle (idx 2) after shift 5
-    const landing = [rnd(), rnd(), res.result, rnd(), rnd()];
-    const delays  = [160, 270, 420, 620, 900];
-    let cum = 0;
-    landing.forEach((num, idx) => {
-      cum += delays[idx];
-      timerRef.current = setTimeout(() => {
-        setStrip(prev => [...prev.slice(1), num]);
-        if (idx === landing.length - 1) {
-          useGameStore.setState(s => ({
-            hero: {
-              ...s.hero,
-              gold: s.hero.gold + (res.won ? res.net + stake : 0),
-              goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
-              lastCasinoSpinAt: Date.now(),
-            },
-          }));
-          setLastResult({ n: res.result, won: res.won, net: res.net });
-          setHistory(h => [{ n: res.result }, ...h].slice(0, 20));
-          setSpinning(false);
-          saveGame();
-          if (db && user) {
-            addDoc(collection(db, 'casinoSpins'), {
-              uid: user.uid,
-              username: user.username,
-              result: res.result,
-              won: res.won,
-              net: res.net,
-              stake,
-              ts: Date.now(),
-            }).catch(() => {});
-          }
-        }
-      }, cum);
-    });
-  }, [spinning, betType, stake, hero.gold, saveGame]);
+    onDoneRef.current = () => {
+      useGameStore.setState(s => ({
+        hero: {
+          ...s.hero,
+          gold: s.hero.gold + (res.won ? res.net + stake : 0),
+          goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
+          lastCasinoSpinAt: Date.now(),
+        },
+      }));
+      setLastResult({ n: res.result, won: res.won, net: res.net });
+      histRef.current = [res.result, ...histRef.current].slice(0, 20);
+      setSpinning(false);
+      saveGame();
+      if (db && user) {
+        addDoc(collection(db, 'casinoSpins'), {
+          uid: user.uid,
+          username: user.username,
+          result: res.result,
+          won: res.won,
+          net: res.net,
+          stake,
+          ts: Date.now(),
+        }).catch(() => {});
+      }
+    };
+  }, [spinning, betType, stake, hero.gold, saveGame, user]);
 
-  const centerNum = strip[2] ?? null;
-  const c = centerNum !== null ? numColor(centerNum) : '#334155';
+  // ── Reel rendering ────────────────────────────────────────────────────────────
+  const centerIdx = Math.floor(renderPos);
+  const frac      = renderPos - centerIdx;         // 0.0 → 1.0
+  const shiftY    = frac * STEP_PX;                // pixels the strip has scrolled up
+
+  // We render 7 cells (-3 … +3) to keep the viewport full during transitions
+  const OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
+
+  // The center number (landed or mid-spin)
+  const centerNum = reelRef.current.tape[centerIdx] ?? 0;
+  const c = numColor(centerNum);
+
+  // Viewport height = 5 visible cells + gaps
+  const viewH = CELL_H[0] + CELL_H[1] + CELL_H[2] + CELL_H[3] + CELL_H[4] + 4 * CELL_GAP;
 
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -215,80 +285,115 @@ export default function CasinoPanel() {
         </p>
       </div>
 
-      {/* History strip */}
-      {history.length > 0 && (
+      {/* Session history strip */}
+      {histRef.current.length > 0 && (
         <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-          {history.map((h, i) => {
-            const hc = numColor(h.n);
+          {histRef.current.map((n, i) => {
+            const hc = numColor(n);
             return (
               <span key={i} style={{
-                ...MONO, fontSize: 9,
-                color: hc,
-                background: hc + '18',
-                border: `1px solid ${hc}44`,
+                ...MONO, fontSize: 9, color: hc,
+                background: hc + '18', border: `1px solid ${hc}44`,
                 padding: '1px 5px', minWidth: 20, textAlign: 'center',
               }}>
-                {h.n}
+                {n}
               </span>
             );
           })}
         </div>
       )}
 
-      {/* Roulette drum strip */}
+      {/* ── Roulette drum (vertical reel) ── */}
       <div style={{
         background: 'linear-gradient(135deg, rgba(4,2,12,0.98), rgba(8,4,18,0.98))',
-        border: `2px solid ${spinning ? 'rgba(255,215,0,0.55)' : c + '55'}`,
-        padding: '18px 0 14px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-        boxShadow: `0 0 28px ${spinning ? 'rgba(255,215,0,0.12)' : c + '10'}`,
-        transition: 'border-color 0.08s',
+        border: `2px solid ${spinning ? 'rgba(255,215,0,0.5)' : c + '66'}`,
+        padding: '0',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0,
+        boxShadow: `0 0 28px ${spinning ? 'rgba(255,215,0,0.12)' : c + '18'}`,
+        transition: 'border-color 0.15s, box-shadow 0.15s',
         position: 'relative', overflow: 'hidden',
       }}>
         {/* CRT scanlines */}
         <div style={{
-          position: 'absolute', inset: 0, pointerEvents: 'none',
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px)',
+          position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px)',
         }} />
 
-        {/* 5-cell drum */}
-        <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-          {/* Side fade masks */}
-          <div style={{
-            position: 'absolute', left: 0, top: 0, bottom: 0, width: '18%', pointerEvents: 'none', zIndex: 2,
-            background: 'linear-gradient(to right, rgba(4,2,12,0.95), transparent)',
-          }} />
-          <div style={{
-            position: 'absolute', right: 0, top: 0, bottom: 0, width: '18%', pointerEvents: 'none', zIndex: 2,
-            background: 'linear-gradient(to left, rgba(4,2,12,0.95), transparent)',
-          }} />
+        {/* Top / bottom fade masks */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: 0, height: '30%',
+          background: 'linear-gradient(to bottom, rgba(4,2,12,0.92), transparent)',
+          pointerEvents: 'none', zIndex: 2,
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, bottom: 0, height: '30%',
+          background: 'linear-gradient(to top, rgba(4,2,12,0.92), transparent)',
+          pointerEvents: 'none', zIndex: 2,
+        }} />
 
-          {/* Cells */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {(strip.length === 5 ? strip : [null, null, null, null, null]).map((n, i) => {
-              const isCenter = i === 2;
-              const cellColor = n !== null ? numColor(n) : (isCenter ? '#334155' : '#1e293b');
-              const opacity = isCenter ? 1 : i === 1 || i === 3 ? 0.7 : 0.4;
-              const size = isCenter ? 72 : i === 1 || i === 3 ? 54 : 40;
+        {/* Center highlight line pair */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, zIndex: 2,
+          top: `calc(50% - ${CELL_H[2] / 2 + 2}px)`,
+          height: 2,
+          background: spinning ? 'rgba(255,215,0,0.35)' : c + '55',
+          transition: 'background 0.15s',
+          boxShadow: spinning ? '0 0 8px rgba(255,215,0,0.3)' : `0 0 8px ${c}44`,
+        }} />
+        <div style={{
+          position: 'absolute', left: 0, right: 0, zIndex: 2,
+          bottom: `calc(50% - ${CELL_H[2] / 2 + 2}px)`,
+          height: 2,
+          background: spinning ? 'rgba(255,215,0,0.35)' : c + '55',
+          transition: 'background 0.15s',
+          boxShadow: spinning ? '0 0 8px rgba(255,215,0,0.3)' : `0 0 8px ${c}44`,
+        }} />
+
+        {/* Scrolling reel viewport */}
+        <div style={{
+          width: '100%', height: viewH,
+          overflow: 'hidden', position: 'relative',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {/* The actual tape — translated by fractional offset for smooth scroll */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center',
+            gap: CELL_GAP,
+            transform: `translateY(${shiftY - STEP_PX}px)`,
+          }}>
+            {OFFSETS.map((offset) => {
+              const tapeIdx = centerIdx + offset;
+              const num = reelRef.current.tape[Math.max(0, tapeIdx)] ?? rnd37();
+              const isCenter = offset === 0;
+              const absOff   = Math.abs(offset);
+              const sz       = absOff === 0 ? CELL_H[2] : absOff === 1 ? CELL_H[1] : CELL_H[0];
+              const opacity  = absOff === 0 ? 1 : absOff === 1 ? 0.62 : 0.28;
+              const cellColor = numColor(num);
+
               return (
-                <div key={i} style={{
-                  width: size, height: size,
-                  borderRadius: 6,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: n !== null ? cellColor + (isCenter ? '22' : '14') : 'rgba(255,255,255,0.03)',
-                  border: `${isCenter ? 2 : 1}px solid ${n !== null ? cellColor + (isCenter ? 'cc' : '55') : 'rgba(255,255,255,0.08)'}`,
-                  boxShadow: isCenter && n !== null ? `0 0 18px ${cellColor}55, inset 0 0 10px ${cellColor}18` : 'none',
-                  opacity,
-                  transition: 'opacity 0.06s',
-                  flexShrink: 0,
-                }}>
+                <div
+                  key={offset}
+                  style={{
+                    width: sz, height: sz, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: 6,
+                    background: isCenter
+                      ? cellColor + '20'
+                      : 'rgba(255,255,255,0.025)',
+                    border: `${isCenter ? 2 : 1}px solid ${isCenter ? cellColor + 'bb' : 'rgba(255,255,255,0.06)'}`,
+                    boxShadow: isCenter ? `0 0 20px ${cellColor}44, inset 0 0 12px ${cellColor}14` : 'none',
+                    opacity,
+                    transition: 'opacity 0.06s',
+                  }}
+                >
                   <span style={{
                     fontFamily: "'Orbitron', monospace", fontWeight: 900,
-                    fontSize: n !== null && n >= 10 ? (isCenter ? 22 : 14) : (isCenter ? 26 : 16),
-                    color: n !== null ? cellColor : 'rgba(255,255,255,0.12)',
-                    textShadow: isCenter && n !== null ? `0 0 10px ${cellColor}` : 'none',
+                    fontSize: isCenter ? (num >= 10 ? 24 : 28) : (absOff === 1 ? (num >= 10 ? 16 : 18) : (num >= 10 ? 12 : 14)),
+                    color: isCenter ? cellColor : 'rgba(255,255,255,0.4)',
+                    textShadow: isCenter ? `0 0 12px ${cellColor}` : 'none',
                   }}>
-                    {n !== null ? n : '?'}
+                    {num}
                   </span>
                 </div>
               );
@@ -296,26 +401,20 @@ export default function CasinoPanel() {
           </div>
         </div>
 
-        {/* Center indicator line */}
-        <div style={{
-          width: 2, height: '100%', position: 'absolute', top: 0, left: '50%',
-          background: spinning ? 'rgba(255,215,0,0.25)' : c + '33',
-          pointerEvents: 'none', zIndex: 1,
-          transition: 'background 0.1s',
-        }} />
-
-        {/* Status line */}
-        {spinning ? (
-          <p style={{ ...MONO, fontSize: 9, color: '#fbbf24', letterSpacing: 2 }}>⟳ KRĘCI...</p>
-        ) : centerNum !== null ? (
-          <p style={{ ...MONO, fontSize: 9, color: c, letterSpacing: 1, textShadow: `0 0 8px ${c}80` }}>
-            {numLabel(centerNum)}
-          </p>
-        ) : (
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
-            POSTAW ZAKŁAD I ZAKRĘĆ
-          </p>
-        )}
+        {/* Status label */}
+        <div style={{ padding: '8px 0 10px', zIndex: 3 }}>
+          {spinning ? (
+            <p style={{ ...MONO, fontSize: 9, color: '#fbbf24', letterSpacing: 2 }}>⟳ KRĘCI...</p>
+          ) : lastResult !== null ? (
+            <p style={{ ...MONO, fontSize: 9, color: c, letterSpacing: 1, textShadow: `0 0 8px ${c}80` }}>
+              {numLabel(centerNum)}
+            </p>
+          ) : (
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
+              POSTAW ZAKŁAD I ZAKRĘĆ
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Win / loss flash */}
@@ -370,22 +469,8 @@ export default function CasinoPanel() {
               fontSize: 13, padding: '7px 10px', outline: 'none',
             }}
           />
-          <button
-            onClick={() => setStakeInput(String(Math.min(stake * 2, maxStake)))}
-            disabled={spinning}
-            className="btn btn-secondary"
-            style={{ fontSize: 9, padding: '6px 9px' }}
-          >
-            ×2
-          </button>
-          <button
-            onClick={() => setStakeInput(String(Math.max(1, Math.floor(stake / 2))))}
-            disabled={spinning}
-            className="btn btn-secondary"
-            style={{ fontSize: 9, padding: '6px 9px' }}
-          >
-            ÷2
-          </button>
+          <button onClick={() => setStakeInput(String(Math.min(stake * 2, maxStake)))} disabled={spinning} className="btn btn-secondary" style={{ fontSize: 9, padding: '6px 9px' }}>×2</button>
+          <button onClick={() => setStakeInput(String(Math.max(1, Math.floor(stake / 2))))} disabled={spinning} className="btn btn-secondary" style={{ fontSize: 9, padding: '6px 9px' }}>÷2</button>
         </div>
       </div>
 
@@ -393,39 +478,15 @@ export default function CasinoPanel() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>TYP ZAKŁADU</p>
 
-        {/* Red / Black */}
         <div style={{ display: 'flex', gap: 5 }}>
-          <button
-            onClick={() => setBetType('red')}
-            disabled={spinning}
-            style={{
-              flex: 1, padding: '10px 4px', cursor: 'pointer',
-              background: betType === 'red' ? 'rgba(239,68,68,0.25)' : 'rgba(5,8,20,0.8)',
-              border: `2px solid ${betType === 'red' ? '#ef4444' : 'rgba(239,68,68,0.25)'}`,
-              color: '#fca5a5', fontFamily: "'Share Tech Mono', monospace", fontSize: 10,
-              transition: 'border-color 0.1s',
-            }}
-          >
-            🔴 CZERWONY<br />
-            <span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+          <button onClick={() => setBetType('red')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'red' ? 'rgba(239,68,68,0.25)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'red' ? '#ef4444' : 'rgba(239,68,68,0.25)'}`, color: '#fca5a5', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
+            🔴 CZERWONY<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
           </button>
-          <button
-            onClick={() => setBetType('black')}
-            disabled={spinning}
-            style={{
-              flex: 1, padding: '10px 4px', cursor: 'pointer',
-              background: betType === 'black' ? 'rgba(148,163,184,0.15)' : 'rgba(5,8,20,0.8)',
-              border: `2px solid ${betType === 'black' ? '#94a3b8' : 'rgba(148,163,184,0.2)'}`,
-              color: '#cbd5e1', fontFamily: "'Share Tech Mono', monospace", fontSize: 10,
-              transition: 'border-color 0.1s',
-            }}
-          >
-            ⚫ CZARNY<br />
-            <span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+          <button onClick={() => setBetType('black')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'black' ? 'rgba(148,163,184,0.15)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'black' ? '#94a3b8' : 'rgba(148,163,184,0.2)'}`, color: '#cbd5e1', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
+            ⚫ CZARNY<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
           </button>
         </div>
 
-        {/* Even-chance row 1: odd / even / low / high */}
         <div style={{ display: 'flex', gap: 4 }}>
           {(['odd', 'even', 'low', 'high'] as const).map(b => {
             const labels = ['NIEP.', 'PARZ.', '1–18', '19–36'];
@@ -438,7 +499,6 @@ export default function CasinoPanel() {
           })}
         </div>
 
-        {/* Dozens */}
         <div style={{ display: 'flex', gap: 4 }}>
           {(['dozen1', 'dozen2', 'dozen3'] as const).map(b => {
             const label = b === 'dozen1' ? '1–12' : b === 'dozen2' ? '13–24' : '25–36';
@@ -450,13 +510,7 @@ export default function CasinoPanel() {
           })}
         </div>
 
-        {/* Number picker toggle */}
-        <button
-          onClick={() => setShowNums(v => !v)}
-          disabled={spinning}
-          className="btn btn-secondary"
-          style={{ fontSize: 9, padding: '5px', width: '100%' }}
-        >
+        <button onClick={() => setShowNums(v => !v)} disabled={spinning} className="btn btn-secondary" style={{ fontSize: 9, padding: '5px', width: '100%' }}>
           {showNums ? '▲ UKRYJ NUMERY' : `▼ NUMER DOKŁADNY (35:1)${betType?.startsWith('num_') ? ` — wybrany: ${betType.slice(4)}` : ''}`}
         </button>
 
@@ -466,18 +520,7 @@ export default function CasinoPanel() {
               const nc = numColor(i);
               const active = betType === `num_${i}`;
               return (
-                <button
-                  key={i}
-                  onClick={() => { setBetType(`num_${i}` as BetType); setShowNums(false); }}
-                  disabled={spinning}
-                  style={{
-                    padding: '5px 2px', textAlign: 'center', cursor: 'pointer',
-                    background: active ? nc + '30' : nc + '10',
-                    border: `1px solid ${active ? nc : nc + '44'}`,
-                    color: active ? nc : nc + 'cc',
-                    fontFamily: "'Share Tech Mono', monospace", fontSize: 9,
-                  }}
-                >
+                <button key={i} onClick={() => { setBetType(`num_${i}` as BetType); setShowNums(false); }} disabled={spinning} style={{ padding: '5px 2px', textAlign: 'center', cursor: 'pointer', background: active ? nc + '30' : nc + '10', border: `1px solid ${active ? nc : nc + '44'}`, color: active ? nc : nc + 'cc', fontFamily: "'Share Tech Mono', monospace", fontSize: 9 }}>
                   {i}
                 </button>
               );
@@ -488,15 +531,9 @@ export default function CasinoPanel() {
 
       {/* Active bet summary */}
       {betType && (
-        <div style={{
-          background: 'rgba(255,215,0,0.05)',
-          border: '1px solid rgba(255,215,0,0.25)',
-          padding: '7px 12px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        }}>
+        <div style={{ background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.25)', padding: '7px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ ...MONO, fontSize: 10, color: '#fbbf24' }}>
-            {betLabel(betType)}
-            <span style={{ opacity: 0.55, marginLeft: 6 }}>({betOdds(betType)})</span>
+            {betLabel(betType)}<span style={{ opacity: 0.55, marginLeft: 6 }}>({betOdds(betType)})</span>
           </span>
           <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>🪙 {stake.toLocaleString()}</span>
         </div>
@@ -508,8 +545,7 @@ export default function CasinoPanel() {
         disabled={spinning || !betType || stake <= 0 || hero.gold <= 0}
         className="btn btn-primary"
         style={{
-          padding: '13px',
-          fontSize: 11, letterSpacing: 3,
+          padding: '13px', fontSize: 11, letterSpacing: 3,
           opacity: !betType || hero.gold <= 0 ? 0.4 : 1,
           background: spinning ? undefined : 'linear-gradient(135deg, rgba(245,158,11,0.25), rgba(245,158,11,0.08))',
           borderColor: spinning ? undefined : 'rgba(245,158,11,0.6)',
@@ -517,45 +553,27 @@ export default function CasinoPanel() {
           textShadow: spinning ? 'none' : '0 0 10px rgba(245,158,11,0.7)',
         }}
       >
-        {spinning
-          ? '⟳ KRĘCI...'
-          : hero.gold <= 0
-          ? '— BRAK ZŁOTA —'
-          : betType
-          ? `🎰 ZAKRĘĆ — 🪙 ${stake.toLocaleString()}`
-          : '← WYBIERZ ZAKŁAD'}
+        {spinning ? '⟳ KRĘCI...' : hero.gold <= 0 ? '— BRAK ZŁOTA —' : betType ? `🎰 ZAKRĘĆ — 🪙 ${stake.toLocaleString()}` : '← WYBIERZ ZAKŁAD'}
       </button>
 
       {spinError && (
-        <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center' }}>
-          ⚠ {spinError}
-        </p>
+        <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center' }}>⚠ {spinError}</p>
       )}
 
       {/* All-time records */}
       {(topWin || topLoss) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
-            🏆 REKORDY WSZECHCZASÓW
-          </p>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>🏆 REKORDY WSZECH CZASÓW</p>
           <div style={{ display: 'flex', gap: 5 }}>
             {topWin && (
-              <div style={{
-                flex: 1, padding: '7px 8px',
-                background: 'rgba(34,197,94,0.06)',
-                border: '1px solid rgba(34,197,94,0.3)',
-              }}>
+              <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}>
                 <p style={{ ...MONO, fontSize: 8, color: '#6ee7b7', marginBottom: 3 }}>▲ NAJWIĘKSZA WYGRANA</p>
                 <p style={{ ...MONO, fontSize: 11, color: '#4ade80' }}>+{topWin.net.toLocaleString()} 🪙</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topWin.username}</p>
               </div>
             )}
             {topLoss && (
-              <div style={{
-                flex: 1, padding: '7px 8px',
-                background: 'rgba(239,68,68,0.06)',
-                border: '1px solid rgba(239,68,68,0.25)',
-              }}>
+              <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
                 <p style={{ ...MONO, fontSize: 8, color: '#fca5a5', marginBottom: 3 }}>▼ NAJWIĘKSZA PRZEGRANA</p>
                 <p style={{ ...MONO, fontSize: 11, color: '#f87171' }}>−{Math.abs(topLoss.net).toLocaleString()} 🪙</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topLoss.username}</p>
@@ -575,33 +593,10 @@ export default function CasinoPanel() {
             const rc = numColor(e.result);
             const won = e.won;
             return (
-              <div key={e.id} style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '5px 8px',
-                background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                borderBottom: '1px solid rgba(255,255,255,0.04)',
-              }}>
-                {/* Result bubble */}
-                <span style={{
-                  ...MONO, fontSize: 9, minWidth: 22, textAlign: 'center',
-                  color: rc, background: rc + '18',
-                  border: `1px solid ${rc}44`,
-                  padding: '1px 4px', flexShrink: 0,
-                }}>
-                  {e.result}
-                </span>
-                {/* Username */}
-                <span style={{
-                  ...MONO, fontSize: 9, color: 'var(--text-dim)',
-                  flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>
-                  {e.username}
-                </span>
-                {/* Win / loss */}
-                <span style={{
-                  ...MONO, fontSize: 9, flexShrink: 0,
-                  color: won ? '#4ade80' : '#f87171',
-                }}>
+              <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 8px', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <span style={{ ...MONO, fontSize: 9, minWidth: 22, textAlign: 'center', color: rc, background: rc + '18', border: `1px solid ${rc}44`, padding: '1px 4px', flexShrink: 0 }}>{e.result}</span>
+                <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.username}</span>
+                <span style={{ ...MONO, fontSize: 9, flexShrink: 0, color: won ? '#4ade80' : '#f87171' }}>
                   {won ? `+${e.net.toLocaleString()}` : `−${Math.abs(e.net).toLocaleString()}`} 🪙
                 </span>
               </div>
