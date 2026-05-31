@@ -5,8 +5,8 @@ import { syncToCloud } from '../lib/cloudSync';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import {
-  ActiveBuff, BUFFS, DEBUFFS,
-  KryptaEnemy, buildEnemy, pickRandomEnemy,
+  type ActiveBuff, BUFFS, DEBUFFS,
+  type KryptaEnemy, buildEnemy, pickRandomEnemy,
   BOSS_TEMPLATE, SPIDER_TEMPLATE, getBossRarity,
 } from '../data/krypta';
 
@@ -86,11 +86,9 @@ export default function KryptaPanel() {
   const [log, setLog]               = useState<string[]>([]);
   const [totalXp, setTotalXp]       = useState(0);
   const [totalGold, setTotalGold]   = useState(0);
-  const [isBossPhase, setIsBossPhase] = useState(false);
 
-  const baseAtk     = getHeroAttack(hero);
-  const baseDef     = getHeroDefense(hero);
-  const baseMaxHp   = getHeroMaxHp(hero.stats, hero.level, hero.equipment);
+  const baseAtk = getHeroAttack(hero);
+  const baseDef = getHeroDefense(hero);
 
   const atkMult = buffs.reduce((a, b) => a * b.atkMult, 1) * (hasCompanion ? 1 + COMPANION_ATK_BONUS : 1);
   const defMult = buffs.reduce((a, b) => a * b.defMult, 1);
@@ -123,7 +121,6 @@ export default function KryptaPanel() {
     setEventType(null);
     setTotalXp(0);
     setTotalGold(0);
-    setIsBossPhase(false);
     setLog(['⚰️ Wkraczasz w mroczne głębiny Krypty...']);
   }
 
@@ -135,7 +132,6 @@ export default function KryptaPanel() {
     setLog([]);
     setBuffs([]);
     setHasCompanion(false);
-    setIsBossPhase(false);
   }
 
   function chooseDirection(_dir: 'left' | 'center' | 'right') {
@@ -186,7 +182,7 @@ export default function KryptaPanel() {
         const box = createMysteryBox(getBossRarity(hero.level), hero.level);
         addToInventory(box);
         saveGame();
-        if (user) syncToCloud(useGameStore.getState().hero, user.uid).catch(() => {});
+        if (user) syncToCloud(user.uid, user.username).catch(() => {});
         pushLog([`🏆 LORD CIENIA pokonany!`, `🎁 ${box.name} trafia do ekwipunku!`, `📈 Łącznie: +${newXp} XP, +${newGold} 🪙`, ...msgs.slice().reverse()]);
         setTotalXp(newXp);
         setTotalGold(newGold);
@@ -228,7 +224,6 @@ export default function KryptaPanel() {
   function startBoss() {
     const e = buildEnemy(BOSS_TEMPLATE, hero.level, TOTAL_ROOMS + 1);
     setEnemy(e);
-    setIsBossPhase(true);
     pushLog(['☠️ LORD CIENIA staje przed tobą! Walka na śmierć i życie!']);
     setPhase('boss_combat');
   }
