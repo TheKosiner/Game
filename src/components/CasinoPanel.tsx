@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { collection, query, orderBy, limit, onSnapshot, addDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/firestore';
 import { functions, db } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
@@ -113,12 +113,18 @@ export default function CasinoPanel() {
 
   useEffect(() => {
     if (!db) return;
-    const qFeed = query(collection(db, 'casinoSpins'), orderBy('ts', 'desc'), limit(25));
-    const qWin  = query(collection(db, 'casinoSpins'), where('won', '==', true),  orderBy('net', 'desc'), limit(1));
-    const qLoss = query(collection(db, 'casinoSpins'), where('won', '==', false), orderBy('net', 'asc'),  limit(1));
+    const qFeed = query(collection(db, 'casinoSpins'), orderBy('ts',  'desc'), limit(25));
+    const qWin  = query(collection(db, 'casinoSpins'), orderBy('net', 'desc'), limit(1));
+    const qLoss = query(collection(db, 'casinoSpins'), orderBy('net', 'asc'),  limit(1));
     const u1 = onSnapshot(qFeed, snap => setFeed(snap.docs.map(d => ({ id: d.id, ...d.data() } as FeedEntry))));
-    const u2 = onSnapshot(qWin,  snap => setTopWin(snap.docs[0]  ? { id: snap.docs[0].id,  ...snap.docs[0].data()  } as FeedEntry : null));
-    const u3 = onSnapshot(qLoss, snap => setTopLoss(snap.docs[0] ? { id: snap.docs[0].id,  ...snap.docs[0].data()  } as FeedEntry : null));
+    const u2 = onSnapshot(qWin,  snap => {
+      const e = snap.docs[0] ? { id: snap.docs[0].id, ...snap.docs[0].data() } as FeedEntry : null;
+      setTopWin(e?.won ? e : null);
+    });
+    const u3 = onSnapshot(qLoss, snap => {
+      const e = snap.docs[0] ? { id: snap.docs[0].id, ...snap.docs[0].data() } as FeedEntry : null;
+      setTopLoss(e && !e.won ? e : null);
+    });
     return () => { u1(); u2(); u3(); };
   }, []);
 
@@ -530,7 +536,7 @@ export default function CasinoPanel() {
       {(topWin || topLoss) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
-            🏆 REKORDY WSZECH CZASÓW
+            🏆 REKORDY WSZECHCZASÓW
           </p>
           <div style={{ display: 'flex', gap: 5 }}>
             {topWin && (
