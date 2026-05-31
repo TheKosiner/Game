@@ -123,7 +123,7 @@ export default function CasinoPanel() {
     targetPos: -1 as number, // -1 = freewheel
   });
   const [renderPos, setRenderPos] = useState(30);
-  const rafRef     = useRef<number>();
+  const rafRef     = useRef<number | undefined>(undefined);
   const onDoneRef  = useRef<(() => void) | null>(null);
   const histRef    = useRef<number[]>([]); // local session history
 
