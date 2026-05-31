@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "casinoSpins",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "won", "order": "ASCENDING" },
+        { "fieldPath": "net", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "casinoSpins",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "won", "order": "ASCENDING" },
+        { "fieldPath": "net", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
