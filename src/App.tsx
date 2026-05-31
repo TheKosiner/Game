@@ -35,6 +35,7 @@ import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
 import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
+import KryptaPanel from './components/KryptaPanel';
 
 export default function App() {
   const t = useT();
@@ -393,6 +394,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+              {tab === 'krypta' && <KryptaPanel />}
               {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
@@ -536,6 +538,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+          {tab === 'krypta' && <KryptaPanel />}
           {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
