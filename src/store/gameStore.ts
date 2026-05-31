@@ -55,13 +55,13 @@ function tryBumpRarity(rarity: Rarity, difficulty: 'easy' | 'normal' | 'hard'): 
 }
 
 
-function tryDungeonLoot(heroLevel: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
+function tryDungeonLoot(dungeonLevel: number, mode: 'xp' | 'balanced' | 'loot', difficulty: 'easy' | 'normal' | 'hard', set: (partial: any) => void, get: () => GameState): void {
   const hero = get().hero;
   if (hero.inventory.length >= MAX_INVENTORY) return;
   const baseRarity = rollRarity(mode, difficulty);
   const { rarity, bumped } = tryBumpRarity(baseRarity, difficulty);
   const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
-  const itemLevel = Math.max(1, heroLevel + levelBonus);
+  const itemLevel = Math.max(1, dungeonLevel + levelBonus);
   const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
   const box = createMysteryBox(rarity, itemLevel);
   set({ hero: { ...hero, inventory: [...hero.inventory, box] } });
@@ -461,7 +461,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(get().hero.level, mode, diff, set, get);
+        tryDungeonLoot(currentDungeon.minLevel, mode, diff, set, get);
         const freshHero = get().hero;
         const prevCompleted = freshHero.completedDungeons ?? [];
         if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
@@ -544,7 +544,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
-        tryDungeonLoot(get().hero.level, mode2, diff2, set, get);
+        tryDungeonLoot(currentDungeon.minLevel, mode2, diff2, set, get);
         const freshHero2 = get().hero;
         const prevCompleted2 = freshHero2.completedDungeons ?? [];
         if (diff2 !== 'easy' && !prevCompleted2.includes(currentDungeon.id)) {
