@@ -35,6 +35,7 @@ import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
 import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
+import KryptaPanel from './components/KryptaPanel';
 
 export default function App() {
   const t = useT();
@@ -335,11 +336,12 @@ export default function App() {
   const isNewGame = hero.name === 'Hero' && !hasSave;
   if (isNewGame) return <CharacterCreation />;
 
-  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
+  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────────────────────
   if (isDesktop && !isNative) {
     const sectionLabel: Record<MainTab, string> = {
       hero:   t.nav.hero,
       play:   t.nav.play,
+      krypta: 'KRYPTA',
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.shop,
@@ -393,6 +395,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+              {tab === 'krypta' && <KryptaPanel />}
               {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
@@ -410,7 +413,7 @@ export default function App() {
     );
   }
 
-  // ── MOBILE LAYOUT ─────────────────────────────────────────────────────────────
+  // ── MOBILE LAYOUT ─────────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
@@ -536,6 +539,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+          {tab === 'krypta' && <KryptaPanel />}
           {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
