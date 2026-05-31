@@ -9,7 +9,6 @@ Mobilna gra RPG w stylu pixel-art z systemem progresji, walkami, zadaniami i ele
 
 ## 🎮 Funkcje
 
-- **System postaci** - 3 klasy (Wojownik, Mag, Łotrzyk)
 - **Lochy** - 4 lochy z rosnącą trudnością, system pięter
 - **Zadania** - 8 zadań w czasie rzeczywistym
 - **PvP Arena** - Walki z innymi graczami, ranking Top 50
