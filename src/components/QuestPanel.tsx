@@ -98,19 +98,13 @@ export default function QuestPanel() {
     if (collecting) return;
     setCollecting(true);
     try {
-      if (user) {
-        try {
-          await collectQuestServer();
-        } catch (err: any) {
-          if (err?.code === 'functions/failed-precondition') {
-            setCollecting(false);
-            return;
-          }
-        }
-      }
+      // Apply reward immediately — Firestore rules enforce timing server-side via
+      // validQuestClear, so optimistic update is safe. The CF is anti-cheat only
+      // and its return value is unused by the client.
       collectQuest();
-      // Sync immediately — iOS kills tabs before the 10s interval fires
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
+      // Fire server-side validation in background (doesn't block UI).
+      if (user) collectQuestServer().catch(() => {});
     } finally {
       setCollecting(false);
     }

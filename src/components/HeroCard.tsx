@@ -461,15 +461,8 @@ export default function HeroCard() {
   const inCombat       = useGameStore(s => s.inCombat);
 
   async function handleCollectBegging() {
-    if (user) {
-      try {
-        await collectBeggingServer();
-      } catch (err: any) {
-        if (err?.code === 'functions/failed-precondition') return;
-        // fallback to local on network/deploy errors
-      }
-    }
     collectBegging();
+    if (user) collectBeggingServer().catch(() => {});
   }
   const activeQuest    = useGameStore(s => s.activeQuest);
   const currentDungeon = useGameStore(s => s.currentDungeon);

@@ -8,6 +8,7 @@ import { useLangStore } from '../store/langStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { PX, MONO, ORB } from '../utils/styles';
+import DungeonMapView from './DungeonMapView';
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
 type DungeonMode = 'xp' | 'balanced' | 'loot';
@@ -189,6 +190,144 @@ function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?:
     );
   }
 
+  if (id === 'sewers') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* pionowa rura */}
+        <rect x="-5" y="-5.5" width="2.5" height="9" fill={color} opacity="0.85"/>
+        {/* pozioma rura */}
+        <rect x="-5" y="-1" width="10" height="2.2" fill={color} opacity="0.85"/>
+        {/* złącze lewe */}
+        <circle cx="-3.8" cy="-0.1" r="1.4" fill={color}/>
+        {/* złącze prawe */}
+        <circle cx="3.5" cy="-0.1" r="1.4" fill={color}/>
+        {/* kapie */}
+        <circle cx="3.5" cy="2.8" r="0.7" fill={color} opacity="0.7"/>
+        <line x1="3.5" y1="1.3" x2="3.5" y2="2.3" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'biotech_lab') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* szyjka kolby */}
+        <rect x="-0.7" y="-6" width="1.4" height="3.5" fill={color} opacity="0.9"/>
+        {/* kolba */}
+        <path d="M -2.2 -2.5 Q -4.5 0.5 -4 3 Q -3.5 5 0 5 Q 3.5 5 4 3 Q 4.5 0.5 2.2 -2.5 Z" fill={color} opacity="0.7"/>
+        {/* bąbelki */}
+        <circle cx="-1.5" cy="1" r="0.7" fill={color} opacity="0.9"/>
+        <circle cx="1.5" cy="2.5" r="0.7" fill={color} opacity="0.9"/>
+        <circle cx="0" cy="0.2" r="0.5" fill={color} opacity="0.9"/>
+        {/* DNA spirala lewa */}
+        <path d="M -0.8 -2.5 C -3 -1 -3 0 -0.8 1" fill="none" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+        {/* DNA spirala prawa */}
+        <path d="M 0.8 -2.5 C 3 -1 3 0 0.8 1" fill="none" stroke={color} strokeWidth="0.5" opacity="0.5"/>
+      </svg>
+    );
+  }
+
+  if (id === 'corrupted_matrix') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* glitched pixel blocks */}
+        <rect x="-5" y="-5.5" width="2.2" height="1.5" fill={color}/>
+        <rect x="-1.5" y="-5.5" width="3.5" height="1.5" fill={color} opacity="0.55"/>
+        <rect x="2.5" y="-5.5" width="2.5" height="1.5" fill={color}/>
+        <rect x="-5" y="-2.8" width="4.5" height="1.5" fill={color} opacity="0.35"/>
+        <rect x="0.5" y="-2.8" width="2.2" height="1.5" fill={color}/>
+        <rect x="-5" y="-0.2" width="1.8" height="1.5" fill={color}/>
+        <rect x="-2" y="-0.2" width="5" height="1.5" fill={color} opacity="0.7"/>
+        <rect x="-5" y="2.5" width="3.2" height="1.5" fill={color} opacity="0.4"/>
+        <rect x="-0.5" y="2.5" width="5.5" height="1.5" fill={color}/>
+      </svg>
+    );
+  }
+
+  if (id === 'system_core') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* chip body */}
+        <rect x="-3.5" y="-3.5" width="7" height="7" fill={color} opacity="0.8"/>
+        {/* circuit inside */}
+        <rect x="-2" y="-2" width="4" height="4" fill="#000" opacity="0.55"/>
+        <circle cx="0" cy="0" r="1" fill={color} opacity="0.9"/>
+        {/* pins left */}
+        <rect x="-5.5" y="-2.5" width="2" height="0.8" fill={color}/>
+        <rect x="-5.5" y="-0.4" width="2" height="0.8" fill={color}/>
+        <rect x="-5.5" y="1.7" width="2" height="0.8" fill={color}/>
+        {/* pins right */}
+        <rect x="3.5" y="-2.5" width="2" height="0.8" fill={color}/>
+        <rect x="3.5" y="-0.4" width="2" height="0.8" fill={color}/>
+        <rect x="3.5" y="1.7" width="2" height="0.8" fill={color}/>
+        {/* pins top */}
+        <rect x="-2.5" y="-5.5" width="0.8" height="2" fill={color}/>
+        <rect x="-0.4" y="-5.5" width="0.8" height="2" fill={color}/>
+        <rect x="1.7" y="-5.5" width="0.8" height="2" fill={color}/>
+      </svg>
+    );
+  }
+
+  if (id === 'apocalypse_zone') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* base fireball */}
+        <circle cx="0" cy="1" r="3.8" fill={color} opacity="0.6"/>
+        {/* top spike */}
+        <polygon points="0,-6 1.1,-2 -1.1,-2" fill={color} opacity="0.95"/>
+        {/* left spike */}
+        <polygon points="-5.5,-2.5 -2,-0.8 -3,1.5" fill={color} opacity="0.75"/>
+        {/* right spike */}
+        <polygon points="5.5,-2.5 2,-0.8 3,1.5" fill={color} opacity="0.75"/>
+        {/* lower left */}
+        <polygon points="-4,4.5 -1,2.2 -2,5.5" fill={color} opacity="0.5"/>
+        {/* lower right */}
+        <polygon points="4,4.5 1,2.2 2,5.5" fill={color} opacity="0.5"/>
+        {/* hot center */}
+        <circle cx="0" cy="1" r="1.8" fill={color} opacity="0.95"/>
+      </svg>
+    );
+  }
+
+  if (id === 'void_nexus') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* outer ring */}
+        <circle cx="0" cy="0" r="5.5" fill="none" stroke={color} strokeWidth="0.9" opacity="0.9"/>
+        {/* mid ring */}
+        <circle cx="0" cy="0" r="3.8" fill="none" stroke={color} strokeWidth="0.6" opacity="0.7"/>
+        {/* inner ring */}
+        <circle cx="0" cy="0" r="2.2" fill="none" stroke={color} strokeWidth="0.5" opacity="0.55"/>
+        {/* center eye */}
+        <circle cx="0" cy="0" r="1" fill={color} opacity="0.95"/>
+        {/* spiral arms */}
+        <path d="M 0 -3.8 Q 2.2 -2 3.8 0" fill="none" stroke={color} strokeWidth="0.6" opacity="0.55"/>
+        <path d="M 0 3.8 Q -2.2 2 -3.8 0" fill="none" stroke={color} strokeWidth="0.6" opacity="0.55"/>
+        <path d="M 3.8 0 Q 2 2.5 0 3.8" fill="none" stroke={color} strokeWidth="0.4" opacity="0.35"/>
+      </svg>
+    );
+  }
+
+  if (id === 'network_end') {
+    return (
+      <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg" overflow="visible">
+        {/* terminal frame */}
+        <rect x="-5.5" y="-5.5" width="11" height="8.5" rx="0.5" fill={color} opacity="0.75"/>
+        <rect x="-4.5" y="-4.5" width="9" height="6.5" fill="#000" opacity="0.8"/>
+        {/* skull */}
+        <ellipse cx="0" cy="-1.8" rx="2.8" ry="2.3" fill={color} opacity="0.85"/>
+        <ellipse cx="-1.1" cy="-2.3" rx="0.85" ry="0.9" fill="#000" opacity="0.9"/>
+        <ellipse cx="1.1" cy="-2.3" rx="0.85" ry="0.9" fill="#000" opacity="0.9"/>
+        <rect x="-2.2" y="0.2" width="4.4" height="1.2" rx="0.3" fill={color} opacity="0.85"/>
+        <line x1="-1.5" y1="0.2" x2="-1.5" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        <line x1="-0.3" y1="0.2" x2="-0.3" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        <line x1="0.9" y1="0.2" x2="0.9" y2="1.4" stroke="#000" strokeWidth="0.5"/>
+        {/* base stand */}
+        <rect x="-2" y="3.5" width="4" height="0.9" fill={color} opacity="0.65"/>
+      </svg>
+    );
+  }
+
   // fallback — generic dot
   return (
     <svg width={size} height={size} viewBox={vb} xmlns="http://www.w3.org/2000/svg">
@@ -280,13 +419,7 @@ function EnemyBattleCard() {
   );
 }
 
-// ── Helper: pick a dungeon weighted toward higher tiers for the hero's level ─
 type FullDungeon = (typeof ALL_DUNGEONS)[0];
-function pickDungeonForLevel(heroLevel: number): FullDungeon {
-  const eligible = ALL_DUNGEONS.filter(d => d.minLevel <= heroLevel);
-  const pool = eligible.length > 0 ? eligible : [ALL_DUNGEONS[0]];
-  return pool[Math.floor(Math.random() * pool.length)];
-}
 
 function DungeonList() {
   const t = useT();
@@ -298,7 +431,38 @@ function DungeonList() {
                        (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil);
   const limitReached = hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS;
 
-  const [chosen] = useState<FullDungeon>(() => pickDungeonForLevel(hero.level));
+  const completed = hero.completedDungeons ?? [];
+
+  // Unlock rule: first dungeon is free; each next requires the previous completed on normal/hard.
+  // Backward compat: also unlock if hero.level >= dungeon.minLevel (existing saves).
+  const isDungeonUnlocked = (idx: number): boolean => {
+    if (idx === 0) return true;
+    if (completed.includes(ALL_DUNGEONS[idx - 1].id)) return true;
+    return hero.level >= ALL_DUNGEONS[idx].minLevel; // legacy gate for existing saves
+  };
+
+  // Default selection: last played dungeon (from localStorage), fallback to highest unlocked
+  const [selected, setSelected] = useState<FullDungeon>(() => {
+    try {
+      const lastId = localStorage.getItem('glitchsoul_last_dungeon');
+      if (lastId) {
+        const found = ALL_DUNGEONS.find(d => d.id === lastId);
+        if (found) return found;
+      }
+    } catch {}
+    let last = ALL_DUNGEONS[0];
+    for (let i = 1; i < ALL_DUNGEONS.length; i++) {
+      if (completed.includes(ALL_DUNGEONS[i - 1].id) || hero.level >= ALL_DUNGEONS[i].minLevel) {
+        last = ALL_DUNGEONS[i];
+      } else break;
+    }
+    return last;
+  });
+
+  const handleSelectDungeon = (d: FullDungeon) => {
+    setSelected(d);
+    try { localStorage.setItem('glitchsoul_last_dungeon', d.id); } catch {}
+  };
   const [difficulty, setDifficulty] = useState<DungeonDifficulty>('normal');
   const blocked = isResting || limitReached;
 
@@ -335,80 +499,97 @@ function DungeonList() {
         </div>
       )}
 
+      {/* ── Interactive dungeon map ───────────────────────────────────────── */}
+      <DungeonMapView
+        isDungeonUnlocked={isDungeonUnlocked}
+        completed={completed}
+        selected={selected}
+        onSelect={handleSelectDungeon}
+        isEn={isEn}
+      />
+
+      {/* ── Selected dungeon details ─────────────────────────────────────────── */}
       <div style={{
-            display: 'flex', alignItems: 'flex-start', gap: 10,
-            background: 'rgba(255,45,120,0.04)', border: '1px solid rgba(255,45,120,0.2)',
-            padding: '10px 12px',
-          }}>
-            <div style={{ flexShrink: 0, width: 48, height: 48 }}>
-              <LocationIcon id={chosen.id} size={48} color="#ff2d78" />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)', marginBottom: 3 }}>
-                {isEn ? (chosen as typeof chosen & { nameEn?: string }).nameEn ?? chosen.name : chosen.name}
-              </p>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>
-                {isEn ? (chosen as typeof chosen & { descEn?: string }).descEn ?? chosen.description : chosen.description}
-              </p>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>10 {t.dungeon.floors}</span>
-                <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>{t.dungeon.level}{hero.level}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Difficulty selector */}
-          <div>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>{t.dungeon.difficultyLabel}</p>
-            <div style={{ display: 'flex', gap: 6 }}>
-              {DIFFICULTY_OPTIONS.map(d => {
-                const active = difficulty === d.key;
-                return (
-                  <button key={d.key} onClick={() => setDifficulty(d.key)} style={{
-                    flex: 1,
-                    background: active ? `rgba(${d.key === 'easy' ? '68,204,119' : d.key === 'hard' ? '255,68,68' : '160,160,160'},0.12)` : 'var(--bg-inset)',
-                    border: `1px solid ${active ? d.border : 'var(--border-dark)'}`,
-                    padding: '7px 4px', cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                    boxShadow: active ? `0 0 10px ${d.border}` : 'none',
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
-                  }}>
-                    <span style={{ fontSize: 14 }}>{d.badge}</span>
-                    <span style={{ ...ORB, fontSize: 10, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 5 }}>
-              {DIFFICULTY_OPTIONS.find(d => d.key === difficulty)?.desc}
+        display: 'flex', alignItems: 'flex-start', gap: 10,
+        background: 'rgba(255,45,120,0.04)', border: '1px solid rgba(255,45,120,0.2)',
+        padding: '10px 12px',
+      }}>
+        <div style={{ flexShrink: 0, width: 48, height: 48 }}>
+          <LocationIcon id={selected.id} size={48} color="#ff2d78" />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.4)' }}>
+              {isEn ? (selected as typeof selected & { nameEn?: string }).nameEn ?? selected.name : selected.name}
             </p>
+            {completed.includes(selected.id) && (
+              <span style={{ ...MONO, fontSize: 8, color: '#4ade80' }}>✓ ukończony</span>
+            )}
           </div>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>
+            {isEn ? (selected as typeof selected & { descEn?: string }).descEn ?? selected.description : selected.description}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{selected.floors} {t.dungeon.floors}</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>
+              {isEn ? 'Rec.' : 'Pol.'} POZ. {selected.minLevel}
+            </span>
+          </div>
+        </div>
+      </div>
 
-          {/* Mode cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {DUNGEON_VARIANTS.map(v => (
-              <div key={v.key} style={{
-                background: v.bg, border: `1px solid ${v.border}`,
-                padding: '10px 12px', boxShadow: `0 0 16px ${v.glow}`,
-                display: 'flex', alignItems: 'center', gap: 10,
-                opacity: blocked ? 0.5 : 1,
+      {/* Difficulty selector */}
+      <div>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 6, letterSpacing: '0.08em' }}>{t.dungeon.difficultyLabel}</p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {DIFFICULTY_OPTIONS.map(d => {
+            const active = difficulty === d.key;
+            return (
+              <button key={d.key} onClick={() => setDifficulty(d.key)} style={{
+                flex: 1,
+                background: active ? `rgba(${d.key === 'easy' ? '68,204,119' : d.key === 'hard' ? '255,68,68' : '160,160,160'},0.12)` : 'var(--bg-inset)',
+                border: `1px solid ${active ? d.border : 'var(--border-dark)'}`,
+                padding: '7px 4px', cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                boxShadow: active ? `0 0 10px ${d.border}` : 'none',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
               }}>
-                <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
-                <div style={{ flex: 1 }}>
-                  <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 3 }}>{v.label}</p>
-                  <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{v.desc}</p>
-                </div>
-                <button
-                  onClick={() => enterDungeon(chosen, v.key, difficulty)}
-                  disabled={blocked}
-                  className="btn btn-primary"
-                  style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
-                >
-                  {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
-                </button>
-              </div>
-            ))}
+                <span style={{ fontSize: 14 }}>{d.badge}</span>
+                <span style={{ ...ORB, fontSize: 10, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 5 }}>
+          {DIFFICULTY_OPTIONS.find(d => d.key === difficulty)?.desc}
+        </p>
+      </div>
+
+      {/* Mode cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {DUNGEON_VARIANTS.map(v => (
+          <div key={v.key} style={{
+            background: v.bg, border: `1px solid ${v.border}`,
+            padding: '10px 12px', boxShadow: `0 0 16px ${v.glow}`,
+            display: 'flex', alignItems: 'center', gap: 10,
+            opacity: blocked ? 0.5 : 1,
+          }}>
+            <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 3 }}>{v.label}</p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{v.desc}</p>
+            </div>
+            <button
+              onClick={() => enterDungeon(selected, v.key, difficulty)}
+              disabled={blocked}
+              className="btn btn-primary"
+              style={{ fontSize: 10, padding: '7px 10px', flexShrink: 0, cursor: blocked ? 'not-allowed' : 'pointer', borderColor: v.border }}
+            >
+              {isResting ? t.dungeon.rest : limitReached ? t.dungeon.limit : t.dungeon.enter}
+            </button>
           </div>
+        ))}
+      </div>
     </div>
   );
 }

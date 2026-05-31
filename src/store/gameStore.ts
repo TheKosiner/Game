@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
-import { ALL_DUNGEONS } from '../data/dungeons';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import { getLang } from './langStore';
@@ -161,6 +160,8 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     unlockedPortraits: [],
     lastRespecAt: null,
     completedDungeons: [],
+    lastCasinoSpinAt: 0,
+    goldEarnedToday: 0,
   };
 }
 
@@ -175,7 +176,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   combatLog: [],
   inCombat: false,
   defeatedAtDungeon: null,
-  lastSaved: Date.now(),
+  lastSaved: 0,
   shopSeed: Date.now(),
   lastShopRefresh: 0,
   shopPurchased: [],
@@ -256,7 +257,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const bonus = get().guildGoldBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
-    set({ hero: { ...hero, gold: hero.gold + amount } });
+    set({ hero: { ...hero, gold: hero.gold + amount, goldEarnedToday: hero.goldEarnedToday + amount } });
   },
 
   addGems: (amount) => {
@@ -265,8 +266,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   gemHeal: () => {
-    const { hero } = get();
+    const { hero, currentDungeon } = get();
     const COST = 30;
+    if (currentDungeon) return false;
     if (hero.gems < COST || hero.hp >= hero.maxHp) return false;
     const t = getT();
     set({ hero: { ...hero, gems: hero.gems - COST, hp: hero.maxHp } });
@@ -349,7 +351,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx === -1) return;
     newInventory.splice(idx, 1);
-    set({ hero: { ...hero, gold: hero.gold + item.goldValue, inventory: newInventory } });
+    set({ hero: { ...hero, gold: hero.gold + item.goldValue, goldEarnedToday: hero.goldEarnedToday + item.goldValue, inventory: newInventory } });
     get().saveGame();
   },
 
@@ -389,12 +391,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const diffStatMult = difficulty === 'easy' ? 0.7 : difficulty === 'hard' ? 1.5 : 1;
     const heroFloors = 10;
-    const tierDungeon = ALL_DUNGEONS.filter(d => d.minLevel <= hero.level).pop() ?? ALL_DUNGEONS[0];
-    const safeEnemyPool = tierDungeon.enemies.filter(id => {
+    // Use the selected dungeon's enemy pool, not the highest-tier dungeon by hero level
+    const safeEnemyPool = dungeon.enemies.filter(id => {
       const e = getEnemyById(id);
       return e && e.level <= hero.level;
     });
-    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : tierDungeon.enemies;
+    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : dungeon.enemies;
     const enemyId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;
@@ -596,8 +598,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   useItem: (item: Item, invIdx: number) => {
-    const hero = get().hero;
+    const { hero, currentDungeon } = get();
     if (item.slot !== 'consumable') return;
+    if (currentDungeon) return;
     const newInventory = hero.inventory.filter((_, i) => i !== invIdx);
     const healAmount = Math.round(hero.maxHp * (item.healPercent ?? 1));
     const actualHeal = Math.min(healAmount, hero.maxHp - hero.hp);
@@ -700,8 +703,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   restHero: (minutes: number) => {
-    const { hero, inCombat, activeQuest } = get();
-    if (inCombat) return;
+    const { hero, inCombat, currentDungeon, activeQuest } = get();
+    if (inCombat || currentDungeon) return;
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
     if (activeQuest) return;
@@ -766,7 +769,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     const t = getT();
     cancelBeggingNotification();
-    set({ hero: { ...hero, gold: hero.gold + earned, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    if (earned > 0) get().addGold(earned);
+    const freshHero = get().hero;
+    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     if (earned > 0) get().addCombatLog(t.combat.beggingCancelledWithGold(earned), 'loot');
     else get().addCombatLog(t.combat.beggingCancelled, 'system');
     get().saveGame();
@@ -778,7 +783,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const reward = hero.beggingReward ?? 0;
     const t = getT();
     cancelBeggingNotification();
-    set({ hero: { ...hero, gold: hero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    get().addGold(reward);
+    const freshHero = get().hero;
+    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
   },
@@ -798,6 +805,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...hero,
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
+          goldEarnedToday: 0,
           lastDailyReset: now,
           gems: hero.gems + DAILY_GEMS,
         },
@@ -1197,12 +1205,14 @@ export const useGameStore = create<GameState>((set, get) => ({
           unlockedPortraits: save.hero.unlockedPortraits ?? [],
           lastRespecAt: save.hero.lastRespecAt ?? null,
           completedDungeons: save.hero.completedDungeons ?? inferCompletedDungeons(save.hero.level ?? 1),
+          lastCasinoSpinAt: save.hero.lastCasinoSpinAt ?? 0,
+          goldEarnedToday: save.hero.goldEarnedToday ?? 0,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
-          lastSaved: save.lastSaved ?? Date.now(),
+          lastSaved: save.lastSaved ?? 0,
           shopSeed: save.shopSeed ?? Date.now(),
           lastShopRefresh: save.lastShopRefresh ?? 0,
           shopPurchased: save.shopPurchased ?? [],

@@ -11,7 +11,7 @@ import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { claimDailyRewardServer } from './lib/serverActions';
 import { requestNotificationPermission, rescheduleActiveNotifications } from './lib/notifications';
-import { onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { onSnapshot, collection, query, orderBy, limit, doc } from 'firebase/firestore';
 import AuthScreen from './components/AuthScreen';
 import CharacterCreation from './components/CharacterCreation';
 import HeroCard from './components/HeroCard';
@@ -34,6 +34,7 @@ import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
 import LevelUpModal from './components/LevelUpModal';
+import CasinoPanel from './components/CasinoPanel';
 
 export default function App() {
   const t = useT();
@@ -153,12 +154,15 @@ export default function App() {
     // Save immediately so initial regen/daily-reset changes aren't lost on quick reload
     saveGame();
     const id = setInterval(async () => {
+      // Skip when the tab/app is in the background — the pagehide/visibilitychange
+      // handlers already flush a sync when the device goes idle, and we must not
+      // overwrite a foreground device's cloud save with stale background data.
+      if (document.hidden) return;
       const currentUser = useAuthStore.getState().user;
       checkDailyReset();
       tickPassiveRegen();
       saveGame();
       if (currentUser) {
-        await loadFromCloud(currentUser.uid).catch(() => {});
         syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       }
     }, 10_000);
@@ -195,13 +199,29 @@ export default function App() {
         hiddenAt = Date.now();
         if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       } else {
-        if (currentUser && Date.now() - hiddenAt > 120_000) {
+        if (currentUser && Date.now() - hiddenAt > 5_000) {
           loadFromCloud(currentUser.uid).catch(() => {});
         }
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [gameLoaded, user?.uid]);
+
+  // Listen for admin overrides on the player's save document.
+  // When admin sets updatedAt far in the future, force-reload from cloud
+  // so the player sees the admin's changes immediately without refreshing.
+  useEffect(() => {
+    if (!gameLoaded || !user || !db) return;
+    const ref = doc(db, 'saves', user.uid);
+    const unsub = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
+      const cloudTs: number = snap.data().updatedAt ?? 0;
+      if (cloudTs > Date.now() + 3_600_000) {
+        loadFromCloud(user.uid, true).catch(() => {});
+      }
+    }, () => {});
+    return () => unsub();
   }, [gameLoaded, user?.uid]);
 
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
@@ -377,6 +397,7 @@ export default function App() {
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
               {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
+              {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
               {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
               {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
               {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
@@ -519,6 +540,7 @@ export default function App() {
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
           {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
+          {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
           {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
           {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
           {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}

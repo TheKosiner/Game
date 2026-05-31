@@ -14,10 +14,15 @@ import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.png';
 import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
 import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
+import mysteryBoxRareSrc from '../assets/mystery-box-rare.png';
+import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.png';
 
 const BOX_IMG: Partial<Record<string, string>> = {
-  common:   mysteryBoxCommonSrc,
-  uncommon: mysteryBoxUncommonSrc,
+  common:    mysteryBoxCommonSrc,
+  uncommon:  mysteryBoxRareSrc,
+  rare:      mysteryBoxUncommonSrc,
+  epic:      mysteryBoxUncommonSrc,
+  legendary: mysteryBoxLegendarySrc,
 };
 function getBoxImg(rarity: string) {
   return BOX_IMG[rarity] ?? mysteryBoxSrc;
@@ -29,9 +34,9 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 function ItemCard({
-  item, selected, onToggle, onEquip, onSell, onUse, onOpen,
+  item, selected, onToggle, onEquip, onSell, onUse, onOpen, inDungeon,
 }: {
-  item: Item; selected: boolean;
+  item: Item; selected: boolean; inDungeon?: boolean;
   onToggle: () => void; onEquip: () => void; onSell: () => void; onUse?: () => void; onOpen?: () => void;
 }) {
   const t    = useT();
@@ -126,7 +131,7 @@ function ItemCard({
           {isBox
             ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}>📦 OTWÓRZ</button>
             : item.slot === 'consumable'
-            ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.use}</button>
+            ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} disabled={inDungeon} className="btn btn-primary" style={{ padding: '5px 8px', opacity: inDungeon ? 0.4 : 1, cursor: inDungeon ? 'not-allowed' : 'pointer' }}>{t.inventory.use}</button>
             : <button onClick={e => { e.stopPropagation(); onEquip(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
           }
           <button onClick={e => { e.stopPropagation(); onSell(); }} className="btn btn-secondary" style={{ padding: '5px 8px' }}>🪙{item.goldValue}</button>
@@ -147,6 +152,7 @@ export default function InventoryPanel() {
   const sellItem        = useGameStore(s => s.sellItem);
   const useItem         = useGameStore(s => s.useItem);
   const openBoxModal    = useGameStore(s => s.openMysteryBoxModal);
+  const inDungeon       = useGameStore(s => s.currentDungeon !== null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [sellConfirm, setSellConfirm] = useState<{ item: Item; idx: number } | null>(null);
   const [boxConfirm,  setBoxConfirm]  = useState<{ item: Item; idx: number } | null>(null);
@@ -181,6 +187,7 @@ export default function InventoryPanel() {
               onToggle={() => setSelectedIdx(prev => prev === idx ? null : idx)}
               onEquip={() => { equipItem(item, idx); setSelectedIdx(null); const u = useAuthStore.getState().user; if (u) syncToCloud(u.uid, u.username).catch(() => {}); }}
               onSell={() => { setSellConfirm({ item, idx }); setSelectedIdx(null); }}
+              inDungeon={inDungeon}
               onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
               onOpen={() => { setBoxConfirm({ item, idx }); setSelectedIdx(null); }}
             />

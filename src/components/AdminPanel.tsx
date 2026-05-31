@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { loadFromCloud } from '../lib/cloudSync';
+import { useAuthStore } from '../store/authStore';
 import { MONO } from '../utils/styles';
 
 const ADMIN_EMAIL = 'thekosiner@gmail.com';
@@ -18,19 +20,23 @@ interface PlayerInfo {
   activeQuest: boolean;
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
+  guildId: string | null;
 }
 
 async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
   if (!db) return null;
   // Try by UID first
   try {
-    const saveSnap = await getDoc(doc(db, 'saves', nameOrUid));
+    const [saveSnap, playerSnap] = await Promise.all([
+      getDoc(doc(db, 'saves', nameOrUid)),
+      getDoc(doc(db, 'players', nameOrUid)),
+    ]);
     if (saveSnap.exists()) {
       const d = saveSnap.data();
-      const playerSnap = await getDoc(doc(db, 'players', nameOrUid));
+      const pd = playerSnap.exists() ? playerSnap.data() : null;
       return {
         uid: nameOrUid,
-        username: playerSnap.data()?.username ?? '?',
+        username: pd?.username ?? '?',
         level: d.hero?.level ?? 0,
         gold: d.hero?.gold ?? 0,
         gems: d.hero?.gems ?? 0,
@@ -41,6 +47,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
         activeQuest: !!d.activeQuest,
         restingUntil: d.hero?.restingUntil ?? null,
         voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+        guildId: pd?.guildId ?? null,
       };
     }
   } catch {}
@@ -55,9 +62,10 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
       const saveSnap = await getDoc(doc(db, 'saves', uid));
       if (saveSnap.exists()) {
         const d = saveSnap.data();
+        const pd = playerDoc.data();
         return {
           uid,
-          username: playerDoc.data().username,
+          username: pd.username,
           level: d.hero?.level ?? 0,
           gold: d.hero?.gold ?? 0,
           gems: d.hero?.gems ?? 0,
@@ -68,6 +76,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           activeQuest: !!d.activeQuest,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+          guildId: pd.guildId ?? null,
         };
       }
     }
@@ -83,9 +92,10 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
       const saveSnap = await getDoc(doc(db, 'saves', uid));
       if (saveSnap.exists()) {
         const d = saveSnap.data();
+        const pd = playerDoc.data();
         return {
           uid,
-          username: playerDoc.data().username ?? playerDoc.data().heroName,
+          username: pd.username ?? pd.heroName,
           level: d.hero?.level ?? 0,
           gold: d.hero?.gold ?? 0,
           gems: d.hero?.gems ?? 0,
@@ -96,6 +106,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           activeQuest: !!d.activeQuest,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
+          guildId: pd.guildId ?? null,
         };
       }
     }
@@ -113,6 +124,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   const [goldAmount, setGoldAmount] = useState('');
   const [gemsAmount, setGemsAmount] = useState('');
   const [levelAmount, setLevelAmount] = useState('');
+  const [selfInfo, setSelfInfo] = useState<{ cloudLevel: number } | null>(null);
 
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
 
@@ -128,10 +140,25 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const patch = async (data: Record<string, unknown>) => {
     if (!player || !db) return;
-    await updateDoc(doc(db, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
-    // Refresh
-    const p = await findPlayer(player.uid);
-    setPlayer(p);
+    try {
+      await updateDoc(doc(db!, 'saves', player.uid), { ...data, updatedAt: 9999999999999 });
+    } catch (e: any) {
+      flash(`❌ Błąd zapisu: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
+    setPlayer(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev };
+      for (const [key, val] of Object.entries(data)) {
+        if (key === 'hero.gold')   updated.gold   = val as number;
+        if (key === 'hero.gems')   updated.gems   = val as number;
+        if (key === 'hero.level')  updated.level  = val as number;
+        if (key === 'hero.hp')     updated.hp     = val as number;
+        if (key === 'hero.dungeonRunsToday')    updated.dungeonRunsToday    = val as number;
+        if (key === 'hero.questsCompletedToday') updated.questsCompletedToday = val as number;
+      }
+      return updated;
+    });
   };
 
   const giveGold = async () => {
@@ -173,9 +200,13 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const clearQuest = async () => {
     if (!player) return;
-    await updateDoc(doc(db!, 'saves', player.uid), { activeQuest: null, updatedAt: 9999999999999 });
-    const p = await findPlayer(player.uid);
-    setPlayer(p);
+    try {
+      await updateDoc(doc(db!, 'saves', player.uid), { activeQuest: null, updatedAt: 9999999999999 });
+    } catch (e: any) {
+      flash(`❌ Błąd zapisu: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
+    setPlayer(prev => prev ? { ...prev, activeQuest: false } : prev);
     flash(`Wyczyszczono aktywną misję dla ${player.username}`);
   };
 
@@ -183,6 +214,34 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     if (!player) return;
     await patch({ 'hero.hp': player.maxHp });
     flash(`HP ${player.username} → ${player.maxHp}/${player.maxHp}`);
+  };
+
+  const forceReloadSelf = async () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid || !db) return;
+    flash('Ładowanie z chmury...');
+    try {
+      const snap = await getDoc(doc(db, 'saves', uid));
+      const cloudLevel = snap.exists() ? (snap.data().hero?.level ?? '?') : '❌ brak';
+      setSelfInfo({ cloudLevel: cloudLevel as number });
+      const result = await loadFromCloud(uid, true);
+      if (result === true) flash(`✅ Załadowano z chmury (level w chmurze: ${cloudLevel})`);
+      else if (result === null) flash('❌ Brak zapisu w chmurze!');
+      else flash('ℹ️ Lokalny zapis był nowszy (ale force pominął)');
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.message ?? e}`);
+    }
+  };
+
+  const resetGuildRaid = async () => {
+    if (!player?.guildId || !db) return;
+    try {
+      await updateDoc(doc(db, 'guilds', player.guildId), { guildOperation: deleteField() });
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.code ?? e?.message ?? 'nieznany'}`);
+      return;
+    }
+    flash(`Zresetowano rajd gildyjny (${player.guildId.slice(0, 8)}...)`);
   };
 
   const s: React.CSSProperties = {
@@ -194,6 +253,19 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   return (
     <div style={s}>
       <p style={{ ...MONO, fontSize: 11, color: '#ff4466', marginBottom: 8, letterSpacing: '0.1em' }}>⚙ ADMIN PANEL</p>
+
+      {/* Self recovery */}
+      <div style={{ marginBottom: 10, padding: '6px 8px', background: '#110022', border: '1px solid #6644aa', borderRadius: 3 }}>
+        <p style={{ ...MONO, fontSize: 9, color: '#aa88ff', marginBottom: 4 }}>MÓJ ZAPIS</p>
+        {selfInfo && (
+          <p style={{ ...MONO, fontSize: 9, color: '#eee', marginBottom: 4 }}>
+            Level w chmurze: <span style={{ color: '#ffd700' }}>{selfInfo.cloudLevel}</span>
+          </p>
+        )}
+        <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
+          🔄 Force reload z chmury
+        </button>
+      </div>
 
       {/* Search */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
@@ -226,6 +298,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </p>
             <p style={{ ...MONO, fontSize: 9, color: (player.restingUntil || player.voluntaryRestUntil) ? '#ff8844' : '#666' }}>
               Odpoczynek: {(player.restingUntil || player.voluntaryRestUntil) ? '⚠ aktywny' : 'brak'}
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: player.guildId ? '#88aaff' : '#444' }}>
+              Gildia: {player.guildId ? player.guildId.slice(0, 12) + '...' : 'brak'}
             </p>
           </div>
 
@@ -269,6 +344,13 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </button>
             <button onClick={healFull} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Heal do pełna
+            </button>
+            <button
+              onClick={resetGuildRaid}
+              disabled={!player.guildId}
+              style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #4466aa', color: player.guildId ? '#88aaff' : '#444', padding: '4px 8px', borderRadius: 3, cursor: player.guildId ? 'pointer' : 'not-allowed' }}
+            >
+              Reset rajdu gildii
             </button>
           </div>
         </>

@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-26 v5
+// Last deployed: 2026-05-30 v7
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -16,12 +16,7 @@ service cloud.firestore {
     }
 
     // ── Time-based validation using SERVER time (request.time) ────────────────
-    // These replace Cloud Functions for timer validation — work on Spark plan
 
-    // Quest collection: if activeQuest is cleared, server time must be past endsAt.
-    // If endsAt is >1 h in the future, the value is corrupted — allow correction.
-    // (skips check if quest is being abandoned mid-run — same null result but
-    //  questsCompletedToday won't increment on abandon, so reward can't be gamed)
     function validQuestClear(old, nw) {
       return old.activeQuest == null
         || nw.activeQuest != null
@@ -29,73 +24,76 @@ service cloud.firestore {
         || old.activeQuest.endsAt > request.time.toMillis() + 3600000;
     }
 
-    // Begging: if beggingUntil cleared AND beggingReward consumed, time must be past.
-    // If beggingUntil is >48 h in the future, the value is corrupted — allow correction.
     function validBeggingClear(old, nw) {
       return old.hero.beggingUntil == null
         || nw.hero.beggingUntil != null
-        // cancelled early (reward nulled too — no gold awarded at full rate)
         || nw.hero.beggingReward == null
-        // completed: server time past end
         || request.time.toMillis() >= old.hero.beggingUntil
         || old.hero.beggingUntil > request.time.toMillis() + 172800000;
     }
 
-    // lastDailyReset: if changed, new value must be ≈ server time (blocks backdating).
-    // If old value is in the future (corrupted clock), allow correction.
+    // Null-safe: treat missing lastDailyReset as 0 (very old saves lack this field).
     function validDailyReset(old, nw) {
-      return nw.hero.lastDailyReset == old.hero.lastDailyReset
-        || old.hero.lastDailyReset > request.time.toMillis()
+      let oldReset = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
+      return nw.hero.lastDailyReset == oldReset
+        || oldReset > request.time.toMillis()
         || (nw.hero.lastDailyReset >= request.time.toMillis() - 300000
-            && nw.hero.lastDailyReset <= request.time.toMillis() + 10000);
+            && nw.hero.lastDailyReset <= request.time.toMillis() + 10000
+            && request.time.toMillis() - oldReset >= 82800000);
     }
 
-    // Voluntary rest: voluntaryRestUntil can only be cleared after server time passes it.
-    // If voluntaryRestUntil is >48 h in the future, the value is corrupted — allow correction.
     function validRestClear(old, nw) {
       return old.hero.voluntaryRestUntil == null
         || nw.hero.voluntaryRestUntil != null
-        // cancelled early — no full reward (voluntaryRestHp must decrease or stay null)
         || (nw.hero.voluntaryRestHp == null && nw.hero.voluntaryRestStartAt == null
             && request.time.toMillis() < old.hero.voluntaryRestUntil)
-        // completed: server time must be past the rest end
         || request.time.toMillis() >= old.hero.voluntaryRestUntil
         || old.hero.voluntaryRestUntil > request.time.toMillis() + 172800000;
     }
 
-    // Challenge cooldown: lastChallengeAt can only increase after 1 h from server's view.
-    // If old value is in the future (corrupted clock), allow correction to any value.
+    // Null-safe: treat missing lastChallengeAt as 0.
     function validChallengeCooldown(old, nw) {
-      let COOLDOWN_MS = 3600000; // 1 hour
-      return nw.lastChallengeAt <= old.lastChallengeAt
-        || old.lastChallengeAt == 0
-        || old.lastChallengeAt > request.time.toMillis()
-        || request.time.toMillis() - old.lastChallengeAt >= COOLDOWN_MS;
+      let COOLDOWN_MS = 3600000;
+      let oldAt = old.lastChallengeAt == null ? 0 : old.lastChallengeAt;
+      return nw.lastChallengeAt <= oldAt
+        || oldAt == 0
+        || oldAt > request.time.toMillis()
+        || request.time.toMillis() - oldAt >= COOLDOWN_MS;
     }
 
-    // updatedAt must be ≈ server time — blocks writes where clock was advanced >60 s
     function validTimestamp(nw) {
       return nw.updatedAt <= request.time.toMillis() + 60000
         && nw.updatedAt >= request.time.toMillis() - 300000;
     }
 
+    // Gold earned today. Null-safe: missing goldEarnedToday treated as 0.
+    function validGoldEarned(old, nw) {
+      let oldEarned = old.hero.goldEarnedToday == null ? 0 : old.hero.goldEarnedToday;
+      let dailyReset = nw.hero.lastDailyReset != old.hero.lastDailyReset;
+      let earnedDelta = dailyReset ? 0 : nw.hero.goldEarnedToday - oldEarned;
+      return
+        (dailyReset
+          ? nw.hero.goldEarnedToday >= 0
+          : nw.hero.goldEarnedToday >= oldEarned)
+        && nw.hero.goldEarnedToday <= 250000000
+        && nw.hero.gold >= 0
+        && nw.hero.gold <= 1000000000
+        && nw.hero.gold <= old.hero.gold + earnedDelta;
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
-        // Level: max +5 per write
         nw.hero.level <= old.hero.level + 5
-        // PvP wins/losses: only increase, max +1 per write
         && nw.pvpWins   >= old.pvpWins
         && nw.pvpWins   <= old.pvpWins + 1
         && nw.pvpLosses >= old.pvpLosses
         && nw.pvpLosses <= old.pvpLosses + 1
-        // PvP rating: bounded change (+25 win / -15 loss, with margin)
         && nw.pvpRating <= old.pvpRating + 30
         && nw.pvpRating >= old.pvpRating - 20
-        // Challenge unlock: only increases, max +1 per write
         && nw.challengeUnlocked >= old.challengeUnlocked
         && nw.challengeUnlocked <= old.challengeUnlocked + 1
-        // Time-based: server validates all timers (blocks clock-manipulation cheats)
+        && validGoldEarned(old, nw)
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)
         && validDailyReset(old, nw)
@@ -157,11 +155,17 @@ service cloud.firestore {
       // Guild leader can update anything
       allow update: if isAuthenticated()
         && resource.data.leaderUid == request.auth.uid;
-      // Regular members may only touch treasury, contributions, and operation state
+      // Officers can update anything except leaderUid (prevents self-promotion to leader)
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.members
+        && resource.data.members[request.auth.uid].role == 'officer'
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
+      // Regular members may only touch treasury (deposit only), contributions, and operation state
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt']);
+             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt'])
+        && request.resource.data.treasury >= resource.data.treasury;
       // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
@@ -194,10 +198,25 @@ service cloud.firestore {
         && request.resource.data.attackerUid == request.auth.uid;
     }
 
-    // Guild territories
+    // Guild territories — write requires membership in the guild claiming/updating the territory
     match /territories/{territoryId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      // Allow write only if the caller is a member of the guild referenced in the document.
+      // Covers both creating a new claim and updating/sieging an existing territory.
+      allow write: if isAuthenticated()
+        && (
+          // New territory claim: caller must be in the guild they are claiming for
+          (resource == null
+            && request.resource.data.guildId != null
+            && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.guildId)).data.members)
+          // Update / siege: caller must be in the defending guild OR the attacking guild
+          || (resource != null
+              && resource.data.guildId != null
+              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.guildId)).data.members)
+          || (resource != null
+              && request.resource.data.siegeGuildId != null
+              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.siegeGuildId)).data.members)
+        );
     }
 
     // In-game mail
@@ -222,6 +241,15 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.text.size() <= 200;
+    }
+
+    // Casino spin history (global feed)
+    match /casinoSpins/{spinId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.stake >= 1
+        && request.resource.data.stake <= 10000000;
     }
 
     // Guild chat

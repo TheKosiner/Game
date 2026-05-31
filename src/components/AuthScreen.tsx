@@ -160,6 +160,15 @@ export default function AuthScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
+  const USERNAME_RE = /^[a-zA-Z0-9_-]*$/;
+  const usernameError = mode === 'register' && username.length > 0
+    ? username.length < 3
+      ? t.auth.errUsernameTooShort
+      : !USERNAME_RE.test(username)
+      ? t.auth.errUsernameInvalidChars
+      : null
+    : null;
+
   const login         = useAuthStore(s => s.login);
   const register      = useAuthStore(s => s.register);
   const resetPassword = useAuthStore(s => s.resetPassword);
@@ -185,7 +194,7 @@ export default function AuthScreen() {
     if (mode === 'login') {
       await login(email, password);
     } else if (mode === 'register') {
-      if (!username.trim()) { setSubmitting(false); return; }
+      if (!username.trim() || usernameError) { setSubmitting(false); return; }
       await register(email, password, username.trim());
     } else {
       const ok = await resetPassword(email);
@@ -314,8 +323,21 @@ export default function AuthScreen() {
                     placeholder={t.auth.usernamePlaceholder}
                     maxLength={20}
                     required
-                    style={inputStyle}
+                    style={{
+                      ...inputStyle,
+                      borderColor: usernameError ? '#7f1d1d' : '#334155',
+                    }}
                   />
+                  {usernameError && (
+                    <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#f87171', marginTop: 4 }}>
+                      ⚠ {usernameError}
+                    </p>
+                  )}
+                  {!usernameError && username.length >= 3 && (
+                    <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#4ade80', marginTop: 4 }}>
+                      ✓
+                    </p>
+                  )}
                 </div>
               )}
 

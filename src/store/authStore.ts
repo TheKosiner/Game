@@ -49,6 +49,14 @@ function isDisposableEmail(email: string): boolean {
   return BLOCKED_DOMAINS.has(domain);
 }
 
+const USERNAME_RE = /^[a-zA-Z0-9_-]+$/;
+
+function validateUsername(username: string): 'ok' | 'too_short' | 'invalid_chars' {
+  if (username.length < 3) return 'too_short';
+  if (!USERNAME_RE.test(username)) return 'invalid_chars';
+  return 'ok';
+}
+
 async function fetchUsername(uid: string): Promise<string> {
   try {
     if (!db) return 'Gracz';
@@ -139,7 +147,15 @@ export const useAuthStore = create<AuthState>((set) => {
         return;
       }
 
-      const normalizedUsername = username.trim().toLowerCase();
+      const trimmed = username.trim();
+      const usernameCheck = validateUsername(trimmed);
+      if (usernameCheck !== 'ok') {
+        const t = getT();
+        set({ error: usernameCheck === 'too_short' ? t.auth.errUsernameTooShort : t.auth.errUsernameInvalidChars });
+        return;
+      }
+
+      const normalizedUsername = trimmed.toLowerCase();
 
       try {
         // Create auth user first — Firestore writes require auth

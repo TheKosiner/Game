@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
-  startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
+  startGuildOperation, attackGuildEnemy, claimGuildOperationReward, setKnockedOut,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -53,18 +53,27 @@ export default function GuildOperationPanel({
   const [starting, setStarting] = useState(false);
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [selectedLocationId, setSelectedLocationId] = useState<string>(() => GUILD_OP_LOCATIONS[0].id);
 
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
   const logRef = useRef<HTMLDivElement>(null);
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
 
+  // Local combat HP — arena-style: starts at maxHp, drains during raid, never touches hero.hp.
+  // Starts at 0 if the player was already knocked out in this operation (handles re-navigation).
+  const [raidHp, setRaidHp] = useState(() => {
+    if (guild.guildOperation?.participants?.[myUid]?.knockedOut) return 0;
+    return useGameStore.getState().hero.maxHp;
+  });
+  const raidHpRef = useRef(raidHp);
+
   const hero           = useGameStore(s => s.hero);
   const addXp          = useGameStore(s => s.addXp);
   const addGold        = useGameStore(s => s.addGold);
-  const takeDamage     = useGameStore(s => s.takeDamageInGuildRaid);
   const addToInventory = useGameStore(s => s.addToInventory);
-  const isLeader    = guild.leaderUid === myUid;
+  const isLeader         = guild.leaderUid === myUid;
+  const isLeaderOrOfficer = isLeader || guild.members[myUid]?.role === 'officer';
   const memberCount = Object.keys(guild.members).length;
   const myUsername  = guild.members[myUid]?.username ?? '';
 
@@ -119,7 +128,7 @@ export default function GuildOperationPanel({
   async function handleStart() {
     setStarting(true);
     try {
-      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount);
+      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocationId);
       if (ok) setLog([]);
       else notify('Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
@@ -129,7 +138,7 @@ export default function GuildOperationPanel({
     if (attackingRef.current) return;
     const currentOp = op;
     const currentHero = useGameStore.getState().hero;
-    if (!currentOp || currentHero.hp <= 0) return;
+    if (!currentOp || raidHpRef.current <= 0) return;
 
     attackingRef.current = true;
     setAttacking(true);
@@ -143,7 +152,7 @@ export default function GuildOperationPanel({
 
     try {
       const { status, damage } = await attackGuildEnemy(
-        guildId, myUid, heroDamage,
+        guildId, myUid, heroDamage, currentHero.maxHp,
         { username: myUsername, heroName: currentHero.name },
       );
       if (status === 'failed') {
@@ -153,15 +162,18 @@ export default function GuildOperationPanel({
         notify('Brak aktywnej operacji.', false);
         setAutoFight(false);
       } else {
+        const newRaidHp = Math.max(0, raidHpRef.current - enemyDmg);
+        raidHpRef.current = newRaidHp;
+        setRaidHp(newRaidHp);
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
           { text: `⚔ Ty → ${fmtNum(damage)} dmg na ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
         setLog(l => [...l, ...newLines]);
-        takeDamage(enemyDmg);
-        if (Math.max(0, currentHero.hp - enemyDmg) <= 0) {
-          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Odpocznij żeby wrócić.`, type: 'kill' }]);
+        if (newRaidHp <= 0) {
+          setLog(l => [...l, { text: `💀 ${currentHero.name} pokonany! Nie możesz już atakować w tej operacji.`, type: 'kill' }]);
           setAutoFight(false);
+          setKnockedOut(guildId, myUid).catch(() => {});
         }
         if (status === 'completed') setAutoFight(false);
       }
@@ -170,7 +182,7 @@ export default function GuildOperationPanel({
       setAttacking(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [op, guildId, myUid, myUsername, takeDamage]);
+  }, [op, guildId, myUid, myUsername]);
 
   useEffect(() => {
     if (!autoFight) return;
@@ -180,8 +192,24 @@ export default function GuildOperationPanel({
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
 
-  // Heal to full when entering an active operation
-  const healedRef = useRef(false);
+  // Reset local combat HP when a new operation starts
+  useEffect(() => {
+    if (!op?.startedAt) return;
+    const maxHp = useGameStore.getState().hero.maxHp;
+    raidHpRef.current = maxHp;
+    setRaidHp(maxHp);
+    setLog([]);
+  }, [op?.startedAt]);
+
+  // Sync knocked-out state arriving from Firestore (e.g. after a page re-open)
+  useEffect(() => {
+    if (op?.participants?.[myUid]?.knockedOut && raidHpRef.current > 0) {
+      raidHpRef.current = 0;
+      setRaidHp(0);
+      setAutoFight(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [op?.participants?.[myUid]?.knockedOut]);
 
   async function handleClaim() {
     const reward = await claimGuildOperationReward(guildId, myUid);
@@ -203,16 +231,7 @@ export default function GuildOperationPanel({
   const isFailed    = !!op && (op.status === 'failed' || (op.status === 'active' && isExpired));
   const isCompleted = !!op && op.status === 'completed';
   const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
-  const canStart    = isLeader && !isActive && !inCooldown;
-
-  useEffect(() => {
-    if (isActive && !healedRef.current) {
-      healedRef.current = true;
-      useGameStore.setState(s => ({ hero: { ...s.hero, hp: s.hero.maxHp } }));
-      useGameStore.getState().saveGame();
-    }
-    if (!isActive) healedRef.current = false;
-  }, [isActive]);
+  const canStart    = isLeaderOrOfficer && !isActive && !inCooldown;
 
   const participants = useMemo(
     () => op ? Object.entries(op.participants ?? {}).sort((a, b) => b[1].damage - a[1].damage) : [],
@@ -223,9 +242,8 @@ export default function GuildOperationPanel({
     [participants],
   );
 
-  const myEntry    = op?.participants?.[myUid];
-  const isDead     = hero.hp <= 0;
-  const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (hero.hp / hero.maxHp) * 100) : 0;
+  const isDead          = raidHp <= 0;
+  const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (raidHp / hero.maxHp) * 100) : 0;
 
   const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
@@ -303,18 +321,18 @@ export default function GuildOperationPanel({
           </div>
         </div>
 
-        {/* Hero HP */}
+        {/* Hero combat HP (local, like arena — doesn't affect real hero HP) */}
         <div style={{
           background: 'var(--bg-inset)',
           border: `1px solid ${isDead ? 'rgba(239,68,68,0.4)' : 'var(--border-dark)'}`,
-          padding: 8,
+          padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
               {isDead ? '💀' : '❤'} {hero.name}
             </span>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : '#86efac' }}>
-              {hero.hp} / {hero.maxHp} HP · {fmtNum(myEntry?.damage ?? 0)} dmg zadano
+              {fmtNum(raidHp)} / {fmtNum(hero.maxHp)} HP
             </span>
           </div>
           <div className="pixel-bar">
@@ -335,8 +353,11 @@ export default function GuildOperationPanel({
             background: 'rgba(30,5,5,0.9)', border: '1px solid rgba(239,68,68,0.3)',
             padding: '10px 12px', textAlign: 'center',
           }}>
-            <p style={{ ...MONO, fontSize: 10, color: '#f87171' }}>
-              💀 Jesteś pokonany! Odpocznij żeby wrócić do walki.
+            <p style={{ ...MONO, fontSize: 10, color: '#f87171', marginBottom: 2 }}>
+              💀 Pokonany!
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: 'rgba(248,113,113,0.6)' }}>
+              Nie możesz już atakować w tej operacji.
             </p>
           </div>
         ) : (
@@ -532,19 +553,80 @@ export default function GuildOperationPanel({
   }
 
   // ── START SCREEN ─────────────────────────────────────────────────────────────
+  const selectedLoc = GUILD_OP_LOCATIONS.find(l => l.id === selectedLocationId) ?? GUILD_OP_LOCATIONS[0];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
-      <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)', marginBottom: 2 }}>OPERACJA GILDYJNA</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)' }}>WYBIERZ OPERACJĘ</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>
+          👥 {memberCount} członków · POZ. {hero.level}
+        </p>
+      </div>
 
-      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '10px 12px' }}>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>
-          🗺 Lokacja dobierana automatycznie wg Twojego poziomu ({hero.level}).
+      {/* Location list */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {GUILD_OP_LOCATIONS.map(loc => {
+          const locked   = hero.level < loc.minLevel;
+          const selected = loc.id === selectedLocationId;
+          const rc       = RARITY_COLOR[loc.finalRarity] ?? '#aaa';
+          return (
+            <button
+              key={loc.id}
+              onClick={() => !locked && setSelectedLocationId(loc.id)}
+              disabled={locked}
+              style={{
+                background: selected
+                  ? `linear-gradient(135deg, rgba(0,0,0,0.7), ${rc}12)`
+                  : 'rgba(5,8,20,0.6)',
+                border: `1px solid ${selected ? rc + '66' : locked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)'}`,
+                padding: '8px 10px',
+                cursor: locked ? 'not-allowed' : 'pointer',
+                opacity: locked ? 0.45 : 1,
+                display: 'flex', alignItems: 'center', gap: 10,
+                textAlign: 'left',
+                boxShadow: selected ? `0 0 10px ${rc}18` : 'none',
+                transition: 'border-color 0.15s, background 0.15s',
+              }}
+            >
+              <span style={{ fontSize: 26, flexShrink: 0, lineHeight: 1 }}>{loc.emoji}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                  <span style={{ ...MONO, fontSize: 10, color: locked ? 'var(--text-muted)' : selected ? rc : 'var(--text-bright)' }}>
+                    {loc.name}
+                  </span>
+                  <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}14`, border: `1px solid ${rc}33`, padding: '1px 5px', flexShrink: 0 }}>
+                    {loc.finalRarity.toUpperCase()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ ...MONO, fontSize: 9, color: locked ? '#f87171' : 'var(--text-dim)' }}>
+                    {locked ? `🔒 POZ. ${loc.minLevel}+` : `POZ. ${loc.minLevel}+`}
+                  </span>
+                  <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>
+                    {loc.floors} piętra
+                  </span>
+                </div>
+              </div>
+              {selected && !locked && (
+                <div style={{ width: 6, height: 6, background: rc, borderRadius: '50%', flexShrink: 0, boxShadow: `0 0 6px ${rc}` }} />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Selected location description */}
+      <div style={{
+        background: `linear-gradient(135deg, rgba(0,0,0,0.6), ${RARITY_COLOR[selectedLoc.finalRarity] ?? '#aaa'}08)`,
+        border: `1px solid ${RARITY_COLOR[selectedLoc.finalRarity] ?? '#aaa'}33`,
+        padding: '8px 10px',
+      }}>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.5 }}>
+          {selectedLoc.description}
         </p>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 4 }}>
-          👥 Liczba członków: {memberCount} · Im wyższy poziom, tym lepsze nagrody.
-        </p>
-        <p style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
+        <p style={{ ...MONO, fontSize: 9, color: '#f59e0b', marginTop: 4 }}>
           ⚡ Operacja kończy się o północy UTC. Każdy walczy swoim HP.
         </p>
       </div>
@@ -558,15 +640,15 @@ export default function GuildOperationPanel({
       ) : canStart ? (
         <button
           onClick={handleStart}
-          disabled={starting}
+          disabled={starting || hero.level < selectedLoc.minLevel}
           className="btn btn-primary"
           style={{ fontSize: 10 }}
         >
-          {starting ? '⏳ Uruchamianie...' : '▶ ROZPOCZNIJ OPERACJĘ'}
+          {starting ? '⏳ Uruchamianie...' : `▶ ROZPOCZNIJ — ${selectedLoc.emoji} ${selectedLoc.name}`}
         </button>
-      ) : !isLeader ? (
+      ) : !isLeaderOrOfficer ? (
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-          Tylko władca gildii może uruchomić operację.
+          Tylko władca lub oficer może uruchomić operację.
         </p>
       ) : null}
     </div>

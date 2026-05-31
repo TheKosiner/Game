@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
-  acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership,
+  acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership, setMemberRole,
   getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost, updateGuildDescription,
   getGuildMemberLevels,
   type Guild, type GuildInvite, type LeaderboardEntry,
@@ -230,6 +230,8 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
   const [descVal, setDescVal] = useState(guild.description ?? '');
   const [savingDesc, setSavingDesc] = useState(false);
   const isLeader = guild.leaderUid === myUid;
+  const isOfficer = guild.members[myUid]?.role === 'officer';
+  const canManage = isLeader || isOfficer;
   const treasury = guild.treasury ?? 0;
   const expLvl = guild.expUpgrade ?? 0;
   const goldLvl = guild.goldUpgrade ?? 0;
@@ -299,7 +301,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
               {!maxed && <p style={{ ...PX(4), color: canAfford ? '#ffd700' : '#555', textAlign: 'center' }}>{t.guild.upgradeCost(cost)}</p>}
               {maxed ? (
                 <p style={{ ...PX(5), color, textAlign: 'center' }}>{t.guild.upgradeMaxed}</p>
-              ) : isLeader ? (
+              ) : canManage ? (
                 <button onClick={() => handleUpgrade(type)} disabled={!!upgrading || !canAfford} className="btn btn-primary"
                   style={{ fontSize: 9, padding: '5px 4px', opacity: canAfford ? 1 : 0.4, marginTop: 'auto' }}>
                   {upgrading === type ? '⏳' : t.guild.upgradeBtn}
@@ -353,9 +355,9 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
         ) : (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
             <p style={{ ...PX(4), color: guild.description ? 'var(--text-dim)' : 'var(--text-muted)', fontStyle: guild.description ? 'normal' : 'italic', flex: 1 }}>
-              {guild.description || (isLeader ? '— dodaj opis gildii —' : '—')}
+              {guild.description || (canManage ? '— dodaj opis gildii —' : '—')}
             </p>
-            {isLeader && (
+            {canManage && (
               <button onClick={() => setEditingDesc(true)} className="btn btn-secondary" style={{ fontSize: 9, padding: '3px 7px', flexShrink: 0 }}>✎</button>
             )}
           </div>
@@ -365,6 +367,8 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
   );
 }
 
+const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
+
 function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuildTabChange }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGuildTabChange: (t: import('./BottomNav').GuildTabSub) => void }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
@@ -373,8 +377,13 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
   const setGuildTab = onGuildTabChange;
   const [leaderWarn, setLeaderWarn] = useState(false);
   const isLeader = guild.leaderUid === myUid;
+  const isOfficer = guild.members[myUid]?.role === 'officer';
+  const canManage = isLeader || isOfficer;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
-    .sort((a, b) => (a.role === 'leader' ? -1 : b.role === 'leader' ? 1 : b.level - a.level));
+    .sort((a, b) => {
+      const ro = (ROLE_ORDER[a.role] ?? 2) - (ROLE_ORDER[b.role] ?? 2);
+      return ro !== 0 ? ro : b.level - a.level;
+    });
   const memberCount = members.length;
 
   async function handleLeave() {
@@ -402,6 +411,17 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
     if (!confirm(t.guild.transferConfirm(username))) return;
     setActing(true);
     try { await transferLeadership(guild.id, myUid, uid); onRefresh(); }
+    finally { setActing(false); }
+  }
+
+  async function handleSetOfficer(uid: string, currentRole: string) {
+    const newRole = currentRole === 'officer' ? 'member' : 'officer';
+    const label = newRole === 'officer'
+      ? (isEn ? 'Promote to Officer?' : 'Mianować oficerem?')
+      : (isEn ? 'Demote from Officer?' : 'Odebrać stopień oficera?');
+    if (!confirm(label)) return;
+    setActing(true);
+    try { await setMemberRole(guild.id, myUid, uid, newRole); onRefresh(); }
     finally { setActing(false); }
   }
 
@@ -455,7 +475,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ ...PX(5), color: 'var(--gold-main)' }}>{t.guild.membersTitle}</p>
-          {isLeader && (
+          {canManage && (
             <button onClick={() => setShowInvite(true)} className="btn btn-primary" style={{ fontSize: 10, padding: '4px 8px' }}>
               {t.guild.inviteBtn}
             </button>
@@ -464,37 +484,69 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
 
         {members.map(m => {
           const isMe = m.uid === myUid;
+          const borderColor = m.role === 'leader' ? 'var(--gold-darker)' : m.role === 'officer' ? 'rgba(100,180,255,0.4)' : 'var(--border-dark)';
+          const nameColor   = m.role === 'leader' ? 'var(--gold-bright)' : m.role === 'officer' ? '#7dd3fc' : 'var(--text-bright)';
+          // Officers can kick regular members; leader can kick anyone except self
+          const canKick = !isMe && m.role !== 'leader' && (isLeader || (isOfficer && m.role === 'member'));
           return (
             <div key={m.uid} style={{
               background: isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
-              border: `1px solid ${m.role === 'leader' ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
+              border: `1px solid ${borderColor}`,
               padding: '7px 8px',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${m.role === 'leader' ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+              <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${borderColor}` }}>
                 <img src={portraitSrc(resolvePortrait(playerPortraits[m.uid] ?? m.portrait, m.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                  <p style={{ ...PX(6), color: m.role === 'leader' ? 'var(--gold-bright)' : 'var(--text-bright)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 2 }}>
+                  <p style={{ ...PX(6), color: nameColor }}>
                     {m.role === 'leader' ? '👑 ' : ''}{m.username}{isMe ? ' ◀' : ''}
                   </p>
+                  {m.role === 'officer' && (
+                    <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#7dd3fc', background: 'rgba(100,180,255,0.1)', border: '1px solid rgba(100,180,255,0.35)', padding: '1px 4px' }}>
+                      OFICER
+                    </span>
+                  )}
                 </div>
-                <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                  POZ.{m.level}
-                </p>
+                <p style={{ ...PX(4), color: 'var(--text-muted)' }}>POZ.{m.level}</p>
                 {(guild.contributions?.[m.uid] ?? 0) > 0 && (
                   <p style={{ ...PX(4), color: '#ffd700', marginTop: 2 }}>
                     🪙 {(guild.contributions?.[m.uid] ?? 0).toLocaleString()}
                   </p>
                 )}
               </div>
-              {isLeader && !isMe && (
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  <button onClick={() => handleTransfer(m.uid, m.username)} disabled={acting} className="btn btn-secondary" style={{ fontSize: 10, padding: '3px 5px' }} title={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'} aria-label={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'}>👑</button>
-                  <button onClick={() => handleKick(m.uid, m.username)} disabled={acting} className="btn btn-danger" style={{ fontSize: 10, padding: '3px 5px' }} title={t.guild.kickBtn} aria-label={isEn ? `Kick ${m.username}` : `Wyrzuć ${m.username}`}>✕</button>
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                {isLeader && !isMe && (
+                  <>
+                    <button
+                      onClick={() => handleSetOfficer(m.uid, m.role)}
+                      disabled={acting}
+                      className="btn btn-secondary"
+                      style={{ fontSize: 10, padding: '3px 5px', color: m.role === 'officer' ? '#fbbf24' : '#7dd3fc' }}
+                      title={m.role === 'officer' ? (isEn ? 'Demote from Officer' : 'Odbierz stopień oficera') : (isEn ? 'Promote to Officer' : 'Mianuj oficerem')}
+                    >
+                      {m.role === 'officer' ? '★' : '☆'}
+                    </button>
+                    <button
+                      onClick={() => handleTransfer(m.uid, m.username)}
+                      disabled={acting}
+                      className="btn btn-secondary"
+                      style={{ fontSize: 10, padding: '3px 5px' }}
+                      title={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'}
+                    >👑</button>
+                  </>
+                )}
+                {canKick && (
+                  <button
+                    onClick={() => handleKick(m.uid, m.username)}
+                    disabled={acting}
+                    className="btn btn-danger"
+                    style={{ fontSize: 10, padding: '3px 5px' }}
+                    title={t.guild.kickBtn}
+                  >✕</button>
+                )}
+              </div>
             </div>
           );
         })}
