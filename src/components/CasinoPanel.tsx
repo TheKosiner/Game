@@ -264,8 +264,6 @@ export default function CasinoPanel() {
 
   // We render 7 cells (-3 … +3) to keep the viewport full during transitions
   const OFFSETS = [-3, -2, -1, 0, 1, 2, 3] as const;
-  // Map offset to visual size index (clamp to 0–4)
-  const sizeIdx = (off: number) => Math.min(4, Math.abs(off) + (Math.abs(off) > 2 ? 99 : 0));
 
   // The center number (landed or mid-spin)
   const centerNum = reelRef.current.tape[centerIdx] ?? 0;
