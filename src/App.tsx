@@ -341,6 +341,7 @@ export default function App() {
     const sectionLabel: Record<MainTab, string> = {
       hero:   t.nav.hero,
       play:   t.nav.play,
+      krypta: 'KRYPTA',
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.shop,
