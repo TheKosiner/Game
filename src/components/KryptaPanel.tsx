@@ -163,7 +163,7 @@ export default function KryptaPanel() {
     incrementKryptaRuns();
     setPhase('direction');
     setDepth(0);
-    setRaidHp(maxHp);
+    setRaidHp(hero.hp);
     setRaidMaxHp(maxHp);
     setBuffs([]);
     setHasCompanion(false);
@@ -263,12 +263,16 @@ export default function KryptaPanel() {
     if (hp <= 0) {
       pushLog(['💀 Padasz pokonany...']);
       setPhase('dead');
+      saveGame();
+      if (user) syncToCloud(user.uid, user.username).catch(() => {});
     }
   }
 
   function flee() {
     pushLog(['🏃 Uciekasz z Krypty!']);
     setPhase('fled');
+    saveGame();
+    if (user) syncToCloud(user.uid, user.username).catch(() => {});
   }
 
   function startBoss() {
