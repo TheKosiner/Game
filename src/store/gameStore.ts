@@ -19,6 +19,7 @@ const OLD_SAVE_KEY = 'cybermagic_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 export const MAX_DAILY_DUNGEONS = 10;
+export const MAX_DAILY_KRYPTA = 5;
 export const MAX_DAILY_QUESTS = 5;
 export const SHOP_REFRESH_COOLDOWN = 60 * 60 * 1000;
 export const PVP_COOLDOWN = 15 * 60 * 1000;
@@ -162,6 +163,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     completedDungeons: [],
     lastCasinoSpinAt: 0,
     goldEarnedToday: 0,
+    kryptaRunsToday: 0,
   };
 }
 
@@ -806,6 +808,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
           goldEarnedToday: 0,
+          kryptaRunsToday: 0,
           lastDailyReset: now,
           gems: hero.gems + DAILY_GEMS,
         },
@@ -1085,6 +1088,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  incrementKryptaRuns: () => {
+    const { hero } = get();
+    set({ hero: { ...hero, kryptaRunsToday: hero.kryptaRunsToday + 1 } });
+    get().saveGame();
+  },
+
   addToInventory: (item) => {
     const { hero } = get();
     if (hero.inventory.length >= 20) return;
@@ -1191,6 +1200,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           beggingStartAt: save.hero.beggingStartAt ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
+          kryptaRunsToday: save.hero.kryptaRunsToday ?? 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
           stats: migrateStats(save.hero.stats ?? {}),
           equipment: migrateEquipment(save.hero.equipment),

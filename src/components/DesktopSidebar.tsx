@@ -182,11 +182,9 @@ export default function DesktopSidebar({
             onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
           <NavItem icon="⚔" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
             onClick={() => { onTab('play'); onPlay('pvp'); }} />
+          <NavItem icon="⚰️" label="Krypta" active={tab === 'play' && playSub === 'krypta'}
+            onClick={() => { onTab('play'); onPlay('krypta'); }} />
         </>}
-
-        {/* Krypta — direct, no sub-nav */}
-        <SectionNavItem tabId="krypta" label="KRYPTA" active={tab === 'krypta'} open={false}
-          onToggle={() => { onTab('krypta'); setOpen(prev => ({ ...prev, krypta: false })); }} />
 
         {/* Guild — direct, no sub-nav */}
         <SectionNavItem tabId="guild" label={t.nav.guild} active={tab === 'guild'} open={false}

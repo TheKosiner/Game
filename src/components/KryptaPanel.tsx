@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, MAX_DAILY_KRYPTA } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
@@ -67,12 +67,61 @@ function Btn({ onClick, children, color = '#ff2d78', disabled = false, small = f
   );
 }
 
+function SvgDoor({ label, onClick }: { label: string; onClick: () => void }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 4px' }}
+    >
+      <svg width="88" height="124" viewBox="0 0 88 124" fill="none" xmlns="http://www.w3.org/2000/svg"
+        style={{ filter: hov ? 'drop-shadow(0 0 14px #9944cc)' : 'drop-shadow(0 0 4px rgba(153,68,204,0.35))', transition: 'filter 0.2s' }}>
+        {/* Stone frame */}
+        <rect x="4" y="40" width="80" height="78" rx="2" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
+        {/* Gothic pointed arch */}
+        <path d="M4 40 Q4 4 44 4 Q84 4 84 40 Z" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
+        {/* Arch inner glow tint */}
+        <path d="M12 40 Q12 16 44 16 Q76 16 76 40 Z" fill={hov ? 'rgba(153,68,204,0.15)' : 'rgba(153,68,204,0.06)'}/>
+        {/* Cross rune in arch */}
+        <line x1="44" y1="12" x2="44" y2="32" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
+        <line x1="31" y1="22" x2="57" y2="22" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
+        {/* Left door panel */}
+        <rect x="8" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
+        {/* Right door panel */}
+        <rect x="48" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
+        {/* Inset panels left */}
+        <rect x="11" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
+        <rect x="11" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
+        {/* Inset panels right */}
+        <rect x="51" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
+        <rect x="51" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
+        {/* Centre gap */}
+        <line x1="44" y1="42" x2="44" y2="114" stroke="rgba(153,68,204,0.28)" strokeWidth="2"/>
+        {/* Knobs */}
+        <circle cx="41" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
+        <circle cx="47" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
+        {/* Keyhole */}
+        <ellipse cx="44" cy="76" rx="1.8" ry="2.2" fill={hov ? '#cc88ff' : '#7722bb'}/>
+        <path d="M42.5 78 L42 82 L45.5 82 L45 78" fill={hov ? '#cc88ff' : '#7722bb'}/>
+        {/* Bottom threshold */}
+        <rect x="4" y="116" width="80" height="6" rx="1" fill="#1a0030" stroke="rgba(153,68,204,0.2)" strokeWidth="1"/>
+        {/* Glow line at base when hovered */}
+        {hov && <rect x="8" y="114" width="72" height="2" rx="1" fill="#9944cc" opacity="0.6"/>}
+      </svg>
+      <span style={{ ...MONO, fontSize: 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
+    </button>
+  );
+}
+
 export default function KryptaPanel() {
   const hero = useGameStore(s => s.hero);
   const addXp = useGameStore(s => s.addXp);
   const addGold = useGameStore(s => s.addGold);
   const addToInventory = useGameStore(s => s.addToInventory);
   const saveGame = useGameStore(s => s.saveGame);
+  const incrementKryptaRuns = useGameStore(s => s.incrementKryptaRuns);
   const user = useAuthStore(s => s.user);
 
   const [phase, setPhase]           = useState<Phase>('idle');
@@ -111,6 +160,7 @@ export default function KryptaPanel() {
 
   function enterCrypt() {
     const maxHp = getHeroMaxHp(hero.stats, hero.level, hero.equipment);
+    incrementKryptaRuns();
     setPhase('direction');
     setDepth(0);
     setRaidHp(maxHp);
@@ -353,10 +403,12 @@ export default function KryptaPanel() {
   // ── Phase rendering ─────────────────────────────────────────────────────────
 
   if (phase === 'idle') {
+    const runsLeft = MAX_DAILY_KRYPTA - (hero.kryptaRunsToday ?? 0);
+    const blocked = runsLeft <= 0;
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 16px', textAlign: 'center' }}>
-        <div style={{ fontSize: 56 }}>⚰️</div>
-        <div style={{ ...ORB, fontSize: 20, color: '#9944cc', letterSpacing: 2, textShadow: '0 0 16px #9944cc' }}>KRYPTA</div>
+        <div style={{ fontSize: 56, filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}>⚰️</div>
+        <div style={{ ...ORB, fontSize: 20, color: blocked ? 'rgba(153,68,204,0.4)' : '#9944cc', letterSpacing: 2, textShadow: blocked ? 'none' : '0 0 16px #9944cc' }}>KRYPTA</div>
         <div style={{ ...MONO, fontSize: 12, color: 'rgba(255,255,255,0.5)', maxWidth: 360, lineHeight: 1.7 }}>
           Starożytna krypta skrywa mroczne tajemnice. Przemierzaj jej korytarze, walcz z potworami,
           odkrywaj sekrety i zmierz się z Lordem Cienia. Nagrody skalują się z Twoim poziomem.
@@ -366,7 +418,27 @@ export default function KryptaPanel() {
           <span>☠️ Boss końcowy</span>
           <span>🎁 Skrzynka z nagrodą</span>
         </div>
-        <Btn onClick={enterCrypt} color="#9944cc">⚰️ WEJDŹ DO KRYPTY</Btn>
+        {/* Daily run counter */}
+        <div style={{
+          display: 'flex', gap: 6, alignItems: 'center',
+          background: blocked ? 'rgba(255,45,120,0.08)' : 'rgba(153,68,204,0.08)',
+          border: `1px solid ${blocked ? 'rgba(255,45,120,0.3)' : 'rgba(153,68,204,0.25)'}`,
+          padding: '6px 16px',
+        }}>
+          {Array.from({ length: MAX_DAILY_KRYPTA }).map((_, i) => (
+            <span key={i} style={{ fontSize: 14, opacity: i < (hero.kryptaRunsToday ?? 0) ? 0.2 : 1 }}>⚰️</span>
+          ))}
+          <span style={{ ...MONO, fontSize: 10, color: blocked ? '#ff2d78' : 'rgba(255,255,255,0.5)', marginLeft: 6 }}>
+            {blocked ? 'Limit dzienny wyczerpany' : `${runsLeft}/${MAX_DAILY_KRYPTA} krypt dziś`}
+          </span>
+        </div>
+        {blocked ? (
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,45,120,0.7)', letterSpacing: 0.5 }}>
+            Wróć jutro, by ponownie wkroczyć w mroki Krypty.
+          </div>
+        ) : (
+          <Btn onClick={enterCrypt} color="#9944cc">⚰️ WEJDŹ DO KRYPTY</Btn>
+        )}
       </div>
     );
   }
@@ -378,12 +450,10 @@ export default function KryptaPanel() {
         <div style={{ textAlign: 'center', ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>
           Wybierz kierunek eksploracji:
         </div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-          {(['left', 'center', 'right'] as const).map((dir, i) => (
-            <Btn key={dir} onClick={() => chooseDirection(dir)} color="#9944cc">
-              {['← LEWO', '↑ ŚRODEK', '→ PRAWO'][i]}
-            </Btn>
-          ))}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <SvgDoor label="← LEWO"    onClick={() => chooseDirection('left')} />
+          <SvgDoor label="↑ ŚRODEK"  onClick={() => chooseDirection('center')} />
+          <SvgDoor label="→ PRAWO"   onClick={() => chooseDirection('right')} />
         </div>
         {renderLog()}
       </div>

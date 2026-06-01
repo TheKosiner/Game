@@ -341,7 +341,6 @@ export default function App() {
     const sectionLabel: Record<MainTab, string> = {
       hero:   t.nav.hero,
       play:   t.nav.play,
-      krypta: 'KRYPTA',
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.shop,
@@ -395,7 +394,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
-              {tab === 'krypta' && <KryptaPanel />}
+              {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
               {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
@@ -539,7 +538,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
-          {tab === 'krypta' && <KryptaPanel />}
+          {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
           {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
