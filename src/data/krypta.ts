@@ -42,8 +42,16 @@ export const BOSS_TEMPLATE: EnemyTemplate = {
 };
 
 export function getBossRarity(heroLevel: number): Rarity {
-  if (heroLevel >= 30) return 'legendary';
-  if (heroLevel >= 20) return 'epic';
+  const r = Math.random();
+  if (heroLevel >= 30) {
+    if (r < 0.12) return 'legendary'; // ~12% — trochę powyżej trybu łupy (~8%)
+    if (r < 0.85) return 'epic';
+    return 'rare';
+  }
+  if (heroLevel >= 20) {
+    if (r < 0.60) return 'epic';
+    return 'rare';
+  }
   return 'rare';
 }
 
