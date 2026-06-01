@@ -16,6 +16,7 @@ interface PlayerInfo {
   hp: number;
   maxHp: number;
   dungeonRunsToday: number;
+  kryptaRunsToday: number;
   questsCompletedToday: number;
   activeQuest: boolean;
   restingUntil: number | null;
@@ -43,6 +44,7 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
         hp: d.hero?.hp ?? 0,
         maxHp: d.hero?.maxHp ?? 0,
         dungeonRunsToday: d.hero?.dungeonRunsToday ?? 0,
+        kryptaRunsToday: d.hero?.kryptaRunsToday ?? 0,
         questsCompletedToday: d.hero?.questsCompletedToday ?? 0,
         activeQuest: !!d.activeQuest,
         restingUntil: d.hero?.restingUntil ?? null,
@@ -155,6 +157,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
         if (key === 'hero.level')  updated.level  = val as number;
         if (key === 'hero.hp')     updated.hp     = val as number;
         if (key === 'hero.dungeonRunsToday')    updated.dungeonRunsToday    = val as number;
+        if (key === 'hero.kryptaRunsToday')     updated.kryptaRunsToday     = val as number;
         if (key === 'hero.questsCompletedToday') updated.questsCompletedToday = val as number;
       }
       return updated;
@@ -190,6 +193,12 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     if (!player) return;
     await patch({ 'hero.dungeonRunsToday': 0 });
     flash(`Zresetowano limity lochów dla ${player.username}`);
+  };
+
+  const resetKrypta = async () => {
+    if (!player) return;
+    await patch({ 'hero.kryptaRunsToday': 0 });
+    flash(`Zresetowano limit Krypty dla ${player.username}`);
   };
 
   const resetQuests = async () => {
@@ -291,7 +300,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </p>
             <p style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>Złoto: {player.gold} | Gemy: {player.gems}</p>
             <p style={{ ...MONO, fontSize: 9, color: '#aaa' }}>
-              Lochy: {player.dungeonRunsToday}/10 | Misje: {player.questsCompletedToday}/5
+              Lochy: {player.dungeonRunsToday}/10 | Krypta: {player.kryptaRunsToday}/5 | Misje: {player.questsCompletedToday}/5
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.activeQuest ? '#ff8844' : '#666' }}>
               Misja: {player.activeQuest ? '⚠ aktywna' : 'brak'}
@@ -335,6 +344,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             <button onClick={resetDungeons} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Reset lochów
+            </button>
+            <button onClick={resetKrypta} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #6644aa', color: '#cc88ff', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
+              Reset Krypty
             </button>
             <button onClick={resetQuests} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Reset misji
