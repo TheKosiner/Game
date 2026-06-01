@@ -11,19 +11,19 @@ export type EnemyTemplate = {
 };
 
 export const ENEMY_TIERS: EnemyTemplate[][] = [
-  // Tier 1 (depth 1–2)
+  // Tier 1 (depth 1–5)
   [
     { name: 'Cień Krwi',      emoji: '👻', hpMult: 3.5, atkMult: 0.8, defMult: 0.5, baseXp: 20, baseGold: 15 },
     { name: 'Kościan',        emoji: '💀', hpMult: 4.0, atkMult: 0.7, defMult: 0.7, baseXp: 22, baseGold: 12 },
     { name: 'Gnijący Szczur', emoji: '🐀', hpMult: 3.0, atkMult: 1.0, defMult: 0.3, baseXp: 18, baseGold: 18 },
   ],
-  // Tier 2 (depth 3–4)
+  // Tier 2 (depth 6–10)
   [
     { name: 'Widmo',          emoji: '🕷️', hpMult: 5.0, atkMult: 1.2, defMult: 0.8, baseXp: 35, baseGold: 28 },
     { name: 'Trupi Rycerz',  emoji: '⚔️', hpMult: 6.0, atkMult: 1.0, defMult: 1.2, baseXp: 40, baseGold: 25 },
     { name: 'Nekromanta',    emoji: '🧙', hpMult: 4.5, atkMult: 1.4, defMult: 0.6, baseXp: 38, baseGold: 30 },
   ],
-  // Tier 3 (depth 5+)
+  // Tier 3 (depth 11+)
   [
     { name: 'Demon Otchłani',  emoji: '😈', hpMult: 7.5, atkMult: 1.6, defMult: 1.0, baseXp: 55, baseGold: 45 },
     { name: 'Nieumarły Mag',   emoji: '🔮', hpMult: 6.5, atkMult: 1.8, defMult: 0.8, baseXp: 58, baseGold: 48 },
@@ -104,7 +104,7 @@ export function buildEnemy(template: EnemyTemplate, heroLevel: number, depth: nu
 }
 
 export function pickRandomEnemy(depth: number): EnemyTemplate {
-  const tier = depth <= 2 ? 0 : depth <= 4 ? 1 : 2;
+  const tier = depth <= 5 ? 0 : depth <= 10 ? 1 : 2;
   const pool = ENEMY_TIERS[tier];
   return pool[Math.floor(Math.random() * pool.length)];
 }
