@@ -161,6 +161,9 @@ function migrateHeroFromRaw(raw: any) {
     completedDungeons: raw.completedDungeons ?? [],
     lastCasinoSpinAt: raw.lastCasinoSpinAt ?? 0,
     goldEarnedToday: raw.goldEarnedToday ?? 0,
+    dungeonRunsToday: raw.dungeonRunsToday ?? 0,
+    questsCompletedToday: raw.questsCompletedToday ?? 0,
+    kryptaRunsToday: raw.kryptaRunsToday ?? 0,
   };
 }
 
