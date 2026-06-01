@@ -28,7 +28,7 @@ export const CHALLENGE_COOLDOWN = 60 * 60 * 1000;
 type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 const RARITY_BASE: Record<Rarity, number> = { common: 50, uncommon: 28, rare: 14, epic: 6, legendary: 2 };
-const RARITY_EMOJI: Record<Rarity, string> = { common: '⬜', uncommon: '🟩', rare: '🟦', epic: '🟥', legendary: '✨' };
+const RARITY_EMOJI: Record<Rarity, string> = { common: '⬜', uncommon: '🟩', rare: '🟦', epic: '🟪', legendary: '✨' };
 const RARITY_LABEL: Record<Rarity, string> = { common: '', uncommon: '', rare: ' RZADKI!', epic: ' 💜 EPICKI!', legendary: ' ✨ LEGENDARNY!' };
 const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 // Chance to bump one tier higher after normal roll (per difficulty multiplier applied later)
@@ -1242,3 +1242,5 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
 }));
+
+export { scaledQuestDuration };
