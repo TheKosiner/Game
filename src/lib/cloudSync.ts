@@ -161,6 +161,9 @@ function migrateHeroFromRaw(raw: any) {
     completedDungeons: raw.completedDungeons ?? [],
     lastCasinoSpinAt: raw.lastCasinoSpinAt ?? 0,
     goldEarnedToday: raw.goldEarnedToday ?? 0,
+    dungeonRunsToday: raw.dungeonRunsToday ?? 0,
+    questsCompletedToday: raw.questsCompletedToday ?? 0,
+    kryptaRunsToday: raw.kryptaRunsToday ?? 0,
   };
 }
 
@@ -324,7 +327,7 @@ export async function getPvpHistory(): Promise<PvpFightRecord[]> {
   return snap.docs.map(d => d.data() as PvpFightRecord);
 }
 
-// ── GUILDS ────────────────────────────────────────────────────────────────
+// ── GUILDS ───────────────────────────────────────────────────────
 
 export interface GuildOpParticipant {
   username: string;
@@ -708,7 +711,7 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   await deleteDoc(doc(db, 'guilds', guildId));
 }
 
-// ── TERRITORIES ───────────────────────────────────────────────────────────────
+// ── TERRITORIES ───────────────────────────────────────────────────────
 
 export interface TerritoryState {
   id: string;
@@ -963,7 +966,7 @@ export async function claimTerritoryReward(
   return { gold: 0, xp: 0 };
 }
 
-// ── Mail ─────────────────────────────────────────────────────────────────────
+// ── Mail ────────────────────────────────────────────────────────────────────
 
 export async function sendMail(
   fromUid: string,
@@ -1000,7 +1003,7 @@ export async function deleteMail(mailId: string): Promise<void> {
   await deleteDoc(doc(db, 'mail', mailId));
 }
 
-// ── GUILD OPERATIONS ──────────────────────────────────────────────────────
+// ── GUILD OPERATIONS ────────────────────────────────────────────────
 
 function nextMidnightUtc(): number {
   const now = new Date();
