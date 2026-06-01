@@ -10,18 +10,30 @@ export type EnemyTemplate = {
   baseGold: number;
 };
 
-export const ENEMY_TEMPLATES: EnemyTemplate[] = [
-  { name: 'Szkielet',      emoji: '💀', hpMult: 8,  atkMult: 1.2, defMult: 0.8, baseXp: 18,  baseGold: 12  },
-  { name: 'Ghul',          emoji: '🦷', hpMult: 10, atkMult: 1.5, defMult: 0.9, baseXp: 22,  baseGold: 15  },
-  { name: 'Widmo',         emoji: '👻', hpMult: 7,  atkMult: 1.8, defMult: 0.6, baseXp: 25,  baseGold: 18  },
-  { name: 'Zombie',        emoji: '🧙', hpMult: 14, atkMult: 1.0, defMult: 1.2, baseXp: 20,  baseGold: 13  },
-  { name: 'Upiór',         emoji: '🦇', hpMult: 9,  atkMult: 1.6, defMult: 0.7, baseXp: 28,  baseGold: 20  },
-  { name: 'Demon Cienia',  emoji: '👿', hpMult: 12, atkMult: 2.0, defMult: 1.0, baseXp: 35,  baseGold: 28  },
+export const ENEMY_TIERS: EnemyTemplate[][] = [
+  // Tier 1 (depth 1–2)
+  [
+    { name: 'Cień Krwi',      emoji: '👻', hpMult: 3.5, atkMult: 0.8, defMult: 0.5, baseXp: 20, baseGold: 15 },
+    { name: 'Kościan',        emoji: '💀', hpMult: 4.0, atkMult: 0.7, defMult: 0.7, baseXp: 22, baseGold: 12 },
+    { name: 'Gnijący Szczur', emoji: '🐀', hpMult: 3.0, atkMult: 1.0, defMult: 0.3, baseXp: 18, baseGold: 18 },
+  ],
+  // Tier 2 (depth 3–4)
+  [
+    { name: 'Widmo',          emoji: '🕷️', hpMult: 5.0, atkMult: 1.2, defMult: 0.8, baseXp: 35, baseGold: 28 },
+    { name: 'Trupi Rycerz',  emoji: '⚔️', hpMult: 6.0, atkMult: 1.0, defMult: 1.2, baseXp: 40, baseGold: 25 },
+    { name: 'Nekromanta',    emoji: '🧙', hpMult: 4.5, atkMult: 1.4, defMult: 0.6, baseXp: 38, baseGold: 30 },
+  ],
+  // Tier 3 (depth 5+)
+  [
+    { name: 'Demon Otchłani',  emoji: '😈', hpMult: 7.5, atkMult: 1.6, defMult: 1.0, baseXp: 55, baseGold: 45 },
+    { name: 'Nieumarły Mag',   emoji: '🔮', hpMult: 6.5, atkMult: 1.8, defMult: 0.8, baseXp: 58, baseGold: 48 },
+    { name: 'Strażnik Krypt',  emoji: '🗿', hpMult: 9.0, atkMult: 1.4, defMult: 1.6, baseXp: 60, baseGold: 40 },
+  ],
 ];
 
 export const SPIDER_TEMPLATE: EnemyTemplate = {
-  name: 'Pająk Kryptowy', emoji: '🕷️',
-  hpMult: 18, atkMult: 2.2, defMult: 1.3, baseXp: 45, baseGold: 35,
+  name: 'Jadowity Pająk', emoji: '🕷️',
+  hpMult: 2.5, atkMult: 0.9, defMult: 0.3, baseXp: 15, baseGold: 10,
 };
 
 export const BOSS_TEMPLATE: EnemyTemplate = {
@@ -53,51 +65,46 @@ export type ActiveBuff = {
 };
 
 export const BUFFS: ActiveBuff[] = [
-  { id: 'fury',    label: 'Furia',       color: '#ff4444', atkMult: 1.5,  defMult: 0.8,  hpMult: 1.0 },
-  { id: 'shield',  label: 'Tarcza',      color: '#4488ff', atkMult: 1.0,  defMult: 1.8,  hpMult: 1.0 },
-  { id: 'regen',   label: 'Regeneracja', color: '#44ff88', atkMult: 1.0,  defMult: 1.0,  hpMult: 1.5 },
-  { id: 'shadow',  label: 'Mrok',        color: '#aa44ff', atkMult: 1.25, defMult: 1.25, hpMult: 1.25 },
+  { id: 'ancient_blessing', label: '✨ Błogosławieństwo',  color: '#ffd700', atkMult: 1.15, defMult: 1.10, hpMult: 1.10 },
+  { id: 'battle_frenzy',    label: '⚔️ Szał Bojowy',       color: '#ff4444', atkMult: 1.30, defMult: 0.85, hpMult: 1.00 },
+  { id: 'stone_skin',       label: '🪨 Kamienna Skóra',    color: '#aaaaaa', atkMult: 0.90, defMult: 1.35, hpMult: 1.15 },
 ];
 
-export const EVENT_POOL = [
-  {
-    id: 'trap',
-    text: 'Wchodzisz w strefę pułapek. Kole z kolcami wyrastają z podłogi!',
-    choices: [
-      { label: 'Przeskocz (DEX)',    stat: 'dexterity' as const,    dmgPct: 0.05, buffId: null },
-      { label: 'Przetrzymaj (VIT)', stat: 'vitality'  as const, dmgPct: 0.20, buffId: null },
-    ],
-  },
-  {
-    id: 'altar',
-    text: 'Napotykasz mroczny ołtarz. Możesz złożyć ofiarę z krwi w zamian za siłę.',
-    choices: [
-      { label: 'Złóż ofiarę (15% HP → Furia)', stat: null, dmgPct: 0.15, buffId: 'fury'   },
-      { label: 'Ominąć',                        stat: null, dmgPct: 0,    buffId: null   },
-    ],
-  },
-  {
-    id: 'fountain',
-    text: 'Tajemnicza fontanna emituje złowrogą poświatę. Pijąc z niej możesz zyskać ochronę.',
-    choices: [
-      { label: 'Wypić (INT → Tarcza)',  stat: 'intelligence' as const, dmgPct: 0,    buffId: 'shield' },
-      { label: 'Zignorować',              stat: null,                    dmgPct: 0,    buffId: null    },
-    ],
-  },
-  {
-    id: 'miasma',
-    text: 'Gruba warstwa miazmy wypełnia korytarz. Oddychasz ciężkim, zgniłym powietrzem.',
-    choices: [
-      { label: 'Przebij się siłą (STR)', stat: 'strength'     as const, dmgPct: 0.10, buffId: null  },
-      { label: 'Zaczekaj i regeneruj', stat: null,                   dmgPct: 0,    buffId: 'regen' },
-    ],
-  },
-  {
-    id: 'runes',
-    text: 'Na ścianie widnieją starożytne runy. Ktoś lub coś tu było przed tobą.',
-    choices: [
-      { label: 'Odczytaj (INT → Mrok)',   stat: 'intelligence' as const, dmgPct: 0,    buffId: 'shadow' },
-      { label: 'Ignoruj i idź dalej',     stat: null,                    dmgPct: 0,    buffId: null     },
-    ],
-  },
+export const DEBUFFS: ActiveBuff[] = [
+  { id: 'cursed_blood', label: '🩸 Przeklęta Krew', color: '#cc00cc', atkMult: 0.80, defMult: 0.80, hpMult: 0.85 },
+  { id: 'weakened',     label: '💔 Osłabienie',      color: '#888888', atkMult: 0.85, defMult: 0.85, hpMult: 1.00 },
+  { id: 'fear',         label: '😨 Strach',           color: '#9944cc', atkMult: 0.70, defMult: 0.90, hpMult: 1.00 },
 ];
+
+export type KryptaEnemy = {
+  name: string;
+  emoji: string;
+  hp: number;
+  maxHp: number;
+  attack: number;
+  defense: number;
+  xp: number;
+  gold: number;
+};
+
+export function buildEnemy(template: EnemyTemplate, heroLevel: number, depth: number): KryptaEnemy {
+  const scale = 1 + (depth - 1) * 0.28;
+  const lvl = Math.max(1, heroLevel);
+  const hp = Math.round(lvl * template.hpMult * scale);
+  return {
+    name:    template.name,
+    emoji:   template.emoji,
+    hp,
+    maxHp:   hp,
+    attack:  Math.round(lvl * template.atkMult * scale),
+    defense: Math.round(lvl * template.defMult * scale),
+    xp:      Math.round(template.baseXp  * (1 + lvl * 0.08) * scale),
+    gold:    Math.round(template.baseGold * (1 + lvl * 0.08) * scale),
+  };
+}
+
+export function pickRandomEnemy(depth: number): EnemyTemplate {
+  const tier = depth <= 2 ? 0 : depth <= 4 ? 1 : 2;
+  const pool = ENEMY_TIERS[tier];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
