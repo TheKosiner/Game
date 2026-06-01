@@ -312,7 +312,7 @@ export default function KryptaPanel() {
     } else {
       const d = DEBUFFS[Math.floor(Math.random() * DEBUFFS.length)];
       setBuffs(prev => [...prev.filter(x => x.id !== d.id), d]);
-      pushLog([`💜 Jezioro cię przeklina: ${d.label}!`]);
+      pushLog([`💜 Jezioro cię przeklęna: ${d.label}!`]);
     }
     setEventType(null);
     afterRoom(depth, raidHp, raidMaxHp);
@@ -337,7 +337,7 @@ export default function KryptaPanel() {
     afterRoom(depth, raidHp, raidMaxHp);
   }
 
-  // ── Render helpers ──────────────────────────────────────────────────────────
+  // ── Render helpers ────────────────────────────────────────────────────────
 
   function renderHeader() {
     if (phase === 'idle' || phase === 'victory' || phase === 'dead' || phase === 'fled') return null;
@@ -403,7 +403,8 @@ export default function KryptaPanel() {
   // ── Phase rendering ─────────────────────────────────────────────────────────
 
   if (phase === 'idle') {
-    const runsLeft = MAX_DAILY_KRYPTA - (hero.kryptaRunsToday ?? 0);
+    const todayRuns = Number.isFinite(hero.kryptaRunsToday) ? hero.kryptaRunsToday : 0;
+    const runsLeft = MAX_DAILY_KRYPTA - todayRuns;
     const blocked = runsLeft <= 0;
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 16px', textAlign: 'center' }}>
@@ -418,6 +419,7 @@ export default function KryptaPanel() {
           <span>☠️ Boss końcowy</span>
           <span>🎁 Skrzynka z nagrodą</span>
         </div>
+        {/* Daily run counter */}
         <div style={{
           display: 'flex', gap: 6, alignItems: 'center',
           background: blocked ? 'rgba(255,45,120,0.08)' : 'rgba(153,68,204,0.08)',
@@ -425,7 +427,7 @@ export default function KryptaPanel() {
           padding: '6px 16px',
         }}>
           {Array.from({ length: MAX_DAILY_KRYPTA }).map((_, i) => (
-            <span key={i} style={{ fontSize: 14, opacity: i < (hero.kryptaRunsToday ?? 0) ? 0.2 : 1 }}>⚰️</span>
+            <span key={i} style={{ fontSize: 14, opacity: i < todayRuns ? 0.2 : 1 }}>⚰️</span>
           ))}
           <span style={{ ...MONO, fontSize: 10, color: blocked ? '#ff2d78' : 'rgba(255,255,255,0.5)', marginLeft: 6 }}>
             {blocked ? 'Limit dzienny wyczerpany' : `${runsLeft}/${MAX_DAILY_KRYPTA} krypt dziś`}
@@ -436,7 +438,7 @@ export default function KryptaPanel() {
             Wróć jutro, by ponownie wkroczyć w mroki Krypty.
           </div>
         ) : (
-          <Btn onClick={enterCrypt} color="#9944cc">⚰️ WEJDŹ DO KRYPTY</Btn>
+          <Btn onClick={enterCrypt} color="#9944cc">⚰️ WEJĐŻ DO KRYPTY</Btn>
         )}
       </div>
     );
@@ -587,7 +589,7 @@ export default function KryptaPanel() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 16px', textAlign: 'center' }}>
         <div style={{ fontSize: 56 }}>💀</div>
-        <div style={{ ...ORB, fontSize: 18, color: '#ff2d78', letterSpacing: 2 }}>POLEGŁEŚ</div>
+        <div style={{ ...ORB, fontSize: 18, color: '#ff2d78', letterSpacing: 2 }}>POLE GŁEŚ</div>
         <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
           Mroczne siły Krypty okazały się zbyt potężne.<br />
           Żadnych nagród tym razem.
