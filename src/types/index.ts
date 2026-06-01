@@ -72,6 +72,7 @@ export interface Hero {
   lastTerritoryClaimAt?: Record<string, number>;
   lastCasinoSpinAt: number;
   goldEarnedToday: number;
+  kryptaRunsToday: number;
 }
 
 export interface Enemy {
@@ -278,6 +279,7 @@ export interface GameState {
   openMysteryBoxModal: (box: Item, invIdx: number) => void;
   collectMysteryBoxReward: (box: Item, invIdx: number, wonItem: Item) => boolean;
   dismissMysteryBox: () => void;
+  incrementKryptaRuns: () => void;
   loadGame: () => void;
   saveGame: () => void;
 }

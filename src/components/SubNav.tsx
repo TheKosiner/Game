@@ -79,6 +79,7 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
         { id: 'challenge' as PlaySub, label: t.nav.boss },
         { id: 'quests'    as PlaySub, label: t.nav.quests, badge: questBadge ? 1 : 0 },
         { id: 'pvp'       as PlaySub, label: t.nav.arena },
+        { id: 'krypta'    as PlaySub, label: '⚰️ KRYPTA' },
       ]}
       active={active}
       onChange={onChange}
