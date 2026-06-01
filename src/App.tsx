@@ -336,7 +336,7 @@ export default function App() {
   const isNewGame = hero.name === 'Hero' && !hasSave;
   if (isNewGame) return <CharacterCreation />;
 
-  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────
+  // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────────────────────
   if (isDesktop && !isNative) {
     const sectionLabel: Record<MainTab, string> = {
       hero:   t.nav.hero,
@@ -412,7 +412,7 @@ export default function App() {
     );
   }
 
-  // ── MOBILE LAYOUT ─────────────────────────────────────────────────────────────
+  // ── MOBILE LAYOUT ───────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 

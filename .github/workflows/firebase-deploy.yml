@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'firestore.rules'
+      - 'firestore.indexes.json'
       - 'firebase.json'
       - '.firebaserc'
       - 'functions/**'
@@ -31,8 +32,12 @@ jobs:
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
+      - name: Deploy Firestore indexes
+        run: firebase deploy --only firestore:indexes --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
       - name: Deploy Cloud Functions
         run: firebase deploy --only functions --non-interactive --force
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-
