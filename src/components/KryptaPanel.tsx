@@ -403,7 +403,8 @@ export default function KryptaPanel() {
   // ── Phase rendering ─────────────────────────────────────────────────────────
 
   if (phase === 'idle') {
-    const runsLeft = MAX_DAILY_KRYPTA - (hero.kryptaRunsToday ?? 0);
+    const todayRuns = Number.isFinite(hero.kryptaRunsToday) ? hero.kryptaRunsToday : 0;
+    const runsLeft = MAX_DAILY_KRYPTA - todayRuns;
     const blocked = runsLeft <= 0;
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 16px', textAlign: 'center' }}>
@@ -426,7 +427,7 @@ export default function KryptaPanel() {
           padding: '6px 16px',
         }}>
           {Array.from({ length: MAX_DAILY_KRYPTA }).map((_, i) => (
-            <span key={i} style={{ fontSize: 14, opacity: i < (hero.kryptaRunsToday ?? 0) ? 0.2 : 1 }}>⚰️</span>
+            <span key={i} style={{ fontSize: 14, opacity: i < todayRuns ? 0.2 : 1 }}>⚰️</span>
           ))}
           <span style={{ ...MONO, fontSize: 10, color: blocked ? '#ff2d78' : 'rgba(255,255,255,0.5)', marginLeft: 6 }}>
             {blocked ? 'Limit dzienny wyczerpany' : `${runsLeft}/${MAX_DAILY_KRYPTA} krypt dziś`}

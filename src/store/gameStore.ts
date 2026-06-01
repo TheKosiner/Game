@@ -1090,7 +1090,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   incrementKryptaRuns: () => {
     const { hero } = get();
-    set({ hero: { ...hero, kryptaRunsToday: hero.kryptaRunsToday + 1 } });
+    const current = Number.isFinite(hero.kryptaRunsToday) ? hero.kryptaRunsToday : 0;
+    set({ hero: { ...hero, kryptaRunsToday: current + 1 } });
     get().saveGame();
   },
 
@@ -1200,7 +1201,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           beggingStartAt: save.hero.beggingStartAt ?? null,
           dungeonRunsToday: save.hero.dungeonRunsToday ?? 0,
           questsCompletedToday: save.hero.questsCompletedToday ?? 0,
-          kryptaRunsToday: save.hero.kryptaRunsToday ?? 0,
+          kryptaRunsToday: Number.isFinite(save.hero.kryptaRunsToday) ? save.hero.kryptaRunsToday : 0,
           lastDailyReset: save.hero.lastDailyReset ?? Date.now(),
           stats: migrateStats(save.hero.stats ?? {}),
           equipment: migrateEquipment(save.hero.equipment),
