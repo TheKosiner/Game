@@ -77,36 +77,33 @@ function Btn({ onClick, children, color = '#ff2d78', disabled = false, small = f
   );
 }
 
-function SvgDoor({ label, onClick }: { label: string; onClick: () => void }) {
+const BASE = import.meta.env.BASE_URL;
+const DOOR_IMGS = {
+  left:   `${BASE}krypta/door_blue.png`,
+  center: `${BASE}krypta/door_red.png`,
+  right:  `${BASE}krypta/door_green.png`,
+};
+
+function DoorImg({ dir, label, onClick }: { dir: 'left' | 'center' | 'right'; label: string; onClick: () => void }) {
   const [hov, setHov] = useState(false);
   return (
     <button
       onClick={onClick}
       onMouseEnter={() => setHov(true)}
       onMouseLeave={() => setHov(false)}
-      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '8px 4px' }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '4px' }}
     >
-      <svg width="88" height="124" viewBox="0 0 88 124" fill="none" xmlns="http://www.w3.org/2000/svg"
-        style={{ filter: hov ? 'drop-shadow(0 0 14px #9944cc)' : 'drop-shadow(0 0 4px rgba(153,68,204,0.35))', transition: 'filter 0.2s' }}>
-        <rect x="4" y="40" width="80" height="78" rx="2" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
-        <path d="M4 40 Q4 4 44 4 Q84 4 84 40 Z" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
-        <path d="M12 40 Q12 16 44 16 Q76 16 76 40 Z" fill={hov ? 'rgba(153,68,204,0.15)' : 'rgba(153,68,204,0.06)'}/>
-        <line x1="44" y1="12" x2="44" y2="32" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
-        <line x1="31" y1="22" x2="57" y2="22" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
-        <rect x="8" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
-        <rect x="48" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
-        <rect x="11" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        <rect x="11" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        <rect x="51" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        <rect x="51" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        <line x1="44" y1="42" x2="44" y2="114" stroke="rgba(153,68,204,0.28)" strokeWidth="2"/>
-        <circle cx="41" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
-        <circle cx="47" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
-        <ellipse cx="44" cy="76" rx="1.8" ry="2.2" fill={hov ? '#cc88ff' : '#7722bb'}/>
-        <path d="M42.5 78 L42 82 L45.5 82 L45 78" fill={hov ? '#cc88ff' : '#7722bb'}/>
-        <rect x="4" y="116" width="80" height="6" rx="1" fill="#1a0030" stroke="rgba(153,68,204,0.2)" strokeWidth="1"/>
-        {hov && <rect x="8" y="114" width="72" height="2" rx="1" fill="#9944cc" opacity="0.6"/>}
-      </svg>
+      <img
+        src={DOOR_IMGS[dir]}
+        alt={label}
+        width={110}
+        style={{
+          objectFit: 'contain',
+          filter: hov ? 'drop-shadow(0 0 18px rgba(200,120,255,0.9)) brightness(1.15)' : 'drop-shadow(0 0 6px rgba(153,68,204,0.5))',
+          transition: 'filter 0.2s',
+          transform: hov ? 'scale(1.06)' : 'scale(1)',
+        }}
+      />
       <span style={{ ...MONO, fontSize: 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
     </button>
   );
@@ -574,9 +571,9 @@ export default function KryptaPanel() {
           Wybierz kierunek eksploracji:
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <SvgDoor label="← LEWO"    onClick={() => chooseDirection('left')} />
-          <SvgDoor label="↑ ŚRODEK"  onClick={() => chooseDirection('center')} />
-          <SvgDoor label="→ PRAWO"   onClick={() => chooseDirection('right')} />
+          <DoorImg dir="left"   label="← LEWO"   onClick={() => chooseDirection('left')} />
+          <DoorImg dir="center" label="↑ ŚRODEK" onClick={() => chooseDirection('center')} />
+          <DoorImg dir="right"  label="→ PRAWO"  onClick={() => chooseDirection('right')} />
         </div>
         {renderLog()}
       </div>
