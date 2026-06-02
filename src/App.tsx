@@ -119,6 +119,8 @@ export default function App() {
             initHero('Hero', 1, 2, true);
           } else if (!loaded) {
             loadGame();
+          } else {
+            useGameStore.getState().checkDailyReset();
           }
         } catch { loadGame(); }
       } else {
@@ -201,7 +203,9 @@ export default function App() {
         if (currentUser) syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       } else {
         if (currentUser && Date.now() - hiddenAt > 5_000) {
-          loadFromCloud(currentUser.uid).catch(() => {});
+          loadFromCloud(currentUser.uid).then(loaded => {
+            if (loaded) useGameStore.getState().checkDailyReset();
+          }).catch(() => {});
         }
       }
     };
@@ -236,6 +240,7 @@ export default function App() {
           gems: result.gems ?? s.hero.gems,
           dungeonRunsToday: 0,
           questsCompletedToday: 0,
+          kryptaRunsToday: 0,
           lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
         },
       }));
