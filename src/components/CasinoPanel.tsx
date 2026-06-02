@@ -6,6 +6,7 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
+import { useT } from '../hooks/useT';
 
 interface SpinResult { result: number; won: boolean; net: number; newGold: number }
 
@@ -18,15 +19,6 @@ function numColor(n: number): string {
   return RED_NUMS.has(n) ? '#ef4444' : '#94a3b8';
 }
 
-function numLabel(n: number): string {
-  if (n === 0) return 'ZERO';
-  return [
-    RED_NUMS.has(n) ? 'CZERWONY' : 'CZARNY',
-    n % 2 === 1 ? 'NIEPARZYSTE' : 'PARZYSTE',
-    n <= 18 ? '1–18' : '19–36',
-  ].join(' · ');
-}
-
 type BetType =
   | 'red' | 'black'
   | 'odd' | 'even'
@@ -34,14 +26,14 @@ type BetType =
   | 'dozen1' | 'dozen2' | 'dozen3'
   | `num_${number}`;
 
-function betLabel(bet: BetType): string {
+function betLabel(bet: BetType, tBetLabel?: (n: string) => string): string {
   const map: Record<string, string> = {
-    red: '🔴 Czerwony', black: '⚫ Czarny',
-    odd: 'Nieparzyste', even: 'Parzyste',
+    red: '🔴', black: '⚫',
+    odd: '', even: '',
     low: '▼ 1–18', high: '▲ 19–36',
     dozen1: '1–12', dozen2: '13–24', dozen3: '25–36',
   };
-  if (bet.startsWith('num_')) return `Numer ${bet.slice(4)}`;
+  if (bet.startsWith('num_')) return tBetLabel ? tBetLabel(bet.slice(4)) : `Numer ${bet.slice(4)}`;
   return map[bet] ?? bet;
 }
 
@@ -102,9 +94,19 @@ interface FeedEntry {
 // ── Main panel ────────────────────────────────────────────────────────────────
 
 export default function CasinoPanel() {
+  const t        = useT();
   const hero     = useGameStore(s => s.hero);
   const saveGame = useGameStore(s => s.saveGame);
   const user     = useAuthStore(s => s.user);
+
+  function numLabel(n: number): string {
+    if (n === 0) return t.casino.colorZero;
+    return [
+      RED_NUMS.has(n) ? t.casino.colorRed : t.casino.colorBlack,
+      n % 2 === 1 ? t.casino.odd.toUpperCase() : t.casino.even.toUpperCase(),
+      n <= 18 ? '1–18' : '19–36',
+    ].join(' · ');
+  }
 
   const [betType, setBetType]       = useState<BetType | null>(null);
   const [stakeInput, setStakeInput] = useState('100');
@@ -215,7 +217,7 @@ export default function CasinoPanel() {
       reelRef.current.phase = 'idle';
       useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
       setSpinning(false);
-      setSpinError(err?.message ?? 'Błąd serwera — spróbuj ponownie');
+      setSpinError(err?.message ?? t.casino.serverError);
       return;
     }
 
@@ -279,10 +281,10 @@ export default function CasinoPanel() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <p style={{ ...ORB, fontSize: 11, color: '#f59e0b', textShadow: '0 0 14px rgba(245,158,11,0.7)' }}>
-          🎰 KASYNO
+          {t.casino.title}
         </p>
         <p style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>
-          🪙 {hero.gold.toLocaleString()} złota
+          {t.casino.gold(hero.gold.toLocaleString())}
         </p>
       </div>
 
@@ -405,7 +407,7 @@ export default function CasinoPanel() {
         {/* Status label */}
         <div style={{ padding: '8px 0 10px', zIndex: 3 }}>
           {spinning ? (
-            <p style={{ ...MONO, fontSize: 9, color: '#fbbf24', letterSpacing: 2 }}>⟳ KRĘCI...</p>
+            <p style={{ ...MONO, fontSize: 9, color: '#fbbf24', letterSpacing: 2 }}>{t.casino.spinning}</p>
           ) : lastResult !== null ? (
             <p style={{ ...MONO, fontSize: 9, color: c, letterSpacing: 1, textShadow: `0 0 8px ${c}80` }}>
               {numLabel(centerNum)}
@@ -427,15 +429,15 @@ export default function CasinoPanel() {
         }}>
           <p style={{ ...ORB, fontSize: 10, color: lastResult.won ? '#4ade80' : '#f87171' }}>
             {lastResult.won
-              ? `🎉 WYGRAŁEŚ +${lastResult.net.toLocaleString()} 🪙`
-              : `💸 PRZEGRAŁEŚ −${Math.abs(lastResult.net).toLocaleString()} 🪙`}
+              ? t.casino.won(lastResult.net.toLocaleString())
+              : t.casino.lost(Math.abs(lastResult.net).toLocaleString())}
           </p>
         </div>
       )}
 
       {/* Stake controls */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>KWOTA ZAKŁADU</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>{t.casino.betAmount}</p>
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {QUICK_STAKES.map(q => (
             <button
