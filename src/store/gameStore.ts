@@ -95,10 +95,9 @@ function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: n
 function isSameDay(ts: number): boolean {
   const a = new Date(ts);
   const b = new Date();
-  // Use UTC to stay consistent with guild operation deadlines (nextMidnightUtc)
-  return a.getUTCFullYear() === b.getUTCFullYear()
-    && a.getUTCMonth() === b.getUTCMonth()
-    && a.getUTCDate() === b.getUTCDate();
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
 }
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
