@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/firestore';
 import { functions, db } from '../lib/firebase';
+import { syncToCloud } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
@@ -198,6 +199,11 @@ export default function CasinoPanel() {
 
     useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
+    // Sync local gold to Firestore first so the CF sees the correct balance
+    if (user) {
+      try { await syncToCloud(user.uid, user.username); } catch {}
+    }
+
     let res: SpinResult;
     try {
       const fn = httpsCallable<{ betType: string; stake: number }, SpinResult>(functions, 'spinRoulette');
@@ -227,7 +233,7 @@ export default function CasinoPanel() {
       useGameStore.setState(s => ({
         hero: {
           ...s.hero,
-          gold: s.hero.gold + (res.won ? res.net + stake : 0),
+          gold: res.newGold,
           goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
           lastCasinoSpinAt: Date.now(),
         },
@@ -236,6 +242,7 @@ export default function CasinoPanel() {
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
       setSpinning(false);
       saveGame();
+      if (user) syncToCloud(user.uid, user.username).catch(() => {});
       if (db && user) {
         addDoc(collection(db, 'casinoSpins'), {
           uid: user.uid,
