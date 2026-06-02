@@ -103,14 +103,9 @@ service cloud.firestore {
     }
 
     function validPlayerUpdate(old, nw) {
-      return
-        nw.level      <= old.level + 5
-        && nw.pvpWins   >= old.pvpWins
-        && nw.pvpWins   <= old.pvpWins + 1
-        && nw.pvpLosses >= old.pvpLosses
-        && nw.pvpLosses <= old.pvpLosses + 1
-        && nw.pvpRating <= old.pvpRating + 30
-        && nw.pvpRating >= old.pvpRating - 20;
+      // PvP stat constraints live in validSaveUpdate (saves collection).
+      // Only guard against large level jumps on the public profile.
+      return nw.level <= old.level + 20;
     }
 
     // User profiles (private)

@@ -86,6 +86,8 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   const shouldSyncGuild = existingGuildId && (now - lastGuildSync >= 60_000);
 
   const batchB: Promise<unknown>[] = [
+    // Profile write — level, combat stats, equipment. Never includes pvp stats so
+    // pvp-stat divergence cannot block this write.
     setDoc(playerRef, {
       username,
       heroName: hero.name,
@@ -100,9 +102,6 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
       attack: getHeroAttack(hero),
       defense: getHeroDefense(hero),
       maxHp: hero.maxHp,
-      pvpWins: pvpWins ?? 0,
-      pvpLosses: pvpLosses ?? 0,
-      pvpRating: pvpRating ?? 1000,
       equipment: Object.fromEntries(
         Object.entries(hero.equipment).map(([slot, item]) => [
           slot,
@@ -117,6 +116,13 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
       ),
       updatedAt: savedAt,
     }, { merge: true }),
+    // PvP stats write — separate so a stat-divergence failure never blocks the
+    // profile write above. Silently ignored on failure.
+    setDoc(playerRef, {
+      pvpWins: pvpWins ?? 0,
+      pvpLosses: pvpLosses ?? 0,
+      pvpRating: pvpRating ?? 1000,
+    }, { merge: true }).catch(() => {}),
   ];
 
   // Keep guild member data in sync with current hero stats (throttled)
