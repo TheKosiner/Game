@@ -51,7 +51,6 @@ export default function GuildOperationPanel({
   const [op, setOp] = useState<GuildOperationState | null>(guild.guildOperation ?? null);
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
-  const [selectedLocationId, setSelectedLocationId] = useState<string>(GUILD_OP_LOCATIONS[0].id);
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
@@ -127,7 +126,7 @@ export default function GuildOperationPanel({
   async function handleStart() {
     setStarting(true);
     try {
-      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocationId);
+      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount);
       if (ok) setLog([]);
       else notify('Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
@@ -552,9 +551,6 @@ export default function GuildOperationPanel({
   }
 
   // ── START SCREEN ─────────────────────────────────────────────────────────────
-  const selectedLoc = GUILD_OP_LOCATIONS.find(l => l.id === selectedLocationId) ?? GUILD_OP_LOCATIONS[0];
-  const RARITY_COL: Record<string, string> = { rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b' };
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
@@ -564,66 +560,6 @@ export default function GuildOperationPanel({
           👥 {memberCount} członków · POZ. {hero.level}
         </p>
       </div>
-
-      {/* Location picker — leader/officer only */}
-      {isLeaderOrOfficer ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>WYBIERZ RAJD</p>
-          {GUILD_OP_LOCATIONS.map(loc => {
-            const locked   = hero.level < loc.minLevel;
-            const selected = selectedLocationId === loc.id;
-            const rc       = RARITY_COL[loc.finalRarity];
-            return (
-              <div
-                key={loc.id}
-                onClick={() => { if (!locked) setSelectedLocationId(loc.id); }}
-                style={{
-                  padding: '8px 10px',
-                  background: selected
-                    ? 'rgba(255,215,0,0.07)'
-                    : locked ? 'rgba(5,8,20,0.35)' : 'rgba(5,8,20,0.6)',
-                  border: `1px solid ${selected ? 'rgba(255,215,0,0.4)' : locked ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)'}`,
-                  cursor: locked ? 'not-allowed' : 'pointer',
-                  opacity: locked ? 0.45 : 1,
-                  transition: 'border-color 0.1s, background 0.1s',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                  <span style={{ ...MONO, fontSize: 10, color: selected ? '#ffd700' : 'var(--text-bright)' }}>
-                    {loc.emoji} {loc.name}
-                  </span>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ ...MONO, fontSize: 8, color: rc }}>{loc.finalRarity.toUpperCase()}</span>
-                    <span style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)' }}>{loc.floors} piętra</span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 6 }}>
-                  <span style={{ ...MONO, fontSize: 8, color: 'var(--text-dim)', lineHeight: 1.4, flex: 1 }}>
-                    {loc.description}
-                  </span>
-                  <span style={{ ...MONO, fontSize: 8, color: locked ? '#f87171' : 'var(--text-muted)', flexShrink: 0 }}>
-                    {locked ? `🔒 POZ. ${loc.minLevel}+` : `POZ. ${loc.minLevel}+`}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div style={{ background: 'rgba(5,8,20,0.6)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px 12px' }}>
-          {op?.locationId ? (
-            <>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.5 }}>
-                Następny rajd zostanie wybrany przez władcę lub oficera.
-              </p>
-            </>
-          ) : (
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.5 }}>
-              Lokacja zostanie wybrana przez władcę lub oficera gildi.
-            </p>
-          )}
-        </div>
-      )}
 
       <p style={{ ...MONO, fontSize: 9, color: '#f59e0b' }}>
         ⚡ Operacja kończy się o północy UTC. Każdy walczy swoim HP.
@@ -638,13 +574,11 @@ export default function GuildOperationPanel({
       ) : canStart ? (
         <button
           onClick={handleStart}
-          disabled={starting || hero.level < selectedLoc.minLevel}
+          disabled={starting}
           className="btn btn-primary"
           style={{ fontSize: 10 }}
         >
-          {starting
-            ? '⏳ Uruchamianie...'
-            : `▶ ROZPOCZNIJ — ${selectedLoc.emoji} ${selectedLoc.name}`}
+          {starting ? '⏳ Uruchamianie...' : '▶ ROZPOCZNIJ OPERACJĘ'}
         </button>
       ) : !isLeaderOrOfficer ? (
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
