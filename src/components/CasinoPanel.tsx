@@ -197,12 +197,14 @@ export default function CasinoPanel() {
     // Start freewheeling
     reelRef.current.phase = 'spin';
 
-    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
-
-    // Sync local gold to Firestore first so the CF sees the correct balance
+    // Sync BEFORE deducting stake — CF reads gold from Firestore and validates
+    // stake <= gold. If we deduct first and then sync, CF sees gold-stake and
+    // rejects any bet > half the player's balance.
     if (user) {
       try { await syncToCloud(user.uid, user.username); } catch {}
     }
+
+    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
     let res: SpinResult;
     try {
