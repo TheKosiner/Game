@@ -77,14 +77,97 @@ function Btn({ onClick, children, color = '#ff2d78', disabled = false, small = f
   );
 }
 
-const BASE = import.meta.env.BASE_URL;
-const DOOR_IMGS = {
-  left:   `${BASE}krypta/door_blue.png`,
-  center: `${BASE}krypta/door_red.png`,
-  right:  `${BASE}krypta/door_green.png`,
+const DOOR_THEMES = {
+  left:   { glow: '#4488ff', glowDim: '#1144aa', accent: '#88bbff', stone: '#1a1a2e', panel: '#0d0d1f', icon: 'skull' },
+  center: { glow: '#ff3322', glowDim: '#881100', accent: '#ff8866', stone: '#2a0a00', panel: '#180500', icon: 'star' },
+  right:  { glow: '#22cc44', glowDim: '#115522', accent: '#66ff88', stone: '#001a08', panel: '#000f04', icon: 'skull2' },
 };
 
-function DoorImg({ dir, label, onClick }: { dir: 'left' | 'center' | 'right'; label: string; onClick: () => void }) {
+function DoorSvg({ dir, hov }: { dir: 'left' | 'center' | 'right'; hov: boolean }) {
+  const t = DOOR_THEMES[dir];
+  const g = hov ? t.glow : t.glowDim;
+  const a = hov ? t.accent : t.glow;
+  return (
+    <svg width="90" height="130" viewBox="0 0 90 130" fill="none" xmlns="http://www.w3.org/2000/svg"
+      style={{ filter: hov ? `drop-shadow(0 0 16px ${t.glow})` : `drop-shadow(0 0 5px ${t.glowDim})`, transition: 'filter 0.2s', transform: hov ? 'scale(1.07)' : 'scale(1)', transition: 'all 0.2s' }}>
+      <defs>
+        <radialGradient id={`rg${dir}`} cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stopColor={g} stopOpacity="0.25"/>
+          <stop offset="100%" stopColor={g} stopOpacity="0"/>
+        </radialGradient>
+        <linearGradient id={`sg${dir}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={t.stone}/>
+          <stop offset="100%" stopColor="#080808"/>
+        </linearGradient>
+      </defs>
+
+      {/* Stone frame */}
+      <path d="M8 42 Q8 4 45 4 Q82 4 82 42 L82 122 L8 122 Z" fill={`url(#sg${dir})`} stroke={a} strokeWidth="1.5"/>
+      {/* Arch inner */}
+      <path d="M15 42 Q15 14 45 14 Q75 14 75 42 L75 122 L15 122 Z" fill={t.panel}/>
+      {/* Glow fill */}
+      <path d="M15 42 Q15 14 45 14 Q75 14 75 42 L75 122 L15 122 Z" fill={`url(#rg${dir})`}/>
+
+      {/* Door split line */}
+      <line x1="45" y1="44" x2="45" y2="120" stroke={a} strokeWidth="1" strokeOpacity="0.5"/>
+      {/* Top cross */}
+      <line x1="45" y1="16" x2="45" y2="38" stroke={a} strokeWidth="1" strokeOpacity="0.6"/>
+      <line x1="32" y1="27" x2="58" y2="27" stroke={a} strokeWidth="1" strokeOpacity="0.6"/>
+
+      {/* Left panel inset */}
+      <rect x="18" y="46" width="24" height="20" rx="1" stroke={a} strokeWidth="0.7" strokeOpacity="0.4" fill="none"/>
+      <rect x="18" y="70" width="24" height="46" rx="1" stroke={a} strokeWidth="0.7" strokeOpacity="0.4" fill="none"/>
+      {/* Right panel inset */}
+      <rect x="48" y="46" width="24" height="20" rx="1" stroke={a} strokeWidth="0.7" strokeOpacity="0.4" fill="none"/>
+      <rect x="48" y="70" width="24" height="46" rx="1" stroke={a} strokeWidth="0.7" strokeOpacity="0.4" fill="none"/>
+
+      {/* Icon: center symbol */}
+      {t.icon === 'star' && (
+        // 5-pointed star (pentagram)
+        <path d="M45 54 L47.4 61.2 L55 61.2 L49 65.8 L51.4 73 L45 68.4 L38.6 73 L41 65.8 L35 61.2 L42.6 61.2 Z"
+          fill={a} fillOpacity={hov ? 0.9 : 0.5}/>
+      )}
+      {t.icon === 'skull' && (
+        <g opacity={hov ? 0.85 : 0.45}>
+          <ellipse cx="45" cy="61" rx="8" ry="7" fill={a}/>
+          <rect x="40" y="66" width="10" height="5" rx="1" fill={a}/>
+          <rect x="40.5" y="67.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <rect x="44" y="67.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <rect x="47.5" y="67.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <circle cx="42" cy="60" r="2" fill={t.panel}/>
+          <circle cx="48" cy="60" r="2" fill={t.panel}/>
+        </g>
+      )}
+      {t.icon === 'skull2' && (
+        <g opacity={hov ? 0.85 : 0.45}>
+          <ellipse cx="45" cy="60" rx="8" ry="7" fill={a}/>
+          <rect x="40" y="65" width="10" height="5" rx="1" fill={a}/>
+          <rect x="40.5" y="66.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <rect x="44" y="66.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <rect x="47.5" y="66.5" width="2.5" height="3" rx="0.5" fill={t.panel}/>
+          <circle cx="42" cy="59" r="2" fill={t.panel}/>
+          <circle cx="48" cy="59" r="2" fill={t.panel}/>
+          {/* flames */}
+          <path d="M40 57 Q38 52 41 54 Q39 49 43 52 Q42 47 45 51 Q48 47 47 52 Q51 49 49 54 Q52 52 50 57" stroke={a} strokeWidth="1" fill="none" strokeOpacity="0.7"/>
+        </g>
+      )}
+
+      {/* Knobs */}
+      <circle cx="42" cy="90" r="2.5" fill={a} opacity={hov ? 0.9 : 0.5}/>
+      <circle cx="48" cy="90" r="2.5" fill={a} opacity={hov ? 0.9 : 0.5}/>
+
+      {/* Neon edge lines */}
+      <line x1="8" y1="60" x2="8" y2="100" stroke={a} strokeWidth="1" strokeOpacity={hov ? 0.6 : 0.2}/>
+      <line x1="82" y1="60" x2="82" y2="100" stroke={a} strokeWidth="1" strokeOpacity={hov ? 0.6 : 0.2}/>
+
+      {/* Floor slab */}
+      <rect x="4" y="120" width="82" height="6" rx="1" fill="#111" stroke={a} strokeWidth="0.7" strokeOpacity="0.4"/>
+      {hov && <rect x="8" y="119" width="74" height="2" rx="1" fill={t.glow} opacity="0.5"/>}
+    </svg>
+  );
+}
+
+function SvgDoor({ dir, label, onClick }: { dir: 'left' | 'center' | 'right'; label: string; onClick: () => void }) {
   const [hov, setHov] = useState(false);
   return (
     <button
@@ -93,18 +176,8 @@ function DoorImg({ dir, label, onClick }: { dir: 'left' | 'center' | 'right'; la
       onMouseLeave={() => setHov(false)}
       style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '4px' }}
     >
-      <img
-        src={DOOR_IMGS[dir]}
-        alt={label}
-        width={110}
-        style={{
-          objectFit: 'contain',
-          filter: hov ? 'drop-shadow(0 0 18px rgba(200,120,255,0.9)) brightness(1.15)' : 'drop-shadow(0 0 6px rgba(153,68,204,0.5))',
-          transition: 'filter 0.2s',
-          transform: hov ? 'scale(1.06)' : 'scale(1)',
-        }}
-      />
-      <span style={{ ...MONO, fontSize: 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
+      <DoorSvg dir={dir} hov={hov} />
+      <span style={{ ...MONO, fontSize: 10, color: hov ? DOOR_THEMES[dir].accent : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
     </button>
   );
 }
@@ -571,9 +644,9 @@ export default function KryptaPanel() {
           Wybierz kierunek eksploracji:
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <DoorImg dir="left"   label="← LEWO"   onClick={() => chooseDirection('left')} />
-          <DoorImg dir="center" label="↑ ŚRODEK" onClick={() => chooseDirection('center')} />
-          <DoorImg dir="right"  label="→ PRAWO"  onClick={() => chooseDirection('right')} />
+          <SvgDoor dir="left"   label="← LEWO"   onClick={() => chooseDirection('left')} />
+          <SvgDoor dir="center" label="↑ ŚRODEK" onClick={() => chooseDirection('center')} />
+          <SvgDoor dir="right"  label="→ PRAWO"  onClick={() => chooseDirection('right')} />
         </div>
         {renderLog()}
       </div>
