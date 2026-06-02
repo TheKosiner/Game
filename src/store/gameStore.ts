@@ -93,11 +93,8 @@ function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: n
 }
 
 function isSameDay(ts: number): boolean {
-  const a = new Date(ts);
-  const b = new Date();
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
+  const fmt = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  return fmt(new Date(ts)) === fmt(new Date());
 }
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
