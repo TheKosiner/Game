@@ -391,8 +391,8 @@ export const collectBeggingServer = functions.https.onCall(async (_data, context
 export const resetAllDailyLimits = functions.https.onCall(async (_data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
 
-  const adminUid = functions.config().admin?.uid as string | undefined;
-  if (!adminUid || context.auth.uid !== adminUid) {
+  const ADMIN_EMAIL = 'thekosiner@gmail.com';
+  if (context.auth.token.email !== ADMIN_EMAIL) {
     throw new functions.https.HttpsError('permission-denied', 'Admin only');
   }
 
