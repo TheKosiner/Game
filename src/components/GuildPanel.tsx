@@ -142,6 +142,40 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
   );
 }
 
+// ── In-game Confirm / Alert Dialog ──────────────────────────────────────────
+
+function ConfirmDialog({ msg, okLabel = 'TAK', cancelLabel, onOk, onCancel }: {
+  msg: string;
+  okLabel?: string;
+  cancelLabel?: string;
+  onOk: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
+      onClick={cancelLabel ? onCancel : onOk}
+    >
+      <div
+        style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-main)', padding: '16px 14px', maxWidth: 300, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}
+        onClick={e => e.stopPropagation()}
+      >
+        <p style={{ ...PX(9), color: 'var(--text-bright)', textAlign: 'center', lineHeight: 1.7 }}>{msg}</p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {cancelLabel && (
+            <button onClick={onCancel} className="btn btn-secondary" style={{ fontSize: 10, flex: 1 }}>
+              {cancelLabel}
+            </button>
+          )}
+          <button onClick={onOk} className={cancelLabel ? 'btn btn-primary' : 'btn btn-secondary'} style={{ fontSize: 10, flex: 1 }}>
+            {okLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Guild View ───────────────────────────────────────────────────────────────
 
 function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) {
@@ -376,6 +410,14 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
   const [acting, setActing] = useState(false);
   const setGuildTab = onGuildTabChange;
   const [leaderWarn, setLeaderWarn] = useState(false);
+  type DlgState = { msg: string; okLabel?: string; cancelLabel?: string; onOk: () => void } | null;
+  const [dlg, setDlg] = useState<DlgState>(null);
+  function showConfirm(msg: string, onOk: () => void) {
+    setDlg({ msg, cancelLabel: isEn ? 'Cancel' : 'Anuluj', onOk });
+  }
+  function showAlert(msg: string) {
+    setDlg({ msg, okLabel: 'OK', onOk: () => setDlg(null) });
+  }
   const isLeader = guild.leaderUid === myUid;
   const isOfficer = guild.members[myUid]?.role === 'officer';
   const canManage = isLeader || isOfficer;
@@ -386,60 +428,66 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
     });
   const memberCount = members.length;
 
-  async function handleLeave() {
-    if (isLeader && memberCount > 1) {
-      setLeaderWarn(true);
-      return;
-    }
-    if (!confirm(isLeader ? t.guild.disbandConfirm : t.guild.leaveConfirm)) return;
-    setActing(true);
-    try {
-      if (isLeader) await disbandGuild(guild.id, myUid);
-      else await leaveGuild(guild.id, myUid);
-      onRefresh();
-    } finally { setActing(false); }
+  function handleLeave() {
+    if (isLeader && memberCount > 1) { setLeaderWarn(true); return; }
+    showConfirm(isLeader ? t.guild.disbandConfirm : t.guild.leaveConfirm, async () => {
+      setDlg(null);
+      setActing(true);
+      try {
+        if (isLeader) await disbandGuild(guild.id, myUid);
+        else await leaveGuild(guild.id, myUid);
+        onRefresh();
+      } finally { setActing(false); }
+    });
   }
 
-  async function handleKick(uid: string, username: string) {
-    if (!confirm(t.guild.kickConfirm(username))) return;
-    setActing(true);
-    try { await leaveGuild(guild.id, uid); onRefresh(); }
-    finally { setActing(false); }
+  function handleKick(uid: string, username: string) {
+    showConfirm(t.guild.kickConfirm(username), async () => {
+      setDlg(null);
+      setActing(true);
+      try { await leaveGuild(guild.id, uid); onRefresh(); }
+      finally { setActing(false); }
+    });
   }
 
-  async function handleTransfer(uid: string, username: string) {
-    if (!confirm(t.guild.transferConfirm(username))) return;
-    setActing(true);
-    try {
-      await transferLeadership(guild.id, myUid, uid);
-      onRefresh();
-    } catch (e: any) {
-      alert(isEn ? `Transfer failed: ${e?.message ?? 'unknown error'}` : `Błąd przekazania: ${e?.message ?? 'nieznany błąd'}`);
-    } finally {
-      setActing(false);
-    }
+  function handleTransfer(uid: string, username: string) {
+    showConfirm(t.guild.transferConfirm(username), async () => {
+      setDlg(null);
+      setActing(true);
+      try {
+        await transferLeadership(guild.id, myUid, uid);
+        onRefresh();
+      } catch (e: any) {
+        showAlert(isEn ? `Transfer failed: ${e?.message ?? 'unknown error'}` : `Błąd przekazania: ${e?.message ?? 'nieznany błąd'}`);
+      } finally {
+        setActing(false);
+      }
+    });
   }
 
-  async function handleSetOfficer(uid: string, currentRole: string) {
+  function handleSetOfficer(uid: string, currentRole: string) {
     const newRole = currentRole === 'officer' ? 'member' : 'officer';
     const label = newRole === 'officer'
       ? (isEn ? 'Promote to Officer?' : 'Mianować oficerem?')
       : (isEn ? 'Demote from Officer?' : 'Odebrać stopień oficera?');
-    if (!confirm(label)) return;
-    setActing(true);
-    try {
-      await setMemberRole(guild.id, myUid, uid, newRole);
-      onRefresh();
-    } catch (e: any) {
-      alert(isEn ? `Failed: ${e?.message ?? 'unknown error'}` : `Błąd: ${e?.message ?? 'nieznany błąd'}`);
-    } finally {
-      setActing(false);
-    }
+    showConfirm(label, async () => {
+      setDlg(null);
+      setActing(true);
+      try {
+        await setMemberRole(guild.id, myUid, uid, newRole);
+        onRefresh();
+      } catch (e: any) {
+        showAlert(isEn ? `Failed: ${e?.message ?? 'unknown error'}` : `Błąd: ${e?.message ?? 'nieznany błąd'}`);
+      } finally {
+        setActing(false);
+      }
+    });
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {showInvite && <InviteModal guild={guild} onClose={() => setShowInvite(false)} />}
+      {dlg && <ConfirmDialog msg={dlg.msg} okLabel={dlg.okLabel} cancelLabel={dlg.cancelLabel} onOk={dlg.onOk} onCancel={() => setDlg(null)} />}
 
       {leaderWarn && (
         <div style={{ background: 'rgba(40,10,10,0.8)', border: '1px solid rgba(200,50,50,0.5)', padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
