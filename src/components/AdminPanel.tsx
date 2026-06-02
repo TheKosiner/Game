@@ -3,6 +3,7 @@ import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField 
 import { db } from '../lib/firebase';
 import { loadFromCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
+import { resetAllDailyLimits } from '../lib/serverActions';
 import { MONO } from '../utils/styles';
 
 const ADMIN_EMAIL = 'thekosiner@gmail.com';
@@ -255,6 +256,16 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     flash(`Zresetowano rajd gildyjny (${player.guildId.slice(0, 8)}...)`);
   };
 
+  const resetAllLimits = async () => {
+    if (!confirm('Zresetować limity WSZYSTKICH graczy (lochy + krypta + misje)?')) return;
+    try {
+      const res = await resetAllDailyLimits();
+      flash(`✅ Zresetowano limity dla ${res.resetCount} graczy`);
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.message ?? e}`);
+    }
+  };
+
   const s: React.CSSProperties = {
     background: '#0a0a12', border: '2px solid #ff4466',
     borderRadius: 4, padding: 12,
@@ -275,6 +286,14 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
         )}
         <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
           🔄 Force reload z chmury
+        </button>
+      </div>
+
+      {/* Global reset */}
+      <div style={{ marginBottom: 10, padding: '6px 8px', background: '#1a0000', border: '1px solid #ff4444', borderRadius: 3 }}>
+        <p style={{ ...MONO, fontSize: 9, color: '#ff8888', marginBottom: 4 }}>AKCJE GLOBALNE</p>
+        <button onClick={resetAllLimits} style={{ ...MONO, fontSize: 9, background: '#2a0000', border: '1px solid #ff4444', color: '#ff8888', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
+          🔄 Reset limitów WSZYSTKICH graczy
         </button>
       </div>
 
