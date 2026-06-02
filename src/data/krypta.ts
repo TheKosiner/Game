@@ -37,9 +37,9 @@ export const ENEMY_TIERS: EnemyTemplate[][] = [
   ],
   // Tier 5 (depth 17–20) — horrory przedbossowe
   [
-    { name: 'Wampir Starożytny', emoji: '🧛', hpMult: 14.0, atkMult: 2.8, defMult: 1.6, baseXp: 88, baseGold: 72 },
-    { name: 'Abominacja',        emoji: '👹', hpMult: 17.0, atkMult: 2.4, defMult: 2.4, baseXp: 82, baseGold: 68 },
-    { name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 12.5, atkMult: 3.0, defMult: 2.8, baseXp: 90, baseGold: 75 },
+    { name: 'Wampir Starożytny', emoji: '🧛', hpMult: 24.0, atkMult: 4.5, defMult: 2.5, baseXp: 110, baseGold: 95 },
+    { name: 'Abominacja',        emoji: '👹', hpMult: 30.0, atkMult: 4.0, defMult: 3.8, baseXp: 105, baseGold: 90 },
+    { name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 22.0, atkMult: 4.8, defMult: 4.2, baseXp: 112, baseGold: 98 },
   ],
 ];
 
