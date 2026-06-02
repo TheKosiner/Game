@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteField, writeBatch, getDocs as getAllDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { loadFromCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
-import { resetAllDailyLimits } from '../lib/serverActions';
 import { MONO } from '../utils/styles';
 
 const ADMIN_EMAIL = 'thekosiner@gmail.com';
@@ -257,10 +256,27 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   };
 
   const resetAllLimits = async () => {
+    if (!db) return;
     if (!confirm('Zresetować limity WSZYSTKICH graczy (lochy + krypta + misje)?')) return;
     try {
-      const res = await resetAllDailyLimits();
-      flash(`✅ Zresetowano limity dla ${res.resetCount} graczy`);
+      flash('⏳ Resetowanie...');
+      const snap = await getAllDocs(collection(db, 'saves'));
+      const BATCH_SIZE = 400;
+      let resetCount = 0;
+      for (let i = 0; i < snap.docs.length; i += BATCH_SIZE) {
+        const batch = writeBatch(db);
+        snap.docs.slice(i, i + BATCH_SIZE).forEach(d => {
+          batch.update(d.ref, {
+            'hero.dungeonRunsToday': 0,
+            'hero.questsCompletedToday': 0,
+            'hero.kryptaRunsToday': 0,
+            updatedAt: 9999999999999,
+          });
+          resetCount++;
+        });
+        await batch.commit();
+      }
+      flash(`✅ Zresetowano limity dla ${resetCount} graczy`);
     } catch (e: any) {
       flash(`❌ Błąd: ${e?.message ?? e}`);
     }
