@@ -89,7 +89,7 @@ function DoorSvg({ dir, hov }: { dir: 'left' | 'center' | 'right'; hov: boolean 
   const a = hov ? t.accent : t.glow;
   return (
     <svg width="90" height="130" viewBox="0 0 90 130" fill="none" xmlns="http://www.w3.org/2000/svg"
-      style={{ filter: hov ? `drop-shadow(0 0 16px ${t.glow})` : `drop-shadow(0 0 5px ${t.glowDim})`, transition: 'filter 0.2s', transform: hov ? 'scale(1.07)' : 'scale(1)', transition: 'all 0.2s' }}>
+      style={{ filter: hov ? `drop-shadow(0 0 16px ${t.glow})` : `drop-shadow(0 0 5px ${t.glowDim})`, transform: hov ? 'scale(1.07)' : 'scale(1)', transition: 'all 0.2s' }}>
       <defs>
         <radialGradient id={`rg${dir}`} cx="50%" cy="30%" r="60%">
           <stop offset="0%" stopColor={g} stopOpacity="0.25"/>
