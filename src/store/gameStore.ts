@@ -1168,7 +1168,17 @@ export const useGameStore = create<GameState>((set, get) => ({
           magic: s.magic ?? 4,
           magicResistance: s.magicResistance ?? 4,
         });
-        const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
+        const migrateItemStats = (s: any): Partial<Stats> => ({
+          ...(s.strength        ? { strength:        s.strength        } : {}),
+          ...(s.dexterity       ? { dexterity:       s.dexterity       } : {}),
+          ...(s.intelligence    ? { intelligence:    s.intelligence    } : {}),
+          ...(s.vitality        ? { vitality:        s.vitality        } : {}),
+          ...(s.magic           ? { magic:           s.magic           } : {}),
+          ...(s.magicResistance ? { magicResistance: s.magicResistance } : {}),
+        });
+        const migrateItem = (item: any) => item
+          ? { ...item, stats: item.slot === 'mystery_box' ? {} : migrateItemStats(item.stats ?? {}) }
+          : item;
         const migrateEquipment = (eq: any) => {
           if (!eq) return {};
           const result: any = {};
