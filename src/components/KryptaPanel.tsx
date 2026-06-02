@@ -539,9 +539,9 @@ export default function KryptaPanel() {
           Wybierz kierunek eksploracji:
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-          <SvgDoor label="← LEWO"    onClick={() => chooseDirection('left')}   imgSrc="/krypta/drzwi_1.png" />
-          <SvgDoor label="↑ ŚRODEK"  onClick={() => chooseDirection('center')} imgSrc="/krypta/drzwi_2.png" />
-          <SvgDoor label="→ PRAWO"   onClick={() => chooseDirection('right')}  imgSrc="/krypta/drzwi_3.png" />
+          <SvgDoor label="← LEWO"    onClick={() => chooseDirection('left')}   imgSrc="/Drzwi_1.png" />
+          <SvgDoor label="↑ ŚRODEK"  onClick={() => chooseDirection('center')} imgSrc="/Drzwi_2.png" />
+          <SvgDoor label="→ PRAWO"   onClick={() => chooseDirection('right')}  imgSrc="/Drzwi_3.png" />
         </div>
         {renderLog()}
       </div>
