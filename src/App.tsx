@@ -113,7 +113,12 @@ export default function App() {
         const force = loadedUidRef.current !== user.uid;
         loadedUidRef.current = user.uid;
         try {
-          const loaded = await loadFromCloud(user.uid, force);
+          let loaded = await loadFromCloud(user.uid, force);
+          // Retry once — on mobile, first read can fail due to cold-start network
+          if (loaded === null) {
+            await new Promise(r => setTimeout(r, 2500));
+            loaded = await loadFromCloud(user.uid, true);
+          }
           if (loaded === null) {
             try { localStorage.removeItem('glitchsoul_save'); } catch {}
             initHero('Hero', 1, 2, true);
