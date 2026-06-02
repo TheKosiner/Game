@@ -381,10 +381,8 @@ export default function CasinoPanel() {
                     width: sz, height: sz, flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: 6,
-                    background: isCenter
-                      ? cellColor + '20'
-                      : 'rgba(255,255,255,0.025)',
-                    border: `${isCenter ? 2 : 1}px solid ${isCenter ? cellColor + 'bb' : 'rgba(255,255,255,0.06)'}`,
+                    background: cellColor + (isCenter ? '20' : '0f'),
+                    border: `${isCenter ? 2 : 1}px solid ${cellColor + (isCenter ? 'bb' : '40')}`,
                     boxShadow: isCenter ? `0 0 20px ${cellColor}44, inset 0 0 12px ${cellColor}14` : 'none',
                     opacity,
                     transition: 'opacity 0.06s',
@@ -393,8 +391,8 @@ export default function CasinoPanel() {
                   <span style={{
                     fontFamily: "'Orbitron', monospace", fontWeight: 900,
                     fontSize: isCenter ? (num >= 10 ? 24 : 28) : (absOff === 1 ? (num >= 10 ? 16 : 18) : (num >= 10 ? 12 : 14)),
-                    color: isCenter ? cellColor : 'rgba(255,255,255,0.4)',
-                    textShadow: isCenter ? `0 0 12px ${cellColor}` : 'none',
+                    color: cellColor,
+                    textShadow: isCenter ? `0 0 12px ${cellColor}` : `0 0 6px ${cellColor}66`,
                   }}>
                     {num}
                   </span>
