@@ -200,7 +200,9 @@ export function generateItem(
   const stats: Partial<Stats> = {};
 
   if (slot === 'weapon') {
-    const tplIdx    = Math.floor(rng() * WEAPON_TEMPLATES.length);
+    // Magic weapon templates (12-13) get 2× weight so they appear ~25% of weapon drops
+    const weaponPool = WEAPON_TEMPLATES.map((_, i) => i).flatMap(i => WEAPON_TEMPLATES[i].magicDamage ? [i, i] : [i]);
+    const tplIdx    = weaponPool[Math.floor(rng() * weaponPool.length)];
     const tpl       = WEAPON_TEMPLATES[tplIdx];
     const nameIdx   = Math.floor(rng() * tpl.names.length);
     name   = `${prefix} ${tpl.names[nameIdx]} ${suffix}`;

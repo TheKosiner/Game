@@ -149,7 +149,7 @@ export default function MysteryBoxModal() {
           background: 'rgba(5,10,20,0.9)', border: `1px solid ${rc}44`,
           padding: '8px 14px', marginBottom: 16, minWidth: 200, textAlign: 'center',
         }}>
-          {wonItem.attackBonus  ? <p style={{ ...MONO, fontSize: 10, color: '#86efac' }}>⚔ +{wonItem.attackBonus} Atak</p> : null}
+          {wonItem.attackBonus  ? <p style={{ ...MONO, fontSize: 10, color: wonItem.magicDamage ? '#c078f0' : '#86efac' }}>{wonItem.magicDamage ? '🔮' : '⚔'} +{wonItem.attackBonus} {wonItem.magicDamage ? 'Obrażenia mag.' : 'Atak'}</p> : null}
           {wonItem.defenseBonus ? <p style={{ ...MONO, fontSize: 10, color: '#86efac' }}>🛡 +{wonItem.defenseBonus} Obrona</p> : null}
           {Object.entries(wonItem.stats).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>+{v} {k}</p>
