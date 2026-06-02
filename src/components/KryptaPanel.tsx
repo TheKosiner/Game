@@ -7,10 +7,10 @@ import { createMysteryBox } from '../data/mysteryBoxes';
 import {
   type ActiveBuff, BUFFS, DEBUFFS,
   type KryptaEnemy, buildEnemy, pickRandomEnemy,
-  BOSS_TEMPLATE, SPIDER_TEMPLATE, getBossRarity,
+  BOSS_TEMPLATE, SPIDER_TEMPLATE, MIMIC_TEMPLATE, getBossRarity,
 } from '../data/krypta';
 
-const TOTAL_ROOMS = 5;
+const TOTAL_ROOMS = 20;
 const CRIT_CHANCE = 0.10;
 const CRIT_MULT = 1.8;
 const COMPANION_ATK_BONUS = 0.20;
@@ -20,7 +20,7 @@ const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeig
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
 
 type Phase = 'idle' | 'direction' | 'combat' | 'event' | 'pre_boss' | 'boss_combat' | 'victory' | 'dead' | 'fled';
-type EventType = 'chest' | 'lake' | 'companion';
+type EventType = 'chest' | 'lake' | 'companion' | 'shrine' | 'trap' | 'altar' | 'inscription';
 
 function quadDmg(atk: number, def: number): number {
   const base = (atk * atk) / (atk + Math.max(1, def));
@@ -78,36 +78,23 @@ function SvgDoor({ label, onClick }: { label: string; onClick: () => void }) {
     >
       <svg width="88" height="124" viewBox="0 0 88 124" fill="none" xmlns="http://www.w3.org/2000/svg"
         style={{ filter: hov ? 'drop-shadow(0 0 14px #9944cc)' : 'drop-shadow(0 0 4px rgba(153,68,204,0.35))', transition: 'filter 0.2s' }}>
-        {/* Stone frame */}
         <rect x="4" y="40" width="80" height="78" rx="2" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
-        {/* Gothic pointed arch */}
         <path d="M4 40 Q4 4 44 4 Q84 4 84 40 Z" fill="#0b001a" stroke={hov ? '#bb66ff' : '#6622aa'} strokeWidth="2"/>
-        {/* Arch inner glow tint */}
         <path d="M12 40 Q12 16 44 16 Q76 16 76 40 Z" fill={hov ? 'rgba(153,68,204,0.15)' : 'rgba(153,68,204,0.06)'}/>
-        {/* Cross rune in arch */}
         <line x1="44" y1="12" x2="44" y2="32" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
         <line x1="31" y1="22" x2="57" y2="22" stroke="rgba(153,68,204,0.55)" strokeWidth="1.5"/>
-        {/* Left door panel */}
         <rect x="8" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
-        {/* Right door panel */}
         <rect x="48" y="42" width="32" height="72" rx="1" fill="#08000f" stroke="rgba(153,68,204,0.3)" strokeWidth="1"/>
-        {/* Inset panels left */}
         <rect x="11" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
         <rect x="11" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        {/* Inset panels right */}
         <rect x="51" y="46" width="26" height="22" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
         <rect x="51" y="72" width="26" height="38" rx="1" fill="rgba(153,68,204,0.07)" stroke="rgba(153,68,204,0.18)" strokeWidth="0.8"/>
-        {/* Centre gap */}
         <line x1="44" y1="42" x2="44" y2="114" stroke="rgba(153,68,204,0.28)" strokeWidth="2"/>
-        {/* Knobs */}
         <circle cx="41" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
         <circle cx="47" cy="78" r="3" fill={hov ? '#bb66ff' : '#9944cc'} opacity="0.85"/>
-        {/* Keyhole */}
         <ellipse cx="44" cy="76" rx="1.8" ry="2.2" fill={hov ? '#cc88ff' : '#7722bb'}/>
         <path d="M42.5 78 L42 82 L45.5 82 L45 78" fill={hov ? '#cc88ff' : '#7722bb'}/>
-        {/* Bottom threshold */}
         <rect x="4" y="116" width="80" height="6" rx="1" fill="#1a0030" stroke="rgba(153,68,204,0.2)" strokeWidth="1"/>
-        {/* Glow line at base when hovered */}
         {hov && <rect x="8" y="114" width="72" height="2" rx="1" fill="#9944cc" opacity="0.6"/>}
       </svg>
       <span style={{ ...MONO, fontSize: 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
@@ -145,7 +132,7 @@ export default function KryptaPanel() {
   const effectiveDef = Math.round(baseDef * defMult);
 
   function pushLog(msgs: string[]) {
-    setLog(prev => [...msgs, ...prev].slice(0, 25));
+    setLog(prev => [...msgs, ...prev].slice(0, 30));
   }
 
   function afterRoom(newDepth: number, newHp: number, newMaxHp: number) {
@@ -194,13 +181,31 @@ export default function KryptaPanel() {
       setEnemy(e);
       pushLog([`⚔️ Pokój ${newDepth}/${TOTAL_ROOMS}: Napotykasz ${e.emoji} ${e.name}!`]);
       setPhase('combat');
-    } else {
-      const r = Math.random();
-      const evType: EventType = r < 0.40 ? 'chest' : r < 0.75 ? 'lake' : 'companion';
-      setEventType(evType);
-      pushLog([`🚪 Pokój ${newDepth}/${TOTAL_ROOMS}: Odkrywasz tajemnicze pomieszczenie...`]);
-      setPhase('event');
+      return;
     }
+
+    // Non-combat roll: 18 chest / 16 lake / 10 companion / 16 shrine / 12 trap / 12 altar / 8 mimic / 8 inscription
+    const r = Math.random();
+    if (r < 0.08) {
+      // Mimic — looks like a chest, instantly starts combat
+      const e = buildEnemy(MIMIC_TEMPLATE, hero.level, newDepth);
+      setEnemy(e);
+      pushLog([`📦 Pokój ${newDepth}/${TOTAL_ROOMS}: Otwierasz skrzynię… TO MIMIK! 🎭`]);
+      setPhase('combat');
+      return;
+    }
+    let evType: EventType;
+    if      (r < 0.26) evType = 'chest';
+    else if (r < 0.42) evType = 'shrine';
+    else if (r < 0.58) evType = 'lake';
+    else if (r < 0.68) evType = 'companion';
+    else if (r < 0.80) evType = 'trap';
+    else if (r < 0.92) evType = 'altar';
+    else               evType = 'inscription';
+
+    setEventType(evType);
+    pushLog([`🚪 Pokój ${newDepth}/${TOTAL_ROOMS}: Odkrywasz tajemnicze pomieszczenie...`]);
+    setPhase('event');
   }
 
   function doAttack(isBoss: boolean) {
@@ -216,7 +221,7 @@ export default function KryptaPanel() {
 
     if (e.hp <= 0) {
       msgs.push(`✅ ${e.emoji} ${e.name} pokonany!`);
-      let newXp = totalXp + e.xp;
+      let newXp   = totalXp   + e.xp;
       let newGold = totalGold + e.gold;
 
       if (hasCompanion && !isBoss) {
@@ -292,8 +297,8 @@ export default function KryptaPanel() {
       setEventType(null);
       setPhase('combat');
     } else {
-      const gold = Math.round((30 + Math.random() * 70) * (1 + hero.level * 0.05) * (1 + (depth - 1) * 0.20));
-      const xp   = Math.round((20 + Math.random() * 40) * (1 + hero.level * 0.05) * (1 + (depth - 1) * 0.20));
+      const gold = Math.round((30 + Math.random() * 70) * (1 + hero.level * 0.05) * (1 + (depth - 1) * 0.15));
+      const xp   = Math.round((20 + Math.random() * 40) * (1 + hero.level * 0.05) * (1 + (depth - 1) * 0.15));
       setTotalXp(prev => prev + xp);
       setTotalGold(prev => prev + gold);
       pushLog([`💰 Skrzynia skrywa skarb! +${xp} XP, +${gold} 🪙`]);
@@ -341,6 +346,95 @@ export default function KryptaPanel() {
     afterRoom(depth, raidHp, raidMaxHp);
   }
 
+  function handleShrinePray() {
+    const healAmt = Math.round(raidMaxHp * 0.22);
+    const newHp = Math.min(raidMaxHp, raidHp + healAmt);
+    const healed = newHp - raidHp;
+    const msgs = [`🕯️ Kaplica cię uzdrawia: +${healed} HP`];
+    if (Math.random() < 0.30) {
+      const grace: ActiveBuff = { id: 'divine_grace', label: '🙏 Łaska Boska', color: '#ffdd44', atkMult: 1.00, defMult: 1.15, hpMult: 1.00 };
+      setBuffs(prev => [...prev.filter(x => x.id !== 'divine_grace'), grace]);
+      msgs.push('✨ Boskość cię błogosławi: 🙏 Łaska Boska (+15% DEF)!');
+    }
+    setRaidHp(newHp);
+    pushLog(msgs);
+    setEventType(null);
+    afterRoom(depth, newHp, raidMaxHp);
+  }
+
+  function handleShrineLeave() {
+    pushLog(['🚶 Opuszczasz kaplicę bez modlitwy.']);
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
+  function handleTrapCareful() {
+    const dmg = Math.round(raidMaxHp * 0.05);
+    const newHp = Math.max(1, raidHp - dmg);
+    pushLog([`⚠️ Ostrożnie omijasz pułapki, lecz się skaleczyłeś: −${raidHp - newHp} HP`]);
+    setRaidHp(newHp);
+    setEventType(null);
+    afterRoom(depth, newHp, raidMaxHp);
+  }
+
+  function handleTrapRush() {
+    if (Math.random() < 0.38) {
+      pushLog(['⚠️ Brawurowo przebiegasz bez szwanku! Szczęście ci sprzyja.']);
+      setEventType(null);
+      afterRoom(depth, raidHp, raidMaxHp);
+    } else {
+      const dmg = Math.round(raidMaxHp * (0.12 + Math.random() * 0.08));
+      const newHp = Math.max(1, raidHp - dmg);
+      pushLog([`⚠️ Pułapki rozrywają ciało! −${raidHp - newHp} HP!`]);
+      setRaidHp(newHp);
+      setEventType(null);
+      afterRoom(depth, newHp, raidMaxHp);
+    }
+  }
+
+  function handleAltarSacrifice() {
+    const sacrifice = Math.round(raidMaxHp * 0.20);
+    if (raidHp <= sacrifice + 1) {
+      pushLog(['🔥 Za mało HP, by złożyć ofiarę.']);
+      setEventType(null);
+      afterRoom(depth, raidHp, raidMaxHp);
+      return;
+    }
+    const pact: ActiveBuff = { id: 'blood_pact', label: '🩸 Pakt Krwi', color: '#ff0044', atkMult: 1.30, defMult: 1.00, hpMult: 1.00 };
+    const newHp = raidHp - sacrifice;
+    setRaidHp(newHp);
+    setBuffs(prev => [...prev.filter(x => x.id !== 'blood_pact'), pact]);
+    pushLog([`🔥 Poświęcasz ${sacrifice} HP. Mroczna moc cię zalewa! 🩸 Pakt Krwi (+30% ATK)`]);
+    setEventType(null);
+    afterRoom(depth, newHp, raidMaxHp);
+  }
+
+  function handleAltarLeave() {
+    pushLog(['🚶 Nie oddajesz hołdu ołtarzowi.']);
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
+  function handleInscriptionRead() {
+    if (Math.random() < 0.65) {
+      const ward: ActiveBuff = { id: 'arcane_ward', label: '📜 Magiczna Osłona', color: '#4488ff', atkMult: 1.00, defMult: 1.25, hpMult: 1.05 };
+      setBuffs(prev => [...prev.filter(x => x.id !== 'arcane_ward'), ward]);
+      pushLog(['📜 Inskrypcja wzmacnia twoją tarczę: Magiczna Osłona (+25% DEF, +5% HP)!']);
+    } else {
+      const d = DEBUFFS[Math.floor(Math.random() * DEBUFFS.length)];
+      setBuffs(prev => [...prev.filter(x => x.id !== d.id), d]);
+      pushLog([`📜 Przeklęta inskrypcja wysysa twą moc: ${d.label}!`]);
+    }
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
+  function handleInscriptionLeave() {
+    pushLog(['🚶 Ignorujesz pradawne pismo.']);
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
   // ── Render helpers ──────────────────────────────────────────────────────────
 
   function renderHeader() {
@@ -353,10 +447,10 @@ export default function KryptaPanel() {
               ? '☠️ BOSS'
               : `POKÓJ ${depth}/${TOTAL_ROOMS}`}
           </span>
-          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-            {hasCompanion && '🤝 '}
+          <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
+            {hasCompanion && <span>🤝</span>}
             {buffs.map(b => (
-              <span key={b.id} style={{ color: b.color, marginLeft: 4 }}>{b.label}</span>
+              <span key={b.id} style={{ color: b.color }}>{b.label}</span>
             ))}
           </span>
         </div>
@@ -396,7 +490,7 @@ export default function KryptaPanel() {
         {log.map((line, i) => (
           <div key={i} style={{
             ...MONO, fontSize: 10,
-            color: i === 0 ? '#fff' : `rgba(255,255,255,${Math.max(0.2, 0.7 - i * 0.06)})`,
+            color: i === 0 ? '#fff' : `rgba(255,255,255,${Math.max(0.2, 0.7 - i * 0.05)})`,
             lineHeight: 1.6,
           }}>{line}</div>
         ))}
@@ -423,7 +517,6 @@ export default function KryptaPanel() {
           <span>☠️ Boss końcowy</span>
           <span>🎁 Skrzynka z nagrodą</span>
         </div>
-        {/* Daily run counter */}
         <div style={{
           display: 'flex', gap: 6, alignItems: 'center',
           background: blocked ? 'rgba(255,45,120,0.08)' : 'rgba(153,68,204,0.08)',
@@ -503,6 +596,7 @@ export default function KryptaPanel() {
           <div style={{ ...ORB, fontSize: 13, color: '#00f5ff', marginBottom: 6 }}>Magiczne Jezioro</div>
           <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
             Przed tobą jarzy się magiczne jezioro o nieznanych właściwościach. Wypijesz z niego?
+            <br /><span style={{ color: '#aaaaaa' }}>50% buff · 50% klątwa</span>
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <Btn onClick={handleLakeDrink} color="#00f5ff">💧 Wypij z jeziora</Btn>
@@ -523,6 +617,69 @@ export default function KryptaPanel() {
               {hasCompanion ? '🤝 Masz już kompana' : '🤝 Przyjmij kompana'}
             </Btn>
             <Btn onClick={handleCompanionDecline} color="#888888" small>🚶 Odrzuć ofertę</Btn>
+          </div>
+        </>
+      );
+      if (eventType === 'shrine') return (
+        <>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🕯️</div>
+          <div style={{ ...ORB, fontSize: 13, color: '#ffdd44', marginBottom: 6 }}>Kaplica Uzdrowienia</div>
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
+            Opuszczona kaplica emanuje świętym blaskiem. Czy odmówisz modlitwę?
+            <br /><span style={{ color: '#00ff88' }}>Przywraca ~22% HP · 30% szansa na 🙏 Łaskę (+15% DEF)</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn onClick={handleShrinePray} color="#ffdd44">🕯️ Módl się</Btn>
+            <Btn onClick={handleShrineLeave} color="#888888" small>🚶 Idź dalej</Btn>
+          </div>
+        </>
+      );
+      if (eventType === 'trap') return (
+        <>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
+          <div style={{ ...ORB, fontSize: 13, color: '#ffaa00', marginBottom: 6 }}>Pokój Pułapek</div>
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
+            Podłoga pokryta jest ukrytymi mechanizmami. Jak przejdziesz?
+            <br />
+            <span style={{ color: '#ffdd88' }}>Ostrożnie: gwarantowane −5% HP</span>
+            <br />
+            <span style={{ color: '#ff8844' }}>Sprintem: 38% szansa na 0 obrażeń, 62% na −12–20% HP</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Btn onClick={handleTrapCareful} color="#ffaa00" small>🐢 Ostrożnie (−5% HP)</Btn>
+            <Btn onClick={handleTrapRush}    color="#ff4444" small>💨 Sprintem (ryzyko)</Btn>
+          </div>
+        </>
+      );
+      if (eventType === 'altar') return (
+        <>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🔥</div>
+          <div style={{ ...ORB, fontSize: 13, color: '#ff4400', marginBottom: 6 }}>Ołtarz Krwi</div>
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
+            Mroczny ołtarz woła o ofiarę. Złożysz krew w zamian za moc?
+            <br /><span style={{ color: '#ff0044' }}>Poświęcasz 20% max HP → 🩸 Pakt Krwi (+30% ATK)</span>
+            <br /><span style={{ color: '#888888', fontSize: 10 }}>Wymaga min. {Math.round(raidMaxHp * 0.20) + 2} HP</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn onClick={handleAltarSacrifice} color="#ff4400" disabled={raidHp <= Math.round(raidMaxHp * 0.20) + 1}>
+              🔥 Złóż ofiarę
+            </Btn>
+            <Btn onClick={handleAltarLeave} color="#888888" small>🚶 Ignoruj ołtarz</Btn>
+          </div>
+        </>
+      );
+      if (eventType === 'inscription') return (
+        <>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>📜</div>
+          <div style={{ ...ORB, fontSize: 13, color: '#4488ff', marginBottom: 6 }}>Pradawna Inskrypcja</div>
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
+            Na ścianie widnieje starożytne pismo. Odczytasz je?
+            <br /><span style={{ color: '#4488ff' }}>65% szansa na 📜 Magiczną Osłonę (+25% DEF, +5% HP)</span>
+            <br /><span style={{ color: '#9944cc' }}>35% szansa na klątwę</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn onClick={handleInscriptionRead} color="#4488ff">📜 Odczytaj inskrypcję</Btn>
+            <Btn onClick={handleInscriptionLeave} color="#888888" small>🚶 Ignoruj</Btn>
           </div>
         </>
       );
