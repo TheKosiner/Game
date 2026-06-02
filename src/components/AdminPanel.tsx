@@ -187,6 +187,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     if (!lvl || lvl < 1 || lvl > 100 || !player) return;
     const xpToNext = Math.floor(100 * Math.pow(lvl, 2.3));
     await patch({ 'hero.level': lvl, 'hero.xp': 0, 'hero.xpToNext': xpToNext });
+    try {
+      await updateDoc(doc(db!, 'players', player.uid), { level: lvl });
+    } catch {}
     flash(`Level ${player.username} → ${lvl}`);
     setLevelAmount('');
   };

@@ -1,5 +1,5 @@
 rules_version = '2';
-// Last deployed: 2026-05-30 v7
+// Last deployed: 2026-06-02 v8
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -125,6 +125,7 @@ service cloud.firestore {
     match /players/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId);
+      allow update: if isAdmin();
       allow update: if isOwner(userId) && validPlayerUpdate(resource.data, request.resource.data);
       // Only the document owner may update their own guild membership fields
       allow update: if isOwner(userId)
