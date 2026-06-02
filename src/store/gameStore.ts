@@ -285,7 +285,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const cost = slots * 5;
     if (hero.gems < cost) return false;
     const t = getT();
-    set({ hero: { ...hero, gems: hero.gems - cost }, activeQuest: { ...activeQuest, endsAt: now } });
+    set({ hero: { ...hero, gems: hero.gems - cost }, activeQuest: { ...activeQuest, endsAt: now - 1000 } });
     get().addCombatLog(t.gems.questSpeedupLog(cost), 'system');
     get().saveGame();
     return true;

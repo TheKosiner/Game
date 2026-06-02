@@ -661,7 +661,7 @@ export default function HeroCard() {
 
       {/* REST */}
       {isResting
-        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} gemSpeedupRest={gemSpeedupRest} gems={hero.gems} />
+        ? <RestTimer endsAt={hero.voluntaryRestUntil!} restHp={hero.voluntaryRestHp ?? 0} startAt={hero.voluntaryRestStartAt ?? hero.voluntaryRestUntil!} cancelRest={cancelRest} gemSpeedupRest={() => { const ok = gemSpeedupRest(); if (ok && user) syncToCloud(user.uid, user.username).catch(() => {}); return ok; }} gems={hero.gems} />
         : <RestSlider hero={hero} onRest={restHero} inCombat={inCombat} blocked={!!restBlockReason} blockedReason={restBlockReason} />
       }
 

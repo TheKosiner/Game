@@ -218,7 +218,12 @@ export default function QuestPanel() {
             const canSkip  = hero.gems >= skipCost;
             return (
               <button
-                onClick={gemSpeedupQuest}
+                onClick={() => {
+                  if (gemSpeedupQuest()) {
+                    setNow(Date.now());
+                    if (user) syncToCloud(user.uid, user.username).catch(() => {});
+                  }
+                }}
                 disabled={!canSkip}
                 style={{
                   width: '100%', fontSize: 10, padding: '7px',
