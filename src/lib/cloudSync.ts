@@ -671,7 +671,10 @@ export async function leaveGuild(guildId: string, uid: string): Promise<void> {
 }
 
 export async function transferLeadership(guildId: string, currentLeaderUid: string, newLeaderUid: string): Promise<void> {
-  if (!db) return;
+  if (!db) throw new Error('No DB');
+  const snap = await getDoc(doc(db, 'guilds', guildId));
+  if (!snap.exists()) throw new Error('Guild not found');
+  if (snap.data().leaderUid !== currentLeaderUid) throw new Error('Not leader');
   await updateDoc(doc(db, 'guilds', guildId), {
     leaderUid: newLeaderUid,
     [`members.${newLeaderUid}.role`]: 'leader',

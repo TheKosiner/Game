@@ -410,8 +410,14 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
   async function handleTransfer(uid: string, username: string) {
     if (!confirm(t.guild.transferConfirm(username))) return;
     setActing(true);
-    try { await transferLeadership(guild.id, myUid, uid); onRefresh(); }
-    finally { setActing(false); }
+    try {
+      await transferLeadership(guild.id, myUid, uid);
+      onRefresh();
+    } catch (e: any) {
+      alert(isEn ? `Transfer failed: ${e?.message ?? 'unknown error'}` : `Błąd przekazania: ${e?.message ?? 'nieznany błąd'}`);
+    } finally {
+      setActing(false);
+    }
   }
 
   async function handleSetOfficer(uid: string, currentRole: string) {
@@ -421,8 +427,14 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
       : (isEn ? 'Demote from Officer?' : 'Odebrać stopień oficera?');
     if (!confirm(label)) return;
     setActing(true);
-    try { await setMemberRole(guild.id, myUid, uid, newRole); onRefresh(); }
-    finally { setActing(false); }
+    try {
+      await setMemberRole(guild.id, myUid, uid, newRole);
+      onRefresh();
+    } catch (e: any) {
+      alert(isEn ? `Failed: ${e?.message ?? 'unknown error'}` : `Błąd: ${e?.message ?? 'nieznany błąd'}`);
+    } finally {
+      setActing(false);
+    }
   }
 
   return (
