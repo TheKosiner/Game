@@ -408,6 +408,7 @@ export const resetAllDailyLimits = functions.https.onCall(async (_data, context)
         'hero.dungeonRunsToday': 0,
         'hero.questsCompletedToday': 0,
         'hero.kryptaRunsToday': 0,
+        updatedAt: 9999999999999,
       });
       resetCount++;
     });
