@@ -414,7 +414,7 @@ export default function CasinoPanel() {
             </p>
           ) : (
             <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>
-              POSTAW ZAKŁAD I ZAKRĘĆ
+              {t.casino.chooseBet}
             </p>
           )}
         </div>
@@ -479,20 +479,20 @@ export default function CasinoPanel() {
 
       {/* Bet type grid */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>TYP ZAKŁADU</p>
+        <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>{t.casino.betType}</p>
 
         <div style={{ display: 'flex', gap: 5 }}>
           <button onClick={() => setBetType('red')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'red' ? 'rgba(239,68,68,0.25)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'red' ? '#ef4444' : 'rgba(239,68,68,0.25)'}`, color: '#fca5a5', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
-            🔴 CZERWONY<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+            🔴 {t.casino.colorRed}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
           </button>
           <button onClick={() => setBetType('black')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'black' ? 'rgba(148,163,184,0.15)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'black' ? '#94a3b8' : 'rgba(148,163,184,0.2)'}`, color: '#cbd5e1', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
-            ⚫ CZARNY<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+            ⚫ {t.casino.colorBlack}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
           </button>
         </div>
 
         <div style={{ display: 'flex', gap: 4 }}>
           {(['odd', 'even', 'low', 'high'] as const).map(b => {
-            const labels = ['NIEP.', 'PARZ.', '1–18', '19–36'];
+            const labels = [t.casino.oddShort, t.casino.evenShort, '1–18', '19–36'];
             const i = ['odd','even','low','high'].indexOf(b);
             return (
               <BetBtn key={b} active={betType === b} onClick={() => !spinning && setBetType(b)}>
@@ -514,7 +514,7 @@ export default function CasinoPanel() {
         </div>
 
         <button onClick={() => setShowNums(v => !v)} disabled={spinning} className="btn btn-secondary" style={{ fontSize: 9, padding: '5px', width: '100%' }}>
-          {showNums ? '▲ UKRYJ NUMERY' : `▼ NUMER DOKŁADNY (35:1)${betType?.startsWith('num_') ? ` — wybrany: ${betType.slice(4)}` : ''}`}
+          {showNums ? t.casino.hideNumbers : t.casino.exactNumber(betType?.startsWith('num_') ? betType.slice(4) : null)}
         </button>
 
         {showNums && (
@@ -536,7 +536,7 @@ export default function CasinoPanel() {
       {betType && (
         <div style={{ background: 'rgba(255,215,0,0.05)', border: '1px solid rgba(255,215,0,0.25)', padding: '7px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ ...MONO, fontSize: 10, color: '#fbbf24' }}>
-            {betLabel(betType)}<span style={{ opacity: 0.55, marginLeft: 6 }}>({betOdds(betType)})</span>
+            {betLabel(betType, t.casino.betLabel)}<span style={{ opacity: 0.55, marginLeft: 6 }}>({betOdds(betType)})</span>
           </span>
           <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>🪙 {stake.toLocaleString()}</span>
         </div>
@@ -556,7 +556,7 @@ export default function CasinoPanel() {
           textShadow: spinning ? 'none' : '0 0 10px rgba(245,158,11,0.7)',
         }}
       >
-        {spinning ? '⟳ KRĘCI...' : hero.gold <= 0 ? '— BRAK ZŁOTA —' : betType ? `🎰 ZAKRĘĆ — 🪙 ${stake.toLocaleString()}` : '← WYBIERZ ZAKŁAD'}
+        {spinning ? t.casino.spinning : hero.gold <= 0 ? t.casino.noGold : betType ? t.casino.spinBtn(stake.toLocaleString()) : t.casino.chooseBet}
       </button>
 
       {spinError && (
@@ -566,18 +566,18 @@ export default function CasinoPanel() {
       {/* All-time records */}
       {(topWin || topLoss) && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>🏆 REKORDY WSZECH CZASÓW</p>
+          <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1 }}>{t.casino.recordsTitle}</p>
           <div style={{ display: 'flex', gap: 5 }}>
             {topWin && (
               <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}>
-                <p style={{ ...MONO, fontSize: 8, color: '#6ee7b7', marginBottom: 3 }}>▲ NAJWIĘKSZA WYGRANA</p>
+                <p style={{ ...MONO, fontSize: 8, color: '#6ee7b7', marginBottom: 3 }}>{t.casino.biggestWin}</p>
                 <p style={{ ...MONO, fontSize: 11, color: '#4ade80' }}>+{topWin.net.toLocaleString()} 🪙</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topWin.username}</p>
               </div>
             )}
             {topLoss && (
               <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
-                <p style={{ ...MONO, fontSize: 8, color: '#fca5a5', marginBottom: 3 }}>▼ NAJWIĘKSZA PRZEGRANA</p>
+                <p style={{ ...MONO, fontSize: 8, color: '#fca5a5', marginBottom: 3 }}>{t.casino.biggestLoss}</p>
                 <p style={{ ...MONO, fontSize: 11, color: '#f87171' }}>−{Math.abs(topLoss.net).toLocaleString()} 🪙</p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topLoss.username}</p>
               </div>
@@ -590,7 +590,7 @@ export default function CasinoPanel() {
       {feed.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
           <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1, marginBottom: 5 }}>
-            OSTATNIE 25 LOSOWAŃ GRACZY
+            {t.casino.lastSpins}
           </p>
           {feed.map((e, i) => {
             const rc = numColor(e.result);
