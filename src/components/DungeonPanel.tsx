@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
-import EnemyIcon from './EnemyIcon';
+import EnemyPortrait from './EnemyPortrait';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { syncToCloud } from '../lib/cloudSync';
@@ -378,7 +378,7 @@ function EnemyBattleCard() {
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          <EnemyIcon id={enemy.id} size={64} style={{ flexShrink: 0 }} />
+          <EnemyPortrait id={enemy.id} size={64} style={{ flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(10), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
             <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {hero.level}</p>

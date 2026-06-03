@@ -1,6 +1,7 @@
 import type { Rarity } from '../types';
 
 export type EnemyTemplate = {
+  id: string;
   name: string;
   emoji: string;
   hpMult: number;
@@ -13,47 +14,50 @@ export type EnemyTemplate = {
 export const ENEMY_TIERS: EnemyTemplate[][] = [
   // Tier 1 (depth 1–4)
   [
-    { name: 'Cień Krwi',      emoji: '👻', hpMult:  3.5, atkMult: 0.8, defMult: 0.5, baseXp: 20, baseGold: 15 },
-    { name: 'Kościan',        emoji: '💀', hpMult:  4.0, atkMult: 0.7, defMult: 0.7, baseXp: 22, baseGold: 12 },
-    { name: 'Gnijący Szczur', emoji: '🐀', hpMult:  3.0, atkMult: 1.0, defMult: 0.3, baseXp: 18, baseGold: 18 },
+    { id: 'blood_shadow',  name: 'Cień Krwi',      emoji: '👻', hpMult:  3.5, atkMult: 0.8, defMult: 0.5, baseXp: 20, baseGold: 15 },
+    { id: 'bone_man',      name: 'Kościan',        emoji: '💀', hpMult:  4.0, atkMult: 0.7, defMult: 0.7, baseXp: 22, baseGold: 12 },
+    { id: 'rotten_rat',    name: 'Gnijący Szczur', emoji: '🐀', hpMult:  3.0, atkMult: 1.0, defMult: 0.3, baseXp: 18, baseGold: 18 },
   ],
   // Tier 2 (depth 5–8)
   [
-    { name: 'Widmo',         emoji: '🌫️', hpMult:  5.0, atkMult: 1.2, defMult: 0.8, baseXp: 35, baseGold: 28 },
-    { name: 'Trupi Rycerz', emoji: '⚔️', hpMult:  6.0, atkMult: 1.0, defMult: 1.2, baseXp: 40, baseGold: 25 },
-    { name: 'Nekromanta',   emoji: '🧙', hpMult:  4.5, atkMult: 1.4, defMult: 0.6, baseXp: 38, baseGold: 30 },
+    { id: 'specter',       name: 'Widmo',         emoji: '🌫️', hpMult:  5.0, atkMult: 1.2, defMult: 0.8, baseXp: 35, baseGold: 28 },
+    { id: 'undead_knight', name: 'Trupi Rycerz', emoji: '⚔️', hpMult:  6.0, atkMult: 1.0, defMult: 1.2, baseXp: 40, baseGold: 25 },
+    { id: 'necromancer',   name: 'Nekromanta',   emoji: '🧙', hpMult:  4.5, atkMult: 1.4, defMult: 0.6, baseXp: 38, baseGold: 30 },
   ],
   // Tier 3 (depth 9–12)
   [
-    { name: 'Demon Otchłani', emoji: '😈', hpMult:  7.5, atkMult: 1.6, defMult: 1.0, baseXp: 55, baseGold: 45 },
-    { name: 'Nieumarły Mag',  emoji: '🔮', hpMult:  6.5, atkMult: 1.8, defMult: 0.8, baseXp: 58, baseGold: 48 },
-    { name: 'Strażnik Krypt', emoji: '🗿', hpMult:  9.0, atkMult: 1.4, defMult: 1.6, baseXp: 60, baseGold: 40 },
+    { id: 'abyss_demon',    name: 'Demon Otchłani', emoji: '😈', hpMult:  7.5, atkMult: 1.6, defMult: 1.0, baseXp: 55, baseGold: 45 },
+    { id: 'undead_mage',    name: 'Nieumarły Mag',  emoji: '🔮', hpMult:  6.5, atkMult: 1.8, defMult: 0.8, baseXp: 58, baseGold: 48 },
+    { id: 'crypt_guardian', name: 'Strażnik Krypt', emoji: '🗿', hpMult:  9.0, atkMult: 1.4, defMult: 1.6, baseXp: 60, baseGold: 40 },
   ],
   // Tier 4 (depth 13–16) — elitarne nieumarłe
   [
-    { name: 'Upiór Plagi',     emoji: '🧟', hpMult: 11.0, atkMult: 2.0, defMult: 1.4, baseXp: 72, baseGold: 58 },
-    { name: 'Kościana Bestia', emoji: '🦴', hpMult: 13.0, atkMult: 1.8, defMult: 2.0, baseXp: 68, baseGold: 52 },
-    { name: 'Arcylichej',      emoji: '🧿', hpMult:  9.5, atkMult: 2.4, defMult: 1.2, baseXp: 75, baseGold: 62 },
+    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 11.0, atkMult: 2.0, defMult: 1.4, baseXp: 72, baseGold: 58 },
+    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 13.0, atkMult: 1.8, defMult: 2.0, baseXp: 68, baseGold: 52 },
+    { id: 'archlich',      name: 'Arcylichej',      emoji: '🧿', hpMult:  9.5, atkMult: 2.4, defMult: 1.2, baseXp: 75, baseGold: 62 },
   ],
   // Tier 5 (depth 17–20) — horrory przedbossowe
   [
-    { name: 'Wampir Starożytny', emoji: '🧛', hpMult: 24.0, atkMult: 4.5, defMult: 2.5, baseXp: 110, baseGold: 95 },
-    { name: 'Abominacja',        emoji: '👹', hpMult: 30.0, atkMult: 4.0, defMult: 3.8, baseXp: 105, baseGold: 90 },
-    { name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 22.0, atkMult: 4.8, defMult: 4.2, baseXp: 112, baseGold: 98 },
+    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 24.0, atkMult: 4.5, defMult: 2.5, baseXp: 110, baseGold: 95 },
+    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 30.0, atkMult: 4.0, defMult: 3.8, baseXp: 105, baseGold: 90 },
+    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 22.0, atkMult: 4.8, defMult: 4.2, baseXp: 112, baseGold: 98 },
   ],
 ];
 
 export const SPIDER_TEMPLATE: EnemyTemplate = {
+  id: 'poison_spider',
   name: 'Jadowity Pająk', emoji: '🕷️',
   hpMult: 2.5, atkMult: 0.9, defMult: 0.3, baseXp: 15, baseGold: 10,
 };
 
 export const MIMIC_TEMPLATE: EnemyTemplate = {
+  id: 'chest_mimic',
   name: 'Mimik Skrzyni', emoji: '🎭',
   hpMult: 8.5, atkMult: 2.2, defMult: 1.4, baseXp: 55, baseGold: 60,
 };
 
 export const BOSS_TEMPLATE: EnemyTemplate = {
+  id: 'shadow_lord',
   name: 'Lord Cienia', emoji: '☠️',
   hpMult: 65, atkMult: 4.5, defMult: 2.5, baseXp: 280, baseGold: 350,
 };
@@ -103,6 +107,7 @@ export const DEBUFFS: ActiveBuff[] = [
 ];
 
 export type KryptaEnemy = {
+  id: string;
   name: string;
   emoji: string;
   hp: number;
@@ -118,6 +123,7 @@ export function buildEnemy(template: EnemyTemplate, heroLevel: number, depth: nu
   const lvl = Math.max(1, heroLevel);
   const hp = Math.round(lvl * template.hpMult * scale);
   return {
+    id:      template.id,
     name:    template.name,
     emoji:   template.emoji,
     hp,

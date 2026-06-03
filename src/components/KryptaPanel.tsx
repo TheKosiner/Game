@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import EnemyPortrait from './EnemyPortrait';
 import { useGameStore, MAX_DAILY_KRYPTA } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
@@ -462,7 +463,7 @@ export default function KryptaPanel() {
         background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)',
         padding: '12px 16px', marginBottom: 12, textAlign: 'center',
       }}>
-        <div style={{ fontSize: 40, marginBottom: 4 }}>{enemy.emoji}</div>
+        <EnemyPortrait id={enemy.id} emoji={enemy.emoji} size={72} style={{ margin: '0 auto 4px' }} />
         <div style={{ ...ORB, fontSize: 13, color: '#ff2d78', marginBottom: 8 }}>{enemy.name}</div>
         <HpBar hp={enemy.hp} max={enemy.maxHp} color="#ff2d78" />
         <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>

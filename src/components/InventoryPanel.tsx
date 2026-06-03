@@ -27,6 +27,10 @@ const BOX_IMG: Partial<Record<string, string>> = {
 function getBoxImg(rarity: string) {
   return BOX_IMG[rarity] ?? mysteryBoxSrc;
 }
+function getBoxFilter(rarity: string): string | undefined {
+  if (rarity === 'epic') return 'hue-rotate(55deg) saturate(1.4)';
+  return undefined;
+}
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -220,7 +224,7 @@ export default function InventoryPanel() {
               <img
                 src={getBoxImg(boxConfirm.item.rarity)}
                 alt={getItemName(boxConfirm.item, lang)}
-                style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain' }}
+                style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain', filter: getBoxFilter(boxConfirm.item.rarity) }}
               />
               <p style={{ ...MONO, fontSize: 11, color: bc, textAlign: 'center' }}>
                 {getItemName(boxConfirm.item, lang)}
