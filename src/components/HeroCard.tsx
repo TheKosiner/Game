@@ -564,8 +564,7 @@ export default function HeroCard() {
             <EquipSlot item={hero.equipment.helmet} slot="helmet" label={t.inventory.slotHelmet} selected={selectedSlot === 'helmet'} onClick={() => toggleSlot('helmet')} />
             <div style={{
               width: 96, height: 96, overflow: 'hidden', flexShrink: 0,
-              border: '2px solid rgba(255,45,120,0.4)',
-              boxShadow: '0 0 20px rgba(255,45,120,0.15), inset 0 0 12px rgba(0,0,0,0.5)',
+              boxShadow: 'inset 0 0 12px rgba(0,0,0,0.5)',
             }}>
               <img src={portraitSrc(hero.portrait)} alt={hero.name}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
