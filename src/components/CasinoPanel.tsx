@@ -227,6 +227,30 @@ export default function CasinoPanel() {
       return;
     }
 
+    // Apply result immediately — before any animation — so navigating away
+    // mid-spin never loses gold or skips the Firestore record.
+    useGameStore.setState(s => ({
+      hero: {
+        ...s.hero,
+        gold: res.newGold,
+        goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
+        lastCasinoSpinAt: Date.now(),
+      },
+    }));
+    saveGame();
+    if (user) syncToCloud(user.uid, user.username).catch(() => {});
+    if (db && user) {
+      addDoc(collection(db, 'casinoSpins'), {
+        uid: user.uid,
+        username: user.username,
+        result: res.result,
+        won: res.won,
+        net: res.net,
+        stake,
+        ts: Date.now(),
+      }).catch(() => {});
+    }
+
     // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;
     // distance = SPIN_VEL * DECEL_MS_s / easing_power = 9 * 3 / 5 ≈ 5.4 → 6 cells
@@ -239,31 +263,11 @@ export default function CasinoPanel() {
     r.decelStart = performance.now();
     r.phase      = 'decel';
 
+    // Animation callback: UI-only — gold already settled above
     onDoneRef.current = () => {
-      useGameStore.setState(s => ({
-        hero: {
-          ...s.hero,
-          gold: res.newGold,
-          goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
-          lastCasinoSpinAt: Date.now(),
-        },
-      }));
       setLastResult({ n: res.result, won: res.won, net: res.net });
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
       setSpinning(false);
-      saveGame();
-      if (user) syncToCloud(user.uid, user.username).catch(() => {});
-      if (db && user) {
-        addDoc(collection(db, 'casinoSpins'), {
-          uid: user.uid,
-          username: user.username,
-          result: res.result,
-          won: res.won,
-          net: res.net,
-          stake,
-          ts: Date.now(),
-        }).catch(() => {});
-      }
     };
   }, [spinning, betType, stake, hero.gold, saveGame, user]);
 
