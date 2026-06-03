@@ -147,6 +147,7 @@ function ItemCard({
 
 export default function InventoryPanel() {
   const t         = useT();
+  const lang      = useLangStore(s => s.lang);
   const inventory  = useGameStore(s => s.hero.inventory);
   const equipItem  = useGameStore(s => s.equipItem);
   const sellItem        = useGameStore(s => s.sellItem);
