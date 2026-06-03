@@ -229,7 +229,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
             const alreadySent = sent.has(p.uid);
             return (
               <div key={p.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '6px 8px' }}>
-                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
+                <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0 }}>
                   <img src={portraitSrc(resolvePortrait(p.portrait, p.username))} alt={p.username} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -555,7 +555,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
               padding: '7px 8px',
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
-              <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${borderColor}` }}>
+              <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0 }}>
                 <img src={portraitSrc(resolvePortrait(playerPortraits[m.uid] ?? m.portrait, m.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>

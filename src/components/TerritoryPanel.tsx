@@ -573,7 +573,7 @@ function SiegeCombat({
                   background: current ? 'rgba(180,40,40,0.15)' : 'transparent',
                   opacity: beaten ? 0.4 : 1,
                 }}>
-                  <div style={{ width: 18, height: 18, overflow: 'hidden', border: `1px solid ${current ? '#e06060' : '#555'}`, flexShrink: 0 }}>
+                  <div style={{ width: 18, height: 18, overflow: 'hidden', flexShrink: 0 }}>
                     <img src={portraitSrc(d.portrait)} alt={d.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <span style={{ ...MONO, fontSize: 10, color: current ? '#e06060' : 'rgba(200,120,120,0.8)', textDecoration: beaten ? 'line-through' : 'none' }}>

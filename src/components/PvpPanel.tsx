@@ -219,7 +219,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--border-dark)' }}>
+          <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0 }}>
             <img src={portraitSrc(hero.portrait)} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           </div>
           <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
@@ -340,7 +340,7 @@ function ArenaCard({ entry, canFight, onChallenge }: {
       boxShadow: '0 0 20px rgba(180,40,40,0.07)',
       padding: 10,
     }}>
-      <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden', border: '2px solid rgba(180,40,40,0.45)', boxShadow: '0 0 16px rgba(180,40,40,0.2)' }}>
+      <div style={{ width: '100%', aspectRatio: '1', overflow: 'hidden' }}>
         <img
           src={portraitSrc(resolvePortrait(entry.portrait, entry.username))}
           alt={entry.username}

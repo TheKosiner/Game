@@ -112,7 +112,7 @@ export default function ChatPanel() {
                 <img
                   src={portraitSrc(msg.portrait)}
                   alt={msg.username}
-                  style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)' }}
+                  style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
                 />
               ) : (
                 <div style={{

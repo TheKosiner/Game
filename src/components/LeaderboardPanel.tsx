@@ -170,8 +170,6 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <div style={{
           width: 80, height: 80, overflow: 'hidden', flexShrink: 0,
-          border: '2px solid rgba(255,215,0,0.35)',
-          boxShadow: '0 0 16px rgba(255,215,0,0.12)',
         }}>
           <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
@@ -421,7 +419,7 @@ export default function LeaderboardPanel() {
                       }
                     </div>
 
-                    <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0, border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}` }}>
+                    <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0 }}>
                       <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     </div>
 
