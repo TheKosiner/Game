@@ -165,7 +165,13 @@ export default function CasinoPanel() {
 
     prevTimeRef.current = performance.now();
     rafRef.current = requestAnimationFrame(frame);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      // If the player navigates away mid-animation, immediately settle the
+      // pending result so gold and history are credited even without the reveal.
+      onDoneRef.current?.();
+      onDoneRef.current = null;
+    };
   }, []);
 
   // ── Firestore feed ────────────────────────────────────────────────────────
