@@ -218,11 +218,11 @@ export default function InventoryPanel() {
               </p>
               <img
                 src={getBoxImg(boxConfirm.item.rarity)}
-                alt={boxConfirm.item.name}
+                alt={getItemName(boxConfirm.item, lang)}
                 style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain' }}
               />
               <p style={{ ...MONO, fontSize: 11, color: bc, textAlign: 'center' }}>
-                {boxConfirm.item.name}
+                {getItemName(boxConfirm.item, lang)}
               </p>
               <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
                 Po otwarciu skrzynka zniknie z plecaka.
@@ -273,7 +273,7 @@ export default function InventoryPanel() {
             }}>
               <ItemIcon item={sellConfirm.item} scale={4} />
               <div>
-                <p style={{ ...MONO, fontSize: 11, color: rc }}>{sellConfirm.item.name}</p>
+                <p style={{ ...MONO, fontSize: 11, color: rc }}>{getItemName(sellConfirm.item, lang)}</p>
                 <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>
                   🪙 {sellConfirm.item.goldValue} złota
                 </p>

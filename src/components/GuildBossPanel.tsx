@@ -8,7 +8,7 @@ import {
   calcGuildBossDamage,
   type GuildBossState,
 } from '../lib/guildBoss';
-import { generateItem } from '../data/itemGenerator';
+import { generateItem, getItemName } from '../data/itemGenerator';
 import { syncToCloud } from '../lib/cloudSync';
 
 import { MONO, ORB } from '../utils/styles';
@@ -325,7 +325,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           <p style={{ ...MONO, fontSize: 10, color: claimResult.item.rarity === 'legendary' ? '#ffd700' : '#cc44ff' }}>
             {claimResult.item.rarity === 'legendary'
               ? (isEn ? '✨ LEGENDARY' : '✨ LEGENDARNY')
-              : (isEn ? '💜 EPIC' : '💜 EPICKI')}: {claimResult.item.emoji} {claimResult.item.name}
+              : (isEn ? '💜 EPIC' : '💜 EPICKI')}: {claimResult.item.emoji} {getItemName(claimResult.item, lang)}
           </p>
         </div>
       )}

@@ -31,10 +31,19 @@ const BOX_NAME: Record<Rarity, string> = {
   legendary: 'Legendarna Skrzynka',
 };
 
+const BOX_NAME_EN: Record<Rarity, string> = {
+  common:    'Common Mystery Box',
+  uncommon:  'Uncommon Mystery Box',
+  rare:      'Rare Mystery Box',
+  epic:      'Epic Mystery Box',
+  legendary: 'Legendary Mystery Box',
+};
+
 export function createMysteryBox(rarity: Rarity, heroLevel: number): Item {
   return {
     id: `mystery_box_${rarity}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
     name: BOX_NAME[rarity],
+    nameEn: BOX_NAME_EN[rarity],
     slot: 'mystery_box',
     rarity,
     stats: {},

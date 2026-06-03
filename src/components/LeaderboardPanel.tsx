@@ -3,6 +3,8 @@ import { getLeaderboard, getGuildLeaderboard, type LeaderboardEntry, type GuildL
 import { useAuthStore } from '../store/authStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import { useT } from '../hooks/useT';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
@@ -32,7 +34,7 @@ const STAT_NAMES: Record<string, string> = {
   vitality: 'Żywotność', magic: 'Magia', magicResistance: 'Odp. mag.',
 };
 
-function ItemDetailPopup({ item, onClose }: { item: EquipItem; onClose: () => void }) {
+function ItemDetailPopup({ item, onClose, lang }: { item: EquipItem; onClose: () => void; lang: string }) {
   const col = RARITY_COLOR[item.rarity] ?? '#8FA4B8';
   const stats = Object.entries(item.stats ?? {}).filter(([, v]) => (v as number) > 0);
   const fakeItem = { ...item, stats: item.stats ?? {}, goldValue: 0, emoji: '' } as any;
@@ -51,7 +53,7 @@ function ItemDetailPopup({ item, onClose }: { item: EquipItem; onClose: () => vo
         </div>
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 10, color: col, marginBottom: 4 }}>
-            {item.name}{item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}
+            {getItemName(item as any, lang as any)}{item.enhanceLevel ? ` +${item.enhanceLevel}` : ''}
           </p>
           <span style={{ ...MONO, fontSize: 9, color: col, background: `${col}18`, border: `1px solid ${col}33`, padding: '1px 5px' }}>
             {item.rarity}
@@ -88,6 +90,7 @@ function ItemDetailPopup({ item, onClose }: { item: EquipItem; onClose: () => vo
 }
 
 function EquipmentSection({ equipment }: { equipment: NonNullable<LeaderboardEntry['equipment']> }) {
+  const lang = useLangStore(s => s.lang);
   const [selected, setSelected] = useState<string | null>(null);
   const toggle = (slot: string) => setSelected(s => s === slot ? null : slot);
   const items = SLOT_ORDER.map(slot => ({ slot, item: equipment[slot] })).filter(x => x.item);
@@ -107,7 +110,7 @@ function EquipmentSection({ equipment }: { equipment: NonNullable<LeaderboardEnt
               tabIndex={0}
               onClick={() => toggle(slot)}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggle(slot); }}
-              title={`${item!.name}${item!.enhanceLevel ? ` +${item!.enhanceLevel}` : ''}`}
+              title={`${getItemName(item! as any, lang as any)}${item!.enhanceLevel ? ` +${item!.enhanceLevel}` : ''}`}
               style={{
                 background: isOpen ? `${col}20` : `${col}10`,
                 border: `1px solid ${isOpen ? col : col + '55'}`,
@@ -123,7 +126,7 @@ function EquipmentSection({ equipment }: { equipment: NonNullable<LeaderboardEnt
         })}
       </div>
       {selected && equipment[selected] && (
-        <ItemDetailPopup item={equipment[selected]!} onClose={() => setSelected(null)} />
+        <ItemDetailPopup item={equipment[selected]!} onClose={() => setSelected(null)} lang={lang} />
       )}
     </div>
   );

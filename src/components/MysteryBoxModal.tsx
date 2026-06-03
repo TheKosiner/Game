@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { openMysteryBox, SPIN_POOL, RARITY_ORDER } from '../data/mysteryBoxes';
 import ItemIcon from './ItemIcon';
+import { useLangStore } from '../store/langStore';
+import { getItemName } from '../data/itemGenerator';
 import type { Item, Rarity } from '../types';
 import { MONO, ORB } from '../utils/styles';
 
@@ -34,6 +36,7 @@ function pickSpinItem(boxRarity: Rarity): Item {
 export default function MysteryBoxModal() {
   const pending      = useGameStore(s => s.mysteryBoxPending);
   const addItem      = useGameStore(s => s.addToInventory);
+  const lang         = useLangStore(s => s.lang);
   const dismiss      = useGameStore(s => s.dismissMysteryBox);
 
   const [wonItem, setWonItem]       = useState<Item | null>(null);
@@ -106,7 +109,7 @@ export default function MysteryBoxModal() {
     }}>
       {/* Header */}
       <p style={{ ...ORB, fontSize: 11, color: 'var(--gold-main)', marginBottom: 20, letterSpacing: 2 }}>
-        {pending.box.emoji} {pending.box.name.toUpperCase()}
+        {pending.box.emoji} {getItemName(pending.box, lang).toUpperCase()}
       </p>
 
       {/* Spinning card */}
@@ -133,7 +136,7 @@ export default function MysteryBoxModal() {
           <ItemIcon item={display} size={96} />
         </div>
         <p style={{ ...MONO, fontSize: 11, color: rc, textAlign: 'center', padding: '0 10px', marginBottom: 6 }}>
-          {display.name}
+          {getItemName(display, lang)}
         </p>
         <span style={{
           ...ORB, fontSize: 9, padding: '2px 8px',

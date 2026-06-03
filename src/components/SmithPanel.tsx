@@ -8,6 +8,7 @@ import { useLangStore } from '../store/langStore';
 import { enhanceMultiplier } from '../utils/combat';
 import smithImg from '../assets/smith.webp';
 import ItemIcon from './ItemIcon';
+import { getItemName } from '../data/itemGenerator';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -40,7 +41,7 @@ interface EnhanceResult {
   toLevel: number;
 }
 
-function ItemCard({ item, selected, onClick }: { item: Item; selected: boolean; onClick: () => void }) {
+function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boolean; onClick: () => void; lang: string }) {
   const enh = item.enhanceLevel ?? 0;
   const color = RARITY_COLOR[item.rarity] ?? 'white';
   return (
@@ -59,7 +60,7 @@ function ItemCard({ item, selected, onClick }: { item: Item; selected: boolean; 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ ...ORB, fontSize: 10, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {item.name}
+            {getItemName(item, lang as any)}
           </span>
           {enh > 0 && (
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700', flexShrink: 0 }}>+{enh}</span>
@@ -359,7 +360,7 @@ export default function SmithPanel() {
               ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t.smith.noItems}</p>
               : equippedItems.map(({ slot, item }) => (
                 <ItemCard
-                  key={slot} item={item}
+                  key={slot} item={item} lang={lang}
                   selected={selected?.source === 'equipment' && selected.idxOrSlot === slot}
                   onClick={() => handleSelect('equipment', slot, item)}
                 />
@@ -371,7 +372,7 @@ export default function SmithPanel() {
               ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t.smith.noItems}</p>
               : inventoryItems.map(({ item, idx }) => (
                 <ItemCard
-                  key={idx} item={item}
+                  key={idx} item={item} lang={lang}
                   selected={selected?.source === 'inventory' && selected.idxOrSlot === idx}
                   onClick={() => handleSelect('inventory', idx, item)}
                 />
