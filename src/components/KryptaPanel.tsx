@@ -229,6 +229,7 @@ export default function KryptaPanel() {
         addGold(newGold);
         const box = createMysteryBox(getBossRarity(hero.level), hero.level);
         addToInventory(box);
+        useGameStore.setState(s => ({ hero: { ...s.hero, hp: Math.max(1, hp) } }));
         saveGame();
         if (user) syncToCloud(user.uid, user.username).catch(() => {});
         pushLog([t.krypta.bossDefeated, t.krypta.lootAdded(box.name), t.krypta.totalRewards(newXp, newGold), ...msgs.slice().reverse()]);
@@ -261,6 +262,7 @@ export default function KryptaPanel() {
     if (hp <= 0) {
       pushLog([`💀 ${t.krypta.defeated}...`]);
       setPhase('dead');
+      useGameStore.setState(s => ({ hero: { ...s.hero, hp: 1 } }));
       saveGame();
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
     }
@@ -269,6 +271,7 @@ export default function KryptaPanel() {
   function flee() {
     pushLog([`🏃 ${t.krypta.fled}!`]);
     setPhase('fled');
+    useGameStore.setState(s => ({ hero: { ...s.hero, hp: Math.max(1, raidHp) } }));
     saveGame();
     if (user) syncToCloud(user.uid, user.username).catch(() => {});
   }
