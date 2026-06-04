@@ -209,6 +209,25 @@ export default function KryptaPanel() {
     let e = { ...enemy };
     let hp = raidHp;
 
+    const heroGoesFirst = Math.random() < 0.5;
+
+    // ── Enemy strikes first ──
+    if (!heroGoesFirst) {
+      const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
+      const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
+      hp = Math.max(0, hp - eDmg);
+      msgs.push(`${eCrit ? '💥 KRYT! ' : ''}⚡ ${e.emoji} ${e.name} atakuje pierwszy za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+      if (hp <= 0) {
+        pushLog([...msgs, '💀 Padasz pokonany...'].reverse());
+        setRaidHp(0);
+        setPhase('dead');
+        saveGame();
+        if (user) syncToCloud(user.uid, user.username).catch(() => {});
+        return;
+      }
+    }
+
+    // ── Hero attacks ──
     const isCrit = Math.random() < CRIT_CHANCE;
     const dmg = Math.round(quadDmg(effectiveAtk, e.defense) * (isCrit ? CRIT_MULT : 1));
     e.hp = Math.max(0, e.hp - dmg);
@@ -250,11 +269,13 @@ export default function KryptaPanel() {
       return;
     }
 
-    // Enemy strikes back
-    const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
-    const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
-    hp = Math.max(0, hp - eDmg);
-    msgs.push(`${eCrit ? '💥 KRYT! ' : ''}${e.emoji} ${e.name} atakuje za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+    // ── Enemy counter-attacks (hero went first) ──
+    if (heroGoesFirst) {
+      const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
+      const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
+      hp = Math.max(0, hp - eDmg);
+      msgs.push(`${eCrit ? '💥 KRYT! ' : ''}${e.emoji} ${e.name} atakuje za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+    }
 
     pushLog([...msgs].reverse());
     setRaidHp(hp);
