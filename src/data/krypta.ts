@@ -47,7 +47,7 @@ export const ENEMY_TIERS: EnemyTemplate[][] = [
 export const SPIDER_TEMPLATE: EnemyTemplate = {
   id: 'poison_spider',
   name: 'Jadowity Pająk', emoji: '🕷️',
-  hpMult: 2.5, atkMult: 0.9, defMult: 0.3, baseXp: 15, baseGold: 10,
+  hpMult: 2.5, atkMult: 0.8, defMult: 0.2, baseXp: 15, baseGold: 10,
 };
 
 export const MIMIC_TEMPLATE: EnemyTemplate = {

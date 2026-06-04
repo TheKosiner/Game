@@ -110,8 +110,7 @@ export default function QuestPanel() {
     }
   }
 
-  const isResting = (hero.restingUntil !== null && now < hero.restingUntil) ||
-                    (hero.voluntaryRestUntil !== null && now < hero.voluntaryRestUntil);
+
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -254,13 +253,7 @@ export default function QuestPanel() {
         </div>
       )}
 
-      {isResting && !activeQuest && (
-        <div style={{ background: 'rgba(8,12,20,0.95)', border: '1px solid rgba(30,50,80,0.5)', padding: 8, textAlign: 'center' }}>
-          <p style={{ ...PX(6), color: '#5070a0' }}>{t.quests.resting}</p>
-        </div>
-      )}
-
-      {!activeQuest && !limitReached && !isResting && (
+      {!activeQuest && !limitReached && (
         <>
           {!base ? (
             <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>

@@ -84,10 +84,17 @@ function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: n
   let hHp = heroHp;
   let oHp = oppHp;
   for (let i = 0; i < 300; i++) {
-    oHp -= simDmg(heroAtk, oppDef, heroCrit);
-    if (oHp <= 0) return true;
-    hHp -= simDmg(oppAtk, heroDef, oppCrit);
-    if (hHp <= 0) return false;
+    if (Math.random() < 0.5) {
+      oHp -= simDmg(heroAtk, oppDef, heroCrit);
+      if (oHp <= 0) return true;
+      hHp -= simDmg(oppAtk, heroDef, oppCrit);
+      if (hHp <= 0) return false;
+    } else {
+      hHp -= simDmg(oppAtk, heroDef, oppCrit);
+      if (hHp <= 0) return false;
+      oHp -= simDmg(heroAtk, oppDef, heroCrit);
+      if (oHp <= 0) return true;
+    }
   }
   return hHp >= oHp;
 }
@@ -436,12 +443,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!currentEnemy || !currentDungeon) return;
     const t = getT();
 
+    const heroGoesFirst = Math.random() < 0.5;
+    let heroHp  = hero.hp;
+    let enemyHp = currentEnemy.hp;
+
+    // ── Enemy strikes first ──
+    if (!heroGoesFirst) {
+      const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
+      heroHp = Math.max(0, heroHp - enemyDmg);
+      get().addCombatLog(`⚡ ${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
+      if (heroHp <= 0) {
+        get().addCombatLog(t.combat.playerDefeated, 'system');
+        set({ hero: { ...hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name });
+        get().saveGame();
+        return;
+      }
+    }
+
+    // ── Hero attacks ──
     const { damage: heroDmg, isCrit } = heroAttackEnemy(hero, currentEnemy);
-    const newEnemyHp = Math.max(0, currentEnemy.hp - heroDmg);
+    enemyHp = Math.max(0, enemyHp - heroDmg);
     const critText = isCrit ? ` ${t.combat.critical}` : '';
     get().addCombatLog(`${t.combat.dealDamage(heroDmg)}${critText} ${currentEnemy.emoji} ${currentEnemy.name}`, 'hero');
 
-    if (newEnemyHp <= 0) {
+    if (enemyHp <= 0) {
       get().addCombatLog(t.combat.defeated(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode = get().dungeonMode;
       const diff = get().dungeonDifficulty;
@@ -477,12 +502,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }
       }
-    } else {
+    } else if (heroGoesFirst) {
+      // ── Enemy counter-attacks (hero went first) ──
       const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
-      const newHeroHp = Math.max(0, hero.hp - enemyDmg);
+      heroHp = Math.max(0, heroHp - enemyDmg);
       get().addCombatLog(`${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
 
-      if (newHeroHp <= 0) {
+      if (heroHp <= 0) {
         get().addCombatLog(t.combat.playerDefeated, 'system');
         const updatedHero = get().hero;
         set({
@@ -494,9 +520,12 @@ export const useGameStore = create<GameState>((set, get) => ({
         });
         get().saveGame(); // save on defeat
       } else {
-        set({ hero: { ...hero, hp: newHeroHp }, currentEnemy: { ...currentEnemy, hp: newEnemyHp } });
+        set({ hero: { ...hero, hp: heroHp }, currentEnemy: { ...currentEnemy, hp: enemyHp } });
         // no save per-round — App.tsx 10s interval and pagehide handle it
       }
+    } else {
+      // Enemy went first, enemy survived hero's attack — state already tracked in locals
+      set({ hero: { ...hero, hp: heroHp }, currentEnemy: { ...currentEnemy, hp: enemyHp } });
     }
   },
 
@@ -509,12 +538,21 @@ export const useGameStore = create<GameState>((set, get) => ({
     let enemyHp = currentEnemy.hp;
 
     for (let i = 0; i < 500; i++) {
-      const { damage: hDmg } = heroAttackEnemy(hero, currentEnemy);
-      enemyHp = Math.max(0, enemyHp - hDmg);
-      if (enemyHp <= 0) break;
-      const { damage: eDmg } = enemyAttackHero(currentEnemy, hero);
-      heroHp = Math.max(0, heroHp - eDmg);
-      if (heroHp <= 0) break;
+      if (Math.random() < 0.5) {
+        const { damage: hDmg } = heroAttackEnemy(hero, currentEnemy);
+        enemyHp = Math.max(0, enemyHp - hDmg);
+        if (enemyHp <= 0) break;
+        const { damage: eDmg } = enemyAttackHero(currentEnemy, hero);
+        heroHp = Math.max(0, heroHp - eDmg);
+        if (heroHp <= 0) break;
+      } else {
+        const { damage: eDmg } = enemyAttackHero(currentEnemy, hero);
+        heroHp = Math.max(0, heroHp - eDmg);
+        if (heroHp <= 0) break;
+        const { damage: hDmg } = heroAttackEnemy(hero, currentEnemy);
+        enemyHp = Math.max(0, enemyHp - hDmg);
+        if (enemyHp <= 0) break;
+      }
     }
 
     if (heroHp <= 0) {
@@ -891,114 +929,126 @@ export const useGameStore = create<GameState>((set, get) => ({
       ts: Date.now(),
     };
 
-    // ── Hero attacks ──
-    const critChance = calcCritChance(hero.stats.dexterity + getEquipmentStats(hero.equipment).dexterity, hero.level);
-    const isCrit = Math.random() < critChance;
-    if (pw.includes('dodge') && Math.random() < 0.25) {
-      event.isDodge = true;
-      log.push(t.combat.dodgeRound(r, boss.name));
-    } else {
-      const base = heroAtk * heroAtk / (heroAtk + Math.max(1, boss.defense));
-      let heroDmg = Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4) * (isCrit ? 2 : 1)));
-      if (shieldHp > 0) {
-        const abs = Math.min(shieldHp, heroDmg);
-        shieldHp -= abs; heroDmg -= abs;
-        log.push(`${t.combat.shieldAbsorb(r, abs)}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ` — ${t.combat.shieldDestroyed}`}`);
+    const heroGoesFirst = Math.random() < 0.5;
+
+    const doHeroAttack = () => {
+      const critChance = calcCritChance(hero.stats.dexterity + getEquipmentStats(hero.equipment).dexterity, hero.level);
+      const isCrit = Math.random() < critChance;
+      if (pw.includes('dodge') && Math.random() < 0.25) {
+        event.isDodge = true;
+        log.push(t.combat.dodgeRound(r, boss.name));
+      } else {
+        const base = heroAtk * heroAtk / (heroAtk + Math.max(1, boss.defense));
+        let heroDmg = Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4) * (isCrit ? 2 : 1)));
+        if (shieldHp > 0) {
+          const abs = Math.min(shieldHp, heroDmg);
+          shieldHp -= abs; heroDmg -= abs;
+          log.push(`${t.combat.shieldAbsorb(r, abs)}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ` — ${t.combat.shieldDestroyed}`}`);
+        }
+        if (heroDmg > 0) {
+          bossHp -= heroDmg;
+          event.heroDmg = heroDmg;
+          event.heroCrit = isCrit;
+          log.push(`${t.combat.dealDamageRound(r, heroDmg, Math.max(0, bossHp))}/${boss.maxHp}${isCrit ? ` ${t.combat.critical}` : ''}`);
+        }
       }
-      if (heroDmg > 0) {
-        bossHp -= heroDmg;
-        event.heroDmg = heroDmg;
-        event.heroCrit = isCrit;
-        log.push(`${t.combat.dealDamageRound(r, heroDmg, Math.max(0, bossHp))}/${boss.maxHp}${isCrit ? ` ${t.combat.critical}` : ''}`);
-      }
-    }
-
-    // ── Boss death? ──
-    if (bossHp <= 0) {
-      log.push(t.combat.bossVictory(boss.name, r));
-      // Add XP/gold FIRST so level-up updates hero before we spread it with loot
-      get().addXp(boss.xpReward);
-      get().addGold(boss.goldReward);
-      const freshHero = get().hero;
-      const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
-      const newInventory = [...freshHero.inventory, ...loot];
-      const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
-      set({
-        hero: { ...freshHero, inventory: newInventory },
-        challengeUnlocked: newUnlocked,
-        challengeFight: null,
-        challengeFightLog: [],
-        challengeLastHit: { ...event, ts: Date.now() },
-        challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot },
-      });
-      get().saveGame();
-      return;
-    }
-
-    // ── Boss regen ──
-    if (pw.includes('regen')) {
-      const rAmt = Math.round(boss.maxHp * 0.03);
-      bossHp = Math.min(boss.maxHp, bossHp + rAmt);
-      event.regenAmt = rAmt;
-      log.push(`${t.combat.regenRound(r, rAmt, bossHp)}/${boss.maxHp}`);
-    }
-
-    // ── Rage trigger ──
-    if (pw.includes('rage') && !rageActive && bossHp < boss.maxHp * 0.3) {
-      rageActive = true;
-      event.rageTrigger = true;
-      log.push(t.combat.furyRound(r, boss.name));
-    }
-
-    // ── Boss attacks ──
-    const atkMod = rageActive ? 1.6 : 1;
-    const bAtkVal = boss.attack * atkMod;
-    const calcBossDmg = () => {
-      const base = bAtkVal * bAtkVal / (bAtkVal + Math.max(1, effectiveHeroDef));
-      return Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4)));
     };
 
-    const dmg1 = calcBossDmg();
-    heroHp -= dmg1;
-    event.bossDmg1 = dmg1;
-    if (pw.includes('lifesteal')) {
-      const steal = Math.round(dmg1 * 0.25);
-      bossHp = Math.min(boss.maxHp, bossHp + steal);
-      event.lifeSteal += steal;
-      log.push(t.combat.vampRound(r, steal));
-    }
-    log.push(t.combat.bossAttack(r, boss.name, dmg1, Math.max(0, heroHp)));
-
-    if (heroHp > 0 && pw.includes('double_strike')) {
-      const dmg2 = calcBossDmg();
-      heroHp -= dmg2;
-      event.bossDmg2 = dmg2;
-      if (pw.includes('lifesteal')) {
-        const steal2 = Math.round(dmg2 * 0.25);
-        bossHp = Math.min(boss.maxHp, bossHp + steal2);
-        event.lifeSteal += steal2;
+    const doBossAttack = () => {
+      // ── Boss regen ──
+      if (pw.includes('regen')) {
+        const rAmt = Math.round(boss.maxHp * 0.03);
+        bossHp = Math.min(boss.maxHp, bossHp + rAmt);
+        event.regenAmt = rAmt;
+        log.push(`${t.combat.regenRound(r, rAmt, bossHp)}/${boss.maxHp}`);
       }
-      log.push(t.combat.doubleHit(r, dmg2, Math.max(0, heroHp)));
+      // ── Rage trigger ──
+      if (pw.includes('rage') && !rageActive && bossHp < boss.maxHp * 0.3) {
+        rageActive = true;
+        event.rageTrigger = true;
+        log.push(t.combat.furyRound(r, boss.name));
+      }
+      // ── Boss attacks ──
+      const atkMod = rageActive ? 1.6 : 1;
+      const bAtkVal = boss.attack * atkMod;
+      const calcBossDmg = () => {
+        const base = bAtkVal * bAtkVal / (bAtkVal + Math.max(1, effectiveHeroDef));
+        return Math.max(1, Math.round(base * (0.8 + Math.random() * 0.4)));
+      };
+      const dmg1 = calcBossDmg();
+      heroHp -= dmg1;
+      event.bossDmg1 = (event.bossDmg1 ?? 0) + dmg1;
+      if (pw.includes('lifesteal')) {
+        const steal = Math.round(dmg1 * 0.25);
+        bossHp = Math.min(boss.maxHp, bossHp + steal);
+        event.lifeSteal += steal;
+        log.push(t.combat.vampRound(r, steal));
+      }
+      log.push(t.combat.bossAttack(r, boss.name, dmg1, Math.max(0, heroHp)));
+      if (heroHp > 0 && pw.includes('double_strike')) {
+        const dmg2 = calcBossDmg();
+        heroHp -= dmg2;
+        event.bossDmg2 = (event.bossDmg2 ?? 0) + dmg2;
+        if (pw.includes('lifesteal')) {
+          const steal2 = Math.round(dmg2 * 0.25);
+          bossHp = Math.min(boss.maxHp, bossHp + steal2);
+          event.lifeSteal += steal2;
+        }
+        log.push(t.combat.doubleHit(r, dmg2, Math.max(0, heroHp)));
+      }
+      if (heroHp > 0 && pw.includes('poison')) {
+        const pd = Math.round(heroMaxHp * 0.04);
+        heroHp -= pd;
+        event.poisonDmg = pd;
+        log.push(t.combat.poisonRound(r, pd, Math.max(0, heroHp)));
+      }
+    };
+
+    // ── Execute in random order ──
+    if (heroGoesFirst) {
+      doHeroAttack();
+      if (bossHp <= 0) {
+        log.push(t.combat.bossVictory(boss.name, r));
+        get().addXp(boss.xpReward);
+        get().addGold(boss.goldReward);
+        const freshHero = get().hero;
+        const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
+        const newInventory = [...freshHero.inventory, ...loot];
+        const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+        set({ hero: { ...freshHero, inventory: newInventory }, challengeUnlocked: newUnlocked, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot } });
+        get().saveGame();
+        return;
+      }
+      doBossAttack();
+    } else {
+      log.push(`⚡ ${boss.name} atakuje pierwszy!`);
+      doBossAttack();
+      if (heroHp <= 0) {
+        log.push(t.combat.bossDefeat(r));
+        set({ hero: { ...hero, hp: 1 }, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] } });
+        get().addXp(Math.floor(boss.xpReward * 0.1));
+        get().saveGame();
+        return;
+      }
+      doHeroAttack();
+      if (bossHp <= 0) {
+        log.push(t.combat.bossVictory(boss.name, r));
+        get().addXp(boss.xpReward);
+        get().addGold(boss.goldReward);
+        const freshHero = get().hero;
+        const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
+        const newInventory = [...freshHero.inventory, ...loot];
+        const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+        set({ hero: { ...freshHero, inventory: newInventory }, challengeUnlocked: newUnlocked, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot } });
+        get().saveGame();
+        return;
+      }
     }
 
-    // ── Poison ──
-    if (heroHp > 0 && pw.includes('poison')) {
-      const pd = Math.round(heroMaxHp * 0.04);
-      heroHp -= pd;
-      event.poisonDmg = pd;
-      log.push(t.combat.poisonRound(r, pd, Math.max(0, heroHp)));
-    }
-
-    // ── Hero death? ──
+    // ── Hero death check (for hero-first path where boss attacked second) ──
     if (heroHp <= 0) {
       log.push(t.combat.bossDefeat(r));
-      set({
-        hero: { ...hero, hp: 1 },
-        challengeFight: null,
-        challengeFightLog: [],
-        challengeLastHit: { ...event, ts: Date.now() },
-        challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] },
-      });
+      set({ hero: { ...hero, hp: 1 }, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] } });
       get().addXp(Math.floor(boss.xpReward * 0.1));
       get().saveGame();
       return;
@@ -1189,11 +1239,11 @@ export const useGameStore = create<GameState>((set, get) => ({
         const isLegacySave = save.hero.dungeonRunsToday === undefined;
         const loadedHero: Hero = {
           name: save.hero.name,
-          level: save.hero.level,
-          xp: save.hero.xp,
-          xpToNext: save.hero.xpToNext,
-          hp: save.hero.hp,
-          maxHp: save.hero.maxHp,
+          level: save.hero.level ?? 1,
+          xp: save.hero.xp ?? 0,
+          xpToNext: save.hero.xpToNext || calcXpToNext(save.hero.level ?? 1),
+          maxHp: save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment)),
+          hp: Math.max(1, save.hero.hp ?? save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment))),
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
           voluntaryRestHp: save.hero.voluntaryRestHp != null

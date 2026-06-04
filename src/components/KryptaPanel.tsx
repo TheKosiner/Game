@@ -217,6 +217,25 @@ export default function KryptaPanel() {
     let e = { ...enemy };
     let hp = raidHp;
 
+    const heroGoesFirst = Math.random() < 0.5;
+
+    // ── Enemy strikes first ──
+    if (!heroGoesFirst) {
+      const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
+      const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
+      hp = Math.max(0, hp - eDmg);
+      msgs.push(`${eCrit ? '💥 KRYT! ' : ''}⚡ ${e.emoji} ${e.name} atakuje pierwszy za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+      if (hp <= 0) {
+        pushLog([...msgs, '💀 Padasz pokonany...'].reverse());
+        setRaidHp(0);
+        setPhase('dead');
+        saveGame();
+        if (user) syncToCloud(user.uid, user.username).catch(() => {});
+        return;
+      }
+    }
+
+    // ── Hero attacks ──
     const isCrit = Math.random() < CRIT_CHANCE;
     const dmg = Math.round(quadDmg(effectiveAtk, e.defense) * (isCrit ? CRIT_MULT : 1));
     e.hp = Math.max(0, e.hp - dmg);
@@ -259,11 +278,13 @@ export default function KryptaPanel() {
       return;
     }
 
-    // Enemy strikes back
-    const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
-    const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
-    hp = Math.max(0, hp - eDmg);
-    msgs.push(`${eCrit ? '💥 KRYT! ' : ''}${e.emoji} ${e.name} atakuje za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+    // ── Enemy counter-attacks (hero went first) ──
+    if (heroGoesFirst) {
+      const eCrit = Math.random() < (isBoss ? 0.07 : 0.05);
+      const eDmg = Math.round(quadDmg(e.attack, effectiveDef) * (eCrit ? (isBoss ? 2.5 : 2) : 1));
+      hp = Math.max(0, hp - eDmg);
+      msgs.push(`${eCrit ? '💥 KRYT! ' : ''}${e.emoji} ${e.name} atakuje za ${eDmg} → HP: ${hp}/${raidMaxHp}`);
+    }
 
     pushLog([...msgs].reverse());
     setRaidHp(hp);
@@ -441,6 +462,22 @@ export default function KryptaPanel() {
     afterRoom(depth, raidHp, raidMaxHp);
   }
 
+  function handleShrinePray() {
+    const healAmt = Math.round(raidMaxHp * 0.22);
+    const newHp = Math.min(raidMaxHp, raidHp + healAmt);
+    const healed = newHp - raidHp;
+    pushLog([`🕯️ Kaplica cię uzdrawia: +${healed} HP`]);
+    setRaidHp(newHp);
+    setEventType(null);
+    afterRoom(depth, newHp, raidMaxHp);
+  }
+
+  function handleShrineLeave() {
+    pushLog(['🚶 Opuszczasz kaplicę bez modlitwy.']);
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
   // ── Render helpers ──────────────────────────────────────────────────────────
 
   function renderHeader() {
@@ -515,8 +552,8 @@ export default function KryptaPanel() {
         <div style={{ fontSize: 56, filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}>⚰️</div>
         <div style={{ ...ORB, fontSize: 20, color: blocked ? 'rgba(153,68,204,0.4)' : '#9944cc', letterSpacing: 2, textShadow: blocked ? 'none' : '0 0 16px #9944cc' }}>{t.krypta.title}</div>
         <div style={{ ...MONO, fontSize: 12, color: 'rgba(255,255,255,0.5)', maxWidth: 360, lineHeight: 1.7 }}>
-          Starożytna krypta skrywa mroczne tajemnice. Przemierzaj jej korytarze, walcz z potworami,
-          odkrywaj sekrety i zmierz się z Lordem Cienia. Nagrody skalują się z Twoim poziomem.
+          Starożytna krypta skrywa mroczne tajemnice. Przemierzaj 15 pięter, walcz z potworami,
+          odkrywaj sekrety — kaplice, skarby, kompanów — i zmierz się z Lordem Cienia.
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
           <span>💀 {TOTAL_ROOMS} Pokoi</span>
