@@ -4,6 +4,7 @@ import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/
 import { functions, db } from '../lib/firebase';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
+import { syncToCloud } from '../lib/cloudSync';
 import { MONO, ORB } from '../utils/styles';
 
 interface SpinResult { result: number; won: boolean; net: number; newGold: number }
@@ -196,6 +197,12 @@ export default function CasinoPanel() {
     // Start freewheeling
     reelRef.current.phase = 'spin';
 
+    // Sync latest gold to Firestore BEFORE deducting so the server validation passes.
+    // Without this, gold earned since the last 10s auto-sync causes a false "not enough gold".
+    if (user) {
+      try { await syncToCloud(user.uid, user.username); } catch { /* proceed if offline */ }
+    }
+
     useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
     let res: SpinResult;
@@ -227,7 +234,7 @@ export default function CasinoPanel() {
       useGameStore.setState(s => ({
         hero: {
           ...s.hero,
-          gold: s.hero.gold + (res.won ? res.net + stake : 0),
+          gold: res.newGold,  // use authoritative server value to prevent drift
           goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
           lastCasinoSpinAt: Date.now(),
         },
