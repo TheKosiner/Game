@@ -462,22 +462,6 @@ export default function KryptaPanel() {
     afterRoom(depth, raidHp, raidMaxHp);
   }
 
-  function handleShrinePray() {
-    const healAmt = Math.round(raidMaxHp * 0.22);
-    const newHp = Math.min(raidMaxHp, raidHp + healAmt);
-    const healed = newHp - raidHp;
-    pushLog([`🕯️ Kaplica cię uzdrawia: +${healed} HP`]);
-    setRaidHp(newHp);
-    setEventType(null);
-    afterRoom(depth, newHp, raidMaxHp);
-  }
-
-  function handleShrineLeave() {
-    pushLog(['🚶 Opuszczasz kaplicę bez modlitwy.']);
-    setEventType(null);
-    afterRoom(depth, raidHp, raidMaxHp);
-  }
-
   // ── Render helpers ──────────────────────────────────────────────────────────
 
   function renderHeader() {
