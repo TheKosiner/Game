@@ -1183,9 +1183,9 @@ export const useGameStore = create<GameState>((set, get) => ({
         const isLegacySave = save.hero.dungeonRunsToday === undefined;
         const loadedHero: Hero = {
           name: save.hero.name,
-          level: save.hero.level,
-          xp: save.hero.xp,
-          xpToNext: save.hero.xpToNext,
+          level: save.hero.level ?? 1,
+          xp: save.hero.xp ?? 0,
+          xpToNext: save.hero.xpToNext || calcXpToNext(save.hero.level ?? 1),
           maxHp: save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment)),
           hp: Math.max(1, save.hero.hp ?? save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment))),
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
