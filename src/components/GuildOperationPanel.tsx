@@ -51,6 +51,7 @@ export default function GuildOperationPanel({
   const [op, setOp] = useState<GuildOperationState | null>(guild.guildOperation ?? null);
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
@@ -126,7 +127,7 @@ export default function GuildOperationPanel({
   async function handleStart() {
     setStarting(true);
     try {
-      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount);
+      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocation ?? undefined);
       if (ok) setLog([]);
       else notify('Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
@@ -551,6 +552,9 @@ export default function GuildOperationPanel({
   }
 
   // ── START SCREEN ─────────────────────────────────────────────────────────────
+  const availableLocations = GUILD_OP_LOCATIONS.filter(l => l.minLevel <= hero.level);
+  const RARITY_COL: Record<string, string> = { rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b' };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
@@ -572,14 +576,58 @@ export default function GuildOperationPanel({
           </p>
         </div>
       ) : canStart ? (
-        <button
-          onClick={handleStart}
-          disabled={starting}
-          className="btn btn-primary"
-          style={{ fontSize: 10 }}
-        >
-          {starting ? '⏳ Uruchamianie...' : '▶ ROZPOCZNIJ OPERACJĘ'}
-        </button>
+        <>
+          {/* Location picker */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {availableLocations.map(loc => {
+              const sel = selectedLocation === loc.id;
+              const rc = RARITY_COL[loc.finalRarity] ?? '#aaa';
+              return (
+                <button
+                  key={loc.id}
+                  onClick={() => setSelectedLocation(sel ? null : loc.id)}
+                  style={{
+                    background: sel ? `${rc}14` : 'rgba(5,8,20,0.8)',
+                    border: `1px solid ${sel ? rc + '88' : 'rgba(255,255,255,0.1)'}`,
+                    padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
+                    display: 'flex', flexDirection: 'column', gap: 3,
+                    transition: 'border-color 0.1s, background 0.1s',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ ...ORB, fontSize: 10, color: sel ? rc : 'var(--text-bright)' }}>
+                      {loc.emoji} {loc.name}
+                    </span>
+                    <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '1px 5px' }}>
+                      {loc.finalRarity.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>POZ. {loc.minLevel}+</span>
+                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{loc.floors} pięter</span>
+                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{loc.enemiesPerFloor} wrogów/piętro</span>
+                  </div>
+                  <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginTop: 1 }}>
+                    {loc.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={handleStart}
+            disabled={starting}
+            className="btn btn-primary"
+            style={{ fontSize: 10 }}
+          >
+            {starting
+              ? '⏳ Uruchamianie...'
+              : selectedLocation
+                ? `▶ ROZPOCZNIJ — ${availableLocations.find(l => l.id === selectedLocation)?.emoji} ${availableLocations.find(l => l.id === selectedLocation)?.name}`
+                : '▶ ROZPOCZNIJ OPERACJĘ (losowa)'}
+          </button>
+        </>
       ) : !isLeaderOrOfficer ? (
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
           Tylko władca lub oficer może uruchomić operację.

@@ -1025,6 +1025,7 @@ export async function startGuildOperation(
   uid: string,
   heroLevel: number,
   memberCount: number,
+  locationId?: string,
 ): Promise<boolean> {
   if (!db) return false;
   const _db = db;
@@ -1042,7 +1043,9 @@ export async function startGuildOperation(
     const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
     if (isActiveAndValid || isInCooldown) return false;
 
-    const location = pickLocationForLevel(heroLevel);
+    const location = locationId
+      ? (GUILD_OP_LOCATIONS.find(l => l.id === locationId) ?? pickLocationForLevel(heroLevel))
+      : pickLocationForLevel(heroLevel);
     const first = getFloorEnemy(location, 1, memberCount);
     const op: GuildOperationState = {
       locationId: location.id,
