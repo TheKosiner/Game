@@ -144,7 +144,15 @@ function migrateHeroFromRaw(raw: any) {
     magic: s.magic ?? 4,
     magicResistance: s.magicResistance ?? 4,
   });
-  const migrateItem = (item: any) => item ? { ...item, stats: migrateStats(item.stats ?? {}) } : item;
+  const migrateItemStats = (s: any) => ({
+    strength: s.strength ?? 0,
+    dexterity: s.dexterity ?? s.agility ?? 0,
+    intelligence: s.intelligence ?? 0,
+    vitality: s.vitality ?? s.constitution ?? 0,
+    magic: s.magic ?? 0,
+    magicResistance: s.magicResistance ?? 0,
+  });
+  const migrateItem = (item: any) => item ? { ...item, stats: migrateItemStats(item.stats ?? {}) } : item;
   const migrateEquipment = (eq: any) => {
     if (!eq) return {};
     const result: any = {};
