@@ -1186,8 +1186,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           level: save.hero.level,
           xp: save.hero.xp,
           xpToNext: save.hero.xpToNext,
-          hp: save.hero.hp,
-          maxHp: save.hero.maxHp,
+          maxHp: save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment)),
+          hp: Math.max(1, save.hero.hp ?? save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment))),
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),
           voluntaryRestUntil: save.hero.voluntaryRestUntil ?? null,
           voluntaryRestHp: save.hero.voluntaryRestHp != null
