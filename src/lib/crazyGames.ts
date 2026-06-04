@@ -31,9 +31,19 @@ export function showRewardedAd(): Promise<boolean> {
 }
 
 export async function initCrazyGames(): Promise<void> {
-  if (!isCrazyGames()) return;
+  // Wait up to 5 s for the async SDK script to finish loading
+  const sdk = await new Promise<typeof window.CrazyGames | undefined>(resolve => {
+    if (window.CrazyGames?.SDK) { resolve(window.CrazyGames); return; }
+    let elapsed = 0;
+    const iv = setInterval(() => {
+      elapsed += 100;
+      if (window.CrazyGames?.SDK) { clearInterval(iv); resolve(window.CrazyGames); }
+      else if (elapsed >= 5000)   { clearInterval(iv); resolve(undefined); }
+    }, 100);
+  });
+  if (!sdk) return;
   try {
-    await window.CrazyGames!.SDK.init();
+    await sdk.SDK.init();
   } catch {
     // Non-fatal — game must work without CrazyGames
   }
