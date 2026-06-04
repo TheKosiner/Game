@@ -309,10 +309,14 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
 
 function pickTwo(pool: LeaderboardEntry[], heroLevel: number): [LeaderboardEntry, LeaderboardEntry] | null {
   if (pool.length < 2) return null;
-  const nearby = pool.filter(e => Math.abs(e.level - heroLevel) <= 15);
-  const src = nearby.length >= 2 ? nearby : pool;
-  const shuffled = [...src].sort(() => Math.random() - 0.5);
-  return [shuffled[0], shuffled[1]];
+  for (const range of [5, 10, 20, Infinity]) {
+    const nearby = pool.filter(e => Math.abs(e.level - heroLevel) <= range);
+    if (nearby.length >= 2) {
+      const shuffled = [...nearby].sort(() => Math.random() - 0.5);
+      return [shuffled[0], shuffled[1]];
+    }
+  }
+  return null;
 }
 
 function ArenaCard({ entry, canFight, onChallenge }: {
