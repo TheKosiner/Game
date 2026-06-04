@@ -6,6 +6,9 @@ import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { MONO, ORB } from '../utils/styles';
 import gemShopSrc from '../assets/gem-shop.png';
+import { isCrazyGames, showRewardedAd } from '../lib/crazyGames';
+
+const REWARDED_AD_GEMS = 20;
 
 const GEM_PACKAGES = [
   { id: '100',  gems: 100,  price: '$0.99' },
@@ -18,8 +21,9 @@ export default function GemsPanel() {
   const hero = useGameStore(s => s.hero);
   const gemBuyPortrait = useGameStore(s => s.gemBuyPortrait);
 
-  const [buyingId, setBuyingId]   = useState<string | null>(null);
-  const [flashMsg, setFlashMsg]   = useState<{ text: string; ok: boolean } | null>(null);
+  const [buyingId, setBuyingId]     = useState<string | null>(null);
+  const [flashMsg, setFlashMsg]     = useState<{ text: string; ok: boolean } | null>(null);
+  const [watchingAd, setWatchingAd] = useState(false);
 
   // Handle return from Stripe Checkout
   useEffect(() => {
@@ -33,6 +37,21 @@ export default function GemsPanel() {
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);
+
+  async function handleWatchAd() {
+    if (watchingAd) return;
+    setWatchingAd(true);
+    try {
+      const rewarded = await showRewardedAd();
+      if (rewarded) {
+        useGameStore.setState(s => ({ hero: { ...s.hero, gems: s.hero.gems + REWARDED_AD_GEMS } }));
+        useGameStore.getState().saveGame();
+        setFlashMsg({ text: `+${REWARDED_AD_GEMS} 💎 ${t.gems.purchaseSuccess}`, ok: true });
+      }
+    } finally {
+      setWatchingAd(false);
+    }
+  }
 
   async function handleBuy(packageId: string) {
     if (buyingId) return;
@@ -105,6 +124,41 @@ export default function GemsPanel() {
           </div>
         ))}
       </div>
+
+      {/* Rewarded ad — only visible on CrazyGames */}
+      {isCrazyGames() && (
+        <div className="card p-3" style={{
+          background: 'linear-gradient(135deg, rgba(0,229,100,0.06), rgba(0,0,0,0.8))',
+          border: '1px solid rgba(0,229,100,0.25)',
+          display: 'flex', flexDirection: 'column', gap: 8,
+        }}>
+          <p style={{ ...ORB, fontSize: 10, color: '#00e564', textShadow: '0 0 8px rgba(0,229,100,0.5)' }}>
+            {t.gems.watchAdTitle}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>
+              {t.gems.watchAdDesc(REWARDED_AD_GEMS)}
+            </span>
+            <button
+              onClick={handleWatchAd}
+              disabled={watchingAd}
+              style={{
+                flexShrink: 0,
+                border: '1px solid rgba(0,229,100,0.5)',
+                padding: '8px 14px',
+                background: watchingAd ? 'rgba(0,229,100,0.12)' : 'rgba(0,229,100,0.08)',
+                cursor: watchingAd ? 'not-allowed' : 'pointer',
+                opacity: watchingAd ? 0.7 : 1,
+                transition: 'all 0.15s',
+              }}
+            >
+              <span style={{ ...ORB, fontSize: 10, color: '#00e564' }}>
+                {watchingAd ? '⏳' : `▶ +${REWARDED_AD_GEMS} 💎`}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Buy gems */}
       <div className="card p-3" style={{

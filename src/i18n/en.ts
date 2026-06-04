@@ -457,6 +457,8 @@ export const en = {
     notEnoughForSkip: (cost: number) => `Not enough gems (need ${cost} 💎)`,
     purchaseSuccess: 'gems added to your account!',
     purchaseCancelled: 'Purchase cancelled.',
+    watchAdTitle: '📺 WATCH AD FOR GEMS',
+    watchAdDesc: (n: number) => `Watch a short ad and get +${n} 💎 free!`,
     claimedLog: (n: number) => `💎 +${n} gems from purchase added!`,
   },
   chat: {
