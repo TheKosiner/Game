@@ -10,7 +10,7 @@ import {
   BOSS_TEMPLATE, SPIDER_TEMPLATE, getBossRarity,
 } from '../data/krypta';
 
-const TOTAL_ROOMS = 5;
+const TOTAL_ROOMS = 15;
 const CRIT_CHANCE = 0.10;
 const CRIT_MULT = 1.8;
 const COMPANION_ATK_BONUS = 0.20;
@@ -20,7 +20,7 @@ const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeig
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
 
 type Phase = 'idle' | 'direction' | 'combat' | 'event' | 'pre_boss' | 'boss_combat' | 'victory' | 'dead' | 'fled';
-type EventType = 'chest' | 'lake' | 'companion';
+type EventType = 'chest' | 'lake' | 'companion' | 'shrine';
 
 function quadDmg(atk: number, def: number): number {
   const base = (atk * atk) / (atk + Math.max(1, def));
@@ -196,7 +196,7 @@ export default function KryptaPanel() {
       setPhase('combat');
     } else {
       const r = Math.random();
-      const evType: EventType = r < 0.40 ? 'chest' : r < 0.75 ? 'lake' : 'companion';
+      const evType: EventType = r < 0.35 ? 'chest' : r < 0.60 ? 'lake' : r < 0.80 ? 'shrine' : 'companion';
       setEventType(evType);
       pushLog([`🚪 Pokój ${newDepth}/${TOTAL_ROOMS}: Odkrywasz tajemnicze pomieszczenie...`]);
       setPhase('event');
@@ -341,6 +341,22 @@ export default function KryptaPanel() {
     afterRoom(depth, raidHp, raidMaxHp);
   }
 
+  function handleShrinePray() {
+    const healAmt = Math.round(raidMaxHp * 0.22);
+    const newHp = Math.min(raidMaxHp, raidHp + healAmt);
+    const healed = newHp - raidHp;
+    pushLog([`🕯️ Kaplica cię uzdrawia: +${healed} HP`]);
+    setRaidHp(newHp);
+    setEventType(null);
+    afterRoom(depth, newHp, raidMaxHp);
+  }
+
+  function handleShrineLeave() {
+    pushLog(['🚶 Opuszczasz kaplicę bez modlitwy.']);
+    setEventType(null);
+    afterRoom(depth, raidHp, raidMaxHp);
+  }
+
   // ── Render helpers ──────────────────────────────────────────────────────────
 
   function renderHeader() {
@@ -415,8 +431,8 @@ export default function KryptaPanel() {
         <div style={{ fontSize: 56, filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}>⚰️</div>
         <div style={{ ...ORB, fontSize: 20, color: blocked ? 'rgba(153,68,204,0.4)' : '#9944cc', letterSpacing: 2, textShadow: blocked ? 'none' : '0 0 16px #9944cc' }}>KRYPTA</div>
         <div style={{ ...MONO, fontSize: 12, color: 'rgba(255,255,255,0.5)', maxWidth: 360, lineHeight: 1.7 }}>
-          Starożytna krypta skrywa mroczne tajemnice. Przemierzaj jej korytarze, walcz z potworami,
-          odkrywaj sekrety i zmierz się z Lordem Cienia. Nagrody skalują się z Twoim poziomem.
+          Starożytna krypta skrywa mroczne tajemnice. Przemierzaj 15 pięter, walcz z potworami,
+          odkrywaj sekrety — kaplice, skarby, kompanów — i zmierz się z Lordem Cienia.
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
           <span>💀 {TOTAL_ROOMS} Pokoi</span>
@@ -523,6 +539,20 @@ export default function KryptaPanel() {
               {hasCompanion ? '🤝 Masz już kompana' : '🤝 Przyjmij kompana'}
             </Btn>
             <Btn onClick={handleCompanionDecline} color="#888888" small>🚶 Odrzuć ofertę</Btn>
+          </div>
+        </>
+      );
+      if (eventType === 'shrine') return (
+        <>
+          <div style={{ fontSize: 40, marginBottom: 8 }}>🕯️</div>
+          <div style={{ ...ORB, fontSize: 13, color: '#88ccff', marginBottom: 6 }}>Kaplica Uzdrowienia</div>
+          <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
+            W niszy skrytej w murze płonie wieczne światło. Czujesz uzdrawiającą moc.
+            <br /><span style={{ color: '#88ccff' }}>Przywraca ~22% max HP</span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn onClick={handleShrinePray} color="#88ccff">🙏 Módl się</Btn>
+            <Btn onClick={handleShrineLeave} color="#888888" small>🚶 Idź dalej</Btn>
           </div>
         </>
       );
