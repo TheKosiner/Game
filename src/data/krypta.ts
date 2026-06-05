@@ -36,11 +36,11 @@ export const ENEMY_TIERS: EnemyTemplate[][] = [
     { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 13.0, atkMult: 1.8, defMult: 2.0, baseXp: 68, baseGold: 52 },
     { id: 'archlich',      name: 'Arcylichej',      emoji: '🧿', hpMult:  9.5, atkMult: 2.4, defMult: 1.2, baseXp: 75, baseGold: 62 },
   ],
-  // Tier 5 (depth 17–20) — horrory przedbossowe
+  // Tier 5 (depth 17–20)
   [
-    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 24.0, atkMult: 4.5, defMult: 2.5, baseXp: 110, baseGold: 95 },
-    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 30.0, atkMult: 4.0, defMult: 3.8, baseXp: 105, baseGold: 90 },
-    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 22.0, atkMult: 4.8, defMult: 4.2, baseXp: 112, baseGold: 98 },
+    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 13.0, atkMult: 2.2, defMult: 1.8, baseXp: 110, baseGold: 95 },
+    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 16.0, atkMult: 2.0, defMult: 2.4, baseXp: 105, baseGold: 90 },
+    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 12.0, atkMult: 2.6, defMult: 2.2, baseXp: 112, baseGold: 98 },
   ],
 ];
 
@@ -59,7 +59,7 @@ export const MIMIC_TEMPLATE: EnemyTemplate = {
 export const BOSS_TEMPLATE: EnemyTemplate = {
   id: 'shadow_lord',
   name: 'Lord Cienia', emoji: '☠️',
-  hpMult: 65, atkMult: 4.5, defMult: 2.5, baseXp: 280, baseGold: 350,
+  hpMult: 45, atkMult: 3.2, defMult: 2.2, baseXp: 280, baseGold: 350,
 };
 
 export function getBossRarity(heroLevel: number): Rarity {
