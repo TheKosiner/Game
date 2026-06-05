@@ -180,7 +180,7 @@ export default function KryptaPanel() {
     const isCombat = Math.random() < 0.60;
     if (isCombat) {
       const template = pickRandomEnemy(newDepth);
-      const e = buildEnemy(template, hero.level, newDepth);
+      const e = buildEnemy(template, hero.level, newDepth, { attack: baseAtk, defense: baseDef, maxHp: raidMaxHp });
       setEnemy(e);
       pushLog([t.krypta.room(newDepth, TOTAL_ROOMS, e.emoji, e.name)]);
       setPhase('combat');
@@ -191,7 +191,7 @@ export default function KryptaPanel() {
     const r = Math.random();
     if (r < 0.08) {
       // Mimic — looks like a chest, instantly starts combat
-      const e = buildEnemy(MIMIC_TEMPLATE, hero.level, newDepth);
+      const e = buildEnemy(MIMIC_TEMPLATE, hero.level, newDepth, { attack: baseAtk, defense: baseDef, maxHp: raidMaxHp });
       setEnemy(e);
       pushLog([t.krypta.mimic(newDepth, TOTAL_ROOMS)]);
       setPhase('combat');
@@ -308,7 +308,7 @@ export default function KryptaPanel() {
   }
 
   function startBoss() {
-    const e = buildEnemy(BOSS_TEMPLATE, hero.level, TOTAL_ROOMS + 1);
+    const e = buildEnemy(BOSS_TEMPLATE, hero.level, TOTAL_ROOMS + 1, { attack: baseAtk, defense: baseDef, maxHp: raidMaxHp });
     setEnemy(e);
     pushLog([t.krypta.bossAppear]);
     setPhase('boss_combat');
@@ -318,7 +318,7 @@ export default function KryptaPanel() {
 
   function handleChestOpen() {
     if (Math.random() < 0.30) {
-      const e = buildEnemy(SPIDER_TEMPLATE, hero.level, depth);
+      const e = buildEnemy(SPIDER_TEMPLATE, hero.level, depth, { attack: baseAtk, defense: baseDef, maxHp: raidMaxHp });
       setEnemy(e);
       pushLog([t.krypta.spiderAmbush]);
       setEventType(null);

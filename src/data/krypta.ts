@@ -11,55 +11,59 @@ export type EnemyTemplate = {
   baseGold: number;
 };
 
+// Multipliers are now relative to hero stats (not hero level):
+//   hpMult  × hero.maxHp   → enemy max HP
+//   atkMult × hero.attack  → enemy attack
+//   defMult × hero.defense → enemy defense
 export const ENEMY_TIERS: EnemyTemplate[][] = [
   // Tier 1 (piętro 1–2)
   [
-    { id: 'blood_shadow',  name: 'Cień Krwi',      emoji: '👻', hpMult:  5.5, atkMult: 1.3, defMult: 0.8, baseXp: 22, baseGold: 16 },
-    { id: 'bone_man',      name: 'Kościan',        emoji: '💀', hpMult:  6.0, atkMult: 1.2, defMult: 1.1, baseXp: 24, baseGold: 14 },
-    { id: 'rotten_rat',    name: 'Gnijący Szczur', emoji: '🐀', hpMult:  4.5, atkMult: 1.5, defMult: 0.5, baseXp: 20, baseGold: 20 },
+    { id: 'blood_shadow',  name: 'Cień Krwi',      emoji: '👻', hpMult: 0.8, atkMult: 0.55, defMult: 0.35, baseXp: 22, baseGold: 16 },
+    { id: 'bone_man',      name: 'Kościan',        emoji: '💀', hpMult: 0.9, atkMult: 0.50, defMult: 0.50, baseXp: 24, baseGold: 14 },
+    { id: 'rotten_rat',    name: 'Gnijący Szczur', emoji: '🐀', hpMult: 0.7, atkMult: 0.65, defMult: 0.20, baseXp: 20, baseGold: 20 },
   ],
   // Tier 2 (piętro 3–4)
   [
-    { id: 'specter',       name: 'Widmo',         emoji: '🌫️', hpMult:  8.0, atkMult: 1.8, defMult: 1.2, baseXp: 38, baseGold: 30 },
-    { id: 'undead_knight', name: 'Trupi Rycerz', emoji: '⚔️', hpMult:  9.5, atkMult: 1.6, defMult: 1.8, baseXp: 44, baseGold: 27 },
-    { id: 'necromancer',   name: 'Nekromanta',   emoji: '🧙', hpMult:  7.0, atkMult: 2.1, defMult: 0.9, baseXp: 42, baseGold: 33 },
+    { id: 'specter',       name: 'Widmo',         emoji: '🌫️', hpMult: 1.1, atkMult: 0.70, defMult: 0.45, baseXp: 38, baseGold: 30 },
+    { id: 'undead_knight', name: 'Trupi Rycerz', emoji: '⚔️', hpMult: 1.3, atkMult: 0.60, defMult: 0.65, baseXp: 44, baseGold: 27 },
+    { id: 'necromancer',   name: 'Nekromanta',   emoji: '🧙', hpMult: 1.0, atkMult: 0.80, defMult: 0.35, baseXp: 42, baseGold: 33 },
   ],
   // Tier 3 (piętro 5–6)
   [
-    { id: 'abyss_demon',    name: 'Demon Otchłani', emoji: '😈', hpMult: 12.0, atkMult: 2.4, defMult: 1.5, baseXp: 60, baseGold: 50 },
-    { id: 'undead_mage',    name: 'Nieumarły Mag',  emoji: '🔮', hpMult: 10.5, atkMult: 2.7, defMult: 1.2, baseXp: 64, baseGold: 54 },
-    { id: 'crypt_guardian', name: 'Strażnik Krypt', emoji: '🗿', hpMult: 14.0, atkMult: 2.1, defMult: 2.4, baseXp: 66, baseGold: 45 },
+    { id: 'abyss_demon',    name: 'Demon Otchłani', emoji: '😈', hpMult: 1.4, atkMult: 0.85, defMult: 0.55, baseXp: 60, baseGold: 50 },
+    { id: 'undead_mage',    name: 'Nieumarły Mag',  emoji: '🔮', hpMult: 1.3, atkMult: 0.95, defMult: 0.45, baseXp: 64, baseGold: 54 },
+    { id: 'crypt_guardian', name: 'Strażnik Krypt', emoji: '🗿', hpMult: 1.7, atkMult: 0.75, defMult: 0.80, baseXp: 66, baseGold: 45 },
   ],
   // Tier 4 (piętro 7–8)
   [
-    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 17.0, atkMult: 3.0, defMult: 2.0, baseXp: 80, baseGold: 65 },
-    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 20.0, atkMult: 2.7, defMult: 2.9, baseXp: 75, baseGold: 58 },
-    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 15.0, atkMult: 3.5, defMult: 1.8, baseXp: 84, baseGold: 70 },
+    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 1.8, atkMult: 0.95, defMult: 0.65, baseXp: 80, baseGold: 65 },
+    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 2.2, atkMult: 0.85, defMult: 0.90, baseXp: 75, baseGold: 58 },
+    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 1.6, atkMult: 1.05, defMult: 0.60, baseXp: 84, baseGold: 70 },
   ],
   // Tier 5 (piętro 9–10)
   [
-    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 22.0, atkMult: 3.8, defMult: 2.6, baseXp: 120, baseGold: 105 },
-    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 27.0, atkMult: 3.4, defMult: 3.6, baseXp: 114, baseGold: 98 },
-    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 20.0, atkMult: 4.0, defMult: 3.2, baseXp: 125, baseGold: 110 },
+    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 1.8, atkMult: 0.90, defMult: 0.60, baseXp: 120, baseGold: 105 },
+    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 2.2, atkMult: 0.80, defMult: 0.85, baseXp: 114, baseGold:  98 },
+    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 1.6, atkMult: 1.00, defMult: 0.75, baseXp: 125, baseGold: 110 },
   ],
 ];
 
 export const SPIDER_TEMPLATE: EnemyTemplate = {
   id: 'poison_spider',
   name: 'Jadowity Pająk', emoji: '🕷️',
-  hpMult: 2.5, atkMult: 0.8, defMult: 0.2, baseXp: 15, baseGold: 10,
+  hpMult: 0.5, atkMult: 0.45, defMult: 0.15, baseXp: 15, baseGold: 10,
 };
 
 export const MIMIC_TEMPLATE: EnemyTemplate = {
   id: 'chest_mimic',
   name: 'Mimik Skrzyni', emoji: '🎭',
-  hpMult: 8.5, atkMult: 2.2, defMult: 1.4, baseXp: 55, baseGold: 60,
+  hpMult: 1.4, atkMult: 0.90, defMult: 0.55, baseXp: 55, baseGold: 60,
 };
 
 export const BOSS_TEMPLATE: EnemyTemplate = {
   id: 'shadow_lord',
   name: 'Lord Cienia', emoji: '☠️',
-  hpMult: 45, atkMult: 3.2, defMult: 2.2, baseXp: 280, baseGold: 350,
+  hpMult: 4.5, atkMult: 1.20, defMult: 0.85, baseXp: 280, baseGold: 350,
 };
 
 export function getBossRarity(heroLevel: number): Rarity {
@@ -119,20 +123,38 @@ export type KryptaEnemy = {
   gold: number;
 };
 
-export function buildEnemy(template: EnemyTemplate, heroLevel: number, depth: number): KryptaEnemy {
-  const scale = 1 + (depth - 1) * 0.13;
-  const lvl = Math.max(1, heroLevel);
-  const hp = Math.round(lvl * template.hpMult * scale);
+export function buildEnemy(
+  template: EnemyTemplate,
+  heroLevel: number,
+  depth: number,
+  heroStats?: { attack: number; defense: number; maxHp: number },
+): KryptaEnemy {
+  // Gentle per-floor scaling so deeper rooms are ~50% harder than room 1
+  const scale = 1 + (depth - 1) * 0.06;
+
+  let hp: number, attack: number, defense: number;
+  if (heroStats) {
+    hp       = Math.round(heroStats.maxHp  * template.hpMult  * scale);
+    attack   = Math.round(heroStats.attack * template.atkMult * scale);
+    defense  = Math.round(heroStats.defense * template.defMult * scale);
+  } else {
+    // Fallback: level-based (used outside KryptaPanel or in tests)
+    const lvl = Math.max(1, heroLevel);
+    hp      = Math.round(lvl * template.hpMult  * scale);
+    attack  = Math.round(lvl * template.atkMult * scale);
+    defense = Math.round(lvl * template.defMult * scale);
+  }
+
   return {
     id:      template.id,
     name:    template.name,
     emoji:   template.emoji,
     hp,
     maxHp:   hp,
-    attack:  Math.round(lvl * template.atkMult * scale),
-    defense: Math.round(lvl * template.defMult * scale),
-    xp:      Math.round(template.baseXp  * (1 + lvl * 0.08) * scale),
-    gold:    Math.round(template.baseGold * (1 + lvl * 0.08) * scale),
+    attack,
+    defense,
+    xp:      Math.round(template.baseXp   * (1 + heroLevel * 0.08) * scale),
+    gold:    Math.round(template.baseGold * (1 + heroLevel * 0.08) * scale),
   };
 }
 
