@@ -739,11 +739,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   restHero: (minutes: number) => {
-    const { hero, inCombat, currentDungeon, activeQuest } = get();
+    const { hero, inCombat, currentDungeon } = get();
     if (inCombat || currentDungeon) return;
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (hero.beggingUntil !== null && Date.now() < hero.beggingUntil) return;
-    if (activeQuest) return;
     if (hero.hp >= hero.maxHp) return;
     const hpPerMin = Math.max(1, Math.round(hero.maxHp * 0.04));
     const hp = Math.min(minutes * hpPerMin, hero.maxHp - hero.hp);

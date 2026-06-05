@@ -490,7 +490,7 @@ export default function HeroCard() {
   const hasQuest    = activeQuest !== null;
   const inDungeon   = currentDungeon !== null || inCombat;
 
-  const restBlockReason    = isBegging ? (lang === 'en' ? 'character is scavenging' : 'postać zbiera złom') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
+  const restBlockReason    = isBegging ? (lang === 'en' ? 'character is scavenging' : 'postać zbiera złom') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
   const beggingBlockReason = isResting ? (lang === 'en' ? 'character is resting' : 'postać odpoczywa') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in a dungeon' : 'postać jest w lochu') : undefined;
 
   const displayHp  = hero.hp + earnedRestHp;
