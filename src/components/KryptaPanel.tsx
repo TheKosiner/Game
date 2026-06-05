@@ -13,7 +13,7 @@ import {
   BOSS_TEMPLATE, SPIDER_TEMPLATE, MIMIC_TEMPLATE, getBossRarity,
 } from '../data/krypta';
 
-const TOTAL_ROOMS = 20;
+const TOTAL_ROOMS = 10;
 const CRIT_CHANCE = 0.10;
 const CRIT_MULT = 1.8;
 const COMPANION_ATK_BONUS = 0.20;
@@ -379,7 +379,7 @@ export default function KryptaPanel() {
     const healed = newHp - raidHp;
     const msgs = [`🕯️ Kaplica cię uzdrawia: +${healed} HP`];
     if (Math.random() < 0.30) {
-      const grace: ActiveBuff = { id: 'divine_grace', label: '🙏 Łaska Boska', color: '#ffdd44', atkMult: 1.00, defMult: 1.15, hpMult: 1.00 };
+      const grace: ActiveBuff = { id: 'divine_grace', label: '🙏 Łaska Boska', desc: '+15% DEF', color: '#ffdd44', atkMult: 1.00, defMult: 1.15, hpMult: 1.00 };
       setBuffs(prev => [...prev.filter(x => x.id !== 'divine_grace'), grace]);
       msgs.push(t.krypta.shrineBlessing);
     }
@@ -427,7 +427,7 @@ export default function KryptaPanel() {
       afterRoom(depth, raidHp, raidMaxHp);
       return;
     }
-    const pact: ActiveBuff = { id: 'blood_pact', label: '🩸 Pakt Krwi', color: '#ff0044', atkMult: 1.30, defMult: 1.00, hpMult: 1.00 };
+    const pact: ActiveBuff = { id: 'blood_pact', label: '🩸 Pakt Krwi', desc: '+30% ATK', color: '#ff0044', atkMult: 1.30, defMult: 1.00, hpMult: 1.00 };
     const newHp = raidHp - sacrifice;
     setRaidHp(newHp);
     setBuffs(prev => [...prev.filter(x => x.id !== 'blood_pact'), pact]);
@@ -444,7 +444,7 @@ export default function KryptaPanel() {
 
   function handleInscriptionRead() {
     if (Math.random() < 0.65) {
-      const ward: ActiveBuff = { id: 'arcane_ward', label: '📜 Magiczna Osłona', color: '#4488ff', atkMult: 1.00, defMult: 1.25, hpMult: 1.05 };
+      const ward: ActiveBuff = { id: 'arcane_ward', label: '📜 Magiczna Osłona', desc: '+25% DEF  +5% HP', color: '#4488ff', atkMult: 1.00, defMult: 1.25, hpMult: 1.05 };
       setBuffs(prev => [...prev.filter(x => x.id !== 'arcane_ward'), ward]);
       pushLog([t.krypta.inscriptionShield]);
     } else {
@@ -477,7 +477,10 @@ export default function KryptaPanel() {
           <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
             {hasCompanion && <span>🤝</span>}
             {buffs.map(b => (
-              <span key={b.id} style={{ color: b.color }}>{b.label}</span>
+              <span key={b.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                <span style={{ color: b.color }}>{b.label}</span>
+                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>{b.desc}</span>
+              </span>
             ))}
           </span>
         </div>
