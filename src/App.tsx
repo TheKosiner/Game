@@ -36,6 +36,7 @@ import AdminPanel from './components/AdminPanel';
 import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
+import EnchanterPanel from './components/EnchanterPanel';
 
 export default function App() {
   const t = useT();
@@ -410,6 +411,7 @@ export default function App() {
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
               {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
               {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
+              {tab === 'shop'   && shopSub === 'enchanter' && <EnchanterPanel />}
               {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
               {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
               {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
@@ -554,6 +556,7 @@ export default function App() {
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
           {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
           {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
+          {tab === 'shop'   && shopSub === 'enchanter' && <EnchanterPanel />}
           {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
           {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
           {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
