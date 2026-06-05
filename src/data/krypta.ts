@@ -136,8 +136,7 @@ export function buildEnemy(template: EnemyTemplate, heroLevel: number, depth: nu
   };
 }
 
-export function pickRandomEnemy(depth: number): EnemyTemplate {
-  const tier = depth <= 2 ? 0 : depth <= 4 ? 1 : depth <= 6 ? 2 : depth <= 8 ? 3 : 4;
-  const pool = ENEMY_TIERS[tier];
+export function pickRandomEnemy(_depth: number): EnemyTemplate {
+  const pool = ENEMY_TIERS[4];
   return pool[Math.floor(Math.random() * pool.length)];
 }
