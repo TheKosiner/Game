@@ -95,112 +95,12 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
   );
 }
 
-function RerollModal({ oldItem, newItem, onConfirm, onCancel, cost, gold, lang }: {
-  oldItem: Item;
-  newItem: Item;
-  onConfirm: () => void;
-  onCancel: () => void;
-  cost: number;
-  gold: number;
-  lang: string;
-}) {
-  const canAfford = gold >= cost;
-  return createPortal(
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 9999,
-      background: 'rgba(0,0,0,0.88)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 24,
-    }}>
-      <div style={{
-        background: '#08080f',
-        border: '2px solid rgba(168,0,255,0.5)',
-        boxShadow: '0 0 40px rgba(168,0,255,0.2)',
-        borderRadius: 10,
-        padding: '24px 20px',
-        width: '100%', maxWidth: 340,
-        display: 'flex', flexDirection: 'column', gap: 14,
-      }}>
-        <p style={{ ...ORB, fontSize: 12, color: '#a800ff', textAlign: 'center', margin: 0, letterSpacing: 1 }}>
-          {lang === 'en' ? '🔮 REROLL PREVIEW' : '🔮 PODGLĄD PRZELOSOWANIA'}
-        </p>
-
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center',
-        }}>
-          <div style={{
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 8, padding: '10px 10px',
-          }}>
-            <p style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', margin: '0 0 6px', letterSpacing: 1 }}>
-              {lang === 'en' ? 'CURRENT' : 'OBECNE'}
-            </p>
-            <ItemStats item={oldItem} lang={lang} />
-          </div>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 18 }}>→</span>
-          <div style={{
-            background: 'rgba(168,0,255,0.07)', border: '1px solid rgba(168,0,255,0.3)',
-            borderRadius: 8, padding: '10px 10px',
-          }}>
-            <p style={{ ...MONO, fontSize: 8, color: '#a800ff', margin: '0 0 6px', letterSpacing: 1 }}>
-              {lang === 'en' ? 'NEW' : 'NOWE'}
-            </p>
-            <ItemStats item={newItem} lang={lang} />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-          <span style={{ ...ORB, fontSize: 11, color: canAfford ? '#ffd700' : '#ff4444' }}>
-            🪙 {cost.toLocaleString()}
-          </span>
-          {!canAfford && (
-            <span style={{ ...MONO, fontSize: 9, color: '#ff4444' }}>
-              ({lang === 'en' ? 'not enough gold' : 'za mało złota'})
-            </span>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              flex: 1, padding: '10px 0', border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 6, background: 'transparent', cursor: 'pointer',
-              ...ORB, fontSize: 10, color: 'rgba(255,255,255,0.5)',
-            }}
-          >
-            {lang === 'en' ? 'CANCEL' : 'ANULUJ'}
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={!canAfford}
-            style={{
-              flex: 2, padding: '10px 0', border: 'none',
-              borderRadius: 6,
-              background: canAfford
-                ? 'linear-gradient(135deg, #6600cc, #a800ff)'
-                : 'rgba(255,255,255,0.06)',
-              cursor: canAfford ? 'pointer' : 'not-allowed',
-              ...ORB, fontSize: 10,
-              color: canAfford ? '#fff' : 'rgba(255,255,255,0.25)',
-            }}
-          >
-            {lang === 'en' ? 'CONFIRM REROLL' : 'ZATWIERDŹ'}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
 export default function EnchanterPanel() {
   const hero = useGameStore(s => s.hero);
   const { lang } = useLangStore();
   const user = useAuthStore(s => s.user);
 
   const [sel, setSel] = useState<Selection | null>(null);
-  const [preview, setPreview] = useState<Item | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const equip = hero.equipment;
@@ -214,24 +114,16 @@ export default function EnchanterPanel() {
 
   function selectItem(source: Source, idxOrSlot: number | EquipSlot, item: Item) {
     setSel({ source, idxOrSlot, item });
-    setPreview(null);
   }
 
-  function generatePreview() {
+  function doReroll() {
     if (!sel) return;
-    const fresh = generateItem(sel.item.level, sel.item.rarity, sel.item.slot);
-    setPreview({
-      ...sel.item,
-      stats:         fresh.stats,
-      attackBonus:   fresh.attackBonus,
-      defenseBonus:  fresh.defenseBonus,
-    });
-  }
-
-  function confirmReroll() {
-    if (!sel || !preview) return;
     const cost = rerollCost(sel.item);
     if (hero.gold < cost) return;
+
+    // Only reroll stat bonuses — keep attackBonus and defenseBonus unchanged
+    const fresh = generateItem(sel.item.level, sel.item.rarity, sel.item.slot);
+    const rerolled: Item = { ...sel.item, stats: fresh.stats };
 
     useGameStore.setState(s => {
       const h = { ...s.hero };
@@ -239,19 +131,18 @@ export default function EnchanterPanel() {
 
       if (sel.source === 'equipment') {
         const slot = sel.idxOrSlot as EquipSlot;
-        h.equipment = { ...h.equipment, [slot]: preview };
+        h.equipment = { ...h.equipment, [slot]: rerolled };
       } else {
         const idx = sel.idxOrSlot as number;
         const inv = [...h.inventory];
-        inv[idx] = preview;
+        inv[idx] = rerolled;
         h.inventory = inv;
       }
 
       return { hero: h };
     });
 
-    setSel(prev => prev ? { ...prev, item: preview } : null);
-    setPreview(null);
+    setSel(prev => prev ? { ...prev, item: rerolled } : null);
 
     if (user) {
       syncToCloud(user.uid, user.username).catch(() => {});
@@ -280,8 +171,8 @@ export default function EnchanterPanel() {
           </p>
           <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
             {lang === 'en'
-              ? 'Reroll an item\'s stats for gold. Name and rarity stay unchanged.'
-              : 'Przelosuj statystyki przedmiotu za złoto. Nazwa i rzadkość pozostają bez zmian.'}
+              ? 'Reroll an item\'s stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
+              : 'Przelosuj bonusy statystyk przedmiotu za złoto. ATK/DEF i rzadkość pozostają bez zmian.'}
           </p>
         </div>
       </div>
@@ -368,32 +259,25 @@ export default function EnchanterPanel() {
               </div>
             </div>
             <button
-              onClick={generatePreview}
+              onClick={doReroll}
+              disabled={!canAfford}
               style={{
                 padding: '11px 0',
-                background: 'linear-gradient(135deg, #4400aa, #a800ff)',
-                border: 'none', borderRadius: 7, cursor: 'pointer',
-                ...ORB, fontSize: 11, color: '#fff', letterSpacing: 1,
-                boxShadow: '0 0 16px rgba(168,0,255,0.3)',
+                background: canAfford
+                  ? 'linear-gradient(135deg, #4400aa, #a800ff)'
+                  : 'rgba(255,255,255,0.06)',
+                border: 'none', borderRadius: 7,
+                cursor: canAfford ? 'pointer' : 'not-allowed',
+                ...ORB, fontSize: 11,
+                color: canAfford ? '#fff' : 'rgba(255,255,255,0.25)',
+                letterSpacing: 1,
+                boxShadow: canAfford ? '0 0 16px rgba(168,0,255,0.3)' : 'none',
               }}
             >
-              {lang === 'en' ? '🎲 ROLL NEW STATS' : '🎲 LOSUJ NOWE STATYSTYKI'}
+              {lang === 'en' ? '🎲 REROLL STATS' : '🎲 PRZELOSUJ STATYSTYKI'}
             </button>
           </div>
         </div>
-      )}
-
-      {/* Preview modal */}
-      {sel && preview && (
-        <RerollModal
-          oldItem={sel.item}
-          newItem={preview}
-          cost={selectedCost}
-          gold={hero.gold}
-          lang={lang}
-          onConfirm={confirmReroll}
-          onCancel={() => setPreview(null)}
-        />
       )}
 
       {/* Toast */}
