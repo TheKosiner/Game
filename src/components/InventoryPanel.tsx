@@ -93,17 +93,17 @@ function ItemCard({
           <ItemIcon item={item} scale={3} />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3, overflow: 'hidden' }}>
             <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', padding: '1px 3px', flexShrink: 0 }}>
               {slotLabel[item.slot] ?? item.slot.toUpperCase()}
             </span>
-            <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80` }}>{getItemName(item, lang)}</p>
+            <p style={{ ...MONO, fontSize: 11, color: rc, textShadow: `0 0 6px ${rc}80`, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{getItemName(item, lang)}</p>
             {(item.enhanceLevel ?? 0) > 0 && (
               <span style={{ ...ORB, fontSize: 10, color: '#ffd700', background: 'rgba(255,215,0,0.12)', border: '1px solid rgba(255,215,0,0.35)', padding: '1px 5px', flexShrink: 0 }}>
                 +{item.enhanceLevel}
               </span>
             )}
-            <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
+            <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px', flexShrink: 0, whiteSpace: 'nowrap' }}>
               {rarityLabel[item.rarity]}
             </span>
           </div>
