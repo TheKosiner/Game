@@ -35,32 +35,35 @@ function rerollCost(item: Item): number {
 type EquipSlot = keyof Equipment;
 type Source = 'equipment' | 'inventory';
 interface Selection { source: Source; idxOrSlot: number | EquipSlot; item: Item }
+interface RerollResult { oldItem: Item; newItem: Item }
 
-function statLabel(k: keyof Stats, lang: string): string {
-  if (lang === 'en') {
-    const map: Record<keyof Stats, string> = {
-      strength: 'STR', dexterity: 'DEX', intelligence: 'ACC',
-      vitality: 'VIT', magic: 'MAG', magicResistance: 'RES',
-    };
-    return map[k];
-  }
-  const map: Record<keyof Stats, string> = {
-    strength: 'SIŁ', dexterity: 'ZRĘ', intelligence: 'CEL',
-    vitality: 'WIT', magic: 'MAG', magicResistance: 'ODP',
-  };
-  return map[k];
-}
+const STAT_LABEL = (lang: string): Record<keyof Stats, string> =>
+  lang === 'en'
+    ? { strength: 'STR', dexterity: 'DEX', intelligence: 'ACC', vitality: 'VIT', magic: 'MAG', magicResistance: 'RES' }
+    : { strength: 'SIŁ', dexterity: 'ZRĘ', intelligence: 'CEL', vitality: 'ŻYW', magic: 'MAG', magicResistance: 'ODP' };
 
-function ItemStats({ item, lang }: { item: Item; lang: string }) {
-  const entries: React.ReactNode[] = [];
-  if (item.attackBonus)  entries.push(<span key="atk" style={{ color: '#ff6b6b' }}>ATK +{item.attackBonus}</span>);
-  if (item.defenseBonus) entries.push(<span key="def" style={{ color: '#64b5f6' }}>DEF +{item.defenseBonus}</span>);
-  for (const [k, v] of Object.entries(item.stats) as [keyof Stats, number][]) {
-    if (v) entries.push(<span key={k} style={{ color: 'rgba(255,255,255,0.55)' }}>{statLabel(k, lang)} +{v}</span>);
-  }
+function ItemStatLines({ item, lang }: { item: Item; lang: string }) {
+  const labels = STAT_LABEL(lang);
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px' }}>
-      {entries.map((e, i) => <span key={i} style={{ ...MONO, fontSize: 9 }}>{e}</span>)}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {item.attackBonus ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>ATK</span>
+          <span style={{ ...ORB, fontSize: 10, color: '#ff6b6b' }}>+{item.attackBonus}</span>
+        </div>
+      ) : null}
+      {item.defenseBonus ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>DEF</span>
+          <span style={{ ...ORB, fontSize: 10, color: '#64b5f6' }}>+{item.defenseBonus}</span>
+        </div>
+      ) : null}
+      {(Object.entries(item.stats) as [keyof Stats, number][]).filter(([, v]) => v > 0).map(([k, v]) => (
+        <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{labels[k]}</span>
+          <span style={{ ...ORB, fontSize: 10, color: '#00ff88' }}>+{v}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -72,7 +75,7 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
     <button
       onClick={onClick}
       style={{
-        display: 'flex', alignItems: 'flex-start', gap: 10,
+        display: 'flex', alignItems: 'center', gap: 10,
         padding: '8px 12px',
         background: selected ? 'rgba(168,0,255,0.12)' : 'rgba(255,255,255,0.03)',
         border: `1px solid ${selected ? '#a800ff' : 'rgba(255,255,255,0.08)'}`,
@@ -80,18 +83,111 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
         transition: 'all 0.15s',
       }}
     >
-      <div style={{ flexShrink: 0, marginTop: 2 }}><ItemIcon item={item} size={32} /></div>
+      <div style={{ flexShrink: 0 }}><ItemIcon item={item} size={32} /></div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ ...ORB, fontSize: 10, color, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {getItemName(item, lang as any)}
           </span>
           {enh > 0 && <span style={{ ...ORB, fontSize: 10, color: '#ffd700', flexShrink: 0 }}>+{enh}</span>}
-          <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>Lv.{item.level}</span>
         </div>
-        <ItemStats item={item} lang={lang} />
+        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Lv.{item.level}</span>
       </div>
     </button>
+  );
+}
+
+function ResultModal({ result, onClose, lang }: { result: RerollResult; onClose: () => void; lang: string }) {
+  const labels = STAT_LABEL(lang);
+
+  const oldStats = result.oldItem.stats;
+  const newStats = result.newItem.stats;
+  const allKeys = Array.from(new Set([
+    ...Object.keys(oldStats),
+    ...Object.keys(newStats),
+  ])) as (keyof Stats)[];
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.88)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{
+        background: '#08080f',
+        border: '2px solid rgba(168,0,255,0.5)',
+        boxShadow: '0 0 40px rgba(168,0,255,0.2)',
+        borderRadius: 10,
+        padding: '24px 20px',
+        width: '100%', maxWidth: 340,
+        display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 44 }}>✨</span>
+
+        <p style={{ ...ORB, fontSize: 13, color: '#a800ff', textAlign: 'center', letterSpacing: 1, margin: 0 }}>
+          {lang === 'en' ? 'REROLL COMPLETE!' : 'PRZELOSOWANIE ZAKOŃCZONE!'}
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+          <ItemIcon item={result.newItem} size={44} />
+          <div>
+            <p style={{ ...ORB, fontSize: 10, color: RARITY_COLOR[result.newItem.rarity] ?? '#fff', margin: 0 }}>
+              {getItemName(result.newItem, lang as any)}
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>Lv.{result.newItem.level}</p>
+          </div>
+        </div>
+
+        {/* Stat comparison */}
+        <div style={{
+          width: '100%',
+          background: 'rgba(168,0,255,0.06)',
+          border: '1px solid rgba(168,0,255,0.2)',
+          borderRadius: 8, padding: '10px 14px',
+          display: 'flex', flexDirection: 'column', gap: 5,
+        }}>
+          {allKeys.map(k => {
+            const o = oldStats[k] ?? 0;
+            const n = newStats[k] ?? 0;
+            if (!o && !n) return null;
+            const better = n > o;
+            const worse  = n < o;
+            const delta  = n - o;
+            return (
+              <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{labels[k]}</span>
+                <span style={{ ...ORB, fontSize: 10 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.35)' }}>{o > 0 ? `+${o}` : '—'}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.25)', margin: '0 4px' }}>→</span>
+                  <span style={{ color: better ? '#00ff88' : worse ? '#ff4444' : '#fff' }}>
+                    {n > 0 ? `+${n}` : '—'}
+                  </span>
+                  {delta !== 0 && (
+                    <span style={{ color: better ? '#00ff8888' : '#ff444488', fontSize: 9, marginLeft: 4 }}>
+                      ({delta > 0 ? '+' : ''}{delta})
+                    </span>
+                  )}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{
+            width: '100%', padding: '11px 0', border: 'none', borderRadius: 7,
+            background: 'linear-gradient(135deg, #4400aa, #a800ff)',
+            cursor: 'pointer', ...ORB, fontSize: 11, color: '#fff', letterSpacing: 1,
+            boxShadow: '0 0 16px rgba(168,0,255,0.3)',
+          }}
+        >
+          {lang === 'en' ? 'CLOSE' : 'ZAMKNIJ'}
+        </button>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -100,199 +196,220 @@ export default function EnchanterPanel() {
   const { lang } = useLangStore();
   const user = useAuthStore(s => s.user);
 
-  const [sel, setSel] = useState<Selection | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [sel, setSel]       = useState<Selection | null>(null);
+  const [section, setSection] = useState<'equipped' | 'inventory'>('equipped');
+  const [result, setResult] = useState<RerollResult | null>(null);
 
   const equip = hero.equipment;
-  const equipSlots = Object.entries(equip).filter(([, v]) => v) as [EquipSlot, Item][];
-  const inventory = hero.inventory.filter(i => i.slot !== 'consumable' && i.slot !== 'mystery_box');
+  const equippedItems = (['weapon','armor','helmet','boots','ring','amulet'] as EquipSlot[])
+    .filter(s => !!equip[s])
+    .map(s => ({ slot: s, item: equip[s] as Item }));
+  const inventoryItems = hero.inventory
+    .map((item, idx) => ({ item, idx }))
+    .filter(({ item }) => item.slot !== 'consumable' && item.slot !== 'mystery_box');
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2500);
-  }
+  // Keep selected item in sync with store (after reroll it gets updated)
+  const freshSel = (() => {
+    if (!sel) return null;
+    if (sel.source === 'inventory') {
+      const item = hero.inventory[sel.idxOrSlot as number];
+      return item ? { ...sel, item } : null;
+    }
+    const item = equip[sel.idxOrSlot as EquipSlot] as Item | undefined;
+    return item ? { ...sel, item } : null;
+  })();
 
-  function selectItem(source: Source, idxOrSlot: number | EquipSlot, item: Item) {
+  function handleSelect(source: Source, idxOrSlot: number | EquipSlot, item: Item) {
+    if (sel?.source === source && sel.idxOrSlot === idxOrSlot) { setSel(null); return; }
     setSel({ source, idxOrSlot, item });
   }
 
   function doReroll() {
-    if (!sel) return;
-    const cost = rerollCost(sel.item);
+    if (!freshSel) return;
+    const cost = rerollCost(freshSel.item);
     if (hero.gold < cost) return;
 
-    // Only reroll stat bonuses — keep attackBonus and defenseBonus unchanged
-    const fresh = generateItem(sel.item.level, sel.item.rarity, sel.item.slot);
-    const rerolled: Item = { ...sel.item, stats: fresh.stats };
+    const fresh = generateItem(freshSel.item.level, freshSel.item.rarity, freshSel.item.slot);
+    const rerolled: Item = { ...freshSel.item, stats: fresh.stats };
+    const oldItem = { ...freshSel.item };
 
     useGameStore.setState(s => {
-      const h = { ...s.hero };
-      h.gold = h.gold - cost;
-
-      if (sel.source === 'equipment') {
-        const slot = sel.idxOrSlot as EquipSlot;
-        h.equipment = { ...h.equipment, [slot]: rerolled };
+      const h = { ...s.hero, gold: s.hero.gold - cost };
+      if (freshSel.source === 'equipment') {
+        h.equipment = { ...h.equipment, [freshSel.idxOrSlot as EquipSlot]: rerolled };
       } else {
-        const idx = sel.idxOrSlot as number;
         const inv = [...h.inventory];
-        inv[idx] = rerolled;
+        inv[freshSel.idxOrSlot as number] = rerolled;
         h.inventory = inv;
       }
-
       return { hero: h };
     });
 
     setSel(prev => prev ? { ...prev, item: rerolled } : null);
+    setResult({ oldItem, newItem: rerolled });
 
-    if (user) {
-      syncToCloud(user.uid, user.username).catch(() => {});
-    }
-
-    showToast(lang === 'en' ? 'Stats rerolled!' : 'Statystyki przelosowane!');
+    if (user) syncToCloud(user.uid, user.username).catch(() => {});
   }
 
-  const selectedCost = sel ? rerollCost(sel.item) : 0;
-  const canAfford = hero.gold >= selectedCost;
+  const cost      = freshSel ? rerollCost(freshSel.item) : 0;
+  const canAfford = hero.gold >= cost;
 
   return (
-    <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {result && <ResultModal result={result} onClose={() => setResult(null)} lang={lang} />}
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(168,0,255,0.12), rgba(80,0,200,0.08))',
-        border: '1px solid rgba(168,0,255,0.3)',
-        borderRadius: 10, padding: '14px 16px',
-        display: 'flex', alignItems: 'center', gap: 14,
+        background: 'linear-gradient(135deg, rgba(168,0,255,0.1), rgba(80,0,200,0.06))',
+        border: '1px solid rgba(168,0,255,0.25)',
+        borderRadius: 8, padding: '14px 16px',
       }}>
-        <span style={{ fontSize: 36 }}>🔮</span>
-        <div>
-          <p style={{ ...ORB, fontSize: 13, color: '#a800ff', margin: 0, letterSpacing: 1, textShadow: '0 0 12px rgba(168,0,255,0.5)' }}>
-            {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
-          </p>
-          <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: '4px 0 0' }}>
-            {lang === 'en'
-              ? 'Reroll an item\'s stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
-              : 'Przelosuj bonusy statystyk przedmiotu za złoto. ATK/DEF i rzadkość pozostają bez zmian.'}
-          </p>
-        </div>
-      </div>
-
-      {/* Gold */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
-        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
-          {lang === 'en' ? 'Your gold:' : 'Twoje złoto:'}
-        </span>
-        <span style={{ ...ORB, fontSize: 11, color: '#ffd700' }}>🪙 {hero.gold.toLocaleString()}</span>
-      </div>
-
-      {/* Equipped items */}
-      {equipSlots.length > 0 && (
-        <section>
-          <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '0 0 6px', letterSpacing: 1 }}>
-            {lang === 'en' ? 'EQUIPPED' : 'ZAŁOŻONE'}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {equipSlots.map(([slot, item]) => (
-              <ItemCard
-                key={slot}
-                item={item}
-                lang={lang}
-                selected={sel?.source === 'equipment' && sel.idxOrSlot === slot}
-                onClick={() => selectItem('equipment', slot, item)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Inventory items */}
-      {inventory.length > 0 && (
-        <section>
-          <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '0 0 6px', letterSpacing: 1 }}>
-            {lang === 'en' ? 'INVENTORY' : 'EKWIPUNEK'}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {inventory.map((item, idx) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                lang={lang}
-                selected={sel?.source === 'inventory' && sel.idxOrSlot === idx}
-                onClick={() => selectItem('inventory', idx, item)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {equipSlots.length === 0 && inventory.length === 0 && (
-        <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginTop: 32 }}>
-          {lang === 'en' ? 'No items to enchant.' : 'Brak przedmiotów do zaczarowania.'}
+        <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#a800ff', letterSpacing: 2, textShadow: '0 0 12px rgba(168,0,255,0.5)' }}>
+          🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+        </h2>
+        <p style={{ ...MONO, margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+          {lang === 'en'
+            ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
+            : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość pozostają bez zmian.'}
         </p>
-      )}
+      </div>
 
-      {/* Action panel */}
-      {sel && (
-        <div style={{
-          position: 'sticky', bottom: 0,
-          background: 'linear-gradient(180deg, transparent 0%, #05050d 20%)',
-          paddingTop: 12,
-        }}>
-          <div style={{
-            background: '#09090f',
-            border: '1px solid rgba(168,0,255,0.3)',
-            borderRadius: 10, padding: '14px 16px',
-            display: 'flex', flexDirection: 'column', gap: 10,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <ItemIcon item={sel.item} size={36} />
-              <div style={{ flex: 1 }}>
-                <p style={{ ...ORB, fontSize: 10, color: RARITY_COLOR[sel.item.rarity] ?? '#fff', margin: 0 }}>
-                  {getItemName(sel.item, lang as any)}
-                </p>
-                <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0' }}>
-                  {lang === 'en' ? 'Reroll cost:' : 'Koszt przelosowania:'}{' '}
-                  <span style={{ color: canAfford ? '#ffd700' : '#ff4444' }}>
-                    🪙 {selectedCost.toLocaleString()}
-                  </span>
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={doReroll}
-              disabled={!canAfford}
-              style={{
-                padding: '11px 0',
-                background: canAfford
-                  ? 'linear-gradient(135deg, #4400aa, #a800ff)'
-                  : 'rgba(255,255,255,0.06)',
-                border: 'none', borderRadius: 7,
-                cursor: canAfford ? 'pointer' : 'not-allowed',
-                ...ORB, fontSize: 11,
-                color: canAfford ? '#fff' : 'rgba(255,255,255,0.25)',
-                letterSpacing: 1,
-                boxShadow: canAfford ? '0 0 16px rgba(168,0,255,0.3)' : 'none',
-              }}
-            >
-              {lang === 'en' ? '🎲 REROLL STATS' : '🎲 PRZELOSUJ STATYSTYKI'}
-            </button>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+
+        {/* Item list */}
+        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 4 }}>
+            {(['equipped', 'inventory'] as const).map(s => (
+              <button key={s} onClick={() => setSection(s)} style={{
+                ...ORB, flex: 1, padding: '7px 8px', fontSize: 9,
+                background: section === s ? 'rgba(168,0,255,0.15)' : 'rgba(255,255,255,0.03)',
+                border: `1px solid ${section === s ? '#a800ff' : 'rgba(255,255,255,0.1)'}`,
+                color: section === s ? '#a800ff' : 'rgba(255,255,255,0.45)',
+                borderRadius: 5, cursor: 'pointer',
+              }}>
+                {s === 'equipped' ? (lang === 'en' ? 'EQUIPPED' : 'ZAŁOŻONE') : (lang === 'en' ? 'INVENTORY' : 'PLECAK')}
+              </button>
+            ))}
           </div>
-        </div>
-      )}
 
-      {/* Toast */}
-      {toast && createPortal(
-        <div style={{
-          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(168,0,255,0.9)', color: '#fff', borderRadius: 8,
-          padding: '8px 20px', zIndex: 9999,
-          ...ORB, fontSize: 11, whiteSpace: 'nowrap',
-          boxShadow: '0 0 20px rgba(168,0,255,0.5)',
-        }}>
-          {toast}
-        </div>,
-        document.body,
-      )}
+          {section === 'equipped' && (
+            equippedItems.length === 0
+              ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  {lang === 'en' ? 'No equipped items.' : 'Brak założonych przedmiotów.'}
+                </p>
+              : equippedItems.map(({ slot, item }) => (
+                <ItemCard key={slot} item={item} lang={lang}
+                  selected={sel?.source === 'equipment' && sel.idxOrSlot === slot}
+                  onClick={() => handleSelect('equipment', slot, item)} />
+              ))
+          )}
+
+          {section === 'inventory' && (
+            inventoryItems.length === 0
+              ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                  {lang === 'en' ? 'No items in inventory.' : 'Brak przedmiotów w plecaku.'}
+                </p>
+              : inventoryItems.map(({ item, idx }) => (
+                <ItemCard key={idx} item={item} lang={lang}
+                  selected={sel?.source === 'inventory' && sel.idxOrSlot === idx}
+                  onClick={() => handleSelect('inventory', idx, item)} />
+              ))
+          )}
+        </div>
+
+        {/* Action panel */}
+        <div style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {!freshSel ? (
+            <div style={{
+              border: '1px dashed rgba(168,0,255,0.2)', borderRadius: 8,
+              padding: 20, textAlign: 'center',
+            }}>
+              <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                {lang === 'en' ? 'Select an item to enchant' : 'Wybierz przedmiot do zaczarowania'}
+              </p>
+            </div>
+          ) : (
+            <div style={{
+              background: 'rgba(168,0,255,0.05)',
+              border: '1px solid rgba(168,0,255,0.2)',
+              borderRadius: 8, padding: '14px 16px',
+              display: 'flex', flexDirection: 'column', gap: 10,
+            }}>
+              {/* Item header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <ItemIcon item={freshSel.item} size={44} />
+                <div>
+                  <div style={{ ...ORB, fontSize: 11, color: RARITY_COLOR[freshSel.item.rarity] ?? 'white' }}>
+                    {getItemName(freshSel.item, lang as any)}
+                  </div>
+                  <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+                    Lv.{freshSel.item.level}
+                    {(freshSel.item.enhanceLevel ?? 0) > 0 && (
+                      <span style={{ color: '#ffd700', marginLeft: 6 }}>+{freshSel.item.enhanceLevel}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Current stats */}
+              <div style={{
+                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: 6, padding: '8px 10px',
+              }}>
+                <p style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '0 0 6px', letterSpacing: 1 }}>
+                  {lang === 'en' ? 'CURRENT STATS' : 'AKTUALNE STATY'}
+                </p>
+                <ItemStatLines item={freshSel.item} lang={lang} />
+              </div>
+
+              {/* Cost row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                  {lang === 'en' ? 'Cost' : 'Koszt'}
+                </span>
+                <span style={{ ...ORB, fontSize: 10, color: canAfford ? '#ffd700' : '#ff4444' }}>
+                  {cost.toLocaleString()}🪙
+                </span>
+              </div>
+
+              {/* Gold row */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
+                  {lang === 'en' ? 'Your gold' : 'Twoje złoto'}
+                </span>
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>
+                  {hero.gold.toLocaleString()}🪙
+                </span>
+              </div>
+
+              {!canAfford && (
+                <p style={{ ...MONO, fontSize: 10, color: '#ff4444', margin: 0 }}>
+                  {lang === 'en' ? 'Not enough gold!' : 'Za mało złota!'}
+                </p>
+              )}
+
+              <button
+                onClick={doReroll}
+                disabled={!canAfford}
+                style={{
+                  ...ORB, fontSize: 11, padding: '10px 0',
+                  background: canAfford
+                    ? 'linear-gradient(135deg, rgba(168,0,255,0.25), rgba(80,0,200,0.2))'
+                    : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${canAfford ? '#a800ff' : 'rgba(255,255,255,0.1)'}`,
+                  color: canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)',
+                  borderRadius: 6, cursor: canAfford ? 'pointer' : 'not-allowed',
+                  textShadow: canAfford ? '0 0 8px rgba(168,0,255,0.5)' : 'none',
+                  transition: 'all 0.15s',
+                }}
+              >
+                🎲 {lang === 'en' ? 'REROLL STATS' : 'PRZELOSUJ STATY'}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
