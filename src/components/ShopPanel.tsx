@@ -8,6 +8,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { ComparePanel } from './ItemCompare';
+import { WeaponBadges } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -133,6 +134,7 @@ export default function ShopPanel() {
         }}>
           {getItemName(item, lang)}
         </p>
+        <WeaponBadges item={item} />
         {/* Buy button */}
         <button
           onClick={e => handleBuy(e, item, price, idx)}

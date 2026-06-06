@@ -6,6 +6,7 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useLangStore } from '../store/langStore';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
+import { WeaponBadges } from '../utils/styles';
 import type { Item, Equipment, Stats } from '../types/index';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -91,7 +92,10 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
           </span>
           {enh > 0 && <span style={{ ...ORB, fontSize: 10, color: '#ffd700', flexShrink: 0 }}>+{enh}</span>}
         </div>
-        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Lv.{item.level}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>Lv.{item.level}</span>
+          <WeaponBadges item={item} />
+        </div>
       </div>
     </button>
   );
@@ -343,11 +347,12 @@ export default function EnchanterPanel() {
                   <div style={{ ...ORB, fontSize: 11, color: RARITY_COLOR[freshSel.item.rarity] ?? 'white' }}>
                     {getItemName(freshSel.item, lang as any)}
                   </div>
-                  <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+                  <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     Lv.{freshSel.item.level}
                     {(freshSel.item.enhanceLevel ?? 0) > 0 && (
-                      <span style={{ color: '#ffd700', marginLeft: 6 }}>+{freshSel.item.enhanceLevel}</span>
+                      <span style={{ color: '#ffd700' }}>+{freshSel.item.enhanceLevel}</span>
                     )}
+                    <WeaponBadges item={freshSel.item} />
                   </div>
                 </div>
               </div>

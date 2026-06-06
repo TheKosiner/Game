@@ -9,6 +9,7 @@ import { enhanceMultiplier } from '../utils/combat';
 import smithImg from '../assets/smith.webp';
 import ItemIcon from './ItemIcon';
 import { getItemName } from '../data/itemGenerator';
+import { WeaponBadges } from '../utils/styles';
 import type { Item, Equipment, Stats } from '../types';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -66,7 +67,10 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700', flexShrink: 0 }}>+{enh}</span>
           )}
         </div>
-        <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Lv.{item.level}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>Lv.{item.level}</span>
+          <WeaponBadges item={item} />
+        </div>
       </div>
       {enh >= MAX_ENHANCE && (
         <span style={{ ...ORB, fontSize: 8, color: '#ffd700' }}>MAX</span>
@@ -403,8 +407,9 @@ export default function SmithPanel() {
                   <div style={{ ...ORB, fontSize: 11, color: RARITY_COLOR[freshSelected.item.rarity] ?? 'white' }}>
                     {lang === 'en' ? (freshSelected.item.nameEn ?? freshSelected.item.name) : freshSelected.item.name}
                   </div>
-                  <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+                  <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     Lv.{freshSelected.item.level}
+                    <WeaponBadges item={freshSelected.item} />
                   </div>
                 </div>
               </div>

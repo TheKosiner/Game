@@ -5,7 +5,7 @@ import type { Item, ItemSlot } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-import { MONO, ORB } from '../utils/styles';
+import { MONO, ORB, WeaponBadges } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -69,21 +69,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
             {rarityLabel[item.rarity]}
           </span>
-          {item.slot === 'weapon' && !(item as any).ranged && !(item as any).magicDamage && (
-            <span style={{ ...MONO, fontSize: 10, color: '#ff9632', background: 'rgba(255,150,50,0.08)', border: '1px solid rgba(255,150,50,0.3)', padding: '1px 5px', marginLeft: 4 }}>
-              ⚔ WRĘCZ
-            </span>
-          )}
-          {(item as any).ranged && (
-            <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 5px', marginLeft: 4 }}>
-              🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
-            </span>
-          )}
-          {(item as any).magicDamage && (
-            <span style={{ ...MONO, fontSize: 10, color: '#c078f0', background: 'rgba(192,120,240,0.08)', border: '1px solid rgba(192,120,240,0.3)', padding: '1px 5px', marginLeft: 4 }}>
-              🔮 MAGICZNA
-            </span>
-          )}
+          <WeaponBadges item={item} ml={4} />
         </div>
         <button aria-label="Close" onClick={onClose} style={{ color: 'var(--text-dim)', fontSize: 14, background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', fontFamily: 'monospace', flexShrink: 0 }}>✕</button>
       </div>
@@ -171,21 +157,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
               <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
                 {rarityLabel[item.rarity]}
               </span>
-              {item.slot === 'weapon' && !(item as any).ranged && !(item as any).magicDamage && (
-                <span style={{ ...MONO, fontSize: 10, color: '#ff9632', background: 'rgba(255,150,50,0.08)', border: '1px solid rgba(255,150,50,0.3)', padding: '1px 4px' }}>
-                  ⚔ WRĘCZ
-                </span>
-              )}
-              {(item as any).ranged && (
-                <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
-                  🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
-                </span>
-              )}
-              {(item as any).magicDamage && (
-                <span style={{ ...MONO, fontSize: 10, color: '#c078f0', background: 'rgba(192,120,240,0.08)', border: '1px solid rgba(192,120,240,0.3)', padding: '1px 4px' }}>
-                  🔮 MAGICZNA
-                </span>
-              )}
+              <WeaponBadges item={item} />
             </div>
             <p style={{ ...ORB, fontSize: 12, color: rc, textShadow: `0 0 8px ${rc}88`, marginBottom: 4 }}>{getItemName(item, lang)}</p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

@@ -8,7 +8,7 @@ import type { Item } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-import { MONO, ORB } from '../utils/styles';
+import { MONO, ORB, WeaponBadges } from '../utils/styles';
 import { getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.png';
@@ -106,6 +106,7 @@ function ItemCard({
             <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
               {rarityLabel[item.rarity]}
             </span>
+            <WeaponBadges item={item} />
           </div>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
             {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}

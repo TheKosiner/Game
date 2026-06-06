@@ -2,7 +2,7 @@ import type { Item, Stats } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-import { MONO, ORB, PX } from '../utils/styles';
+import { MONO, ORB, PX, WeaponBadges } from '../utils/styles';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8', uncommon: '#4ade80', rare: '#60a5fa',
@@ -64,7 +64,10 @@ export function ComparePanel({ newItem, equipped }: { newItem: Item; equipped: I
           {equipped ? (
             <>
               <p style={{ ...MONO, fontSize: 10, color: eqColor, marginBottom: 1 }}>{getItemName(equipped, lang)}</p>
-              <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lvl} {equipped.level} · {RARITY_LABEL[equipped.rarity]}</p>
+              <p style={{ ...MONO, fontSize: 10, color: '#475569', display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                {lvl} {equipped.level} · {RARITY_LABEL[equipped.rarity]}
+                <WeaponBadges item={equipped} />
+              </p>
             </>
           ) : (
             <p style={{ ...MONO, fontSize: 10, color: '#334155' }}>{t.shop.compareNothingEquipped}</p>
@@ -73,7 +76,10 @@ export function ComparePanel({ newItem, equipped }: { newItem: Item; equipped: I
         <div style={{ flex: 1, padding: '7px 8px' }}>
           <p style={{ ...PX(4), color: '#475569', marginBottom: 3 }}>{t.shop.compareNew}</p>
           <p style={{ ...MONO, fontSize: 10, color: newColor, marginBottom: 1 }}>{getItemName(newItem, lang)}</p>
-          <p style={{ ...MONO, fontSize: 10, color: '#475569' }}>{lvl} {newItem.level} · {RARITY_LABEL[newItem.rarity]}</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#475569', display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+            {lvl} {newItem.level} · {RARITY_LABEL[newItem.rarity]}
+            <WeaponBadges item={newItem} />
+          </p>
         </div>
       </div>
 
