@@ -63,7 +63,7 @@ export const pl: Translations = {
     boss: 'BOSS',
     quests: 'ZADANIA',
     smith: 'KOWAL',
-    shop: 'SKLEP',
+    shop: 'TARGOWISKO',
     gems: 'GEMY',
     arena: 'ARENA',
     guild: 'GILDIA',

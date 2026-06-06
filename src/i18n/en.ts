@@ -61,7 +61,7 @@ export const en = {
     boss: 'BOSS',
     quests: 'QUESTS',
     smith: 'SMITH',
-    shop: 'SHOP',
+    shop: 'MARKET',
     gems: 'GEMS',
     arena: 'ARENA',
     guild: 'GUILD',
