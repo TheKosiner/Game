@@ -145,9 +145,19 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
             <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 5px' }}>
               {rarityLabel[item.rarity]}
             </span>
+            {item.slot === 'weapon' && !item.ranged && !item.magicDamage && (
+              <span style={{ ...MONO, fontSize: 10, color: '#ff9632', background: 'rgba(255,150,50,0.08)', border: '1px solid rgba(255,150,50,0.3)', padding: '1px 4px' }}>
+                ⚔ WRĘCZ
+              </span>
+            )}
             {item.ranged && (
               <span style={{ ...MONO, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.3)', padding: '1px 4px' }}>
                 🔫 <span aria-hidden="true">DYST</span><span className="sr-only">Ranged</span>
+              </span>
+            )}
+            {item.magicDamage && (
+              <span style={{ ...MONO, fontSize: 10, color: '#c078f0', background: 'rgba(192,120,240,0.08)', border: '1px solid rgba(192,120,240,0.3)', padding: '1px 4px' }}>
+                🔮 MAGICZNA
               </span>
             )}
           </div>

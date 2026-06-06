@@ -39,13 +39,13 @@ interface Selection { source: Source; idxOrSlot: number | EquipSlot; item: Item 
 function statLabel(k: keyof Stats, lang: string): string {
   if (lang === 'en') {
     const map: Record<keyof Stats, string> = {
-      strength: 'STR', dexterity: 'DEX', intelligence: 'INT',
+      strength: 'STR', dexterity: 'DEX', intelligence: 'ACC',
       vitality: 'VIT', magic: 'MAG', magicResistance: 'RES',
     };
     return map[k];
   }
   const map: Record<keyof Stats, string> = {
-    strength: 'SIŁ', dexterity: 'ZRĘ', intelligence: 'INT',
+    strength: 'SIŁ', dexterity: 'ZRĘ', intelligence: 'CEL',
     vitality: 'WIT', magic: 'MAG', magicResistance: 'ODP',
   };
   return map[k];
