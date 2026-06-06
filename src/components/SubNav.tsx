@@ -79,7 +79,7 @@ export function PlaySubNav({ active, onChange, questBadge }: { active: PlaySub; 
         { id: 'challenge' as PlaySub, label: t.nav.boss },
         { id: 'quests'    as PlaySub, label: t.nav.quests, badge: questBadge ? 1 : 0 },
         { id: 'pvp'       as PlaySub, label: t.nav.arena },
-        { id: 'krypta'    as PlaySub, label: '⚰️ KRYPTA' },
+        { id: 'krypta'    as PlaySub, label: 'KRYPTA' },
       ]}
       active={active}
       onChange={onChange}
@@ -116,10 +116,10 @@ export function GuildTabSubNav({ active, onChange }: { active: GuildTabSub; onCh
     <SubNavBar
       tabs={[
         { id: 'info'      as GuildTabSub, label: 'INFO' },
-        { id: 'boss'      as GuildTabSub, label: '💀 BOSS' },
-        { id: 'chat'      as GuildTabSub, label: '💬 CHAT' },
-        { id: 'territory' as GuildTabSub, label: '🗺 MAPA' },
-        { id: 'ops'       as GuildTabSub, label: '⚔ RAJD' },
+        { id: 'boss'      as GuildTabSub, label: 'BOSS' },
+        { id: 'chat'      as GuildTabSub, label: 'CHAT' },
+        { id: 'territory' as GuildTabSub, label: 'MAPA' },
+        { id: 'ops'       as GuildTabSub, label: 'RAJD' },
       ]}
       active={active}
       onChange={onChange}
@@ -137,7 +137,7 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
         { id: 'gems'      as ShopSub, label: t.nav.gems },
         { id: 'smith'     as ShopSub, label: t.nav.smith },
         { id: 'casino'    as ShopSub, label: t.nav.casino },
-        { id: 'enchanter' as ShopSub, label: '🔮 ZAKLINACZ' },
+        { id: 'enchanter' as ShopSub, label: 'ZAKLINACZ' },
       ]}
       active={active}
       onChange={onChange}

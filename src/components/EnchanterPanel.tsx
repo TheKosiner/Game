@@ -20,16 +20,16 @@ const RARITY_COLOR: Record<string, string> = {
 };
 
 const REROLL_COST_MULT: Record<string, number> = {
-  common:    10,
-  uncommon:  30,
-  rare:      100,
-  epic:      300,
-  legendary: 700,
+  common:    3,
+  uncommon:  10,
+  rare:      33,
+  epic:      100,
+  legendary: 233,
 };
 
 function rerollCost(item: Item): number {
-  const mult = REROLL_COST_MULT[item.rarity] ?? 100;
-  return Math.max(100, item.level * item.level * mult);
+  const mult = REROLL_COST_MULT[item.rarity] ?? 33;
+  return Math.max(33, item.level * item.level * mult);
 }
 
 type EquipSlot = keyof Equipment;
