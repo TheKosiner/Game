@@ -354,7 +354,7 @@ export default function App() {
       play:   t.nav.play,
       guild:  t.nav.guild,
       social: t.nav.social,
-      shop:   t.nav.shop,
+      shop:   t.nav.market,
     };
     return (
       <>

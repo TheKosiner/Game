@@ -73,7 +73,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
     { id: 'play',   label: t.nav.play },
     { id: 'guild',  label: t.nav.guild },
     { id: 'social', label: t.nav.social },
-    { id: 'shop',   label: t.nav.shop },
+    { id: 'shop',   label: t.nav.market },
   ];
 
   return (

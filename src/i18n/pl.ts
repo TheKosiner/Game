@@ -63,7 +63,7 @@ export const pl: Translations = {
     boss: 'BOSS',
     quests: 'ZADANIA',
     smith: 'KOWAL',
-    shop: 'TARGOWISKO',
+    shop: 'SKLEP',
     gems: 'GEMY',
     arena: 'ARENA',
     guild: 'GILDIA',
@@ -71,6 +71,7 @@ export const pl: Translations = {
     mail: 'POCZTA',
     chat: 'CHAT',
     casino: 'KASYNO',
+    market: 'TARGOWISKO',
   },
   creation: {
     subtitle: 'Stwórz postać i zacznij przygodę',

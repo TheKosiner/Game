@@ -61,7 +61,7 @@ export const en = {
     boss: 'BOSS',
     quests: 'QUESTS',
     smith: 'SMITH',
-    shop: 'MARKET',
+    shop: 'SHOP',
     gems: 'GEMS',
     arena: 'ARENA',
     guild: 'GUILD',
@@ -69,6 +69,7 @@ export const en = {
     mail: 'MAIL',
     chat: 'CHAT',
     casino: 'CASINO',
+    market: 'MARKET',
   },
   creation: {
     subtitle: 'Create your character and start the adventure',

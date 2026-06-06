@@ -206,7 +206,7 @@ export default function DesktopSidebar({
         </>}
 
         {/* Shop */}
-        <SectionNavItem tabId="shop" label={t.nav.shop} active={tab === 'shop'} open={!!open['shop']}
+        <SectionNavItem tabId="shop" label={t.nav.market} active={tab === 'shop'} open={!!open['shop']}
           onToggle={() => {
             if (!open['shop']) expandAndNav('shop', () => { onTab('shop'); onShop('shop'); });
             else toggle('shop');
@@ -214,14 +214,14 @@ export default function DesktopSidebar({
         {open['shop'] && <>
           <NavItem icon="" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
             onClick={() => { onTab('shop'); onShop('shop'); }} />
-          <NavItem icon="" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
-            onClick={() => { onTab('shop'); onShop('gems'); }} />
           <NavItem icon="" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
             onClick={() => { onTab('shop'); onShop('smith'); }} />
           <NavItem icon="" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
             onClick={() => { onTab('shop'); onShop('casino'); }} />
           <NavItem icon="" label="Zaklinacz" active={tab === 'shop' && shopSub === 'enchanter'}
             onClick={() => { onTab('shop'); onShop('enchanter'); }} />
+          <NavItem icon="" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
+            onClick={() => { onTab('shop'); onShop('gems'); }} />
         </>}
 
       </nav>
