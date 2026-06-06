@@ -106,11 +106,13 @@ function ItemCard({
             <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}33`, padding: '1px 3px' }}>
               {rarityLabel[item.rarity]}
             </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2, flexWrap: 'wrap' }}>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>
+              {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
+            </span>
             <WeaponBadges item={item} />
           </div>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>
-            {slotLabel[item.slot] ?? item.slot} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
-          </p>
           <p style={{ ...MONO, fontSize: 10, color: item.slot === 'consumable' ? rc : 'var(--text-main)' }}>
             {item.slot === 'consumable'
               ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
