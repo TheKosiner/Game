@@ -101,7 +101,11 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
   );
 }
 
-function ResultModal({ result, onClose, lang }: { result: RerollResult; onClose: () => void; lang: string }) {
+function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
+  result: RerollResult; onClose: () => void;
+  onReroll: () => void; cost: number; canAfford: boolean;
+  lang: string;
+}) {
   const labels = STAT_LABEL(lang);
 
   const oldStats = result.oldItem.stats;
@@ -179,12 +183,28 @@ function ResultModal({ result, onClose, lang }: { result: RerollResult; onClose:
         </div>
 
         <button
+          onClick={onReroll}
+          disabled={!canAfford}
+          style={{
+            width: '100%', padding: '11px 0', border: `1px solid ${canAfford ? '#a800ff' : 'rgba(255,255,255,0.1)'}`,
+            borderRadius: 7,
+            background: canAfford
+              ? 'linear-gradient(135deg, rgba(168,0,255,0.25), rgba(80,0,200,0.2))'
+              : 'rgba(255,255,255,0.04)',
+            cursor: canAfford ? 'pointer' : 'not-allowed',
+            ...ORB, fontSize: 10, color: canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)',
+            letterSpacing: 1,
+            textShadow: canAfford ? '0 0 8px rgba(168,0,255,0.5)' : 'none',
+          }}
+        >
+          🎲 {lang === 'en' ? `TRY AGAIN — ${cost.toLocaleString()}🪙` : `SPRÓBUJ PONOWNIE — ${cost.toLocaleString()}🪙`}
+        </button>
+        <button
           onClick={onClose}
           style={{
-            width: '100%', padding: '11px 0', border: 'none', borderRadius: 7,
-            background: 'linear-gradient(135deg, #4400aa, #a800ff)',
-            cursor: 'pointer', ...ORB, fontSize: 11, color: '#fff', letterSpacing: 1,
-            boxShadow: '0 0 16px rgba(168,0,255,0.3)',
+            width: '100%', padding: '10px 0', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 7, background: 'rgba(255,255,255,0.04)',
+            cursor: 'pointer', ...ORB, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 1,
           }}
         >
           {lang === 'en' ? 'CLOSE' : 'ZAMKNIJ'}
@@ -261,7 +281,16 @@ export default function EnchanterPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {result && <ResultModal result={result} onClose={() => setResult(null)} lang={lang} />}
+      {result && (
+        <ResultModal
+          result={result}
+          onClose={() => setResult(null)}
+          onReroll={doReroll}
+          cost={cost}
+          canAfford={canAfford}
+          lang={lang}
+        />
+      )}
 
       {/* Header */}
       <div style={{
