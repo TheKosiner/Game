@@ -1,5 +1,6 @@
 /** Shared style constants — enforces WCAG minimum font sizes */
 
+import React from 'react';
 import type { Item } from '../types';
 
 /** Press Start 2P pixel font. Minimum enforced at 10px for WCAG readability. */
@@ -15,7 +16,7 @@ export const MONO = { fontFamily: "'Share Tech Mono', monospace" } as const;
 export const ORB  = { fontFamily: "'Orbitron', monospace", fontWeight: 700 } as const;
 
 /** Weapon type badges: WRĘCZ / DYSTANSOWA / MAGICZNA */
-export function WeaponBadges({ item, ml = 0 }: { item: Item; ml?: number }): JSX.Element | null {
+export function WeaponBadges({ item, ml = 0 }: { item: Item; ml?: number }): React.ReactElement | null {
   if (item.slot !== 'weapon') return null;
   const s: React.CSSProperties = {
     ...MONO, fontSize: 10,

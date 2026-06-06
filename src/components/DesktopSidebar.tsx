@@ -48,7 +48,7 @@ function NavItem({
         position: 'relative',
       }}
     >
-      <span style={{ fontSize: 14, width: 18, textAlign: 'center', flexShrink: 0 }}>{icon}</span>
+      {icon && <span style={{ fontSize: 14, width: 18, textAlign: 'center', flexShrink: 0 }}>{icon}</span>}
       <span style={{
         ...MONO, fontSize: 11,
         color: active ? '#fff' : 'rgba(255,255,255,0.55)',
@@ -174,15 +174,15 @@ export default function DesktopSidebar({
             else toggle('play');
           }} />
         {open['play'] && <>
-          <NavItem icon="🏰" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
+          <NavItem icon="" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
             onClick={() => { onTab('play'); onPlay('dungeon'); }} />
-          <NavItem icon="💀" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
+          <NavItem icon="" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
             onClick={() => { onTab('play'); onPlay('challenge'); }} />
-          <NavItem icon="📋" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
+          <NavItem icon="" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
             onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
-          <NavItem icon="⚔" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
+          <NavItem icon="" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
             onClick={() => { onTab('play'); onPlay('pvp'); }} />
-          <NavItem icon="⚰️" label="Krypta" active={tab === 'play' && playSub === 'krypta'}
+          <NavItem icon="" label="Krypta" active={tab === 'play' && playSub === 'krypta'}
             onClick={() => { onTab('play'); onPlay('krypta'); }} />
         </>}
 
@@ -197,11 +197,11 @@ export default function DesktopSidebar({
             else toggle('social');
           }} />
         {open['social'] && <>
-          <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
+          <NavItem icon="" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
             onClick={() => { onTab('social'); onSocial('ranking'); }} />
-          <NavItem icon="💬" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
+          <NavItem icon="" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
             onClick={() => { onTab('social'); onSocial('chat'); }} badge={chatHasNew} />
-          <NavItem icon="✉" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
+          <NavItem icon="" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
             onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
         </>}
 
@@ -212,14 +212,16 @@ export default function DesktopSidebar({
             else toggle('shop');
           }} />
         {open['shop'] && <>
-          <NavItem icon="🛒" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
+          <NavItem icon="" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
             onClick={() => { onTab('shop'); onShop('shop'); }} />
-          <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
+          <NavItem icon="" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
             onClick={() => { onTab('shop'); onShop('gems'); }} />
-          <NavItem icon="⚒" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
+          <NavItem icon="" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
             onClick={() => { onTab('shop'); onShop('smith'); }} />
-          <NavItem icon="🎰" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
+          <NavItem icon="" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
             onClick={() => { onTab('shop'); onShop('casino'); }} />
+          <NavItem icon="" label="Zaklinacz" active={tab === 'shop' && shopSub === 'enchanter'}
+            onClick={() => { onTab('shop'); onShop('enchanter'); }} />
         </>}
 
       </nav>

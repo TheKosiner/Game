@@ -32,7 +32,7 @@ export function SubNavBar<T extends string>({ tabs, active, onChange, centered }
             style={{
               flex: centered ? '0 0 auto' : 1,
               minWidth: centered ? 80 : 0,
-              padding: '12px 16px',
+              padding: '12px 6px',
               background: isActive
                 ? 'linear-gradient(180deg, rgba(255,45,120,0.15) 0%, rgba(255,45,120,0.05) 100%)'
                 : 'transparent',
@@ -131,7 +131,6 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
   const t = useT();
   return (
     <SubNavBar
-      centered
       tabs={[
         { id: 'shop'      as ShopSub, label: t.nav.shop },
         { id: 'gems'      as ShopSub, label: t.nav.gems },
