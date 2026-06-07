@@ -202,17 +202,8 @@ export default function CasinoPanel() {
     setLastResult(null);
     setSpinError(null);
 
-    // Start freewheeling
+    // Start freewheeling immediately — no pre-sync blocking the animation
     reelRef.current.phase = 'spin';
-
-    // Sync BEFORE deducting stake — CF reads gold from Firestore and validates
-    // stake <= gold. If we deduct first and then sync, CF sees gold-stake and
-    // rejects any bet > half the player's balance.
-    if (user) {
-      try { await syncToCloud(user.uid, user.username); } catch {}
-    }
-
-    useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold - stake } }));
 
     let res: SpinResult;
     try {
@@ -221,14 +212,13 @@ export default function CasinoPanel() {
       res = r.data;
     } catch (err: any) {
       reelRef.current.phase = 'idle';
-      useGameStore.setState(s => ({ hero: { ...s.hero, gold: s.hero.gold + stake } }));
       setSpinning(false);
       setSpinError(err?.message ?? t.casino.serverError);
       return;
     }
 
-    // Apply result immediately — before any animation — so navigating away
-    // mid-spin never loses gold or skips the Firestore record.
+    // Apply authoritative result from CF immediately so navigating away never
+    // loses gold or skips the Firestore record.
     useGameStore.setState(s => ({
       hero: {
         ...s.hero,
@@ -253,7 +243,6 @@ export default function CasinoPanel() {
 
     // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;
-    // distance = SPIN_VEL * DECEL_MS_s / easing_power = 9 * 3 / 5 ≈ 5.4 → 6 cells
     const plantAt = Math.ceil(r.pos) + 6;
     while (r.tape.length <= plantAt + 6) r.tape.push(rnd37());
     r.tape[plantAt] = res.result;
