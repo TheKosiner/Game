@@ -18,52 +18,52 @@ export type EnemyTemplate = {
 export const ENEMY_TIERS: EnemyTemplate[][] = [
   // Tier 1 (piętro 1–2)
   [
-    { id: 'blood_shadow',  name: 'Cień Krwi',      emoji: '👻', hpMult: 0.8, atkMult: 0.45, defMult: 0.30, baseXp: 22, baseGold: 16 },
-    { id: 'bone_man',      name: 'Kościan',        emoji: '💀', hpMult: 0.9, atkMult: 0.40, defMult: 0.40, baseXp: 24, baseGold: 14 },
-    { id: 'rotten_rat',    name: 'Gnijący Szczur', emoji: '🐀', hpMult: 0.7, atkMult: 0.50, defMult: 0.15, baseXp: 20, baseGold: 20 },
+    { id: 'blood_shadow',  name: 'Cień Krwi',      emoji: '👻', hpMult: 0.8, atkMult: 0.28, defMult: 0.25, baseXp: 22, baseGold: 16 },
+    { id: 'bone_man',      name: 'Kościan',        emoji: '💀', hpMult: 0.9, atkMult: 0.25, defMult: 0.35, baseXp: 24, baseGold: 14 },
+    { id: 'rotten_rat',    name: 'Gnijący Szczur', emoji: '🐀', hpMult: 0.7, atkMult: 0.32, defMult: 0.12, baseXp: 20, baseGold: 20 },
   ],
   // Tier 2 (piętro 3–4)
   [
-    { id: 'specter',       name: 'Widmo',         emoji: '🌫️', hpMult: 1.1, atkMult: 0.55, defMult: 0.40, baseXp: 38, baseGold: 30 },
-    { id: 'undead_knight', name: 'Trupi Rycerz', emoji: '⚔️', hpMult: 1.3, atkMult: 0.50, defMult: 0.55, baseXp: 44, baseGold: 27 },
-    { id: 'necromancer',   name: 'Nekromanta',   emoji: '🧙', hpMult: 1.0, atkMult: 0.65, defMult: 0.30, baseXp: 42, baseGold: 33 },
+    { id: 'specter',       name: 'Widmo',         emoji: '🌫️', hpMult: 1.1, atkMult: 0.36, defMult: 0.35, baseXp: 38, baseGold: 30 },
+    { id: 'undead_knight', name: 'Trupi Rycerz', emoji: '⚔️', hpMult: 1.3, atkMult: 0.32, defMult: 0.48, baseXp: 44, baseGold: 27 },
+    { id: 'necromancer',   name: 'Nekromanta',   emoji: '🧙', hpMult: 1.0, atkMult: 0.40, defMult: 0.25, baseXp: 42, baseGold: 33 },
   ],
   // Tier 3 (piętro 5–6)
   [
-    { id: 'abyss_demon',    name: 'Demon Otchłani', emoji: '😈', hpMult: 1.4, atkMult: 0.68, defMult: 0.50, baseXp: 60, baseGold: 50 },
-    { id: 'undead_mage',    name: 'Nieumarły Mag',  emoji: '🔮', hpMult: 1.3, atkMult: 0.75, defMult: 0.40, baseXp: 64, baseGold: 54 },
-    { id: 'crypt_guardian', name: 'Strażnik Krypt', emoji: '🗿', hpMult: 1.7, atkMult: 0.60, defMult: 0.70, baseXp: 66, baseGold: 45 },
+    { id: 'abyss_demon',    name: 'Demon Otchłani', emoji: '😈', hpMult: 1.4, atkMult: 0.42, defMult: 0.45, baseXp: 60, baseGold: 50 },
+    { id: 'undead_mage',    name: 'Nieumarły Mag',  emoji: '🔮', hpMult: 1.3, atkMult: 0.46, defMult: 0.35, baseXp: 64, baseGold: 54 },
+    { id: 'crypt_guardian', name: 'Strażnik Krypt', emoji: '🗿', hpMult: 1.7, atkMult: 0.38, defMult: 0.62, baseXp: 66, baseGold: 45 },
   ],
   // Tier 4 (piętro 7–8)
   [
-    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 1.8, atkMult: 0.75, defMult: 0.55, baseXp: 80, baseGold: 65 },
-    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 2.2, atkMult: 0.68, defMult: 0.80, baseXp: 75, baseGold: 58 },
-    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 1.6, atkMult: 0.82, defMult: 0.55, baseXp: 84, baseGold: 70 },
+    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 1.8, atkMult: 0.48, defMult: 0.50, baseXp: 80, baseGold: 65 },
+    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 2.2, atkMult: 0.42, defMult: 0.72, baseXp: 75, baseGold: 58 },
+    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 1.6, atkMult: 0.52, defMult: 0.48, baseXp: 84, baseGold: 70 },
   ],
   // Tier 5 (piętro 9–10)
   [
-    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 1.8, atkMult: 0.75, defMult: 0.55, baseXp: 120, baseGold: 105 },
-    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 2.2, atkMult: 0.65, defMult: 0.75, baseXp: 114, baseGold:  98 },
-    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 1.6, atkMult: 0.80, defMult: 0.68, baseXp: 125, baseGold: 110 },
+    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 1.8, atkMult: 0.50, defMult: 0.50, baseXp: 120, baseGold: 105 },
+    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 2.2, atkMult: 0.44, defMult: 0.68, baseXp: 114, baseGold:  98 },
+    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 1.6, atkMult: 0.55, defMult: 0.60, baseXp: 125, baseGold: 110 },
   ],
 ];
 
 export const SPIDER_TEMPLATE: EnemyTemplate = {
   id: 'poison_spider',
   name: 'Jadowity Pająk', emoji: '🕷️',
-  hpMult: 0.5, atkMult: 0.45, defMult: 0.15, baseXp: 15, baseGold: 10,
+  hpMult: 0.5, atkMult: 0.28, defMult: 0.12, baseXp: 15, baseGold: 10,
 };
 
 export const MIMIC_TEMPLATE: EnemyTemplate = {
   id: 'chest_mimic',
   name: 'Mimik Skrzyni', emoji: '🎭',
-  hpMult: 1.4, atkMult: 0.90, defMult: 0.55, baseXp: 55, baseGold: 60,
+  hpMult: 1.4, atkMult: 0.48, defMult: 0.50, baseXp: 55, baseGold: 60,
 };
 
 export const BOSS_TEMPLATE: EnemyTemplate = {
   id: 'shadow_lord',
   name: 'Lord Cienia', emoji: '☠️',
-  hpMult: 4.0, atkMult: 0.90, defMult: 0.75, baseXp: 280, baseGold: 350,
+  hpMult: 3.5, atkMult: 0.70, defMult: 0.65, baseXp: 280, baseGold: 350,
 };
 
 export function getBossRarity(heroLevel: number): Rarity {
@@ -129,8 +129,8 @@ export function buildEnemy(
   depth: number,
   heroStats?: { attack: number; defense: number; maxHp: number },
 ): KryptaEnemy {
-  // Gentle per-floor scaling so deeper rooms are ~36% harder than room 1
-  const scale = 1 + (depth - 1) * 0.04;
+  // Gentle per-floor scaling so deeper rooms are ~18% harder than room 1
+  const scale = 1 + (depth - 1) * 0.02;
 
   let hp: number, attack: number, defense: number;
   if (heroStats) {
