@@ -217,30 +217,6 @@ export default function CasinoPanel() {
       return;
     }
 
-    // Apply authoritative result from CF immediately so navigating away never
-    // loses gold or skips the Firestore record.
-    useGameStore.setState(s => ({
-      hero: {
-        ...s.hero,
-        gold: res.newGold,
-        goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
-        lastCasinoSpinAt: Date.now(),
-      },
-    }));
-    saveGame();
-    if (user) syncToCloud(user.uid, user.username).catch(() => {});
-    if (db && user) {
-      addDoc(collection(db, 'casinoSpins'), {
-        uid: user.uid,
-        username: user.username,
-        result: res.result,
-        won: res.won,
-        net: res.net,
-        stake,
-        ts: Date.now(),
-      }).catch(() => {});
-    }
-
     // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;
     const plantAt = Math.ceil(r.pos) + 6;
@@ -252,8 +228,29 @@ export default function CasinoPanel() {
     r.decelStart = performance.now();
     r.phase      = 'decel';
 
-    // Animation callback: UI-only — gold already settled above
+    // Apply gold + show result only once the reel stops
     onDoneRef.current = () => {
+      useGameStore.setState(s => ({
+        hero: {
+          ...s.hero,
+          gold: res.newGold,
+          goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
+          lastCasinoSpinAt: Date.now(),
+        },
+      }));
+      saveGame();
+      if (user) syncToCloud(user.uid, user.username).catch(() => {});
+      if (db && user) {
+        addDoc(collection(db, 'casinoSpins'), {
+          uid: user.uid,
+          username: user.username,
+          result: res.result,
+          won: res.won,
+          net: res.net,
+          stake,
+          ts: Date.now(),
+        }).catch(() => {});
+      }
       setLastResult({ n: res.result, won: res.won, net: res.net });
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
       setSpinning(false);
