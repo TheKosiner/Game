@@ -688,6 +688,17 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
 
   async function handleAttack(def: TerritoryDef, state: TerritoryState | undefined) {
     if (!guild) return;
+    try {
+      return await _handleAttack(def, state);
+    } catch (err: unknown) {
+      setAlertMsg(isEn
+        ? `Siege error: ${err instanceof Error ? err.message : String(err)}`
+        : `Błąd oblężenia: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  async function _handleAttack(def: TerritoryDef, state: TerritoryState | undefined) {
+    if (!guild) return;
 
     if (myOwnedCount >= MAX_TERRITORIES && state?.guildId !== guild.id) {
       setAlertMsg(isEn

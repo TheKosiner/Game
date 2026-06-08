@@ -156,12 +156,15 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members
         && resource.data.members[request.auth.uid].role == 'officer'
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
-      // Regular members may only touch treasury (deposit only), contributions, and operation state
+      // Regular members may only touch treasury (deposit only), contributions, operation state, and capture/loss timestamps
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt'])
+             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt', 'lastCaptureAt'])
         && request.resource.data.treasury >= resource.data.treasury;
+      // Any authenticated user may stamp lastLostAt (attacker writes to the defending guild after capture)
+      allow update: if isAuthenticated()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt']);
       // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
@@ -197,21 +200,26 @@ service cloud.firestore {
     // Guild territories — write requires membership in the guild claiming/updating the territory
     match /territories/{territoryId} {
       allow read: if isAuthenticated();
-      // Allow write only if the caller is a member of the guild referenced in the document.
-      // Covers both creating a new claim and updating/sieging an existing territory.
       allow write: if isAuthenticated()
         && (
-          // New territory claim: caller must be in the guild they are claiming for
+          // New territory doc (claim or siege start on unclaimed territory that has no Firestore doc yet)
           (resource == null
-            && request.resource.data.guildId != null
-            && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.guildId)).data.members)
-          // Update / siege: caller must be in the defending guild OR the attacking guild
+            && (
+              (request.resource.data.guildId != null
+                && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.guildId)).data.members)
+              || (request.resource.data.siegeGuildId != null
+                && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.siegeGuildId)).data.members)
+            )
+          )
+          // Existing territory: caller is in the owning (defending) guild
           || (resource != null
               && resource.data.guildId != null
               && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.guildId)).data.members)
+          // Existing territory: caller is in the currently attacking / sieging guild
+          // (covers siege updates AND the final capture write that clears siegeGuildId)
           || (resource != null
-              && request.resource.data.siegeGuildId != null
-              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.siegeGuildId)).data.members)
+              && resource.data.siegeGuildId != null
+              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.siegeGuildId)).data.members)
         );
     }
 
