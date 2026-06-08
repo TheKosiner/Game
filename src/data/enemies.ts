@@ -226,12 +226,14 @@ export const ENEMY_NAMES_EN: Record<string, string> = {
   end_entity:           'The Final Protocol',
 };
 
+const HP_MULT = 3;
+
 export function scaleEnemy(enemy: Enemy, floor: number): Enemy {
   const scale = 1 + (floor - 1) * 0.15;
   return {
     ...enemy,
-    hp: Math.round(enemy.maxHp * scale),
-    maxHp: Math.round(enemy.maxHp * scale),
+    hp: Math.round(enemy.maxHp * scale * HP_MULT),
+    maxHp: Math.round(enemy.maxHp * scale * HP_MULT),
     attack: Math.round(enemy.attack * scale),
     defense: Math.round(enemy.defense * scale),
     xpReward: Math.round(enemy.xpReward * scale),

@@ -109,7 +109,7 @@ export function getHeroDefense(hero: Hero): number {
 
 export function getHeroMaxHp(stats: Stats, level: number, equipment?: Hero['equipment']): number {
   const eqVit = equipment ? getEquipmentStats(equipment).vitality : 0;
-  return 80 + (stats.vitality + eqVit) * 10 + level * 8;
+  return 80 + (stats.vitality + eqVit) * 12 + level * 12;
 }
 
 export function calcXpToNext(level: number): number {
