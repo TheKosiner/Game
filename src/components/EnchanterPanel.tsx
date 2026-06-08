@@ -8,6 +8,7 @@ import { generateItem, getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
 import { WeaponBadges } from '../utils/styles';
 import type { Item, Equipment, Stats } from '../types/index';
+import enchanterSrc from '../assets/enchanter.webp';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -292,20 +293,27 @@ export default function EnchanterPanel() {
         />
       )}
 
-      {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(168,0,255,0.1), rgba(80,0,200,0.06))',
-        border: '1px solid rgba(168,0,255,0.25)',
-        borderRadius: 8, padding: '14px 16px',
-      }}>
-        <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#a800ff', letterSpacing: 2, textShadow: '0 0 12px rgba(168,0,255,0.5)' }}>
-          🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
-        </h2>
-        <p style={{ ...MONO, margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-          {lang === 'en'
-            ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
-            : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość pozostają bez zmian.'}
-        </p>
+      {/* Banner */}
+      <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', lineHeight: 0 }}>
+        <img
+          src={enchanterSrc}
+          alt="Zaklinacz"
+          style={{ width: '100%', maxHeight: 200, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+        />
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'linear-gradient(to bottom, transparent 40%, rgba(6,4,14,0.92) 100%)',
+        }} />
+        <div style={{ position: 'absolute', bottom: 12, left: 16 }}>
+          <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
+            🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+          </h2>
+          <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+            {lang === 'en'
+              ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
+              : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
+          </p>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
