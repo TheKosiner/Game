@@ -906,7 +906,7 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
       common:    mysteryBoxCommonSrc,
       uncommon:  mysteryBoxRareSrc,
       rare:      mysteryBoxUncommonSrc,
-      epic:      mysteryBoxUncommonSrc,
+      epic:      mysteryBoxSrc,
       legendary: mysteryBoxLegendarySrc,
     };
     const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
