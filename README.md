@@ -10,7 +10,7 @@ Mobilna gra RPG w stylu pixel-art z systemem progresji, walkami, zadaniami i ele
 ## 🎮 Funkcje
 
 - **System postaci** - Customizacja wyglądu (ton skóry, kolor włosów, ubrania, portret), leveling, statystyki
-- **Lochy** - 15 lochów z rosnącą trudnością (poziomy 1–100), tryby XP/Balanced/Loot, trudności Easy/Normal/Hard, skrzynki na poziomie lochów
+- **Operacje** - 15 operacji z rosnącą trudnością (poziomy 1–100), tryby XP/Balanced/Loot, trudności Easy/Normal/Hard, skrzynki na poziomie operacji
 - **Zadania** - 10 zadań w czasie rzeczywistym, 3 warianty (XP/Balanced/Loot), przyspieszenie gemami
 - **PvP Arena** - Walki z innymi graczami, ranking Top 50
 - **Gildie** - Operacje gildyjne, gildia boss, chat gildyjny, terytoria
@@ -63,7 +63,7 @@ firebase deploy --only functions
 ### Store'y (Zustand)
 ```
 src/store/
-├── gameStore.ts    # Główny store — bohater, lochy, walki, ekwipunek, zadania, gildie
+├── gameStore.ts    # Główny store — bohater, operacje, walki, ekwipunek, zadania, gildie
 ├── authStore.ts    # Autentykacja Firebase
 └── langStore.ts    # Język (PL/EN)
 ```
@@ -72,7 +72,7 @@ src/store/
 ```
 src/components/
 ├── HeroCard.tsx           # Panel postaci, statystyki, żebranie
-├── DungeonPanel.tsx       # Walki i lochy
+├── DungeonPanel.tsx       # Walki i operacje
 ├── QuestPanel.tsx         # System zadań
 ├── PvpPanel.tsx           # Arena PvP
 ├── GuildPanel.tsx         # Panel gildii
@@ -169,7 +169,7 @@ firebase deploy
 - **Linie kodu:** ~22 000
 - **Komponenty:** 34
 - **Store'y:** 3 (gameStore, authStore, langStore)
-- **Lochy:** 15
+- **Operacje:** 15
 - **Zadania:** 10
 - **Cloud Functions:** 10
 - **Custom hooki:** 7
@@ -283,9 +283,9 @@ dmg   = max(1, round(base × losowość × mnożnik_kryta))
 ### Krytyczne trafienie
 - **Bohater:** `crit_szansa = min(40%, 5% + (DEX / (DEX + cap)) × 35%)`  
   cap = `30 + poziom_bohatera × 1,5`
-- **Mnożnik krytu (lochy):** ×2,0
-- **Wrogowie (lochy):** 5% szansy, mnożnik ×2,0
-- **Wrogowie (bossowie lochów):** j.w.
+- **Mnożnik krytu (operacje):** ×2,0
+- **Wrogowie (operacje):** 5% szansy, mnożnik ×2,0
+- **Wrogowie (bossowie operacji):** j.w.
 - **Krypta — bohater:** 10% szansy, mnożnik ×1,8
 - **Krypta — zwykły wróg:** 5% szansy, mnożnik ×2,0
 - **Krypta — boss:** 7% szansy, mnożnik ×2,5
@@ -310,11 +310,11 @@ Soft cap statystyk: `stat ≤ 100 → stat; stat > 100 → 100 + (stat - 100) ×
 
 ---
 
-## 🏰 Lochy
+## 🏰 Operacje
 
 ### Limity dzienne
 - **Maksimum:** 10 przebiegów/dzień
-- **Piętra na loch:** 10
+- **Piętra na operację:** 10
 
 ### Tryby nagrody
 
@@ -339,7 +339,7 @@ xp         = round(wróg.xpReward × tryb_xpMult × lvlMult × trudność_mult)
 złoto      = round(wróg.goldReward × tryb_goldMult × lvlMult × trudność_mult)
 ```
 
-XP i złoto trafiają do puli — wypłacane **wyłącznie po ukończeniu całego lochu**.  
+XP i złoto trafiają do puli — wypłacane **wyłącznie po ukończeniu całej operacji**.  
 Przy porażce: **cała pula przepada**.
 
 ---
@@ -519,7 +519,7 @@ DEF   = heroDEF   × defMult × scale
 | Epic | 6 |
 | Legendary | 2 |
 
-### Modyfikatory trybu lochu
+### Modyfikatory trybu operacji
 | Tryb | Common | Uncommon | Rare | Epic | Legendary |
 |------|:------:|:--------:|:----:|:----:|:---------:|
 | XP | — | — | ×0,6 | ×0,4 | ×0,3 |
@@ -693,9 +693,9 @@ Za każdy awans: **+1 punkt atrybutu**, **+3 💎**
 
 | Aktywność | Limit |
 |-----------|:-----:|
-| Lochy | 10/dzień |
+| Operacje | 10/dzień |
 | Zadania | 5/dzień |
 | Krypta | 5/dzień |
 
 Reset o północy (strefa czasowa serwera).  
-Przy resecie zerowane: przebiegi lochów, zadania, przebiegi krypty, złoto zarobione dziś.
+Przy resecie zerowane: przebiegi operacji, zadania, przebiegi krypty, złoto zarobione dziś.

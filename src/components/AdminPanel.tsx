@@ -197,7 +197,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
   const resetDungeons = async () => {
     if (!player) return;
     await patch({ 'hero.dungeonRunsToday': 0 });
-    flash(`Zresetowano limity lochów dla ${player.username}`);
+    flash(`Zresetowano limity operacji dla ${player.username}`);
   };
 
   const resetKrypta = async () => {
@@ -260,7 +260,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   const resetAllLimits = async () => {
     if (!db) return;
-    if (!confirm('Zresetować limity WSZYSTKICH graczy (lochy + krypta + misje)?')) return;
+    if (!confirm('Zresetować limity WSZYSTKICH graczy (operacje + krypta + misje)?')) return;
     try {
       flash('⏳ Resetowanie...');
       const snap = await getAllDocs(collection(db, 'saves'));
@@ -340,7 +340,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </p>
             <p style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>Złoto: {player.gold} | Gemy: {player.gems}</p>
             <p style={{ ...MONO, fontSize: 9, color: '#aaa' }}>
-              Lochy: {player.dungeonRunsToday}/10 | Krypta: {player.kryptaRunsToday}/5 | Misje: {player.questsCompletedToday}/5
+              Operacje: {player.dungeonRunsToday}/10 | Krypta: {player.kryptaRunsToday}/5 | Misje: {player.questsCompletedToday}/5
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.activeQuest ? '#ff8844' : '#666' }}>
               Misja: {player.activeQuest ? '⚠ aktywna' : 'brak'}
@@ -383,7 +383,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
           {/* Reset buttons */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             <button onClick={resetDungeons} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
-              Reset lochów
+              Reset operacji
             </button>
             <button onClick={resetKrypta} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #6644aa', color: '#cc88ff', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Reset Krypty
