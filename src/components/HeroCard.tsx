@@ -517,7 +517,7 @@ export default function HeroCard() {
           position: 'absolute',
           top: 0, left: 0, right: 0,
           aspectRatio: '1 / 1',
-          backgroundImage: 'url(/hero-bg.png)',
+          backgroundImage: 'url(/hero-bg.webp)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           zIndex: 0,

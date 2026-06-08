@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
-import logoImg from './assets/logo.png';
+import logoImg from './assets/logo.webp';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';

@@ -306,7 +306,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {/* Guild base image — clean, no overlay */}
       <div style={{ position: 'relative', border: '1px solid rgba(157,78,221,0.3)', overflow: 'hidden' }}>
-        <img src="/guild_base.jpg" alt="Guild base" style={{ width: '100%', height: 'auto', display: 'block' }} />
+        <img src="/guild_base.webp" alt="Guild base" style={{ width: '100%', height: 'auto', display: 'block' }} />
         {/* Name / tag badge at top-left */}
         <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
           <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', border: '1px solid rgba(255,215,0,0.35)' }}>[{guild.tag}]</span>

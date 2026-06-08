@@ -11,11 +11,11 @@ import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB, WeaponBadges } from '../utils/styles';
 import { getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { ComparePanel } from './ItemCompare';
-import mysteryBoxSrc from '../assets/mystery-box.png';
-import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
-import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
-import mysteryBoxRareSrc from '../assets/mystery-box-rare.png';
-import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.png';
+import mysteryBoxSrc from '../assets/mystery-box.webp';
+import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.webp';
+import mysteryBoxCommonSrc from '../assets/mystery-box-common.webp';
+import mysteryBoxRareSrc from '../assets/mystery-box-rare.webp';
+import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.webp';
 
 const BOX_IMG: Partial<Record<string, string>> = {
   common:    mysteryBoxCommonSrc,

@@ -5,7 +5,7 @@ import { PORTRAIT_LIST } from '../data/portraits';
 import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { MONO, ORB } from '../utils/styles';
-import gemShopSrc from '../assets/gem-shop.png';
+import gemShopSrc from '../assets/gem-shop.webp';
 import { isCrazyGames, showRewardedAd } from '../lib/crazyGames';
 
 const REWARDED_AD_GEMS = 20;

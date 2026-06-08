@@ -4,7 +4,7 @@ import { MAX_DAILY_QUESTS, scaledQuestDuration } from '../store/gameStore';
 import { requestNotificationPermission, getWebNotificationStatus } from '../lib/notifications';
 import { Capacitor } from '@capacitor/core';
 import { ALL_QUESTS, RANDOM_QUEST_NAMES, RANDOM_QUEST_NAMES_EN } from '../data/quests';
-import logoSrc from '../assets/logo.png';
+import logoSrc from '../assets/logo.webp';
 import type { Quest } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';

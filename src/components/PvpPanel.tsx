@@ -9,7 +9,7 @@ import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 
 import { PX, MONO, ORB } from '../utils/styles';
-import arenaSrc from '../assets/arena.png';
+import arenaSrc from '../assets/arena.webp';
 const REROLL_COOLDOWN = 15 * 60 * 1000;
 
 // Module-level cache — survives tab navigation (component unmount/remount)

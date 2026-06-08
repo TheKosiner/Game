@@ -13,22 +13,22 @@ export interface PortraitDef {
 // Indeks musi być unikalny i rosnący.
 export const PORTRAIT_LIST: PortraitDef[] = [
   // Darmowe — dostępne dla każdego
-  { index: 0, src: `${BASE}NewPortrait/Portrait_new_Men.png`,      label: 'MĘŻCZYZNA' },
-  { index: 1, src: `${BASE}NewPortrait/Portrait_new_Women.png`,    label: 'KOBIETA'   },
+  { index: 0, src: `${BASE}NewPortrait/Portrait_new_Men.webp`,      label: 'MĘŻCZYZNA' },
+  { index: 1, src: `${BASE}NewPortrait/Portrait_new_Women.webp`,    label: 'KOBIETA'   },
   // Sklep z gemami — 1000 gemów za odblokowanie
-  { index: 10, src: `${BASE}NewPortrait/Portrait_new_1.png`,       label: 'PORTRET 1',  gemPrice: 1000 },
-  { index: 11, src: `${BASE}NewPortrait/Portrait_new_2.png`,       label: 'PORTRET 2',  gemPrice: 1000 },
-  { index: 12, src: `${BASE}NewPortrait/Portrait_new_3.png`,       label: 'PORTRET 3',  gemPrice: 1000 },
-  { index: 13, src: `${BASE}NewPortrait/Portrait_new_9.png`,       label: 'PORTRET 4',  gemPrice: 1000 },
-  { index: 14, src: `${BASE}NewPortrait/Portrait_new_10.png`,      label: 'PORTRET 5',  gemPrice: 1000 },
-  { index: 15, src: `${BASE}NewPortrait/Portrait_new_11.png`,      label: 'PORTRET 6',  gemPrice: 1000 },
-  { index: 16, src: `${BASE}NewPortrait/Portrait_new_12.png`,      label: 'PORTRET 7',  gemPrice: 1000 },
-  { index: 17, src: `${BASE}NewPortrait/Portrait_new_13.png`,      label: 'PORTRET 8',  gemPrice: 1000 },
-  { index: 18, src: `${BASE}NewPortrait/Portrait_new_BigDM.png`,   label: 'BIGDM',      gemPrice: 1000 },
-  { index: 19, src: `${BASE}NewPortrait/Portrait_new_Kacperek.png`,label: 'KACPEREK',   gemPrice: 1000 },
+  { index: 10, src: `${BASE}NewPortrait/Portrait_new_1.webp`,       label: 'PORTRET 1',  gemPrice: 1000 },
+  { index: 11, src: `${BASE}NewPortrait/Portrait_new_2.webp`,       label: 'PORTRET 2',  gemPrice: 1000 },
+  { index: 12, src: `${BASE}NewPortrait/Portrait_new_3.webp`,       label: 'PORTRET 3',  gemPrice: 1000 },
+  { index: 13, src: `${BASE}NewPortrait/Portrait_new_9.webp`,       label: 'PORTRET 4',  gemPrice: 1000 },
+  { index: 14, src: `${BASE}NewPortrait/Portrait_new_10.webp`,      label: 'PORTRET 5',  gemPrice: 1000 },
+  { index: 15, src: `${BASE}NewPortrait/Portrait_new_11.webp`,      label: 'PORTRET 6',  gemPrice: 1000 },
+  { index: 16, src: `${BASE}NewPortrait/Portrait_new_12.webp`,      label: 'PORTRET 7',  gemPrice: 1000 },
+  { index: 17, src: `${BASE}NewPortrait/Portrait_new_13.webp`,      label: 'PORTRET 8',  gemPrice: 1000 },
+  { index: 18, src: `${BASE}NewPortrait/Portrait_new_BigDM.webp`,   label: 'BIGDM',      gemPrice: 1000 },
+  { index: 19, src: `${BASE}NewPortrait/Portrait_new_Kacperek.webp`,label: 'KACPEREK',   gemPrice: 1000 },
   // Ukryte — przypisane konkretnym graczom
-  { index: 2, src: `${BASE}portraits/1778573895348.png`,           label: 'KOSINER', hidden: true },
-  { index: 9, src: `${BASE}NewPortrait/Portrait_new_Fifi.png`,     label: 'FIFU',    hidden: true },
+  { index: 2, src: `${BASE}portraits/1778573895348.webp`,           label: 'KOSINER', hidden: true },
+  { index: 9, src: `${BASE}NewPortrait/Portrait_new_Fifi.webp`,     label: 'FIFU',    hidden: true },
 ];
 
 // ── Ekskluzywne portrety przypisane do konkretnych graczy (po username) ───────

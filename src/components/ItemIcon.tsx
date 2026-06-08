@@ -1,11 +1,11 @@
 import React from 'react';
 import type { Item, Rarity } from '../types';
-import cannonFusionSrc from '../assets/cannon_fusion.png';
-import mysteryBoxSrc from '../assets/mystery-box.png';
-import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.png';
-import mysteryBoxCommonSrc from '../assets/mystery-box-common.png';
-import mysteryBoxRareSrc from '../assets/mystery-box-rare.png';
-import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.png';
+import cannonFusionSrc from '../assets/cannon_fusion.webp';
+import mysteryBoxSrc from '../assets/mystery-box.webp';
+import mysteryBoxUncommonSrc from '../assets/mystery-box-uncommon.webp';
+import mysteryBoxCommonSrc from '../assets/mystery-box-common.webp';
+import mysteryBoxRareSrc from '../assets/mystery-box-rare.webp';
+import mysteryBoxLegendarySrc from '../assets/mystery-box-legendary.webp';
 
 interface Colors {
   primary: string;

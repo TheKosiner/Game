@@ -6,11 +6,11 @@ import { useT } from '../hooks/useT';
 import type { Translations } from '../i18n/en';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
-import cyberGladiatorImg from '../assets/bosses/cyber-gladiator.png';
-import neonSlayerImg from '../assets/bosses/neon-slayer.png';
-import neuralPhantomImg from '../assets/bosses/neural-phantom.png';
-import ironWarlordImg from '../assets/bosses/iron-warlord.png';
-import quantumBerserkerImg from '../assets/bosses/quantum-berserker.png';
+import cyberGladiatorImg from '../assets/bosses/cyber-gladiator.webp';
+import neonSlayerImg from '../assets/bosses/neon-slayer.webp';
+import neuralPhantomImg from '../assets/bosses/neural-phantom.webp';
+import ironWarlordImg from '../assets/bosses/iron-warlord.webp';
+import quantumBerserkerImg from '../assets/bosses/quantum-berserker.webp';
 import { MONO, ORB } from '../utils/styles';
 
 function getPowerInfo(t: Translations): Record<ChallengePower, { label: string; color: string; emoji: string; desc: string }> {

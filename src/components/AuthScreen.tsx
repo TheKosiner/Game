@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.webp';
 import { PX, MONO } from '../utils/styles';
 
 type Mode = 'login' | 'register' | 'reset';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import logoImg from '../assets/logo.png';
+import logoImg from '../assets/logo.webp';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';

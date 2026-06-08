@@ -201,7 +201,7 @@ export default function ShopPanel() {
       {/* Shop image */}
       <div style={{ position: 'relative' }}>
         <img
-          src="/shop_bg.jpg"
+          src="/shop_bg.webp"
           alt="Shop"
           style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
         />
