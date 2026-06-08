@@ -604,6 +604,8 @@ export default function DungeonPanel() {
   const exitDungeon       = useGameStore(s => s.exitDungeon);
   const combatLog         = useGameStore(s => s.combatLog);
   const defeatedAtDungeon = useGameStore(s => s.defeatedAtDungeon);
+  const lastDungeonXp     = useGameStore(s => s.lastDungeonXp);
+  const lastDungeonGold   = useGameStore(s => s.lastDungeonGold);
   const clearDefeat       = useGameStore(s => s.clearDefeat);
   const dungeonUser       = useAuthStore(s => s.user);
 
@@ -663,9 +665,24 @@ export default function DungeonPanel() {
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
             {t.dungeon.opComplete}
           </p>
-          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--text-dim)' }}>
+          <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>
             {currentDungeon.name} — {currentFloor - 1} {t.dungeon.floors}
           </p>
+          {lastDungeonXp > 0 && (
+            <div style={{
+              display: 'inline-flex', gap: 16, alignItems: 'center',
+              background: 'rgba(255,215,0,0.07)', border: '1px solid rgba(255,215,0,0.25)',
+              borderRadius: 4, padding: '8px 18px',
+            }}>
+              <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 13, color: '#a0c4ff' }}>
+                +{lastDungeonXp} XP
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>|</span>
+              <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 13, color: '#ffd700' }}>
+                +{lastDungeonGold} 🪙
+              </span>
+            </div>
+          )}
         </div>
         <div className="combat-log">
           {combatLog.slice(0, 10).map((log, i) => (

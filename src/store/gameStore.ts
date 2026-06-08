@@ -202,6 +202,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   levelUpPending: null,
   pendingDungeonXp: 0,
   pendingDungeonGold: 0,
+  lastDungeonXp: 0,
+  lastDungeonGold: 0,
   mysteryBoxPending: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
@@ -433,6 +435,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       combatLog: [],
       pendingDungeonXp: 0,
       pendingDungeonGold: 0,
+      lastDungeonXp: 0,
+      lastDungeonGold: 0,
       hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
     });
     get().addCombatLog(t.combat.entering(dungeon.name), 'system');
@@ -498,7 +502,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addXp(newPendingXp);
         get().addGold(newPendingGold);
-        set({ pendingDungeonXp: 0, pendingDungeonGold: 0 });
+        set({ pendingDungeonXp: 0, pendingDungeonGold: 0, lastDungeonXp: newPendingXp, lastDungeonGold: newPendingGold });
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(currentDungeon.minLevel, mode, diff, set, get);
         const freshHero = get().hero;
@@ -600,7 +604,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (nextFloor > currentDungeon.floors) {
         get().addXp(newPendingXp2);
         get().addGold(newPendingGold2);
-        set({ pendingDungeonXp: 0, pendingDungeonGold: 0 });
+        set({ pendingDungeonXp: 0, pendingDungeonGold: 0, lastDungeonXp: newPendingXp2, lastDungeonGold: newPendingGold2 });
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(currentDungeon.minLevel, mode2, diff2, set, get);
         const freshHero2 = get().hero;
