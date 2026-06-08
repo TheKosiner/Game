@@ -396,7 +396,6 @@ export default function App() {
             flex: 1,
             overflowY: tab === 'lobby' ? 'hidden' : 'auto',
             overflowX: 'hidden',
-            display: 'flex', flexDirection: 'column',
           }}>
             {tab === 'guild' && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
             <main style={{
@@ -406,7 +405,7 @@ export default function App() {
               flexDirection: tab !== 'hero' ? 'column' : undefined,
               gap: tab === 'lobby' ? 0 : 16,
               maxWidth: tab === 'lobby' ? undefined : (tab === 'hero' ? 1400 : 960),
-              flex: tab === 'lobby' ? 1 : undefined,
+              height: tab === 'lobby' ? '100%' : undefined,
             }}>
               {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
@@ -543,7 +542,6 @@ export default function App() {
         flex: 1,
         overflowY: tab === 'lobby' ? 'hidden' : 'auto',
         overflowX: 'hidden',
-        display: 'flex', flexDirection: 'column',
       }}>
         {tab === 'play' && (
           <PlaySubNav active={playSub} onChange={switchPlay} questBadge={questBadge} />
@@ -562,7 +560,7 @@ export default function App() {
           padding: tab === 'lobby' ? 0 : '10px 8px',
           display: 'flex', flexDirection: 'column',
           gap: tab === 'lobby' ? 0 : 8,
-          flex: tab === 'lobby' ? 1 : undefined,
+          height: tab === 'lobby' ? '100%' : undefined,
         }}>
           {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
