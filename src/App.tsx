@@ -37,6 +37,7 @@ import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
 import EnchanterPanel from './components/EnchanterPanel';
+import LobbyPanel from './components/LobbyPanel';
 
 export default function App() {
   const t = useT();
@@ -355,6 +356,7 @@ export default function App() {
       guild:  t.nav.guild,
       social: t.nav.social,
       shop:   t.nav.market,
+      lobby:  t.nav.lobby,
     };
     return (
       <>
@@ -390,15 +392,21 @@ export default function App() {
           </header>
 
           {/* Scrollable content */}
-          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <div ref={scrollRef} style={{
+            flex: 1,
+            overflowY: tab === 'lobby' ? 'hidden' : 'auto',
+            overflowX: 'hidden',
+            display: 'flex', flexDirection: 'column',
+          }}>
             {tab === 'guild' && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
             <main style={{
-              padding: '20px 28px',
+              padding: tab === 'lobby' ? 0 : '20px 28px',
               display: tab === 'hero' ? 'grid' : 'flex',
               gridTemplateColumns: tab === 'hero' ? '1fr 1fr' : undefined,
               flexDirection: tab !== 'hero' ? 'column' : undefined,
-              gap: 16,
-              maxWidth: tab === 'hero' ? 1400 : 960,
+              gap: tab === 'lobby' ? 0 : 16,
+              maxWidth: tab === 'lobby' ? undefined : (tab === 'hero' ? 1400 : 960),
+              flex: tab === 'lobby' ? 1 : undefined,
             }}>
               {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
@@ -407,6 +415,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
               {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
               {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
+              {tab === 'lobby'  && <LobbyPanel />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
               {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
@@ -530,7 +539,12 @@ export default function App() {
         </a>
       )}
 
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div ref={scrollRef} style={{
+        flex: 1,
+        overflowY: tab === 'lobby' ? 'hidden' : 'auto',
+        overflowX: 'hidden',
+        display: 'flex', flexDirection: 'column',
+      }}>
         {tab === 'play' && (
           <PlaySubNav active={playSub} onChange={switchPlay} questBadge={questBadge} />
         )}
@@ -544,7 +558,12 @@ export default function App() {
           <GuildTabSubNav active={guildTab} onChange={setGuildTab} />
         )}
 
-        <main style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <main style={{
+          padding: tab === 'lobby' ? 0 : '10px 8px',
+          display: 'flex', flexDirection: 'column',
+          gap: tab === 'lobby' ? 0 : 8,
+          flex: tab === 'lobby' ? 1 : undefined,
+        }}>
           {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
@@ -552,6 +571,7 @@ export default function App() {
           {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
           {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
           {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
+          {tab === 'lobby'  && <LobbyPanel />}
           {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
           {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
           {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}

@@ -72,6 +72,7 @@ export const pl: Translations = {
     chat: 'CHAT',
     casino: 'KASYNO',
     market: 'TARGOWISKO',
+    lobby: 'LOBBY',
   },
   creation: {
     subtitle: 'Stwórz postać i zacznij przygodę',

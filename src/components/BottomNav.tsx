@@ -1,6 +1,6 @@
 import { useT } from '../hooks/useT';
 
-export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop';
+export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop' | 'lobby';
 export type PlaySub     = 'dungeon' | 'challenge' | 'quests' | 'pvp' | 'krypta';
 export type SocialSub   = 'ranking' | 'mail' | 'chat';
 export type GuildSub    = SocialSub;
@@ -62,6 +62,14 @@ export function TabIcon({ id, color }: { id: MainTab; color: string }) {
         <circle cx="13" cy="13" r="1.2" fill={color} stroke="none"/>
       </svg>
     );
+    case 'lobby': return (
+      <svg {...p}>
+        <circle cx="11" cy="9" r="3"/>
+        <circle cx="5" cy="10" r="2.5"/>
+        <circle cx="17" cy="10" r="2.5"/>
+        <path d="M1 19Q1 14 5 14Q7 14 9 16Q10 14 11 14Q12 14 13 16Q15 14 17 14Q21 14 21 19"/>
+      </svg>
+    );
   }
 }
 
@@ -74,6 +82,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
     { id: 'guild',  label: t.nav.guild },
     { id: 'social', label: t.nav.social },
     { id: 'shop',   label: t.nav.market },
+    { id: 'lobby',  label: t.nav.lobby },
   ];
 
   return (

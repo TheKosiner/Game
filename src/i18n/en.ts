@@ -70,6 +70,7 @@ export const en = {
     chat: 'CHAT',
     casino: 'CASINO',
     market: 'MARKET',
+    lobby: 'LOBBY',
   },
   creation: {
     subtitle: 'Create your character and start the adventure',

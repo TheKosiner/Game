@@ -186,6 +186,10 @@ export default function DesktopSidebar({
             onClick={() => { onTab('play'); onPlay('krypta'); }} />
         </>}
 
+        {/* Lobby — direct, no sub-nav */}
+        <SectionNavItem tabId="lobby" label={t.nav.lobby} active={tab === 'lobby'} open={false}
+          onToggle={() => { onTab('lobby'); setOpen(prev => ({ ...prev, lobby: false })); }} />
+
         {/* Guild — direct, no sub-nav */}
         <SectionNavItem tabId="guild" label={t.nav.guild} active={tab === 'guild'} open={false}
           onToggle={() => { onTab('guild'); setOpen(prev => ({ ...prev, guild: false })); }} />
