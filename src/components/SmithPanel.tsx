@@ -319,16 +319,13 @@ export default function SmithPanel() {
       )}
 
       {/* Banner image */}
-      <div style={{ borderRadius: 8, overflow: 'hidden', position: 'relative', lineHeight: 0 }}>
+      <div style={{ position: 'relative' }}>
         <img
           src={smithImg}
           alt="Kowal"
-          style={{ width: '100%', display: 'block', objectFit: 'contain' }}
+          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(255,150,50,0.2)' }}
         />
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, transparent 40%, #040408 100%)',
-        }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
       </div>
 
       {/* Header */}

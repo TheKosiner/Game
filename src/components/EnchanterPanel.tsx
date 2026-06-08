@@ -294,12 +294,13 @@ export default function EnchanterPanel() {
       )}
 
       {/* Banner */}
-      <div style={{ borderRadius: 8, overflow: 'hidden', lineHeight: 0 }}>
+      <div style={{ position: 'relative' }}>
         <img
           src={enchanterSrc}
           alt="Zaklinacz"
-          style={{ width: '100%', maxHeight: 200, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(168,0,255,0.2)' }}
         />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
       </div>
       <div style={{ padding: '10px 4px 2px' }}>
         <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>

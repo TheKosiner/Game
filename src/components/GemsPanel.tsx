@@ -70,8 +70,9 @@ export default function GemsPanel() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
       {/* Header image */}
-      <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(157,78,221,0.4)', boxShadow: '0 0 24px rgba(157,78,221,0.2)' }}>
-        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', display: 'block' }} />
+      <div style={{ position: 'relative' }}>
+        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(157,78,221,0.2)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
       </div>
 
       {/* Flash message from Stripe return */}
