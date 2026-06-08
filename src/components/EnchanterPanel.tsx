@@ -294,26 +294,22 @@ export default function EnchanterPanel() {
       )}
 
       {/* Banner */}
-      <div style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', lineHeight: 0 }}>
+      <div style={{ borderRadius: 8, overflow: 'hidden', lineHeight: 0 }}>
         <img
           src={enchanterSrc}
           alt="Zaklinacz"
           style={{ width: '100%', maxHeight: 200, objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
         />
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to bottom, transparent 40%, rgba(6,4,14,0.92) 100%)',
-        }} />
-        <div style={{ position: 'absolute', bottom: 12, left: 16 }}>
-          <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
-            🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
-          </h2>
-          <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
-            {lang === 'en'
-              ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
-              : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
-          </p>
-        </div>
+      </div>
+      <div style={{ padding: '10px 4px 2px' }}>
+        <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
+          🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+        </h2>
+        <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+          {lang === 'en'
+            ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
+            : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
+        </p>
       </div>
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
