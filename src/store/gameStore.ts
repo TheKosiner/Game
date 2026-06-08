@@ -200,6 +200,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   guildExpBonus: 0,
   guildGoldBonus: 0,
   levelUpPending: null,
+  pendingDungeonXp: 0,
+  pendingDungeonGold: 0,
   mysteryBoxPending: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
@@ -353,10 +355,18 @@ export const useGameStore = create<GameState>((set, get) => ({
   sellItem: (item: Item, invIdx?: number) => {
     const { hero } = get();
     const newInventory = [...hero.inventory];
-    const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
+    let idx: number;
+    if (invIdx !== undefined && invIdx >= 0 && invIdx < newInventory.length) {
+      // Verify item at given index still matches (guard stale index)
+      const atIdx = newInventory[invIdx];
+      idx = (atIdx && atIdx.id === item.id) ? invIdx : newInventory.findIndex(i => i && i.id === item.id);
+    } else {
+      idx = newInventory.findIndex(i => i && i.id === item.id);
+    }
     if (idx === -1) return;
     newInventory.splice(idx, 1);
-    set({ hero: { ...hero, gold: hero.gold + item.goldValue, goldEarnedToday: hero.goldEarnedToday + item.goldValue, inventory: newInventory } });
+    const value = item.goldValue ?? 0;
+    set({ hero: { ...hero, gold: hero.gold + value, goldEarnedToday: (hero.goldEarnedToday ?? 0) + value, inventory: newInventory } });
     get().saveGame();
   },
 
@@ -421,6 +431,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentEnemy: { ...enemy },
       inCombat: true,
       combatLog: [],
+      pendingDungeonXp: 0,
+      pendingDungeonGold: 0,
       hero: { ...hero, dungeonRunsToday: hero.dungeonRunsToday + 1 },
     });
     get().addCombatLog(t.combat.entering(dungeon.name), 'system');
@@ -430,7 +442,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   exitDungeon: () => {
     const t = getT();
-    set({ currentDungeon: null, currentFloor: 1, currentEnemy: null, inCombat: false });
+    set({ currentDungeon: null, currentFloor: 1, currentEnemy: null, inCombat: false, pendingDungeonXp: 0, pendingDungeonGold: 0 });
     get().addCombatLog(t.combat.leaving, 'system');
   },
 
@@ -454,7 +466,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(`⚡ ${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
       if (heroHp <= 0) {
         get().addCombatLog(t.combat.playerDefeated, 'system');
-        set({ hero: { ...hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name });
+        set({ hero: { ...hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name, pendingDungeonXp: 0, pendingDungeonGold: 0 });
         get().saveGame();
         return;
       }
@@ -477,12 +489,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       const lvlMult = Math.pow(1.02, hero.level - 1);
       const xpEarned   = Math.round(currentEnemy.xpReward * xpMult * lvlMult);
       const goldEarned = Math.round(currentEnemy.goldReward * goldMult * lvlMult);
-      get().addXp(xpEarned);
-      get().addGold(goldEarned);
+      const newPendingXp   = get().pendingDungeonXp + xpEarned;
+      const newPendingGold = get().pendingDungeonGold + goldEarned;
+      set({ pendingDungeonXp: newPendingXp, pendingDungeonGold: newPendingGold });
       get().addCombatLog(t.combat.rewards(xpEarned, goldEarned), 'loot');
 
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
+        get().addXp(newPendingXp);
+        get().addGold(newPendingGold);
+        set({ pendingDungeonXp: 0, pendingDungeonGold: 0 });
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(currentDungeon.minLevel, mode, diff, set, get);
         const freshHero = get().hero;
@@ -517,6 +533,8 @@ export const useGameStore = create<GameState>((set, get) => ({
           currentEnemy: null,
           inCombat: false,
           defeatedAtDungeon: currentDungeon.name,
+          pendingDungeonXp: 0,
+          pendingDungeonGold: 0,
         });
         get().saveGame(); // save on defeat
       } else {
@@ -558,7 +576,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (heroHp <= 0) {
       get().addCombatLog(t.combat.enemyWins(`${currentEnemy.emoji} ${currentEnemy.name}`), 'enemy');
       get().addCombatLog(t.combat.playerDefeated, 'system');
-      set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name });
+      set({ hero: { ...get().hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name, pendingDungeonXp: 0, pendingDungeonGold: 0 });
     } else {
       get().addCombatLog(t.combat.quickFight(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode2 = get().dungeonMode;
@@ -570,8 +588,9 @@ export const useGameStore = create<GameState>((set, get) => ({
       const lvlMult2 = Math.pow(1.02, hero.level - 1);
       const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2 * lvlMult2);
       const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2 * lvlMult2);
-      get().addXp(xpEarned2);
-      get().addGold(goldEarned2);
+      const newPendingXp2   = get().pendingDungeonXp + xpEarned2;
+      const newPendingGold2 = get().pendingDungeonGold + goldEarned2;
+      set({ pendingDungeonXp: newPendingXp2, pendingDungeonGold: newPendingGold2 });
       get().addCombatLog(t.combat.rewards(xpEarned2, goldEarned2), 'loot');
 
       const fresh = get().hero;
@@ -579,6 +598,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
       const nextFloor = currentFloor + 1;
       if (nextFloor > currentDungeon.floors) {
+        get().addXp(newPendingXp2);
+        get().addGold(newPendingGold2);
+        set({ pendingDungeonXp: 0, pendingDungeonGold: 0 });
         get().addCombatLog(t.combat.dungeonComplete(currentDungeon.name), 'system');
         tryDungeonLoot(currentDungeon.minLevel, mode2, diff2, set, get);
         const freshHero2 = get().hero;

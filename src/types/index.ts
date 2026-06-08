@@ -229,6 +229,8 @@ export interface GameState {
   guildExpBonus: number;
   guildGoldBonus: number;
   levelUpPending: number | null;
+  pendingDungeonXp: number;
+  pendingDungeonGold: number;
 
   // actions
   setGuildBonuses: (exp: number, gold: number) => void;
