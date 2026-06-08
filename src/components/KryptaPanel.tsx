@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import EnemyPortrait from './EnemyPortrait';
-import { showMidgameAd } from '../lib/crazyGames';
 import { useGameStore, MAX_DAILY_KRYPTA } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
@@ -117,14 +116,6 @@ export default function KryptaPanel() {
   const [totalXp, setTotalXp]       = useState(0);
   const [totalGold, setTotalGold]   = useState(0);
 
-  const adShownRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (phase === 'victory' && adShownRef.current !== 'victory') {
-      adShownRef.current = 'victory';
-      showMidgameAd().catch(() => {});
-    }
-    if (phase === 'idle') adShownRef.current = null;
-  }, [phase]);
 
   const baseAtk = getHeroAttack(hero);
   const baseDef = getHeroDefense(hero);

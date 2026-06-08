@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { showMidgameAd } from '../lib/crazyGames';
+import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
@@ -609,17 +608,6 @@ export default function DungeonPanel() {
   const clearDefeat       = useGameStore(s => s.clearDefeat);
   const dungeonUser       = useAuthStore(s => s.user);
 
-  const adShownRef = useRef(false);
-  useEffect(() => {
-    if (currentDungeon && !inCombat) {
-      if (!adShownRef.current) {
-        adShownRef.current = true;
-        showMidgameAd().catch(() => {});
-      }
-    } else {
-      adShownRef.current = false;
-    }
-  }, [currentDungeon, inCombat]);
   const handleExit = () => {
     exitDungeon();
     if (dungeonUser) syncToCloud(dungeonUser.uid, dungeonUser.username).catch(() => {});
