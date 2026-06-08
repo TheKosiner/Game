@@ -139,13 +139,20 @@ export default function KryptaPanel() {
   }
 
   function afterRoom(newDepth: number, newHp: number, newMaxHp: number) {
+    const regen = Math.round(newMaxHp * 0.04);
     if (newDepth >= TOTAL_ROOMS) {
+      // Heal 30% before boss encounter
+      const bossHeal = Math.round(newMaxHp * 0.30);
+      const finalHp = Math.min(newMaxHp, newHp + regen + bossHeal);
+      setRaidHp(finalHp);
+      setRaidMaxHp(newMaxHp);
+      pushLog([`💫 Chwila wytchnienia przed bossem — uzdrowienie ${finalHp - newHp} HP`]);
       setPhase('pre_boss');
     } else {
+      setRaidHp(Math.min(newMaxHp, newHp + regen));
+      setRaidMaxHp(newMaxHp);
       setPhase('direction');
     }
-    setRaidHp(newHp);
-    setRaidMaxHp(newMaxHp);
   }
 
   function enterCrypt() {
@@ -153,7 +160,7 @@ export default function KryptaPanel() {
     incrementKryptaRuns();
     setPhase('direction');
     setDepth(0);
-    setRaidHp(hero.hp);
+    setRaidHp(maxHp);
     setRaidMaxHp(maxHp);
     setBuffs([]);
     setHasCompanion(false);

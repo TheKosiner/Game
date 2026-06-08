@@ -36,15 +36,15 @@ export const ENEMY_TIERS: EnemyTemplate[][] = [
   ],
   // Tier 4 (piętro 7–8)
   [
-    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 1.8, atkMult: 0.48, defMult: 0.50, baseXp: 80, baseGold: 65 },
-    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 2.2, atkMult: 0.42, defMult: 0.72, baseXp: 75, baseGold: 58 },
-    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 1.6, atkMult: 0.52, defMult: 0.48, baseXp: 84, baseGold: 70 },
+    { id: 'plague_wraith', name: 'Upiór Plagi',     emoji: '🧟', hpMult: 1.8, atkMult: 0.38, defMult: 0.50, baseXp: 80, baseGold: 65 },
+    { id: 'bone_beast',    name: 'Kościana Bestia', emoji: '🦴', hpMult: 2.2, atkMult: 0.32, defMult: 0.72, baseXp: 75, baseGold: 58 },
+    { id: 'archlich',      name: 'Arcylich',        emoji: '🧿', hpMult: 1.6, atkMult: 0.40, defMult: 0.48, baseXp: 84, baseGold: 70 },
   ],
   // Tier 5 (piętro 9–10)
   [
-    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 1.8, atkMult: 0.50, defMult: 0.50, baseXp: 120, baseGold: 105 },
-    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 2.2, atkMult: 0.44, defMult: 0.68, baseXp: 114, baseGold:  98 },
-    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 1.6, atkMult: 0.55, defMult: 0.60, baseXp: 125, baseGold: 110 },
+    { id: 'ancient_vampire', name: 'Wampir Starożytny', emoji: '🧛', hpMult: 1.8, atkMult: 0.38, defMult: 0.50, baseXp: 120, baseGold: 105 },
+    { id: 'abomination',     name: 'Abominacja',        emoji: '👹', hpMult: 2.2, atkMult: 0.33, defMult: 0.68, baseXp: 114, baseGold:  98 },
+    { id: 'dark_paladin',    name: 'Mroczny Paladyn',   emoji: '🗡️', hpMult: 1.6, atkMult: 0.42, defMult: 0.60, baseXp: 125, baseGold: 110 },
   ],
 ];
 
@@ -63,7 +63,7 @@ export const MIMIC_TEMPLATE: EnemyTemplate = {
 export const BOSS_TEMPLATE: EnemyTemplate = {
   id: 'shadow_lord',
   name: 'Lord Cienia', emoji: '☠️',
-  hpMult: 3.5, atkMult: 0.70, defMult: 0.65, baseXp: 280, baseGold: 350,
+  hpMult: 2.2, atkMult: 0.45, defMult: 0.55, baseXp: 280, baseGold: 350,
 };
 
 export function getBossRarity(heroLevel: number): Rarity {
