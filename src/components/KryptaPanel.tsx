@@ -139,7 +139,7 @@ export default function KryptaPanel() {
   }
 
   function afterRoom(newDepth: number, newHp: number, newMaxHp: number) {
-    const regen = Math.round(newMaxHp * 0.04);
+    const regen = Math.round(newMaxHp * 0.08);
     if (newDepth >= TOTAL_ROOMS) {
       // Heal 30% before boss encounter
       const bossHeal = Math.round(newMaxHp * 0.30);
