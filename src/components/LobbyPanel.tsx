@@ -9,27 +9,33 @@ import {
   addDoc, query, orderBy, limit as fsLimit,
 } from 'firebase/firestore';
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── World constants ───────────────────────────────────────────────────────────
 const TILE     = 40;
 const COLS     = 50;
 const ROWS     = 32;
 const MAP_W    = COLS * TILE;
 const MAP_H    = ROWS * TILE;
 const SPEED    = 180;
-const AVATAR_R = 28;
+const AVATAR_R = 18;
 const WRITE_MS = 400;
 const STALE_MS = 30_000;
 const BUBBLE_MS = 5_000;
+
+// ── Isometric projection constants ───────────────────────────────────────────
+// iso tile: screen width = 2*TILE, height = TILE  (2:1 ratio)
+const ISO_HW = TILE;       // half-width  = 40 px
+const ISO_HH = TILE / 2;   // half-height = 20 px
+const WALL_H  = 36;        // screen-pixel height of raised wall block
 
 // 0=concrete  1=wall  2=pillar  3=neon(lounge)  4=grating  5=track
 type Cell = 0 | 1 | 2 | 3 | 4 | 5;
 
 // ── Zone colors ───────────────────────────────────────────────────────────────
 const ZONES = [
-  { r1:2,  r2:8,  c1:17, c2:32, color:'#9d4edd' }, // VIP Lounge
-  { r1:10, r2:21, c1:2,  c2:8,  color:'#f5a623' }, // Platform
-  { r1:9,  r2:21, c1:41, c2:47, color:'#ff2d78' }, // Market
-  { r1:23, r2:28, c1:16, c2:33, color:'#00f5ff' }, // Tunnels
+  { r1:2,  r2:8,  c1:17, c2:32, color:'#9d4edd' },
+  { r1:10, r2:21, c1:2,  c2:8,  color:'#f5a623' },
+  { r1:9,  r2:21, c1:41, c2:47, color:'#ff2d78' },
+  { r1:23, r2:28, c1:16, c2:33, color:'#00f5ff' },
 ];
 function zoneAt(r: number, c: number): string {
   for (const z of ZONES) if (r>=z.r1&&r<=z.r2&&c>=z.c1&&c<=z.c2) return z.color;
@@ -52,16 +58,16 @@ const MAP: Cell[][] = (() => {
   const wl = (x1:number,y1:number,x2:number,y2:number) => fill(x1,y1,x2,y2,1);
   const pl = (c:number,r:number) => { if(r>0&&r<ROWS-1&&c>0&&c<COLS-1) g[r][c]=2; };
 
-  fill(9, 8, 40, 22, 0);           // Central hub
-  fill(17, 2, 32, 7, 3);           // VIP Lounge (neon)
-  wl(17,7,22,7); wl(27,7,32,7);   // Lounge south wall — doorway at 23-26
-  fill(23,7,26,8,3);               // Connector strip
-  fill(2, 11, 8, 20, 5);           // West Platform (track)
-  wl(8,11,8,14); wl(8,18,8,20);   // Platform east wall — doorway at 15-17
-  fill(41, 9, 47, 21, 4);          // East Market (grating)
-  wl(41,9,41,13); wl(41,18,41,21);// Market west wall — doorway at 14-17
-  fill(16, 23, 33, 28, 4);         // South Tunnels (grating)
-  wl(16,23,20,23); wl(29,23,33,23);// Tunnel north wall — doorway at 21-28
+  fill(9, 8, 40, 22, 0);
+  fill(17, 2, 32, 7, 3);
+  wl(17,7,22,7); wl(27,7,32,7);
+  fill(23,7,26,8,3);
+  fill(2, 11, 8, 20, 5);
+  wl(8,11,8,14); wl(8,18,8,20);
+  fill(41, 9, 47, 21, 4);
+  wl(41,9,41,13); wl(41,18,41,21);
+  fill(16, 23, 33, 28, 4);
+  wl(16,23,20,23); wl(29,23,33,23);
 
   for (const [c,r] of [[13,11],[13,14],[13,17],[13,20],[36,11],[36,14],[36,17],[36,20],[21,11],[21,20],[28,11],[28,20]])
     pl(c,r);
@@ -92,15 +98,6 @@ const SIGNS = [
   { wx:24.5*TILE, wy:9.8*TILE,   text:'[ GLITCHSOUL HIDEOUT ]',   color:'#ff2d78', sz:16 },
 ];
 
-// ── Puddles (reflective floor pools) ─────────────────────────────────────────
-const PUDDLES = [
-  { wx:20*TILE, wy:13*TILE, rx:30, ry:9,  color:'#00f5ff' },
-  { wx:31*TILE, wy:19*TILE, rx:25, ry:7,  color:'#9d4edd' },
-  { wx:15*TILE, wy:17*TILE, rx:18, ry:6,  color:'#00f5ff' },
-  { wx:37*TILE, wy:12*TILE, rx:20, ry:6,  color:'#00f5ff' },
-  { wx:24.5*TILE,wy:4.5*TILE,rx:45,ry:12, color:'#9d4edd' },
-];
-
 // ── Particles ─────────────────────────────────────────────────────────────────
 const PCOLS = ['#00f5ff','#9d4edd','#ff2d78','#f5a623'];
 interface Pt { x:number;y:number;vx:number;vy:number;color:string;alpha:number;size:number; }
@@ -115,7 +112,6 @@ function mkPt(): Pt {
 interface RemotePlayer { x:number;y:number;portrait:number;username:string;updatedAt:number; }
 interface ChatMsg      { uid:string;username:string;text:string;createdAt:number; }
 interface Bubble       { text:string;expiresAt:number; }
-interface AvatarEntry  { sx:number;sy:number;portrait:number;local:boolean;name:string;alpha:number;uid:string; }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function LobbyPanel() {
@@ -130,19 +126,19 @@ export default function LobbyPanel() {
   const heroRef = useRef(hero); heroRef.current = hero;
   const userRef = useRef(user); userRef.current = user;
 
-  const posRef      = useRef({ x: MAP_W/2, y: MAP_H/2 });
-  const keysRef     = useRef(new Set<string>());
-  const imgCache    = useRef(new Map<number, HTMLImageElement>());
-  const remotesRef  = useRef(new Map<string, RemotePlayer>());
-  const bubblesRef  = useRef(new Map<string, Bubble>());
-  const particlesRef= useRef<Pt[]>(Array.from({length:25}, mkPt));
-  const dprRef      = useRef(window.devicePixelRatio||1);
-  const logicalSize = useRef({w:400,h:400});
-  const rafRef      = useRef(0);
-  const lastWrite   = useRef(0);
-  const lastTime    = useRef(0);
-  const chatFocus   = useRef(false);
-  const joystick    = useRef({active:false,sx:0,sy:0,dx:0,dy:0});
+  const posRef       = useRef({ x: MAP_W/2, y: MAP_H/2 });
+  const keysRef      = useRef(new Set<string>());
+  const imgCache     = useRef(new Map<number, HTMLImageElement>());
+  const remotesRef   = useRef(new Map<string, RemotePlayer>());
+  const bubblesRef   = useRef(new Map<string, Bubble>());
+  const particlesRef = useRef<Pt[]>(Array.from({length:25}, mkPt));
+  const dprRef       = useRef(window.devicePixelRatio||1);
+  const logicalSize  = useRef({w:400,h:400});
+  const rafRef       = useRef(0);
+  const lastWrite    = useRef(0);
+  const lastTime     = useRef(0);
+  const chatFocus    = useRef(false);
+  const joystick     = useRef({active:false,sx:0,sy:0,dx:0,dy:0});
 
   const [msgs,    setMsgs]    = useState<ChatMsg[]>([]);
   const [input,   setInput]   = useState('');
@@ -217,338 +213,392 @@ export default function LobbyPanel() {
     const canvas = canvasRef.current; if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
 
-    // ── Tile drawing ────────────────────────────────────────────────────────
-    function drawTile(col:number, row:number, camX:number, camY:number, ts:number) {
-      const sx=col*TILE-camX, sy=row*TILE-camY;
-      const cell=MAP[row][col];
-      const pulse=Math.sin(ts*.0015)*.5+.5;
+    function loop(ts: number) {
+      rafRef.current = requestAnimationFrame(loop);
+      const dt = Math.min((ts - (lastTime.current||ts)) / 1000, .1);
+      lastTime.current = ts;
 
-      if (cell===1) {
-        ctx.fillStyle='#050510';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        // Glow on faces adjacent to walkable cells
-        const faces=[
-          {dr:1,dc:0,  fx:sx,         fy:sy+TILE-3, fw:TILE, fh:3},
-          {dr:-1,dc:0, fx:sx,         fy:sy,         fw:TILE, fh:3},
-          {dr:0,dc:1,  fx:sx+TILE-3, fy:sy,         fw:3,    fh:TILE},
-          {dr:0,dc:-1, fx:sx,         fy:sy,         fw:3,    fh:TILE},
-        ];
-        for (const {dr,dc,fx,fy,fw,fh} of faces) {
-          const nr=row+dr, nc=col+dc;
-          if (nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
-          if (MAP[nr][nc]===1) continue;
-          ctx.fillStyle=rgba(zoneAt(nr,nc), .65);
-          ctx.fillRect(fx,fy,fw,fh);
-        }
-        return;
-      }
-
-      if (cell===0) {
-        ctx.fillStyle=(col+row)%2===0?'#0d0d1a':'#0f0f1e';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        ctx.strokeStyle='rgba(255,255,255,0.02)';
-        ctx.lineWidth=1;
-        ctx.strokeRect(sx+.5,sy+.5,TILE-1,TILE-1);
-        const zc=zoneAt(row,col);
-        ctx.fillStyle=rgba(zc,.05+.03*pulse);
-        ctx.fillRect(sx,sy,TILE,TILE);
-        return;
-      }
-
-      if (cell===3) {
-        ctx.fillStyle='#0e0520';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        ctx.strokeStyle=rgba('#9d4edd',.25+.15*pulse);
-        ctx.lineWidth=1;
-        ctx.strokeRect(sx+.5,sy+.5,TILE-1,TILE-1);
-        // Inner cross-glow
-        ctx.fillStyle=rgba('#9d4edd',.06+.04*pulse);
-        ctx.fillRect(sx+TILE*.25,sy,TILE*.5,TILE);
-        ctx.fillRect(sx,sy+TILE*.25,TILE,TILE*.5);
-        return;
-      }
-
-      if (cell===4) {
-        ctx.fillStyle='#07070f';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        ctx.strokeStyle=rgba('#00f5ff',.07+.03*pulse);
-        ctx.lineWidth=.5;
-        for (let i=0;i<=TILE;i+=8) {
-          ctx.beginPath(); ctx.moveTo(sx+i,sy); ctx.lineTo(sx+i,sy+TILE); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(sx,sy+i); ctx.lineTo(sx+TILE,sy+i); ctx.stroke();
-        }
-        return;
-      }
-
-      if (cell===5) {
-        ctx.fillStyle='#070710';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        // Sleepers
-        ctx.fillStyle='rgba(55,45,35,.8)';
-        for (let i=4;i<TILE;i+=10) ctx.fillRect(sx+3,sy+i,TILE-6,4);
-        // Rails
-        const rc=rgba('#a0a0c0',.85);
-        ctx.fillStyle=rc;
-        ctx.fillRect(sx+7,sy,4,TILE);
-        ctx.fillRect(sx+TILE-11,sy,4,TILE);
-        // Rail highlight
-        ctx.fillStyle='rgba(200,210,255,.35)';
-        ctx.fillRect(sx+7,sy,1,TILE);
-        ctx.fillRect(sx+TILE-11,sy,1,TILE);
-        // Amber track ambient
-        ctx.fillStyle=rgba('#f5a623',.05+.03*pulse);
-        ctx.fillRect(sx,sy,TILE,TILE);
-        return;
-      }
-
-      if (cell===2) {
-        ctx.fillStyle=(col+row)%2===0?'#0d0d1a':'#0f0f1e';
-        ctx.fillRect(sx,sy,TILE,TILE);
-        const pw=22,ph=34,px=sx+(TILE-pw)/2,py=sy+(TILE-ph)/2;
-        const bg=ctx.createLinearGradient(px,py,px+pw,py);
-        bg.addColorStop(0,'#18182e'); bg.addColorStop(.5,'#22223a'); bg.addColorStop(1,'#18182e');
-        ctx.fillStyle=bg; ctx.fillRect(px,py,pw,ph);
-        const zc=zoneAt(row,col);
-        const cap=ctx.createLinearGradient(px,py,px,py+10);
-        cap.addColorStop(0,rgba(zc,.8+.15*pulse));
-        cap.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=cap; ctx.fillRect(px,py,pw,10);
-        ctx.strokeStyle=rgba(zc,.4+.2*pulse);
-        ctx.lineWidth=1;
-        ctx.shadowBlur=5; ctx.shadowColor=zc;
-        ctx.strokeRect(px+.5,py+.5,pw-1,ph-1);
-        ctx.shadowBlur=0;
-      }
-    }
-
-    // ── Puddles ────────────────────────────────────────────────────────────
-    function drawPuddles(camX:number,camY:number,ts:number) {
-      const pulse=Math.sin(ts*.0008)*.5+.5;
-      for (const p of PUDDLES) {
-        const sx=p.wx-camX, sy=p.wy-camY;
-        if (Math.abs(sx)>logicalSize.current.w+p.rx*2||Math.abs(sy)>logicalSize.current.h+p.ry*2) continue;
-        const g=ctx.createRadialGradient(sx,sy,0,sx,sy,p.rx);
-        g.addColorStop(0, rgba(p.color,.12+.06*pulse));
-        g.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.save(); ctx.globalAlpha=1;
-        ctx.fillStyle=g;
-        ctx.beginPath(); ctx.ellipse(sx,sy,p.rx,p.ry,0,0,Math.PI*2); ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    // ── Neon signs ─────────────────────────────────────────────────────────
-    function drawSigns(camX:number,camY:number,ts:number) {
-      const {w:cw,h:ch}=logicalSize.current;
-      const pulse=Math.sin(ts*.0012)*.25+.75;
-      for (const s of SIGNS) {
-        const sx=s.wx-camX, sy=s.wy-camY;
-        if (sx<-200||sx>cw+200||sy<-30||sy>ch+30) continue;
-        ctx.save();
-        ctx.font=`900 ${s.sz}px "Orbitron",monospace`;
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.shadowBlur=20*pulse; ctx.shadowColor=s.color;
-        ctx.fillStyle=rgba(s.color,.85*pulse);
-        ctx.fillText(s.text,sx,sy);
-        // Subtle second glow pass
-        ctx.shadowBlur=6; ctx.fillStyle=rgba(s.color,.4);
-        ctx.fillText(s.text,sx,sy);
-        ctx.restore();
-      }
-    }
-
-    // ── Particles ──────────────────────────────────────────────────────────
-    function stepParticles(dt:number,camX:number,camY:number) {
-      const {w:cw,h:ch}=logicalSize.current;
-      const pts=particlesRef.current;
-      for (let i=0;i<pts.length;i++) {
-        const p=pts[i];
-        p.x+=p.vx*dt*8; p.y+=p.vy*dt*8; p.alpha-=dt*.06;
-        if (p.alpha<=0||p.y<0||p.x<0||p.x>MAP_W||p.y>MAP_H) { pts[i]=mkPt(); continue; }
-        const sx=p.x-camX, sy=p.y-camY;
-        if (sx<-5||sx>cw+5||sy<-5||sy>ch+5) continue;
-        ctx.save();
-        ctx.globalAlpha=p.alpha;
-        ctx.fillStyle=p.color;
-        ctx.shadowBlur=4; ctx.shadowColor=p.color;
-        ctx.fillRect(sx-p.size*.5,sy-p.size*.5,p.size,p.size);
-        ctx.restore();
-      }
-    }
-
-    // ── Avatar ─────────────────────────────────────────────────────────────
-    function drawAvatar(e: AvatarEntry) {
-      const {sx,sy,portrait,local,name,alpha}=e;
-      const R=AVATAR_R;
-      ctx.save(); ctx.globalAlpha=alpha;
-      // Shadow
-      ctx.beginPath(); ctx.ellipse(sx,sy+R-2,R*.65,5,0,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fill();
-      // Glow ring
-      ctx.beginPath(); ctx.arc(sx,sy,R+3,0,Math.PI*2);
-      ctx.strokeStyle=local?'#ff2d78':'#00f5ff';
-      ctx.lineWidth=2; ctx.shadowBlur=14; ctx.shadowColor=local?'#ff2d78':'#00f5ff';
-      ctx.stroke(); ctx.shadowBlur=0;
-      // Portrait
-      ctx.beginPath(); ctx.arc(sx,sy,R,0,Math.PI*2); ctx.clip();
-      const img=getImg(portrait);
-      if (img) { ctx.drawImage(img,sx-R,sy-R,R*2,R*2); }
-      else {
-        ctx.fillStyle=local?'rgba(255,45,120,.5)':'rgba(157,78,221,.5)'; ctx.fill();
-        ctx.font=`bold ${R}px Orbitron,sans-serif`;
-        ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#fff';
-        ctx.fillText((name[0]??'?').toUpperCase(),sx,sy);
-      }
-      ctx.restore();
-      // Name tag
-      ctx.save(); ctx.globalAlpha=alpha;
-      ctx.font='700 11px "Share Tech Mono",monospace';
-      ctx.textAlign='center'; ctx.textBaseline='top';
-      const tw=ctx.measureText(name).width;
-      ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(sx-tw/2-4,sy+R+3,tw+8,15);
-      ctx.fillStyle=local?'#ff2d78':'#e0e0e0'; ctx.fillText(name,sx,sy+R+4);
-      ctx.restore();
-    }
-
-    // ── Speech bubble ──────────────────────────────────────────────────────
-    function drawBubble(e: AvatarEntry, text:string) {
-      const {sx,sy,local}=e;
-      const R=AVATAR_R, PAD=8, LINE=13, MAX=140, TAIL=7;
-      ctx.save();
-      ctx.font='10px "Share Tech Mono",monospace';
-      ctx.textAlign='left'; ctx.textBaseline='top';
-      const words=text.split(' '); const lines:string[]=[]; let cur='';
-      for (const w of words) {
-        const t=cur?cur+' '+w:w;
-        if (ctx.measureText(t).width>MAX-PAD*2&&cur) {
-          lines.push(cur); if(lines.length>=2){lines.push('...');cur='';break;} cur=w;
-        } else cur=t;
-      }
-      if (cur&&lines.length<3) lines.push(cur);
-      const bW=Math.min(MAX,Math.max(...lines.map(l=>ctx.measureText(l).width))+PAD*2);
-      const bH=lines.length*LINE+PAD;
-      const bX=Math.round(sx-bW/2), bY=Math.round(sy-R-TAIL-bH-4), cr=5;
-      const col=local?'#ff2d78':'#00f5ff';
-      ctx.fillStyle='rgba(7,7,20,.94)'; ctx.strokeStyle=col; ctx.lineWidth=1;
-      ctx.shadowBlur=6; ctx.shadowColor=col;
-      ctx.beginPath();
-      ctx.moveTo(bX+cr,bY); ctx.lineTo(bX+bW-cr,bY);
-      ctx.arcTo(bX+bW,bY,bX+bW,bY+cr,cr);
-      ctx.lineTo(bX+bW,bY+bH-cr);
-      ctx.arcTo(bX+bW,bY+bH,bX+bW-cr,bY+bH,cr);
-      ctx.lineTo(sx+7,bY+bH); ctx.lineTo(sx,bY+bH+TAIL); ctx.lineTo(sx-7,bY+bH);
-      ctx.lineTo(bX+cr,bY+bH);
-      ctx.arcTo(bX,bY+bH,bX,bY+bH-cr,cr);
-      ctx.lineTo(bX,bY+cr); ctx.arcTo(bX,bY,bX+cr,bY,cr);
-      ctx.closePath(); ctx.fill(); ctx.shadowBlur=0; ctx.stroke();
-      ctx.fillStyle='#fff';
-      lines.forEach((l,i)=>ctx.fillText(l,bX+PAD,bY+PAD/2+i*LINE));
-      ctx.restore();
-    }
-
-    // ── Scanlines ─────────────────────────────────────────────────────────
-    function drawScanlines(cw:number,ch:number) {
-      ctx.save(); ctx.globalAlpha=.025; ctx.fillStyle='#000';
-      for (let y=0;y<ch;y+=3) ctx.fillRect(0,y,cw,1);
-      ctx.restore();
-    }
-
-    // ── Loop ───────────────────────────────────────────────────────────────
-    function loop(ts:number) {
-      rafRef.current=requestAnimationFrame(loop);
-      const dt=Math.min((ts-(lastTime.current||ts))/1000,.1);
-      lastTime.current=ts;
-
-      const dpr=dprRef.current;
-      const {w:cw,h:ch}=logicalSize.current;
+      const dpr = dprRef.current;
+      const {w:cw, h:ch} = logicalSize.current;
       if (!cw||!ch) return;
       ctx.setTransform(dpr,0,0,dpr,0,0);
 
+      // ── Movement ──────────────────────────────────────────────────────────
       if (!chatFocus.current) {
-        const k=keysRef.current, j=joystick.current;
-        let dx=0,dy=0;
-        if(k.has('ArrowLeft')||k.has('a')||k.has('A'))dx-=1;
-        if(k.has('ArrowRight')||k.has('d')||k.has('D'))dx+=1;
-        if(k.has('ArrowUp')||k.has('w')||k.has('W'))dy-=1;
-        if(k.has('ArrowDown')||k.has('s')||k.has('S'))dy+=1;
-        if(j.active){dx+=j.dx;dy+=j.dy;}
-        if(dx!==0&&dy!==0){dx*=.707;dy*=.707;}
-        if(dx!==0||dy!==0){
-          const[nx,ny]=resolveMove(posRef.current.x,posRef.current.y,dx*SPEED*dt,dy*SPEED*dt);
-          posRef.current={x:nx,y:ny};
-          if(db&&userRef.current&&ts-lastWrite.current>WRITE_MS){
-            lastWrite.current=ts;
-            const u=userRef.current,h=heroRef.current;
+        const k = keysRef.current, j = joystick.current;
+        let dx=0, dy=0;
+        if (k.has('ArrowLeft')||k.has('a')||k.has('A'))  dx -= 1;
+        if (k.has('ArrowRight')||k.has('d')||k.has('D')) dx += 1;
+        if (k.has('ArrowUp')||k.has('w')||k.has('W'))    dy -= 1;
+        if (k.has('ArrowDown')||k.has('s')||k.has('S'))  dy += 1;
+        if (j.active) {
+          // Transform screen-space joystick to isometric world directions
+          const origMag = Math.sqrt(j.dx*j.dx + j.dy*j.dy);
+          if (origMag > 0.01) {
+            const wdx = (j.dx + 2*j.dy) / 2;
+            const wdy = (2*j.dy - j.dx) / 2;
+            const newMag = Math.sqrt(wdx*wdx + wdy*wdy);
+            dx += wdx / newMag * origMag;
+            dy += wdy / newMag * origMag;
+          }
+        }
+        if (dx!==0&&dy!==0) { dx*=.707; dy*=.707; }
+        if (dx!==0||dy!==0) {
+          const [nx,ny] = resolveMove(posRef.current.x, posRef.current.y, dx*SPEED*dt, dy*SPEED*dt);
+          posRef.current = {x:nx, y:ny};
+          if (db&&userRef.current&&ts-lastWrite.current>WRITE_MS) {
+            lastWrite.current = ts;
+            const u=userRef.current, h=heroRef.current;
             setDoc(doc(db,'lobbyPlayers',u.uid),{x:nx,y:ny,portrait:h.portrait??0,username:u.username,updatedAt:Date.now()} satisfies RemotePlayer,{merge:true}).catch(()=>{});
           }
         }
       }
 
-      const{x:px,y:py}=posRef.current;
-      const camX=Math.max(0,Math.min(MAP_W-cw,px-cw/2));
-      const camY=Math.max(0,Math.min(MAP_H-ch,py-ch/2));
+      const {x:px, y:py} = posRef.current;
+      const pulse = Math.sin(ts*.0015)*.5+.5;
+      const now = Date.now();
 
-      // Background
-      ctx.fillStyle='#040408'; ctx.fillRect(0,0,cw,ch);
+      // ── Isometric projection: center player on screen ─────────────────────
+      // iso(wx,wy) → [screen_x, screen_y]
+      // sx = (wx-wy - px+py) + cw/2
+      // sy = (wx+wy - px-py)/2 + ch/2
+      function iso(wx: number, wy: number): [number, number] {
+        return [
+          (wx - wy - px + py) + cw/2,
+          (wx + wy - px - py) / 2 + ch/2,
+        ];
+      }
 
-      // Tiles
-      const c0=Math.max(0,Math.floor(camX/TILE)), c1=Math.min(COLS-1,Math.ceil((camX+cw)/TILE));
-      const r0=Math.max(0,Math.floor(camY/TILE)), r1=Math.min(ROWS-1,Math.ceil((camY+ch)/TILE));
-      for(let r=r0;r<=r1;r++) for(let c=c0;c<=c1;c++) drawTile(c,r,camX,camY,ts);
+      // ── Background ────────────────────────────────────────────────────────
+      ctx.fillStyle = '#040408';
+      ctx.fillRect(0, 0, cw, ch);
 
-      drawPuddles(camX,camY,ts);
-      drawSigns(camX,camY,ts);
-      stepParticles(dt,camX,camY);
+      // ── Tile range to render ──────────────────────────────────────────────
+      const BUF = 20;
+      const pc  = Math.floor(px/TILE), pr = Math.floor(py/TILE);
+      const c0  = Math.max(0, pc-BUF),   c1 = Math.min(COLS-1, pc+BUF);
+      const r0  = Math.max(0, pr-BUF),   r1 = Math.min(ROWS-1, pr+BUF);
 
-      // Avatars (Y-sorted)
-      const now=Date.now();
-      const avatars:AvatarEntry[]=[];
-      remotesRef.current.forEach((p,uid)=>{
-        if(uid===userRef.current?.uid)return;
-        const sx=p.x-camX,sy=p.y-camY;
-        if(sx<-80||sx>cw+80||sy<-80||sy>ch+80)return;
-        avatars.push({sx,sy,portrait:p.portrait,local:false,name:p.username,alpha:now-p.updatedAt>STALE_MS?.3:1,uid});
+      // Helper: draw a diamond at iso top-vertex (tx,ty)
+      function diamond(tx: number, ty: number) {
+        ctx.beginPath();
+        ctx.moveTo(tx,           ty);
+        ctx.lineTo(tx + ISO_HW,  ty + ISO_HH);
+        ctx.lineTo(tx,           ty + ISO_HH*2);
+        ctx.lineTo(tx - ISO_HW,  ty + ISO_HH);
+        ctx.closePath();
+      }
+
+      // ── PASS 1: Floor tiles (no depth sorting needed) ─────────────────────
+      for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+          const cell = MAP[r][c];
+          if (cell === 1 || cell === 2) continue; // drawn in pass 2
+
+          const [tx, ty] = iso(c*TILE, r*TILE);
+          if (tx+ISO_HW < -4 || tx-ISO_HW > cw+4 || ty+ISO_HH*2 < -4 || ty > ch+4) continue;
+
+          const zc = zoneAt(r, c);
+
+          if (cell === 0) {
+            diamond(tx, ty);
+            ctx.fillStyle = (c+r)%2===0 ? '#101020' : '#131328';
+            ctx.fill();
+            diamond(tx, ty);
+            ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            diamond(tx, ty);
+            ctx.fillStyle = rgba(zc, 0.05+0.02*pulse);
+            ctx.fill();
+          } else if (cell === 3) {
+            diamond(tx, ty);
+            ctx.fillStyle = '#0c0620'; ctx.fill();
+            diamond(tx, ty);
+            ctx.strokeStyle = rgba('#9d4edd', 0.18+0.12*pulse);
+            ctx.lineWidth = 0.8; ctx.stroke();
+          } else if (cell === 4) {
+            diamond(tx, ty);
+            ctx.fillStyle = '#060612'; ctx.fill();
+            diamond(tx, ty);
+            ctx.strokeStyle = rgba('#00f5ff', 0.07);
+            ctx.lineWidth = 0.5; ctx.stroke();
+          } else if (cell === 5) {
+            diamond(tx, ty);
+            ctx.fillStyle = '#0a0a0e'; ctx.fill();
+            // Rail lines along world-y axis (appear diagonal in iso)
+            const [ax, ay] = iso(c*TILE + TILE*0.2, r*TILE);
+            const [bx, by] = iso(c*TILE + TILE*0.2, (r+1)*TILE);
+            const [cx2, cy2] = iso(c*TILE + TILE*0.8, r*TILE);
+            const [dx2, dy2] = iso(c*TILE + TILE*0.8, (r+1)*TILE);
+            ctx.save();
+            diamond(tx, ty); ctx.clip();
+            ctx.strokeStyle = rgba('#a0a0c0', 0.7);
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx2,cy2); ctx.lineTo(dx2,dy2); ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // ── PASS 2: Depth-sorted objects ──────────────────────────────────────
+      type Item = { d: number; fn: () => void };
+      const items: Item[] = [];
+
+      // Walls & pillars
+      for (let r = r0; r <= r1; r++) {
+        for (let c = c0; c <= c1; c++) {
+          const cell = MAP[r][c];
+          if (cell !== 1 && cell !== 2) continue;
+          // Use tile south-corner for depth so avatars walking south of wall render on top
+          const depth = (c+1)*TILE + (r+1)*TILE;
+          const cc=c, rr=r, cellc=cell;
+          items.push({ d: depth, fn: () => {
+            const wx=cc*TILE, wy=rr*TILE;
+            const [tx,ty] = iso(wx, wy);
+            if (tx+ISO_HW < -4 || tx-ISO_HW > cw+4 || ty+ISO_HH*2 < -WALL_H-4 || ty > ch+4) return;
+
+            const zc = zoneAt(rr, cc);
+
+            // Dark ground plate under block
+            diamond(tx, ty);
+            ctx.fillStyle = '#040408'; ctx.fill();
+
+            if (cellc === 2) {
+              // ── Pillar (circular column) ────────────────────────────────
+              const [colX, colY] = iso(wx + TILE/2, wy + TILE/2);
+              const pr2 = 9;
+              const H2 = Math.round(WALL_H * 0.85);
+
+              // Shaft (gradient rectangle, clipped behind front of tile)
+              ctx.save();
+              diamond(tx, ty); ctx.clip();
+              const shG = ctx.createLinearGradient(colX-pr2, 0, colX+pr2, 0);
+              shG.addColorStop(0, rgba(zc, 0.45));
+              shG.addColorStop(0.5, rgba(zc, 0.7));
+              shG.addColorStop(1, rgba(zc, 0.45));
+              ctx.fillStyle = shG;
+              ctx.fillRect(colX-pr2, colY-H2, pr2*2, H2+2);
+              ctx.restore();
+
+              // Base ellipse
+              ctx.beginPath();
+              ctx.ellipse(colX, colY, pr2+2, (pr2+2)*0.4, 0, 0, Math.PI*2);
+              ctx.fillStyle = rgba(zc, 0.5); ctx.fill();
+
+              // Cap ellipse (glow)
+              ctx.beginPath();
+              ctx.ellipse(colX, colY-H2, pr2+3, (pr2+3)*0.4, 0, 0, Math.PI*2);
+              ctx.fillStyle = rgba(zc, 0.85+0.12*pulse);
+              ctx.shadowBlur = 10; ctx.shadowColor = zc;
+              ctx.fill(); ctx.shadowBlur = 0;
+            } else {
+              // ── Solid wall block ─────────────────────────────────────────
+              const H = WALL_H;
+
+              // Left face (NW — darker)
+              ctx.beginPath();
+              ctx.moveTo(tx,          ty);
+              ctx.lineTo(tx - ISO_HW, ty + ISO_HH);
+              ctx.lineTo(tx - ISO_HW, ty + ISO_HH - H);
+              ctx.lineTo(tx,          ty - H);
+              ctx.closePath();
+              ctx.fillStyle = rgba(zc, 0.18+0.06*pulse); ctx.fill();
+
+              // Right face (NE — medium)
+              ctx.beginPath();
+              ctx.moveTo(tx,          ty);
+              ctx.lineTo(tx + ISO_HW, ty + ISO_HH);
+              ctx.lineTo(tx + ISO_HW, ty + ISO_HH - H);
+              ctx.lineTo(tx,          ty - H);
+              ctx.closePath();
+              ctx.fillStyle = rgba(zc, 0.28+0.07*pulse); ctx.fill();
+
+              // Top face (diamond, raised)
+              ctx.beginPath();
+              ctx.moveTo(tx,          ty - H);
+              ctx.lineTo(tx + ISO_HW, ty + ISO_HH - H);
+              ctx.lineTo(tx,          ty + ISO_HH*2 - H);
+              ctx.lineTo(tx - ISO_HW, ty + ISO_HH - H);
+              ctx.closePath();
+              ctx.fillStyle = rgba(zc, 0.45+0.12*pulse); ctx.fill();
+              // Edge glow on top
+              ctx.strokeStyle = rgba(zc, 0.65+0.2*pulse);
+              ctx.lineWidth = 0.8;
+              ctx.shadowBlur = 6; ctx.shadowColor = zc;
+              ctx.stroke(); ctx.shadowBlur = 0;
+            }
+          }});
+        }
+      }
+
+      // Characters
+      const addChar = (wx: number, wy: number, portrait: number, local: boolean, name: string, alpha: number, uid: string) => {
+        items.push({ d: wx + wy, fn: () => {
+          const [sx, sy] = iso(wx, wy);
+          const R = AVATAR_R;
+          const ay = sy - R; // avatar center lifted above ground
+
+          ctx.save();
+          if (alpha < 1) ctx.globalAlpha = alpha;
+
+          // Ground shadow
+          ctx.beginPath();
+          ctx.ellipse(sx, sy, R*0.6, R*0.22, 0, 0, Math.PI*2);
+          ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fill();
+
+          // Glow ring
+          ctx.beginPath(); ctx.arc(sx, ay, R+3, 0, Math.PI*2);
+          ctx.strokeStyle = local ? '#ff2d78' : '#00f5ff';
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 14; ctx.shadowColor = local ? '#ff2d78' : '#00f5ff';
+          ctx.stroke(); ctx.shadowBlur = 0;
+
+          // Portrait clipped to circle
+          ctx.save();
+          ctx.beginPath(); ctx.arc(sx, ay, R, 0, Math.PI*2); ctx.clip();
+          const img = getImg(portrait);
+          if (img) {
+            ctx.drawImage(img, sx-R, ay-R, R*2, R*2);
+          } else {
+            ctx.fillStyle = local ? 'rgba(255,45,120,.5)' : 'rgba(157,78,221,.5)'; ctx.fill();
+            ctx.font = `bold ${R}px Orbitron,sans-serif`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
+            ctx.fillText((name[0]??'?').toUpperCase(), sx, ay);
+          }
+          ctx.restore();
+
+          ctx.restore();
+
+          // Name tag (outside clip)
+          ctx.save();
+          if (alpha < 1) ctx.globalAlpha = alpha;
+          ctx.font = '700 11px "Share Tech Mono",monospace';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          const tw = ctx.measureText(name).width;
+          ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(sx-tw/2-4, sy+3, tw+8, 14);
+          ctx.fillStyle = local ? '#ff2d78' : '#e0e0e0';
+          ctx.fillText(name, sx, sy+4);
+          ctx.restore();
+
+          // Speech bubble
+          const bub = bubblesRef.current.get(uid);
+          if (bub && bub.expiresAt > now) {
+            const text = bub.text;
+            const PAD=8, LINE=13, MAX=140, TAIL=7;
+            ctx.font = '10px "Share Tech Mono",monospace';
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            const words = text.split(' '); const lines: string[] = []; let cur = '';
+            for (const w of words) {
+              const t = cur ? cur+' '+w : w;
+              if (ctx.measureText(t).width > MAX-PAD*2 && cur) {
+                lines.push(cur); if(lines.length>=2){lines.push('...');cur='';break;} cur=w;
+              } else cur = t;
+            }
+            if (cur && lines.length<3) lines.push(cur);
+            const bW = Math.min(MAX, Math.max(...lines.map(l=>ctx.measureText(l).width))+PAD*2);
+            const bH = lines.length*LINE+PAD;
+            const bX = Math.round(sx-bW/2), bY = Math.round(ay-R-TAIL-bH-4), cr = 5;
+            const col = local ? '#ff2d78' : '#00f5ff';
+            ctx.fillStyle = 'rgba(7,7,20,.94)'; ctx.strokeStyle = col; ctx.lineWidth = 1;
+            ctx.shadowBlur = 6; ctx.shadowColor = col;
+            ctx.beginPath();
+            ctx.moveTo(bX+cr,bY); ctx.lineTo(bX+bW-cr,bY);
+            ctx.arcTo(bX+bW,bY,bX+bW,bY+cr,cr); ctx.lineTo(bX+bW,bY+bH-cr);
+            ctx.arcTo(bX+bW,bY+bH,bX+bW-cr,bY+bH,cr);
+            ctx.lineTo(sx+7,bY+bH); ctx.lineTo(sx,bY+bH+TAIL); ctx.lineTo(sx-7,bY+bH);
+            ctx.lineTo(bX+cr,bY+bH);
+            ctx.arcTo(bX,bY+bH,bX,bY+bH-cr,cr); ctx.lineTo(bX,bY+cr);
+            ctx.arcTo(bX,bY,bX+cr,bY,cr);
+            ctx.closePath(); ctx.fill(); ctx.shadowBlur=0; ctx.stroke();
+            ctx.fillStyle = '#fff';
+            lines.forEach((l,i) => ctx.fillText(l, bX+PAD, bY+PAD/2+i*LINE));
+          }
+        }});
+      };
+
+      remotesRef.current.forEach((p, uid) => {
+        if (uid === userRef.current?.uid) return;
+        addChar(p.x, p.y, p.portrait, false, p.username, now-p.updatedAt>STALE_MS?.3:1, uid);
       });
-      const localUid=userRef.current?.uid??'';
-      avatars.push({sx:px-camX,sy:py-camY,portrait:heroRef.current.portrait??0,local:true,name:userRef.current?.username??heroRef.current.name,alpha:1,uid:localUid});
-      avatars.sort((a,b)=>a.sy-b.sy);
-      avatars.forEach(e=>drawAvatar(e));
+      const localUid = userRef.current?.uid ?? '';
+      addChar(px, py, heroRef.current.portrait??0, true, userRef.current?.username??heroRef.current.name, 1, localUid);
 
-      // Bubbles (on top)
-      const nowMs=Date.now();
-      bubblesRef.current.forEach((b,uid)=>{if(b.expiresAt<=nowMs)bubblesRef.current.delete(uid);});
-      avatars.forEach(e=>{const b=bubblesRef.current.get(e.uid);if(b&&b.expiresAt>nowMs)drawBubble(e,b.text);});
+      // Neon signs (floating above ground)
+      for (const s of SIGNS) {
+        const ss = s;
+        items.push({ d: ss.wx + ss.wy, fn: () => {
+          const [sx, sy] = iso(ss.wx, ss.wy);
+          const signY = sy - WALL_H - 8;
+          if (sx < -200 || sx > cw+200 || signY < -30 || signY > ch+30) return;
+          const sp = Math.sin(ts*.0012)*.25+.75;
+          ctx.save();
+          ctx.font = `900 ${ss.sz}px "Orbitron",monospace`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.shadowBlur = 22*sp; ctx.shadowColor = ss.color;
+          ctx.fillStyle = rgba(ss.color, 0.88*sp);
+          ctx.fillText(ss.text, sx, signY);
+          ctx.shadowBlur = 5;
+          ctx.fillStyle = rgba(ss.color, 0.38);
+          ctx.fillText(ss.text, sx, signY);
+          ctx.restore();
+        }});
+      }
 
-      // HUD
-      ctx.font='700 10px "Share Tech Mono",monospace';
-      const hudTxt=`● ${remotesRef.current.size+1} ONLINE`;
-      ctx.textAlign='right';
-      const hudW=ctx.measureText(hudTxt).width+16;
-      ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(cw-hudW-4,6,hudW,18);
-      ctx.fillStyle='#00f5ff'; ctx.fillText(hudTxt,cw-8,19);
-      const hint='WASD / arrows / touch';
-      ctx.textAlign='left';
-      const hintW=ctx.measureText(hint).width+16;
-      ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(4,6,hintW,18);
-      ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fillText(hint,12,19);
+      // Sort ascending (furthest from camera first) then render
+      items.sort((a,b) => a.d - b.d);
+      for (const item of items) item.fn();
 
-      drawScanlines(cw,ch);
+      // ── Particles (world-pos to iso screen) ──────────────────────────────
+      const pts = particlesRef.current;
+      for (let i=0; i<pts.length; i++) {
+        const p = pts[i];
+        p.x+=p.vx*dt*8; p.y+=p.vy*dt*8; p.alpha-=dt*.06;
+        if (p.alpha<=0||p.y<0||p.x<0||p.x>MAP_W||p.y>MAP_H) { pts[i]=mkPt(); continue; }
+        const [sx,sy] = iso(p.x, p.y);
+        if (sx<-5||sx>cw+5||sy<-5||sy>ch+5) continue;
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 4; ctx.shadowColor = p.color;
+        ctx.fillRect(sx-p.size*.5, sy-p.size*.5, p.size, p.size);
+        ctx.restore();
+      }
 
-      // Joystick
-      const j=joystick.current;
-      if(j.active){
-        const jR=40;
-        ctx.save(); ctx.globalAlpha=.25;
-        ctx.beginPath(); ctx.arc(j.sx,j.sy,jR,0,Math.PI*2);
-        ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); ctx.restore();
-        ctx.save(); ctx.globalAlpha=.6;
-        ctx.beginPath(); ctx.arc(j.sx+j.dx*jR,j.sy+j.dy*jR,18,0,Math.PI*2);
-        ctx.fillStyle='#ff2d78'; ctx.fill(); ctx.restore();
+      // ── HUD ───────────────────────────────────────────────────────────────
+      ctx.font = '700 10px "Share Tech Mono",monospace';
+      const hudTxt = `● ${remotesRef.current.size+1} ONLINE`;
+      ctx.textAlign = 'right';
+      const hudW = ctx.measureText(hudTxt).width + 16;
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(cw-hudW-4, 6, hudW, 18);
+      ctx.fillStyle = '#00f5ff'; ctx.fillText(hudTxt, cw-8, 19);
+      const hint = 'WASD / arrows / touch';
+      ctx.textAlign = 'left';
+      const hintW = ctx.measureText(hint).width + 16;
+      ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(4, 6, hintW, 18);
+      ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillText(hint, 12, 19);
+
+      // ── Scanlines ─────────────────────────────────────────────────────────
+      ctx.save(); ctx.globalAlpha = .025; ctx.fillStyle = '#000';
+      for (let y=0; y<ch; y+=3) ctx.fillRect(0, y, cw, 1);
+      ctx.restore();
+
+      // ── Joystick ──────────────────────────────────────────────────────────
+      const j = joystick.current;
+      if (j.active) {
+        const jR = 40;
+        ctx.save(); ctx.globalAlpha = .25;
+        ctx.beginPath(); ctx.arc(j.sx, j.sy, jR, 0, Math.PI*2);
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+        ctx.save(); ctx.globalAlpha = .6;
+        ctx.beginPath(); ctx.arc(j.sx+j.dx*jR, j.sy+j.dy*jR, 18, 0, Math.PI*2);
+        ctx.fillStyle = '#ff2d78'; ctx.fill(); ctx.restore();
       }
     }
 
-    rafRef.current=requestAnimationFrame(loop);
-    return ()=>cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
   // ── Keyboard ──────────────────────────────────────────────────────────────
