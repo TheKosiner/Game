@@ -239,6 +239,20 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
+    // Lobby presence (one doc per player, owner-only write)
+    match /lobbyPlayers/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+    }
+
+    // Lobby chat
+    match /lobbyChat/{msgId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.text.size() <= 200;
+    }
+
     // Global chat
     match /globalChat/{msgId} {
       allow read: if isAuthenticated();
