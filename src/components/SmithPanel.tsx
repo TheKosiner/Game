@@ -5,7 +5,6 @@ import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
-import { enhanceMultiplier } from '../utils/combat';
 import smithImg from '../assets/smith.webp';
 import ItemIcon from './ItemIcon';
 import { getItemName } from '../data/itemGenerator';
@@ -302,9 +301,8 @@ export default function SmithPanel() {
     const entries = (Object.entries(freshSelected.item.stats) as [keyof Stats, number][])
       .filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
     if (!entries.length) return null;
-    const [stat] = entries[0];
-    const perLevel = Math.max(1, Math.round(freshSelected.item.level * 0.07));
-    return { stat, perLevel, label: STAT_LABEL[stat] };
+    const [stat, val] = entries[0];
+    return { stat, baseVal: val, label: STAT_LABEL[stat] };
   })();
 
   return (
@@ -437,9 +435,10 @@ export default function SmithPanel() {
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                     {isWeapon && (() => {
-                      const base = Math.max(1, Math.round(freshSelected!.item.level * 0.1));
-                      const cur = enhanceMultiplier(freshEnh) * base;
-                      const nxt = enhanceMultiplier(freshEnh + 1) * base;
+                      const base = freshSelected!.item.attackBonus ?? 0;
+                      if (base <= 0) return null;
+                      const cur = Math.round(base * freshEnh / MAX_ENHANCE);
+                      const nxt = Math.round(base * (freshEnh + 1) / MAX_ENHANCE);
                       return (
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>ATK bonus</span>
@@ -450,9 +449,10 @@ export default function SmithPanel() {
                       );
                     })()}
                     {isDefense && (() => {
-                      const base = Math.max(1, Math.round(freshSelected!.item.level * 0.07));
-                      const cur = enhanceMultiplier(freshEnh) * base;
-                      const nxt = enhanceMultiplier(freshEnh + 1) * base;
+                      const base = freshSelected!.item.defenseBonus ?? 0;
+                      if (base <= 0) return null;
+                      const cur = Math.round(base * freshEnh / MAX_ENHANCE);
+                      const nxt = Math.round(base * (freshEnh + 1) / MAX_ENHANCE);
                       return (
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>DEF bonus</span>
@@ -463,8 +463,8 @@ export default function SmithPanel() {
                       );
                     })()}
                     {isCore && coreBonus && (() => {
-                      const cur = enhanceMultiplier(freshEnh) * coreBonus.perLevel;
-                      const nxt = enhanceMultiplier(freshEnh + 1) * coreBonus.perLevel;
+                      const cur = Math.round(coreBonus.baseVal * freshEnh / MAX_ENHANCE);
+                      const nxt = Math.round(coreBonus.baseVal * (freshEnh + 1) / MAX_ENHANCE);
                       return (
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
