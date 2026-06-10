@@ -259,6 +259,7 @@ export interface GameState {
   upgradeAttribute: (attr: keyof Stats) => void;
   addCombatLog: (message: string, type: CombatLog['type']) => void;
   refreshShop: () => void;
+  clearShopPurchased: () => void;
   performPvp: (opponent: PvpOpponent) => PvpResult | null;
   recordPvpResult: (won: boolean, opponent: PvpOpponent) => PvpResult;
   checkDailyReset: () => void;
