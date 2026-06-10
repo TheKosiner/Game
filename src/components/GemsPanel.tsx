@@ -5,6 +5,7 @@ import { PORTRAIT_LIST } from '../data/portraits';
 import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
 import { MONO, ORB } from '../utils/styles';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import gemShopSrc from '../assets/gem-shop.webp';
 
 const GEM_PACKAGES = [
@@ -17,6 +18,7 @@ export default function GemsPanel() {
   const t    = useT();
   const hero = useGameStore(s => s.hero);
   const gemBuyPortrait = useGameStore(s => s.gemBuyPortrait);
+  const isDesktop = useIsDesktop();
 
   const [buyingId, setBuyingId]     = useState<string | null>(null);
   const [flashMsg, setFlashMsg]     = useState<{ text: string; ok: boolean } | null>(null);
@@ -50,110 +52,118 @@ export default function GemsPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Header image */}
-      <div style={{ position: 'relative' }}>
-        <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(157,78,221,0.2)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
-      </div>
+      {/* Image + main content side by side on PC */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
-      {/* Flash message from Stripe return */}
-      {flashMsg && (
-        <div style={{
-          padding: '10px 14px',
-          background: flashMsg.ok ? 'rgba(0,229,100,0.1)' : 'rgba(255,45,120,0.1)',
-          border: `1px solid ${flashMsg.ok ? 'rgba(0,229,100,0.4)' : 'rgba(255,45,120,0.4)'}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        }}>
-          <span style={{ ...MONO, fontSize: 11, color: flashMsg.ok ? '#00e564' : '#ff2d78' }}>
-            {flashMsg.text}
-          </span>
-          <button onClick={() => setFlashMsg(null)} aria-label="Dismiss message" style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+        {/* Header image – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 100 }}>
+          <img src={gemShopSrc} alt="Sklep z gemami" style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block', border: '1px solid rgba(157,78,221,0.2)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
         </div>
-      )}
 
-      {/* Balance */}
-      <div className="card p-3" style={{
-        background: 'linear-gradient(135deg, rgba(0,229,255,0.06), rgba(0,0,0,0.8))',
-        border: '1px solid rgba(0,229,255,0.3)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 0 20px rgba(0,229,255,0.08)',
-      }}>
-        <div>
-          <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 8px rgba(0,229,255,0.6)', marginBottom: 4 }}>
-            {t.gems.title}
-          </p>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.gems.earnTitle}</p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <p style={{ ...ORB, fontSize: 28, color: '#00e5ff', textShadow: '0 0 16px rgba(0,229,255,0.8)', lineHeight: 1 }}>
-            💎 {hero.gems}
-          </p>
-        </div>
-      </div>
+        {/* Right column: flash + balance + earn + buy */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* How to earn */}
-      <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 6px rgba(0,229,255,0.5)', marginBottom: 2 }}>
-          {t.gems.earnTitle}
-        </p>
-        {[
-          { icon: '📅', text: t.gems.earnDaily },
-          { icon: '⬆', text: t.gems.earnLevel },
-        ].map(({ icon, text }) => (
-          <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 16, width: 24, textAlign: 'center' }}>{icon}</span>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{text}</span>
+          {/* Flash message from Stripe return */}
+          {flashMsg && (
+            <div style={{
+              padding: '10px 14px',
+              background: flashMsg.ok ? 'rgba(0,229,100,0.1)' : 'rgba(255,45,120,0.1)',
+              border: `1px solid ${flashMsg.ok ? 'rgba(0,229,100,0.4)' : 'rgba(255,45,120,0.4)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={{ ...MONO, fontSize: 11, color: flashMsg.ok ? '#00e564' : '#ff2d78' }}>
+                {flashMsg.text}
+              </span>
+              <button onClick={() => setFlashMsg(null)} aria-label="Dismiss message" style={{ background: 'none', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            </div>
+          )}
+
+          {/* Balance */}
+          <div className="card p-3" style={{
+            background: 'linear-gradient(135deg, rgba(0,229,255,0.06), rgba(0,0,0,0.8))',
+            border: '1px solid rgba(0,229,255,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxShadow: '0 0 20px rgba(0,229,255,0.08)',
+          }}>
+            <div>
+              <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 8px rgba(0,229,255,0.6)', marginBottom: 4 }}>
+                {t.gems.title}
+              </p>
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.gems.earnTitle}</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ ...ORB, fontSize: 28, color: '#00e5ff', textShadow: '0 0 16px rgba(0,229,255,0.8)', lineHeight: 1 }}>
+                💎 {hero.gems}
+              </p>
+            </div>
           </div>
-        ))}
-      </div>
 
+          {/* How to earn */}
+          <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', textShadow: '0 0 6px rgba(0,229,255,0.5)', marginBottom: 2 }}>
+              {t.gems.earnTitle}
+            </p>
+            {[
+              { icon: '📅', text: t.gems.earnDaily },
+              { icon: '⬆', text: t.gems.earnLevel },
+            ].map(({ icon, text }) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16, width: 24, textAlign: 'center' }}>{icon}</span>
+                <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{text}</span>
+              </div>
+            ))}
+          </div>
 
-      {/* Buy gems */}
-      <div className="card p-3" style={{
-        background: 'linear-gradient(135deg, rgba(157,78,221,0.04), rgba(0,0,0,0.8))',
-        border: '1px solid rgba(157,78,221,0.2)',
-        display: 'flex', flexDirection: 'column', gap: 10,
-      }}>
-        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>
-          {t.gems.buyGemsTitle}
-        </p>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {GEM_PACKAGES.map(pkg => {
-            const isLoading = buyingId === pkg.id;
-            const disabled  = !isFirebaseConfigured || !!buyingId;
-            return (
-              <button
-                key={pkg.id}
-                onClick={() => handleBuy(pkg.id)}
-                disabled={disabled}
-                style={{
-                  flex: 1,
-                  border: `1px solid ${isLoading ? 'rgba(157,78,221,0.6)' : 'rgba(157,78,221,0.3)'}`,
-                  padding: '10px 4px',
-                  textAlign: 'center',
-                  background: isLoading ? 'rgba(157,78,221,0.12)' : 'rgba(157,78,221,0.06)',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled && !isLoading ? 0.5 : 1,
-                  transition: 'all 0.15s',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                }}
-              >
-                <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', margin: 0 }}>
-                  {isLoading ? '⏳' : `${pkg.gems} 💎`}
-                </p>
-                <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{pkg.price}</p>
-              </button>
-            );
-          })}
-        </div>
-        {!isFirebaseConfigured && (
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-            {t.gems.buyGemsSoon}
-          </p>
-        )}
-      </div>
+          {/* Buy gems */}
+          <div className="card p-3" style={{
+            background: 'linear-gradient(135deg, rgba(157,78,221,0.04), rgba(0,0,0,0.8))',
+            border: '1px solid rgba(157,78,221,0.2)',
+            display: 'flex', flexDirection: 'column', gap: 10,
+          }}>
+            <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>
+              {t.gems.buyGemsTitle}
+            </p>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {GEM_PACKAGES.map(pkg => {
+                const isLoading = buyingId === pkg.id;
+                const disabled  = !isFirebaseConfigured || !!buyingId;
+                return (
+                  <button
+                    key={pkg.id}
+                    onClick={() => handleBuy(pkg.id)}
+                    disabled={disabled}
+                    style={{
+                      flex: 1,
+                      border: `1px solid ${isLoading ? 'rgba(157,78,221,0.6)' : 'rgba(157,78,221,0.3)'}`,
+                      padding: '10px 4px',
+                      textAlign: 'center',
+                      background: isLoading ? 'rgba(157,78,221,0.12)' : 'rgba(157,78,221,0.06)',
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled && !isLoading ? 0.5 : 1,
+                      transition: 'all 0.15s',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    }}
+                  >
+                    <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', margin: 0 }}>
+                      {isLoading ? '⏳' : `${pkg.gems} 💎`}
+                    </p>
+                    <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{pkg.price}</p>
+                  </button>
+                );
+              })}
+            </div>
+            {!isFirebaseConfigured && (
+              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
+                {t.gems.buyGemsSoon}
+              </p>
+            )}
+          </div>
 
-      {/* Portrait shop */}
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
+
+      {/* Portrait shop – always full width below */}
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>
           {t.gems.portraitShopTitle}

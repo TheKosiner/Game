@@ -134,8 +134,8 @@ export function ShopSubNav({ active, onChange }: { active: ShopSub; onChange: (t
       tabs={[
         { id: 'shop'      as ShopSub, label: t.nav.shop },
         { id: 'smith'     as ShopSub, label: t.nav.smith },
-        { id: 'casino'    as ShopSub, label: t.nav.casino },
         { id: 'enchanter' as ShopSub, label: 'ZAKLINACZ' },
+        { id: 'casino'    as ShopSub, label: t.nav.casino },
         { id: 'gems'      as ShopSub, label: t.nav.gems },
       ]}
       active={active}
