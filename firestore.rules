@@ -162,9 +162,10 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt', 'lastCaptureAt'])
         && request.resource.data.treasury >= resource.data.treasury;
-      // Any authenticated user may stamp lastLostAt (attacker writes to the defending guild after capture)
+      // Attacker (non-member) may stamp lastLostAt on the defending guild after capture — limited to guild members of any guild
       allow update: if isAuthenticated()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt'])
+        && get(/databases/$(database)/documents/players/$(request.auth.uid)).data.guildId != null;
       // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])

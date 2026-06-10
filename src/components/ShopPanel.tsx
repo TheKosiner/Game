@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { generateShopItems } from '../data/items';
@@ -49,8 +49,9 @@ export default function ShopPanel() {
   const t    = useT();
   const lang = useLangStore(s => s.lang);
   const hero = useGameStore(s => s.hero);
-  const buyShopItem  = useGameStore(s => s.buyShopItem);
-  const refreshShop  = useGameStore(s => s.refreshShop);
+  const buyShopItem        = useGameStore(s => s.buyShopItem);
+  const refreshShop        = useGameStore(s => s.refreshShop);
+  const clearShopPurchased = useGameStore(s => s.clearShopPurchased);
   const shopSeed     = useGameStore(s => s.shopSeed);
   const lastShopRefresh = useGameStore(s => s.lastShopRefresh);
   const shopPurchased   = useGameStore(s => s.shopPurchased);
@@ -64,6 +65,14 @@ export default function ShopPanel() {
 
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+
+  const levelRef = useRef(hero.level);
+  useEffect(() => {
+    if (hero.level !== levelRef.current) {
+      levelRef.current = hero.level;
+      clearShopPurchased();
+    }
+  }, [hero.level, clearShopPurchased]);
 
   const allItems = useMemo(() => generateShopItems(hero.level, shopSeed), [hero.level, shopSeed]);
   const shopItems = useMemo(

@@ -905,8 +905,13 @@ export async function commitSiegeDamage(
   damage: number,
   playerUid: string,
 ): Promise<number> {
-  if (!db || damage <= 0) return 0;
+  if (!db) return 0;
   const ref = doc(db, 'territories', territoryId);
+  if (damage <= 0) {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return 0;
+    return (snap.data() as TerritoryState).siegeCurrentHp ?? 0;
+  }
   return runTransaction(db, async tx => {
     const snap = await tx.get(ref);
     if (!snap.exists()) return 0;

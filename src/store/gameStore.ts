@@ -710,6 +710,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
+  clearShopPurchased: () => set({ shopPurchased: [] }),
+
   performPvp: (opponent: PvpOpponent): PvpResult | null => {
     const { hero, pvpWins, pvpLosses, pvpRating, pvpLog, inCombat } = get();
     let { lastPvpFight } = get();
@@ -1035,7 +1037,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const freshHero = get().hero;
         const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
         const newInventory = [...freshHero.inventory, ...loot];
-        const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+        const newUnlocked = Math.max(challengeUnlocked, challengeFight.bossIdx + 1);
         set({ hero: { ...freshHero, inventory: newInventory }, challengeUnlocked: newUnlocked, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot } });
         get().saveGame();
         return;
@@ -1059,7 +1061,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const freshHero = get().hero;
         const loot = challengeLoot(challengeFight.bossIdx, freshHero.level, freshHero.inventory);
         const newInventory = [...freshHero.inventory, ...loot];
-        const newUnlocked = Math.max(challengeUnlocked, Math.min(challengeFight.bossIdx + 1, CHALLENGE_BOSSES.length - 1));
+        const newUnlocked = Math.max(challengeUnlocked, challengeFight.bossIdx + 1);
         set({ hero: { ...freshHero, inventory: newInventory }, challengeUnlocked: newUnlocked, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: true, bossIdx: challengeFight.bossIdx, log, loot } });
         get().saveGame();
         return;

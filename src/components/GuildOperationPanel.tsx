@@ -244,7 +244,7 @@ export default function GuildOperationPanel({
   const isDead          = raidHp <= 0;
   const hpPctHero  = hero.maxHp > 0 ? Math.max(0, (raidHp / hero.maxHp) * 100) : 0;
 
-  const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy[myUid];
+  const alreadyClaimed = isCompleted && !!op.pendingReward?.claimedBy?.[myUid];
   const loc = op ? GUILD_OP_LOCATIONS.find(l => l.id === op.locationId) : null;
 
   const hpPct   = op ? Math.max(0, (op.enemyHp / op.enemyMaxHp) * 100) : 0;

@@ -658,6 +658,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   const [territories, setTerritories] = useState<Record<string, TerritoryState>>({});
   const [loading,     setLoading]     = useState(true);
   const [combat,      setCombat]      = useState<SiegeCombatState | null>(null);
+  const combatRef = useRef<SiegeCombatState | null>(null);
+  useEffect(() => { combatRef.current = combat; }, [combat]);
   const [claimingId,  setClaimingId]  = useState<string | null>(null);
   const [committing,  setCommitting]  = useState(false);
   const [abandoning,  setAbandoning]  = useState<string | null>(null);
@@ -935,7 +937,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     setCommitting(true);
     try {
       const newHp = await commitSiegeDamage(combat.territory.id, guild.id, combat.damageDealt, myUid ?? 'unknown');
-      if (newHp <= 0 || combat.won) {
+      if (newHp <= 0 || combatRef.current?.won) {
         const members  = Object.values(guild.members);
         const avgLevel = members.length > 0
           ? Math.round(members.reduce((s, m) => s + m.level, 0) / members.length)
