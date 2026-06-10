@@ -376,14 +376,6 @@ export default function LeaderboardPanel() {
             </div>
           )}
 
-          {selected && (
-            <PlayerProfile
-              entry={selected}
-              rank={selectedRank}
-              onClose={() => setSelected(null)}
-            />
-          )}
-
           {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.loading}</p>}
           {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{t.leaderboard.error}</p>}
           {!loading && !error && entries.length === 0 && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.noPlayers}</p>}
@@ -397,56 +389,64 @@ export default function LeaderboardPanel() {
                 const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : 'var(--text-dim)';
 
                 return (
-                  <div
-                    key={entry.uid}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => selectEntry(entry, rank)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
-                    style={{
-                      background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
-                      border: `1px solid ${isSelected ? 'rgba(255,215,0,0.4)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
-                      padding: '7px 8px',
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      cursor: 'pointer',
-                      transition: 'border-color 0.15s, background 0.15s',
-                    }}
-                  >
-                    <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
-                      {rank <= 3
-                        ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
-                        : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
-                      }
-                    </div>
+                  <div key={entry.uid} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => selectEntry(entry, rank)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+                      style={{
+                        background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
+                        border: `1px solid ${isSelected ? 'rgba(255,215,0,0.4)' : isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
+                        padding: '7px 8px',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        cursor: 'pointer',
+                        transition: 'border-color 0.15s, background 0.15s',
+                      }}
+                    >
+                      <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
+                        {rank <= 3
+                          ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+                          : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
+                        }
+                      </div>
 
-                    <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0 }}>
-                      <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                    </div>
+                      <div style={{ width: 36, height: 36, overflow: 'hidden', flexShrink: 0 }}>
+                        <img src={portraitSrc(resolvePortrait(entry.portrait, entry.username))} alt="portret" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {entry.username}{isMe ? ' ◀' : ''}
-                      </p>
-                      {(entry.pvpWins !== undefined || entry.pvpLosses !== undefined) && (
-                        <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                          {entry.pvpWins ?? 0}W / {entry.pvpLosses ?? 0}L
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ ...PX(6), color: isMe ? 'var(--gold-bright)' : 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {entry.username}{isMe ? ' ◀' : ''}
                         </p>
-                      )}
-                    </div>
+                        {(entry.pvpWins !== undefined || entry.pvpLosses !== undefined) && (
+                          <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                            {entry.pvpWins ?? 0}W / {entry.pvpLosses ?? 0}L
+                          </p>
+                        )}
+                      </div>
 
-                    <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
-                      <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
-                      {entry.pvpRating !== undefined && (
-                        <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
-                          ⚔ {entry.pvpRating}
-                        </span>
-                      )}
-                      {entry.guildTag && (
-                        <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
-                          [{entry.guildTag}]
-                        </span>
-                      )}
+                      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                        <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
+                        {entry.pvpRating !== undefined && (
+                          <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
+                            ⚔ {entry.pvpRating}
+                          </span>
+                        )}
+                        {entry.guildTag && (
+                          <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00cc66', background: 'rgba(0,204,102,0.1)', border: '1px solid rgba(0,204,102,0.3)', padding: '1px 4px' }}>
+                            [{entry.guildTag}]
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    {isSelected && (
+                      <PlayerProfile
+                        entry={entry}
+                        rank={rank}
+                        onClose={() => setSelected(null)}
+                      />
+                    )}
                   </div>
                 );
               })}
