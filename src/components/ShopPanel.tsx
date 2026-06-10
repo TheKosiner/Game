@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import { generateShopItems } from '../data/items';
 import ItemIcon from './ItemIcon';
 import type { Item } from '../types';
@@ -49,6 +50,7 @@ export default function ShopPanel() {
   const t    = useT();
   const lang = useLangStore(s => s.lang);
   const hero = useGameStore(s => s.hero);
+  const isDesktop = useIsDesktop();
   const buyShopItem        = useGameStore(s => s.buyShopItem);
   const refreshShop        = useGameStore(s => s.refreshShop);
   const clearShopPurchased = useGameStore(s => s.clearShopPurchased);
@@ -167,67 +169,75 @@ export default function ShopPanel() {
   return (
     <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <p style={{
-            fontSize: 10, marginBottom: 2,
-            background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-          }}>{t.shop.title}</p>
-          <p style={{ color: '#475569', fontSize: 10 }}>{t.shop.subtitle}</p>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
+
+        {/* Shop image – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 100 }}>
+          <img
+            src="/shop_bg.webp"
+            alt="Shop"
+            style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: '#fbbf24', fontSize: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 8px' }}>
-            🪙 {hero.gold}
-          </span>
-          <button onClick={refreshShop} disabled={!canRefresh} className="btn btn-secondary"
-            style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}>
-            {t.shop.refresh}
-          </button>
-        </div>
-      </div>
 
-      {/* Cooldown */}
-      {!canRefresh && (
-        <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '6px 10px', textAlign: 'center' }}>
-          <p style={{ color: '#64748b', fontSize: 10 }}>{t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} /></p>
-        </div>
-      )}
+        {/* Right column: header + items + compare */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Notification */}
-      {notification && (
-        <div style={{
-          background: notification.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-          border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
-          padding: '7px 12px', textAlign: 'center',
-          color: notification.ok ? '#4ade80' : '#f87171', fontSize: 10,
-        }}>
-          {notification.text}
-        </div>
-      )}
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <p style={{
+                fontSize: 10, marginBottom: 2,
+                background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+              }}>{t.shop.title}</p>
+              <p style={{ color: '#475569', fontSize: 10 }}>{t.shop.subtitle}</p>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: '#fbbf24', fontSize: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 8px' }}>
+                🪙 {hero.gold}
+              </span>
+              <button onClick={refreshShop} disabled={!canRefresh} className="btn btn-secondary"
+                style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}>
+                {t.shop.refresh}
+              </button>
+            </div>
+          </div>
 
-      {/* Shop image */}
-      <div style={{ position: 'relative' }}>
-        <img
-          src="/shop_bg.webp"
-          alt="Shop"
-          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(245,158,11,0.2)' }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
-      </div>
+          {/* Cooldown */}
+          {!canRefresh && (
+            <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '6px 10px', textAlign: 'center' }}>
+              <p style={{ color: '#64748b', fontSize: 10 }}>{t.shop.nextRefresh('')} <CooldownTimer cooldownEnd={cooldownEnd} /></p>
+            </div>
+          )}
 
-      {/* All items below the image */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-        {shopItems.map(({ item, price, idx }) => (
-          <ShopItemCard key={idx} item={item} price={price} idx={idx} />
-        ))}
-      </div>
+          {/* Notification */}
+          {notification && (
+            <div style={{
+              background: notification.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+              border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+              padding: '7px 12px', textAlign: 'center',
+              color: notification.ok ? '#4ade80' : '#f87171', fontSize: 10,
+            }}>
+              {notification.text}
+            </div>
+          )}
 
-      {/* Comparison panel below the grid */}
-      {selectedEntry && (
-        <ComparePanel newItem={selectedEntry.item} equipped={equippedForSelected} />
-      )}
+          {/* Items grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {shopItems.map(({ item, price, idx }) => (
+              <ShopItemCard key={idx} item={item} price={price} idx={idx} />
+            ))}
+          </div>
+
+          {/* Comparison panel */}
+          {selectedEntry && (
+            <ComparePanel newItem={selectedEntry.item} equipped={equippedForSelected} />
+          )}
+
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
     </div>
   );
 }

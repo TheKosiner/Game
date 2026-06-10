@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useLangStore } from '../store/langStore';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
 import { WeaponBadges } from '../utils/styles';
@@ -220,6 +221,7 @@ export default function EnchanterPanel() {
   const hero = useGameStore(s => s.hero);
   const { lang } = useLangStore();
   const user = useAuthStore(s => s.user);
+  const isDesktop = useIsDesktop();
 
   const [sel, setSel]       = useState<Selection | null>(null);
   const [section, setSection] = useState<'equipped' | 'inventory'>('equipped');
@@ -293,30 +295,36 @@ export default function EnchanterPanel() {
         />
       )}
 
-      {/* Banner */}
-      <div style={{ position: 'relative' }}>
-        <img
-          src={enchanterSrc}
-          alt="Zaklinacz"
-          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(168,0,255,0.2)' }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
-      </div>
-      <div style={{ padding: '10px 4px 2px' }}>
-        <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
-          🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
-        </h2>
-        <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
-          {lang === 'en'
-            ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
-            : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
-        </p>
-      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {/* Banner – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 120 }}>
+          <img
+            src={enchanterSrc}
+            alt="Zaklinacz"
+            style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block', border: '1px solid rgba(168,0,255,0.2)' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
+        </div>
 
-        {/* Item list */}
-        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* Right column: header + item panels */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          <div style={{ padding: isDesktop ? '2px 4px' : '10px 4px 2px' }}>
+            <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
+              🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+            </h2>
+            <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
+              {lang === 'en'
+                ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
+                : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+
+            {/* Item list */}
+            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 4 }}>
             {(['equipped', 'inventory'] as const).map(s => (
               <button key={s} onClick={() => setSection(s)} style={{
@@ -447,8 +455,11 @@ export default function EnchanterPanel() {
               </button>
             </div>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
     </div>
   );
 }

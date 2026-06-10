@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import smithImg from '../assets/smith.webp';
@@ -205,6 +206,7 @@ export default function SmithPanel() {
   const { lang } = useLangStore();
   const hero = useGameStore(s => s.hero);
   const enhanceItem = useGameStore(s => s.enhanceItem);
+  const isDesktop = useIsDesktop();
 
   const [selected, setSelected] = useState<Selection | null>(null);
   const [section, setSection] = useState<'equipped' | 'inventory'>('equipped');
@@ -316,30 +318,35 @@ export default function SmithPanel() {
         />
       )}
 
-      {/* Banner image */}
-      <div style={{ position: 'relative' }}>
-        <img
-          src={smithImg}
-          alt="Kowal"
-          style={{ width: '100%', height: 'auto', display: 'block', border: '1px solid rgba(255,150,50,0.2)' }}
-        />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
-      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
-      {/* Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, rgba(255,150,50,0.08), rgba(255,45,120,0.05))',
-        border: '1px solid rgba(255,150,50,0.2)',
-        borderRadius: 8, padding: '14px 16px',
-      }}>
-        <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#ff9632', letterSpacing: 2 }}>{t.smith.title}</h2>
-        <p style={{ ...MONO, margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{t.smith.subtitle}</p>
-      </div>
+        {/* Banner image – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 120 }}>
+          <img
+            src={smithImg}
+            alt="Kowal"
+            style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block', border: '1px solid rgba(255,150,50,0.2)' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
+        </div>
 
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {/* Right column: header + item panels */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-        {/* Item list */}
-        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(255,150,50,0.08), rgba(255,45,120,0.05))',
+            border: '1px solid rgba(255,150,50,0.2)',
+            borderRadius: 8, padding: '14px 16px',
+          }}>
+            <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#ff9632', letterSpacing: 2 }}>{t.smith.title}</h2>
+            <p style={{ ...MONO, margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{t.smith.subtitle}</p>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+
+            {/* Item list */}
+            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 4 }}>
             {(['equipped', 'inventory'] as const).map(s => (
               <button key={s} onClick={() => setSection(s)} style={{
@@ -525,8 +532,11 @@ export default function SmithPanel() {
               )}
             </div>
           )}
-        </div>
-      </div>
+            </div>
+          </div>
+
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
     </div>
   );
 }
