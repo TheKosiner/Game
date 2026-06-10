@@ -226,7 +226,7 @@ export const ENEMY_NAMES_EN: Record<string, string> = {
   end_entity:           'The Final Protocol',
 };
 
-const HP_MULT = 3;
+const HP_MULT = 6;
 
 export function scaleEnemy(enemy: Enemy, floor: number): Enemy {
   const scale = 1 + (floor - 1) * 0.15;
