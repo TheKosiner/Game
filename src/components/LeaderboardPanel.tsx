@@ -317,7 +317,6 @@ export default function LeaderboardPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<LeaderboardEntry | null>(null);
-  const [selectedRank, setSelectedRank] = useState(0);
 
   async function fetchLeaderboard() {
     setLoading(true); setError('');
@@ -330,10 +329,9 @@ export default function LeaderboardPanel() {
 
   const myRank = entries.findIndex(e => e.uid === user?.uid) + 1;
 
-  function selectEntry(entry: LeaderboardEntry, rank: number) {
+  function selectEntry(entry: LeaderboardEntry) {
     if (selected?.uid === entry.uid) { setSelected(null); return; }
     setSelected(entry);
-    setSelectedRank(rank);
   }
 
   return (
@@ -393,7 +391,7 @@ export default function LeaderboardPanel() {
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={() => selectEntry(entry, rank)}
+                      onClick={() => selectEntry(entry)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                       style={{
                         background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
