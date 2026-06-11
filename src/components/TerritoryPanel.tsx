@@ -787,7 +787,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       firstEnemyEmoji = '⚔';
     }
 
-    const result = await initOrJoinSiege(def.id, guild.id, guild.tag);
+    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, state?.guildId ? siegeMaxHp : undefined);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
       setAlertMsg(isEn
@@ -804,6 +804,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     }
 
     const heroHp    = hero.maxHp;
+    siegeMaxHp = result.siegeMaxHp;
     const currentHp = Math.min(result.currentHp, siegeMaxHp);
 
     // Align defenderIdx to remaining HP so rejoining players start on correct defender
@@ -963,8 +964,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
     try {
       const result = await claimTerritoryReward(def.id, guild.id);
       if (result !== null) {
-        addGold(def.dailyGold);
-        addXp(def.dailyXp);
+        addGold(result.gold);
+        addXp(result.xp);
         recordTerritoryClaimAt(def.id);
         await reloadTerritories();
       }

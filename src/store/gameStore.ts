@@ -122,6 +122,19 @@ const DUNGEON_LEVELS: [string, number][] = [
   ['forest', 1], ['cave', 5], ['castle', 12], ['westland', 20],
   ['dragon_lair', 28], ['neon_undercity', 35], ['zero_zone', 40], ['ghost_network', 55],
 ];
+function calcDungeonReward(enemy: { xpReward: number; goldReward: number }, heroLevel: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
+  const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
+  const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
+  const xpMult   = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
+  const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
+  const lvlMult  = Math.pow(1.02, heroLevel - 1);
+  return {
+    xp:           Math.round(enemy.xpReward   * xpMult   * lvlMult),
+    gold:         Math.round(enemy.goldReward  * goldMult * lvlMult),
+    diffStatMult,
+  };
+}
+
 function inferCompletedDungeons(level: number): string[] {
   const completed: string[] = [];
   for (let i = 0; i < DUNGEON_LEVELS.length - 1; i++) {
@@ -482,13 +495,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(t.combat.defeated(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode = get().dungeonMode;
       const diff = get().dungeonDifficulty;
-      const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
-      const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
-      const xpMult  = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-      const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-      const lvlMult = Math.pow(1.02, hero.level - 1);
-      const xpEarned   = Math.round(currentEnemy.xpReward * xpMult * lvlMult);
-      const goldEarned = Math.round(currentEnemy.goldReward * goldMult * lvlMult);
+      const { xp: xpEarned, gold: goldEarned, diffStatMult } = calcDungeonReward(currentEnemy, hero.level, mode, diff);
       const newPendingXp   = get().pendingDungeonXp + xpEarned;
       const newPendingGold = get().pendingDungeonGold + goldEarned;
       set({ pendingDungeonXp: newPendingXp, pendingDungeonGold: newPendingGold });
@@ -581,13 +588,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().addCombatLog(t.combat.quickFight(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode2 = get().dungeonMode;
       const diff2 = get().dungeonDifficulty;
-      const diffRewardMult2 = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.6 : 1;
-      const diffStatMult2   = diff2 === 'easy' ? 0.7 : diff2 === 'hard' ? 1.5 : 1;
-      const xpMult2   = (mode2 === 'xp' ? 1.8 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
-      const goldMult2 = (mode2 === 'xp' ? 0.4 : mode2 === 'loot' ? 0.3 : 1) * diffRewardMult2;
-      const lvlMult2 = Math.pow(1.02, hero.level - 1);
-      const xpEarned2   = Math.round(currentEnemy.xpReward * xpMult2 * lvlMult2);
-      const goldEarned2 = Math.round(currentEnemy.goldReward * goldMult2 * lvlMult2);
+      const { xp: xpEarned2, gold: goldEarned2, diffStatMult: diffStatMult2 } = calcDungeonReward(currentEnemy, hero.level, mode2, diff2);
       const newPendingXp2   = get().pendingDungeonXp + xpEarned2;
       const newPendingGold2 = get().pendingDungeonGold + goldEarned2;
       set({ pendingDungeonXp: newPendingXp2, pendingDungeonGold: newPendingGold2 });
@@ -689,6 +690,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     const cost = Math.round(hero.stats[attr] * 75);
     if (hero.gold < cost) return;
+    if (hero.attributePoints <= 0) return;
     const newStats = { ...hero.stats, [attr]: hero.stats[attr] + 1 };
     const newMaxHp = getHeroMaxHp(newStats, hero.level, hero.equipment);
     set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp, attributePoints: hero.attributePoints - 1 } });

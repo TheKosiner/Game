@@ -857,9 +857,11 @@ export async function initOrJoinSiege(
   territoryId: string,
   attackingGuildId: string,
   attackingGuildTag: string,
-): Promise<{ currentHp: number; startedAt: number; attackers: string[] } | { blocked: true; byTag: string; endsAt: number }> {
-  const siegeMaxHp = TERRITORY_LIST.find(t => t.id === territoryId)?.siegeHp ?? 100;
-  if (!db) return { currentHp: siegeMaxHp, startedAt: Date.now(), attackers: [] };
+  overrideSiegeMaxHp?: number,
+): Promise<{ currentHp: number; siegeMaxHp: number; startedAt: number; attackers: string[] } | { blocked: true; byTag: string; endsAt: number }> {
+  const defaultMaxHp = TERRITORY_LIST.find(t => t.id === territoryId)?.siegeHp ?? 100;
+  const siegeMaxHp = overrideSiegeMaxHp ?? defaultMaxHp;
+  if (!db) return { currentHp: siegeMaxHp, siegeMaxHp, startedAt: Date.now(), attackers: [] };
   const ref = doc(db, 'territories', territoryId);
   return runTransaction(db, async tx => {
     const snap = await tx.get(ref);
@@ -871,6 +873,7 @@ export async function initOrJoinSiege(
     if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0 && !siegeExpired) {
       return {
         currentHp: data.siegeCurrentHp!,
+        siegeMaxHp: data.siegeMaxHp ?? siegeMaxHp,
         startedAt: data.siegeStartedAt!,
         attackers: data.siegeAttackers ?? [],
       };
@@ -895,7 +898,7 @@ export async function initOrJoinSiege(
       siegeStartedAt: startedAt,
       siegeAttackers: [],
     }, { merge: true });
-    return { currentHp: siegeMaxHp, startedAt, attackers: [] };
+    return { currentHp: siegeMaxHp, siegeMaxHp, startedAt, attackers: [] };
   });
 }
 
@@ -979,14 +982,18 @@ export async function claimTerritoryReward(
   territoryId: string,
   guildId: string,
 ): Promise<{ gold: number; xp: number } | null> {
-  if (!db) return null;
+  const def = TERRITORY_LIST.find(t => t.id === territoryId);
+  if (!def) return null;
+  if (!db) return { gold: def.dailyGold, xp: def.dailyXp };
   const ref = doc(db, 'territories', territoryId);
-  const snap = await getDoc(ref);
-  if (!snap.exists()) return null;
-  const data = snap.data() as TerritoryState;
-  if (data.guildId !== guildId) return null;
-  // Per-player cooldown is tracked client-side; server just verifies ownership
-  return { gold: 0, xp: 0 };
+  return runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return null;
+    const data = snap.data() as TerritoryState;
+    if (data.guildId !== guildId) return null;
+    tx.update(ref, { lastRewardAt: Date.now() });
+    return { gold: def.dailyGold, xp: def.dailyXp };
+  });
 }
 
 // ── Mail ─────────────────────────────────────────────────────────────────────
