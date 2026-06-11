@@ -6,7 +6,7 @@ import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
-import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
+import { getHeroAttack, getHeroDefense, getHeroMaxHp, calcCritChance, getEquipmentStats } from '../utils/combat';
 
 import { PX, MONO, ORB } from '../utils/styles';
 import arenaSrc from '../assets/arena.webp';
@@ -667,8 +667,8 @@ export default function PvpPanel() {
       oppHp: oppMaxHp, oppMaxHp,
       heroAtk: getHeroAttack(hero), heroDef: getHeroDefense(hero),
       oppAtk, oppDef,
-      heroCritChance: 0.10 + hero.stats.dexterity * 0.005,
-      oppCritChance:  0.10 + entry.level * 0.003,
+      heroCritChance: calcCritChance(hero.stats.dexterity + getEquipmentStats(hero.equipment).dexterity, hero.level),
+      oppCritChance:  calcCritChance(0, entry.level),
       log: [{ message: t.pvp.fightStart(entry.username, entry.level), type: 'system', timestamp: Date.now() }],
       done: false, won: null, xpGained: 0, goldGained: 0,
     });

@@ -238,9 +238,9 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     currentDungeon: null,
     currentEnemy: null,
     inCombat: false,
-    pvpWins:   Math.max(raw.pvpWins   ?? 0, playerData.pvpWins   ?? 0),
-    pvpLosses: Math.max(raw.pvpLosses ?? 0, playerData.pvpLosses ?? 0),
-    pvpRating: Math.max(raw.pvpRating ?? 1000, playerData.pvpRating ?? 1000),
+    pvpWins:   raw.pvpWins   ?? playerData.pvpWins   ?? 0,
+    pvpLosses: raw.pvpLosses ?? playerData.pvpLosses ?? 0,
+    pvpRating: raw.pvpRating ?? playerData.pvpRating ?? 1000,
     pvpLog:            raw.pvpLog            ?? [],
     lastPvpFight:      raw.lastPvpFight      ?? 0,
     challengeUnlocked: raw.challengeUnlocked ?? 0,
@@ -439,15 +439,20 @@ export async function setMemberRole(
 
 export async function upgradeGuildStat(guildId: string, callerUid: string, type: 'exp' | 'gold'): Promise<void> {
   if (!db) throw new Error('No DB');
-  const guild = await getGuild(guildId);
-  if (!guild || !isLeaderOrOfficer(guild, callerUid)) throw new Error('Not officer');
-  const currentLevel = type === 'exp' ? (guild.expUpgrade ?? 0) : (guild.goldUpgrade ?? 0);
-  if (currentLevel >= 50) throw new Error('Max level');
-  const cost = guildUpgradeCost(currentLevel);
-  if ((guild.treasury ?? 0) < cost) throw new Error('Not enough gold');
-  await updateDoc(doc(db, 'guilds', guildId), {
-    treasury: increment(-cost),
-    [type === 'exp' ? 'expUpgrade' : 'goldUpgrade']: increment(1),
+  const ref = doc(db, 'guilds', guildId);
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) throw new Error('Guild not found');
+    const guild = snap.data() as Guild;
+    if (!isLeaderOrOfficer(guild, callerUid)) throw new Error('Not officer');
+    const currentLevel = type === 'exp' ? (guild.expUpgrade ?? 0) : (guild.goldUpgrade ?? 0);
+    if (currentLevel >= 50) throw new Error('Max level');
+    const cost = guildUpgradeCost(currentLevel);
+    if ((guild.treasury ?? 0) < cost) throw new Error('Not enough gold');
+    tx.update(ref, {
+      treasury: increment(-cost),
+      [type === 'exp' ? 'expUpgrade' : 'goldUpgrade']: increment(1),
+    });
   });
 }
 

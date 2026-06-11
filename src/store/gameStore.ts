@@ -345,6 +345,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newInventory = [...hero.inventory];
     const idx = invIdx !== undefined ? invIdx : newInventory.findIndex(i => i === item || (i.id === item.id && i.name === item.name && i.level === item.level));
     if (idx !== -1) newInventory.splice(idx, 1);
+    // If item isn't coming from inventory and inventory would overflow, abort
+    if (oldEquipped && idx === -1 && newInventory.length >= MAX_INVENTORY) return;
     if (oldEquipped) newInventory.push(oldEquipped);
     const newEquipment = { ...hero.equipment, [item.slot as string]: item };
     const newMaxHp = getHeroMaxHp(hero.stats, hero.level, newEquipment);

@@ -51,6 +51,7 @@ export default function GuildOperationPanel({
   const [op, setOp] = useState<GuildOperationState | null>(guild.guildOperation ?? null);
   const [notification, setNotification] = useState<{ text: string; ok: boolean } | null>(null);
   const [starting, setStarting] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -211,15 +212,21 @@ export default function GuildOperationPanel({
   }, [op?.participants?.[myUid]?.knockedOut]);
 
   async function handleClaim() {
-    const reward = await claimGuildOperationReward(guildId, myUid);
-    if (!reward) { notify('Brak nagrody do odebrania.', false); return; }
-    addXp(reward.xp);
-    addGold(reward.gold);
-    const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
-    const boxLevel = opLoc?.minLevel ?? hero.level;
-    const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
-    addToInventory(box);
-    notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
+    if (claiming) return;
+    setClaiming(true);
+    try {
+      const reward = await claimGuildOperationReward(guildId, myUid);
+      if (!reward) { notify('Brak nagrody do odebrania.', false); return; }
+      addXp(reward.xp);
+      addGold(reward.gold);
+      const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
+      const boxLevel = opLoc?.minLevel ?? hero.level;
+      const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
+      addToInventory(box);
+      notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
+    } finally {
+      setClaiming(false);
+    }
   }
 
   const deadline   = op?.deadline ?? 0;
@@ -506,8 +513,8 @@ export default function GuildOperationPanel({
           {alreadyClaimed ? (
             <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)' }}>✓ Nagrodę odebrano</p>
           ) : (
-            <button onClick={handleClaim} className="btn btn-primary" style={{ fontSize: 10, padding: '8px 16px' }}>
-              🎁 ODBIERZ NAGRODĘ
+            <button onClick={handleClaim} disabled={claiming} className="btn btn-primary" style={{ fontSize: 10, padding: '8px 16px' }}>
+              {claiming ? '⏳' : '🎁'} ODBIERZ NAGRODĘ
             </button>
           )}
         </div>
