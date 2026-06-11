@@ -18,6 +18,7 @@ const SAVE_KEY = 'glitchsoul_save';
 const OLD_SAVE_KEY = 'cybermagic_save';
 const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
+const MAX_LEVEL = 300;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_KRYPTA = 5;
 export const MAX_DAILY_QUESTS = 5;
@@ -254,12 +255,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     let { xp, xpToNext, level, stats, maxHp, hp, attributePoints } = hero;
     xp += amount;
     let leveled = false;
-    while (xp >= xpToNext) {
+    while (xp >= xpToNext && level < MAX_LEVEL) {
       xp -= xpToNext;
       level++;
       xpToNext = calcXpToNext(level);
       leveled = true;
     }
+    if (level >= MAX_LEVEL) xp = Math.min(xp, xpToNext - 1);
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = leveled ? newMaxHp - maxHp : 0;
     const newAttributePoints = leveled ? attributePoints + 1 : attributePoints;
@@ -274,6 +276,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   addGold: (amount) => {
+    if (!isFinite(amount) || amount <= 0) return;
     const bonus = get().guildGoldBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();

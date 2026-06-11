@@ -254,13 +254,15 @@ export default function EnchanterPanel() {
   function doReroll() {
     if (!freshSel) return;
     const cost = rerollCost(freshSel.item);
-    if (hero.gold < cost) return;
 
     const fresh = generateItem(freshSel.item.level, freshSel.item.rarity, freshSel.item.slot);
     const rerolled: Item = { ...freshSel.item, stats: fresh.stats };
     const oldItem = { ...freshSel.item };
 
+    let applied = false;
     useGameStore.setState(s => {
+      if (s.hero.gold < cost) return s; // re-check with fresh state — blocks double-click race
+      applied = true;
       const h = { ...s.hero, gold: s.hero.gold - cost };
       if (freshSel.source === 'equipment') {
         h.equipment = { ...h.equipment, [freshSel.idxOrSlot as EquipSlot]: rerolled };
@@ -272,6 +274,7 @@ export default function EnchanterPanel() {
       return { hero: h };
     });
 
+    if (!applied) return;
     setSel(prev => prev ? { ...prev, item: rerolled } : null);
     setResult({ oldItem, newItem: rerolled });
 

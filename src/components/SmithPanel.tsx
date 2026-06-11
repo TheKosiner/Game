@@ -247,9 +247,14 @@ export default function SmithPanel() {
       const updatedHero = useGameStore.getState().hero;
       let updatedItem: Item | undefined;
       if (selected.source === 'inventory') {
-        updatedItem = updatedHero.inventory[selected.idxOrSlot as number];
+        const atIdx = updatedHero.inventory[selected.idxOrSlot as number];
+        // Inventory may have shifted — verify by id, fall back to search
+        updatedItem = atIdx?.id === originalItem.id
+          ? atIdx
+          : updatedHero.inventory.find(i => i.id === originalItem.id);
       } else {
-        updatedItem = updatedHero.equipment[selected.idxOrSlot as EquipSlot] as Item | undefined;
+        const equipped = updatedHero.equipment[selected.idxOrSlot as EquipSlot] as Item | undefined;
+        updatedItem = equipped?.id === originalItem.id ? equipped : undefined;
       }
       const newLevel = updatedItem?.enhanceLevel ?? 0;
       const didSucceed = newLevel > enh;
