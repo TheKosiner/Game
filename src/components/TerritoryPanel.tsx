@@ -668,12 +668,16 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
   async function reloadTerritories() {
-    const t = await getTerritories();
-    setTerritories(t);
+    try {
+      const t = await getTerritories();
+      setTerritories(t);
+    } catch {
+      setAlertMsg(isEn ? 'Connection error. Try refreshing.' : 'Błąd połączenia. Odśwież stronę.');
+    }
   }
 
   useEffect(() => {
-    reloadTerritories().then(() => setLoading(false));
+    reloadTerritories().finally(() => setLoading(false));
     const id = setInterval(() => forceUpdate(n => n + 1), 1000);
     return () => clearInterval(id);
   }, []);
@@ -783,7 +787,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       firstEnemyEmoji = '⚔';
     }
 
-    const result = await initOrJoinSiege(def.id, guild.id, guild.tag, siegeMaxHp);
+    const result = await initOrJoinSiege(def.id, guild.id, guild.tag);
     if ('blocked' in result) {
       const remaining = result.endsAt - Date.now();
       setAlertMsg(isEn
@@ -901,7 +905,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       if (!prev || prev.done) return prev;
       let state = { ...prev, log: [...prev.log, isEn ? '⚡ Quick fight...' : '⚡ Szybka walka...'] };
 
-      for (let i = 0; i < 1000; i++) {
+      for (let i = 0; i < 200; i++) {
         let { heroHp, heroAtk, heroDef, enemyHp, enemyAtk, enemyDef, damageDealt } = state;
         const heroDmg = siegeDmg(heroAtk, enemyDef);
         enemyHp = Math.max(0, enemyHp - heroDmg);

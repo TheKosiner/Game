@@ -691,7 +691,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.gold < cost) return;
     const newStats = { ...hero.stats, [attr]: hero.stats[attr] + 1 };
     const newMaxHp = getHeroMaxHp(newStats, hero.level, hero.equipment);
-    set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp } });
+    set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp, attributePoints: hero.attributePoints - 1 } });
     get().saveGame();
   },
 
@@ -781,7 +781,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   cancelRest: () => {
     const { hero } = get();
-    if (!hero.voluntaryRestUntil || !hero.voluntaryRestHp) return;
+    if (!hero.voluntaryRestUntil || hero.voluntaryRestHp == null) return;
     const now = Date.now();
     if (now >= hero.voluntaryRestUntil) return;
     let earned = 0;
@@ -817,7 +817,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   cancelBegging: () => {
     const { hero } = get();
-    if (!hero.beggingUntil || !hero.beggingReward) return;
+    if (!hero.beggingUntil || hero.beggingReward == null) return;
     const now = Date.now();
     if (now >= hero.beggingUntil) return;
     let earned = 0;

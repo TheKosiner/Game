@@ -131,11 +131,12 @@ export default function CasinoPanel() {
   });
   const prevTimeRef = useRef(performance.now());
   const [renderPos, setRenderPos] = useState(30);
-  const rafRef    = useRef<number | undefined>(undefined);
+  const rafRef         = useRef<number | undefined>(undefined);
+  const rafCallbackRef = useRef<((now: number) => void) | null>(null);
   const onDoneRef = useRef<(() => void) | null>(null);
   const histRef   = useRef<number[]>([]);
 
-  // ── RAF animation loop (always running) ──────────────────────────────────
+  // ── RAF animation loop (idle-aware: stops when reel is idle) ─────────────
   useEffect(() => {
     const frame = (now: number) => {
       const dt = Math.min((now - prevTimeRef.current) / 1000, 0.05);
@@ -146,6 +147,7 @@ export default function CasinoPanel() {
         r.pos += SPIN_VEL * dt;
         while (r.pos + 15 > r.tape.length) r.tape.push(rnd37());
         setRenderPos(r.pos);
+        rafRef.current = requestAnimationFrame(frame);
       } else if (r.phase === 'decel') {
         const t = Math.min((now - r.decelStart) / DECEL_MS, 1);
         // quintic ease-out: stays fast longer, then crawls slowly to a stop
@@ -159,16 +161,17 @@ export default function CasinoPanel() {
           const cb = onDoneRef.current;
           onDoneRef.current = null;
           cb?.();
+        } else {
+          rafRef.current = requestAnimationFrame(frame);
         }
       }
-
-      rafRef.current = requestAnimationFrame(frame);
+      // When idle the loop is not rescheduled — it restarts when spin() begins
     };
 
-    prevTimeRef.current = performance.now();
-    rafRef.current = requestAnimationFrame(frame);
+    rafCallbackRef.current = frame;
+    // Don't start the loop yet — it starts on first spin
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = undefined; }
       // If the player navigates away mid-animation, immediately settle the
       // pending result so gold and history are credited even without the reveal.
       onDoneRef.current?.();
@@ -206,6 +209,8 @@ export default function CasinoPanel() {
 
     // Start freewheeling immediately — no pre-sync blocking the animation
     reelRef.current.phase = 'spin';
+    prevTimeRef.current = performance.now();
+    if (!rafRef.current) rafRef.current = requestAnimationFrame(rafCallbackRef.current!);
 
     let res: SpinResult;
     try {

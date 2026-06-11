@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
+import { TERRITORY_LIST } from '../data/territories';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -287,7 +288,7 @@ export interface GuildLeaderboardEntry {
 
 export async function getGuildLeaderboard(): Promise<GuildLeaderboardEntry[]> {
   if (!db) return [];
-  const snap = await getDocs(collection(db, 'guilds'));
+  const snap = await getDocs(query(collection(db, 'guilds'), limit(200)));
   const entries: GuildLeaderboardEntry[] = snap.docs.map(d => {
     const data = d.data() as Guild;
     const memberValues = Object.values(data.members ?? {});
@@ -856,8 +857,8 @@ export async function initOrJoinSiege(
   territoryId: string,
   attackingGuildId: string,
   attackingGuildTag: string,
-  siegeMaxHp: number,
 ): Promise<{ currentHp: number; startedAt: number; attackers: string[] } | { blocked: true; byTag: string; endsAt: number }> {
+  const siegeMaxHp = TERRITORY_LIST.find(t => t.id === territoryId)?.siegeHp ?? 100;
   if (!db) return { currentHp: siegeMaxHp, startedAt: Date.now(), attackers: [] };
   const ref = doc(db, 'territories', territoryId);
   return runTransaction(db, async tx => {

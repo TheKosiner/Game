@@ -156,12 +156,22 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members
         && resource.data.members[request.auth.uid].role == 'officer'
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
-      // Regular members may only touch treasury (deposit only), contributions, operation state, and capture/loss timestamps
+      // Regular members may only touch treasury (deposit only), contributions, and capture/loss timestamps
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions', 'guildOperation', 'lastLostAt', 'lastCaptureAt'])
+             .hasOnly(['treasury', 'contributions', 'lastLostAt', 'lastCaptureAt'])
         && request.resource.data.treasury >= resource.data.treasury;
+      // Regular members may update operation progress but cannot increase pendingReward amounts
+      allow update: if isAuthenticated()
+        && request.auth.uid in resource.data.members
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guildOperation'])
+        && (resource.data.guildOperation == null
+            || request.resource.data.guildOperation == null
+            || resource.data.guildOperation.pendingReward == null
+            || request.resource.data.guildOperation.pendingReward == null
+            || (request.resource.data.guildOperation.pendingReward.gold <= resource.data.guildOperation.pendingReward.gold
+                && request.resource.data.guildOperation.pendingReward.xp <= resource.data.guildOperation.pendingReward.xp));
       // Attacker (non-member) may stamp lastLostAt on the defending guild after capture — limited to guild members of any guild
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt'])
@@ -173,7 +183,7 @@ service cloud.firestore {
         && request.auth.uid in request.resource.data.members
         && request.resource.data.members[request.auth.uid].role == 'member';
       allow delete: if isAuthenticated()
-        && request.auth.uid in resource.data.members;
+        && resource.data.leaderUid == request.auth.uid;
     }
 
     // Guild invites
@@ -232,7 +242,8 @@ service cloud.firestore {
         && resource.data.toUid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow create: if isAuthenticated()
-        && request.resource.data.fromUid == request.auth.uid;
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.body.size() <= 2000;
     }
 
     // Stripe gem credits — written only by Cloud Functions (admin SDK bypasses rules)
