@@ -9,15 +9,24 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  retryKey: number;
+}
+
+// DOM reconciliation errors caused by browser extensions (Google Translate
+// rewrites text nodes into <font> tags) — recoverable by remounting the tree.
+function isDomMangleError(error: Error): boolean {
+  return /removeChild|insertBefore|appendChild/.test(error.message);
 }
 
 export class ErrorBoundary extends Component<Props, State> {
+  private autoRetries = 0;
+
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, retryKey: 0 };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
@@ -28,6 +37,13 @@ export class ErrorBoundary extends Component<Props, State> {
       (error.stack ?? '') + '\n\nComponent stack:' + errorInfo.componentStack,
       'react',
     );
+    // Auto-recover from extension-mangled DOM: remount the whole subtree
+    // (retryKey change) instead of showing the crash screen. Max 3 attempts
+    // per session so a genuinely broken render can't loop forever.
+    if (isDomMangleError(error) && this.autoRetries < 3) {
+      this.autoRetries++;
+      this.setState(s => ({ hasError: false, error: null, retryKey: s.retryKey + 1 }));
+    }
   }
 
   render() {
@@ -54,6 +70,6 @@ export class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    return <React.Fragment key={this.state.retryKey}>{this.props.children}</React.Fragment>;
   }
 }
