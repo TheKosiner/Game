@@ -254,7 +254,7 @@ export default function InventoryPanel() {
             </div>
           </div>
         );
-      })(), document.body)}
+      })(), document.getElementById('modal-root') ?? document.body)}
 
       {/* Sell confirmation overlay — portal bypasses zoom stacking context */}
       {sellConfirm && createPortal(
@@ -305,7 +305,7 @@ export default function InventoryPanel() {
             </div>
           </div>
         </div>,
-        document.body
+        document.getElementById('modal-root') ?? document.body
       )}
     </div>
   );

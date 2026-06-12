@@ -213,7 +213,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
         </button>
       </div>
     </div>,
-    document.body,
+    document.getElementById('modal-root') ?? document.body,
   );
 }
 

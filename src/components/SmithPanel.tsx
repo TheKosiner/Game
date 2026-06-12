@@ -197,7 +197,7 @@ function ResultModal({ result, onClose, onRetry }: {
         </div>
       </div>
     </div>,
-    document.body
+    document.getElementById('modal-root') ?? document.body
   );
 }
 
