@@ -133,8 +133,10 @@ export default function CasinoPanel() {
   const [renderPos, setRenderPos] = useState(30);
   const rafRef         = useRef<number | undefined>(undefined);
   const rafCallbackRef = useRef<((now: number) => void) | null>(null);
-  const onDoneRef = useRef<(() => void) | null>(null);
-  const histRef   = useRef<number[]>([]);
+  const onDoneRef      = useRef<(() => void) | null>(null);
+  const histRef        = useRef<number[]>([]);
+  const spinLockRef    = useRef(false);
+  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ── RAF animation loop (idle-aware: stops when reel is idle) ─────────────
   useEffect(() => {
@@ -203,15 +205,30 @@ export default function CasinoPanel() {
 
   // ── Spin ─────────────────────────────────────────────────────────────────
   const spin = useCallback(async () => {
-    if (spinning || !betType || stake <= 0 || stake > hero.gold || !functions) return;
+    // spinLockRef is a synchronous guard — avoids stale-closure issues with the
+    // 'spinning' state that would let two concurrent calls slip through
+    if (spinLockRef.current || !betType || stake <= 0 || stake > hero.gold || !functions) return;
+    spinLockRef.current = true;
     setSpinning(true);
     setLastResult(null);
     setSpinError(null);
 
-    // Start freewheeling immediately so the reel is already moving while we sync
+    // 12-second hard deadline: if something deadlocks, reset to a clean state
+    clearTimeout(safetyTimerRef.current);
+    safetyTimerRef.current = setTimeout(() => {
+      reelRef.current.phase = 'idle';
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = undefined; }
+      onDoneRef.current = null;
+      spinLockRef.current = false;
+      setSpinning(false);
+      setSpinError(t.casino.serverError);
+    }, 12000);
+
+    // Always cancel any lingering RAF and force-start a fresh loop
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
     reelRef.current.phase = 'spin';
     prevTimeRef.current = performance.now();
-    if (!rafRef.current) rafRef.current = requestAnimationFrame(rafCallbackRef.current!);
+    rafRef.current = requestAnimationFrame(rafCallbackRef.current!);
 
     // Push latest gold to Firestore so the CF reads the correct balance (cap at 3s)
     if (user) {
@@ -230,8 +247,10 @@ export default function CasinoPanel() {
       ]);
       res = r.data;
     } catch (err: any) {
+      clearTimeout(safetyTimerRef.current);
       reelRef.current.phase = 'idle';
-      rafRef.current = undefined;
+      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = undefined; }
+      spinLockRef.current = false;
       setSpinning(false);
       setSpinError(err?.message ?? t.casino.serverError);
       // Reload authoritative gold — CF may have deducted it before the network error
@@ -265,6 +284,7 @@ export default function CasinoPanel() {
 
     // Apply gold + show result only once the reel stops
     onDoneRef.current = () => {
+      clearTimeout(safetyTimerRef.current);
       useGameStore.setState(s => ({
         hero: {
           ...s.hero,
@@ -277,9 +297,10 @@ export default function CasinoPanel() {
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
       setLastResult({ n: res.result, won: res.won, net: res.net });
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
+      spinLockRef.current = false;
       setSpinning(false);
     };
-  }, [spinning, betType, stake, hero.gold, saveGame, user]);
+  }, [betType, stake, hero.gold, saveGame, user]);
 
   // ── Reel rendering ────────────────────────────────────────────────────────
   const centerIdx = Math.floor(renderPos);
