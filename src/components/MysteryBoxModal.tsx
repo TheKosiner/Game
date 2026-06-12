@@ -95,11 +95,14 @@ export default function MysteryBoxModal() {
     setTimeout(() => dismiss(), 600);
   }
 
-  if (!pending) return null;
+  const modalRoot = document.getElementById('modal-root') ?? document.body;
+
+  // Always keep the portal fiber alive so React never removes/re-adds it during
+  // concurrent-mode reconciliation — avoids removeChild errors on pending→null transitions.
+  if (!pending) return createPortal(null, modalRoot);
 
   const rc = RC[display.rarity];
   const isDone = phase === 'done';
-  const modalRoot = document.getElementById('modal-root') ?? document.body;
 
   // key={phase} forces a full DOM remount on spinning→done transition,
   // preventing removeChild reconciliation errors in React 18 concurrent mode

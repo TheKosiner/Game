@@ -204,47 +204,103 @@ export default function InventoryPanel() {
       )}
 
       {/* Box open confirmation overlay — portal bypasses zoom stacking context */}
-      {boxConfirm && createPortal((() => {
-        const bc = RARITY_COLORS[boxConfirm.item.rarity] ?? '#aaa';
-        return (
+      {createPortal(
+        boxConfirm ? (() => {
+          const bc = RARITY_COLORS[boxConfirm.item.rarity] ?? '#aaa';
+          return (
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              background: 'rgba(0,0,0,0.88)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 24,
+            }}>
+              <div style={{
+                background: '#08080f',
+                border: `2px solid ${bc}66`,
+                boxShadow: `0 0 40px ${bc}33`,
+                padding: '20px 22px',
+                width: '100%', maxWidth: 320,
+                display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
+              }}>
+                <p style={{ ...ORB, fontSize: 10, color: bc, textAlign: 'center', letterSpacing: 2 }}>
+                  OTWORZYĆ SKRZYNKĘ?
+                </p>
+                <img
+                  src={getBoxImg(boxConfirm.item.rarity)}
+                  alt={getItemName(boxConfirm.item, lang)}
+                  style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain', filter: getBoxFilter(boxConfirm.item.rarity) }}
+                />
+                <p style={{ ...MONO, fontSize: 11, color: bc, textAlign: 'center' }}>
+                  {getItemName(boxConfirm.item, lang)}
+                </p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
+                  Po otwarciu skrzynka zniknie z plecaka.
+                </p>
+                <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                  <button
+                    onClick={() => { openBoxModal(boxConfirm.item, boxConfirm.idx); setBoxConfirm(null); }}
+                    className="btn btn-primary"
+                    style={{ flex: 1, fontSize: 10 }}
+                  >
+                    ✓ Otwórz
+                  </button>
+                  <button
+                    onClick={() => setBoxConfirm(null)}
+                    className="btn btn-secondary"
+                    style={{ flex: 1, fontSize: 10 }}
+                  >
+                    ✕ Anuluj
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })() : null,
+        document.getElementById('modal-root') ?? document.body
+      )}
+
+      {/* Sell confirmation overlay — portal bypasses zoom stacking context */}
+      {createPortal(
+        sellConfirm ? (
           <div style={{
             position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.88)',
+            background: 'rgba(0,0,0,0.82)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 24,
           }}>
             <div style={{
               background: '#08080f',
-              border: `2px solid ${bc}66`,
-              boxShadow: `0 0 40px ${bc}33`,
+              border: `2px solid ${rc}66`,
+              boxShadow: `0 0 30px ${rc}22`,
               padding: '20px 22px',
               width: '100%', maxWidth: 320,
-              display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
+              display: 'flex', flexDirection: 'column', gap: 14,
             }}>
-              <p style={{ ...ORB, fontSize: 10, color: bc, textAlign: 'center', letterSpacing: 2 }}>
-                OTWORZYĆ SKRZYNKĘ?
+              <p style={{ ...ORB, fontSize: 10, color: rc, textAlign: 'center' }}>
+                SPRZEDAĆ PRZEDMIOT?
               </p>
-              <img
-                src={getBoxImg(boxConfirm.item.rarity)}
-                alt={getItemName(boxConfirm.item, lang)}
-                style={{ width: '100%', maxWidth: 220, display: 'block', objectFit: 'contain', filter: getBoxFilter(boxConfirm.item.rarity) }}
-              />
-              <p style={{ ...MONO, fontSize: 11, color: bc, textAlign: 'center' }}>
-                {getItemName(boxConfirm.item, lang)}
-              </p>
-              <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-                Po otwarciu skrzynka zniknie z plecaka.
-              </p>
-              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                background: 'rgba(255,255,255,0.03)', border: `1px solid ${rc}33`, padding: '10px 12px',
+              }}>
+                <ItemIcon item={sellConfirm.item} scale={4} />
+                <div>
+                  <p style={{ ...MONO, fontSize: 11, color: rc }}>{getItemName(sellConfirm.item, lang)}</p>
+                  <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>
+                    🪙 {sellConfirm.item.goldValue} złota
+                  </p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
                 <button
-                  onClick={() => { openBoxModal(boxConfirm.item, boxConfirm.idx); setBoxConfirm(null); }}
+                  onClick={() => { sellItem(sellConfirm.item, sellConfirm.idx); setSellConfirm(null); }}
                   className="btn btn-primary"
                   style={{ flex: 1, fontSize: 10 }}
                 >
-                  ✓ Otwórz
+                  ✓ Sprzedaj
                 </button>
                 <button
-                  onClick={() => setBoxConfirm(null)}
+                  onClick={() => setSellConfirm(null)}
                   className="btn btn-secondary"
                   style={{ flex: 1, fontSize: 10 }}
                 >
@@ -253,58 +309,7 @@ export default function InventoryPanel() {
               </div>
             </div>
           </div>
-        );
-      })(), document.getElementById('modal-root') ?? document.body)}
-
-      {/* Sell confirmation overlay — portal bypasses zoom stacking context */}
-      {sellConfirm && createPortal(
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 9999,
-          background: 'rgba(0,0,0,0.82)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: 24,
-        }}>
-          <div style={{
-            background: '#08080f',
-            border: `2px solid ${rc}66`,
-            boxShadow: `0 0 30px ${rc}22`,
-            padding: '20px 22px',
-            width: '100%', maxWidth: 320,
-            display: 'flex', flexDirection: 'column', gap: 14,
-          }}>
-            <p style={{ ...ORB, fontSize: 10, color: rc, textAlign: 'center' }}>
-              SPRZEDAĆ PRZEDMIOT?
-            </p>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              background: 'rgba(255,255,255,0.03)', border: `1px solid ${rc}33`, padding: '10px 12px',
-            }}>
-              <ItemIcon item={sellConfirm.item} scale={4} />
-              <div>
-                <p style={{ ...MONO, fontSize: 11, color: rc }}>{getItemName(sellConfirm.item, lang)}</p>
-                <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>
-                  🪙 {sellConfirm.item.goldValue} złota
-                </p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => { sellItem(sellConfirm.item, sellConfirm.idx); setSellConfirm(null); }}
-                className="btn btn-primary"
-                style={{ flex: 1, fontSize: 10 }}
-              >
-                ✓ Sprzedaj
-              </button>
-              <button
-                onClick={() => setSellConfirm(null)}
-                className="btn btn-secondary"
-                style={{ flex: 1, fontSize: 10 }}
-              >
-                ✕ Anuluj
-              </button>
-            </div>
-          </div>
-        </div>,
+        ) : null,
         document.getElementById('modal-root') ?? document.body
       )}
     </div>
