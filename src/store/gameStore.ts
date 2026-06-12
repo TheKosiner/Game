@@ -1149,7 +1149,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const currentLevel = item.enhanceLevel ?? 0;
     if (currentLevel >= MAX_ENHANCE) return;
 
-    const cost = item.level * ENHANCE_COST_PER_LV[currentLevel];
+    const cost = (item.level ?? 1) * ENHANCE_COST_PER_LV[currentLevel];
     if (hero.gold < cost) return;
 
     const chance = ENHANCE_CHANCES[currentLevel];
@@ -1274,7 +1274,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           ...(s.magicResistance ? { magicResistance: s.magicResistance } : {}),
         });
         const migrateItem = (item: any) => item
-          ? { ...item, stats: item.slot === 'mystery_box' ? {} : migrateItemStats(item.stats ?? {}) }
+          ? { ...item, level: item.level ?? 1, goldValue: item.goldValue ?? 1, stats: item.slot === 'mystery_box' ? {} : migrateItemStats(item.stats ?? {}) }
           : item;
         const migrateEquipment = (eq: any) => {
           if (!eq) return {};

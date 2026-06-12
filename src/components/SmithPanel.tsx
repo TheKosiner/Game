@@ -234,7 +234,7 @@ export default function SmithPanel() {
     if (!selected) return;
     const enh = selected.item.enhanceLevel ?? 0;
     if (enh >= MAX_ENHANCE) return;
-    if (hero.gold < selected.item.level * ENHANCE_COST_PER_LV[enh]) return;
+    if (hero.gold < (selected.item.level ?? 1) * ENHANCE_COST_PER_LV[enh]) return;
 
     const itemName = lang === 'en' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
     const originalItem = selected.item;
@@ -287,7 +287,7 @@ export default function SmithPanel() {
   })();
 
   const freshEnh = freshSelected ? (freshSelected.item.enhanceLevel ?? 0) : 0;
-  const freshCost = freshSelected && freshEnh < MAX_ENHANCE ? freshSelected.item.level * ENHANCE_COST_PER_LV[freshEnh] : null;
+  const freshCost = freshSelected && freshEnh < MAX_ENHANCE ? (freshSelected.item.level ?? 1) * ENHANCE_COST_PER_LV[freshEnh] : null;
   const freshChance = freshSelected && freshEnh < MAX_ENHANCE ? ENHANCE_CHANCES[freshEnh] : null;
   const hasGold = freshCost !== null && hero.gold >= freshCost;
   const isWeapon = freshSelected?.item.slot === 'weapon';
