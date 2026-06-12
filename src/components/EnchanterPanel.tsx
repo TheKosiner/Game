@@ -104,10 +104,16 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
 }
 
 function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
-  result: RerollResult; onClose: () => void;
+  result: RerollResult | null; onClose: () => void;
   onReroll: () => void; cost: number; canAfford: boolean;
   lang: string;
 }) {
+  const modalRoot = document.getElementById('modal-root') ?? document.body;
+
+  // Portal stays mounted even with no result — conditionally mounting the portal
+  // itself causes removeChild reconciliation errors in React 18 concurrent mode.
+  if (!result) return createPortal(null, modalRoot);
+
   const labels = STAT_LABEL(lang);
 
   const oldStats = result.oldItem.stats;
@@ -213,7 +219,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
         </button>
       </div>
     </div>,
-    document.getElementById('modal-root') ?? document.body,
+    modalRoot,
   );
 }
 
@@ -287,16 +293,14 @@ export default function EnchanterPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {result && (
-        <ResultModal
-          result={result}
-          onClose={() => setResult(null)}
-          onReroll={doReroll}
-          cost={cost}
-          canAfford={canAfford}
-          lang={lang}
-        />
-      )}
+      <ResultModal
+        result={result}
+        onClose={() => setResult(null)}
+        onReroll={doReroll}
+        cost={cost}
+        canAfford={canAfford}
+        lang={lang}
+      />
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 

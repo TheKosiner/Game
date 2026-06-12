@@ -80,11 +80,17 @@ function ItemCard({ item, selected, onClick, lang }: { item: Item; selected: boo
 }
 
 function ResultModal({ result, onClose, onRetry }: {
-  result: EnhanceResult;
+  result: EnhanceResult | null;
   onClose: () => void;
   onRetry: () => void;
 }) {
   const lang = useLangStore(s => s.lang);
+  const modalRoot = document.getElementById('modal-root') ?? document.body;
+
+  // Portal stays mounted even with no result — conditionally mounting the portal
+  // itself causes removeChild reconciliation errors in React 18 concurrent mode.
+  if (!result) return createPortal(null, modalRoot);
+
   const success = result.success;
   const color = success ? '#00e676' : '#ff4444';
   const bgColor = success ? 'rgba(0,230,118,0.07)' : 'rgba(255,68,68,0.07)';
@@ -197,7 +203,7 @@ function ResultModal({ result, onClose, onRetry }: {
         </div>
       </div>
     </div>,
-    document.getElementById('modal-root') ?? document.body
+    modalRoot
   );
 }
 
@@ -315,13 +321,11 @@ export default function SmithPanel() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      {result && (
-        <ResultModal
-          result={result}
-          onClose={handleClose}
-          onRetry={handleRetry}
-        />
-      )}
+      <ResultModal
+        result={result}
+        onClose={handleClose}
+        onRetry={handleRetry}
+      />
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
