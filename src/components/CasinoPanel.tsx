@@ -157,6 +157,7 @@ export default function CasinoPanel() {
         if (t >= 1) {
           r.pos = r.targetPos;
           r.phase = 'idle';
+          rafRef.current = undefined; // clear so next spin can restart the loop
           setRenderPos(r.pos);
           const cb = onDoneRef.current;
           onDoneRef.current = null;
@@ -212,16 +213,25 @@ export default function CasinoPanel() {
     prevTimeRef.current = performance.now();
     if (!rafRef.current) rafRef.current = requestAnimationFrame(rafCallbackRef.current!);
 
-    // Push latest gold to Firestore so the CF reads the correct balance
-    if (user) await syncToCloud(user.uid, user.username).catch(() => {});
+    // Push latest gold to Firestore so the CF reads the correct balance (cap at 3s)
+    if (user) {
+      await Promise.race([
+        syncToCloud(user.uid, user.username),
+        new Promise(r => setTimeout(r, 3000)),
+      ]).catch(() => {});
+    }
 
     let res: SpinResult;
     try {
       const fn = httpsCallable<{ betType: string; stake: number }, SpinResult>(functions, 'spinRoulette');
-      const r = await fn({ betType, stake });
+      const r = await Promise.race([
+        fn({ betType, stake }),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error(t.casino.serverError)), 10000)),
+      ]);
       res = r.data;
     } catch (err: any) {
       reelRef.current.phase = 'idle';
+      rafRef.current = undefined;
       setSpinning(false);
       setSpinError(err?.message ?? t.casino.serverError);
       // Reload authoritative gold — CF may have deducted it before the network error
