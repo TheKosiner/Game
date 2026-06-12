@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
 import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/firestore';
 import { functions, db } from '../lib/firebase';
-import { syncToCloud } from '../lib/cloudSync';
+import { syncToCloud, loadFromCloud } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
@@ -207,10 +207,13 @@ export default function CasinoPanel() {
     setLastResult(null);
     setSpinError(null);
 
-    // Start freewheeling immediately — no pre-sync blocking the animation
+    // Start freewheeling immediately so the reel is already moving while we sync
     reelRef.current.phase = 'spin';
     prevTimeRef.current = performance.now();
     if (!rafRef.current) rafRef.current = requestAnimationFrame(rafCallbackRef.current!);
+
+    // Push latest gold to Firestore so the CF reads the correct balance
+    if (user) await syncToCloud(user.uid, user.username).catch(() => {});
 
     let res: SpinResult;
     try {
@@ -221,7 +224,22 @@ export default function CasinoPanel() {
       reelRef.current.phase = 'idle';
       setSpinning(false);
       setSpinError(err?.message ?? t.casino.serverError);
+      // Reload authoritative gold — CF may have deducted it before the network error
+      if (user) loadFromCloud(user.uid, false).catch(() => {});
       return;
+    }
+
+    // Write history immediately so it survives navigation before animation ends
+    if (db && user) {
+      addDoc(collection(db, 'casinoSpins'), {
+        uid: user.uid,
+        username: user.username,
+        result: res.result,
+        won: res.won,
+        net: res.net,
+        stake,
+        ts: Date.now(),
+      }).catch(() => {});
     }
 
     // Plant result 5 cells ahead and switch to timed deceleration
@@ -247,17 +265,6 @@ export default function CasinoPanel() {
       }));
       saveGame();
       if (user) syncToCloud(user.uid, user.username).catch(() => {});
-      if (db && user) {
-        addDoc(collection(db, 'casinoSpins'), {
-          uid: user.uid,
-          username: user.username,
-          result: res.result,
-          won: res.won,
-          net: res.net,
-          stake,
-          ts: Date.now(),
-        }).catch(() => {});
-      }
       setLastResult({ n: res.result, won: res.won, net: res.net });
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
       setSpinning(false);
