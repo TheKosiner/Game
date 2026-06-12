@@ -678,193 +678,101 @@ function IconGrenadeLauncher({ c }: { c: Colors }) {
 }
 
 function IconBow({ c }: { c: Colors }) {
-  /*
-   * Rendering approach: 3-layer cross-section shading per limb.
-   *   Layer 1 (dark)    — full limb silhouette = shadow base
-   *   Layer 2 (primary) — same path, clipped ~2 px away from the belly face,
-   *                       so a dark shadow strip remains on the "inner" edge
-   *   Layer 3 (light)   — thin stroke along the "back" (outer) face = rim highlight
-   * This simulates a gradient without <linearGradient> ID conflicts.
-   *
-   * Coordinate system (48×48):
-   *   Top tip  (43, 9)  — limb overshoots to y≈2, then recurves BACK to y=9
-   *   Bot tip  (43,39)
-   *   Draw pt  (29, 24)
-   */
   return (
     <>
-      {/* ══ TOP LIMB ══
-          Back face (upper-left edge of strip) = rim-light → bright
-          Belly face (lower-right edge)         = shadow   → dark        */}
+      {/* ── TOP LIMB: recurve shape — dark base then primary, tapers to tip ── */}
+      <path d="M22,18 C23,13 28,8 33,6 C36,5 40,6 41,8"
+            fill="none" stroke={c.dark} strokeWidth="6" strokeLinecap="round"/>
+      <path d="M22,18 C23,13 28,8 33,6 C36,5 40,6 41,8"
+            fill="none" stroke={c.primary} strokeWidth="4" strokeLinecap="round"/>
+      {/* inner lamination edge — shows composite structure */}
+      <path d="M22,19 C23,14 28,9 33,7 C36,6 39,7 40,9"
+            fill="none" stroke={c.dark} strokeWidth="1.5" strokeLinecap="round" opacity="0.65"/>
+      {/* outer highlight (back face of limb) */}
+      <path d="M22,17 C23,12 28,7 33,5"
+            fill="none" stroke={c.light} strokeWidth="0.9" strokeLinecap="round" opacity="0.4"/>
+      {/* mid-limb binding wrap (two stacked lines = wrapped cord) */}
+      <line x1="27" y1="13.5" x2="29.5" y2="18.5" stroke={c.glow} strokeWidth="2.2" strokeLinecap="round" opacity="0.55"/>
+      <line x1="29" y1="12.5" x2="31.5" y2="17.5" stroke={c.glow} strokeWidth="2.2" strokeLinecap="round" opacity="0.35"/>
+      <line x1="28" y1="13"   x2="30.5" y2="18"   stroke={c.light} strokeWidth="0.5" strokeLinecap="round" opacity="0.6"/>
 
-      {/* 1 · dark shadow base — full silhouette */}
-      <path d="M 21,16
-               C 24,10 31,4  38,2
-               C 41,1  45,5  43,9
-               L 43,14
-               C 40,15 32,12 24,22
-               Z"
-            fill={c.dark}/>
+      {/* ── BOTTOM LIMB ── mirror of top */}
+      <path d="M22,30 C23,35 28,40 33,42 C36,43 40,42 41,40"
+            fill="none" stroke={c.dark} strokeWidth="6" strokeLinecap="round"/>
+      <path d="M22,30 C23,35 28,40 33,42 C36,43 40,42 41,40"
+            fill="none" stroke={c.primary} strokeWidth="4" strokeLinecap="round"/>
+      <path d="M22,29 C23,34 28,39 33,41 C36,42 39,41 40,39"
+            fill="none" stroke={c.dark} strokeWidth="1.5" strokeLinecap="round" opacity="0.65"/>
+      <path d="M22,31 C23,36 28,41 33,43"
+            fill="none" stroke={c.light} strokeWidth="0.9" strokeLinecap="round" opacity="0.4"/>
+      <line x1="27" y1="34.5" x2="29.5" y2="29.5" stroke={c.glow} strokeWidth="2.2" strokeLinecap="round" opacity="0.55"/>
+      <line x1="29" y1="35.5" x2="31.5" y2="30.5" stroke={c.glow} strokeWidth="2.2" strokeLinecap="round" opacity="0.35"/>
+      <line x1="28" y1="35"   x2="30.5" y2="30"   stroke={c.light} strokeWidth="0.5" strokeLinecap="round" opacity="0.6"/>
 
-      {/* 2 · primary body — belly edge pulled 2 px toward back face,
-               leaving a dark strip on the shadow/belly side            */}
-      <path d="M 21,16
-               C 24,10 31,4  38,2
-               C 41,1  45,5  43,9
-               L 43,12
-               C 40,13 32,10 24,20
-               Z"
+      {/* ── RISER: ergonomic handle with window cutout ── */}
+      {/* riser body */}
+      <path d="M17,16 C19,14 22,13 26,14 L27,15 L27,23 L27,25 L27,33 L26,34 C22,35 19,34 17,32 C16,30 15.5,27 16,24 C15.5,21 16,18 17,16 Z"
             fill={c.primary}/>
+      {/* riser window / shadow — the cut-out that reduces weight and allows aiming */}
+      <path d="M18,17 L25,16 L25,21 L23,22 L23,26 L25,27 L25,32 L18,31 C17.5,29 17.5,27 18,24 C17.5,21 17.5,19 18,17 Z"
+            fill={c.dark} opacity="0.5"/>
+      {/* limb pocket top (where limb bolts into riser) */}
+      <rect x="21" y="13" width="6" height="3.5" rx="1" fill={c.dark} opacity="0.75"/>
+      {/* limb pocket bottom */}
+      <rect x="21" y="31.5" width="6" height="3.5" rx="1" fill={c.dark} opacity="0.75"/>
+      {/* arrow shelf (rest) */}
+      <path d="M17,22.5 L13,22 L12.5,23.5 L13,24.5 L17,24 Z" fill={c.primary} opacity="0.9"/>
+      {/* bow sight — crosshair circle on the riser */}
+      <circle cx="15" cy="20" r="1.8" fill="none" stroke={c.glow} strokeWidth="0.8" opacity="0.6"/>
+      <line x1="13.8" y1="20" x2="16.2" y2="20" stroke={c.glow} strokeWidth="0.4" opacity="0.55"/>
+      <line x1="15"   y1="18.8" x2="15" y2="21.2" stroke={c.glow} strokeWidth="0.4" opacity="0.55"/>
+      {/* grip texture — diagonal ridges */}
+      <line x1="16.5" y1="25.5" x2="21" y2="26"   stroke={c.light} strokeWidth="0.7" opacity="0.35"/>
+      <line x1="16.5" y1="27"   x2="21" y2="27.5" stroke={c.light} strokeWidth="0.7" opacity="0.35"/>
+      <line x1="16.5" y1="28.5" x2="21" y2="29"   stroke={c.light} strokeWidth="0.7" opacity="0.35"/>
+      {/* riser left-edge highlight */}
+      <line x1="16.5" y1="18" x2="16.5" y2="30" stroke={c.light} strokeWidth="0.7" opacity="0.28"/>
 
-      {/* 3 · rim highlight along back/outer edge */}
-      <path d="M 22,16 C 25,10 31,4 38,2 C 41,1 44,5 43,9"
-            fill="none" stroke={c.light} strokeWidth="1.6" strokeLinecap="round" opacity="0.55"/>
+      {/* ── TIP CAPS (glowing nock grooves at limb ends) ── */}
+      <circle cx="41" cy="8"  r="3.2" fill={c.glow} opacity="0.85"/>
+      <circle cx="41" cy="8"  r="1.6" fill={c.dark} opacity="0.6"/>
+      <circle cx="41" cy="40" r="3.2" fill={c.glow} opacity="0.85"/>
+      <circle cx="41" cy="40" r="1.6" fill={c.dark} opacity="0.6"/>
 
-      {/* lamination seam — subtle line separating fibreglass layers */}
-      <path d="M 23,18 C 26,12 31,7 37,5 C 40,4 43,8 43,11"
-            fill="none" stroke={c.dark} strokeWidth="0.7" strokeLinecap="round" opacity="0.5"/>
+      {/* ── BOWSTRING ── */}
+      {/* soft bloom around the drawn string */}
+      <line x1="41" y1="8"  x2="30" y2="24" stroke={c.glow} strokeWidth="6" opacity="0.09" strokeLinecap="round"/>
+      <line x1="41" y1="40" x2="30" y2="24" stroke={c.glow} strokeWidth="6" opacity="0.09" strokeLinecap="round"/>
+      {/* white inner strand */}
+      <line x1="41" y1="8"  x2="30" y2="24" stroke={c.light} strokeWidth="1" opacity="0.35" strokeLinecap="round"/>
+      <line x1="41" y1="40" x2="30" y2="24" stroke={c.light} strokeWidth="1" opacity="0.35" strokeLinecap="round"/>
+      {/* main energy string */}
+      <line x1="41" y1="8"  x2="30" y2="24" stroke={c.glow} strokeWidth="1.8" opacity="0.95" strokeLinecap="round"/>
+      <line x1="41" y1="40" x2="30" y2="24" stroke={c.glow} strokeWidth="1.8" opacity="0.95" strokeLinecap="round"/>
+      {/* serving / nocking point — wrapped cord around center */}
+      <rect x="28.5" y="22.4" width="3" height="3.2" rx="0.5" fill="none" stroke={c.glow} strokeWidth="1" opacity="0.65"/>
+      <line x1="29.5" y1="22.4" x2="29.5" y2="25.6" stroke={c.glow} strokeWidth="0.4" opacity="0.5"/>
+      {/* idle brace string — faint arc tip to tip */}
+      <path d="M41,8 Q43.5,24 41,40" fill="none" stroke={c.glow} strokeWidth="0.8" opacity="0.18" strokeDasharray="2,3"/>
 
-      {/* mid-limb binding cord × 2 */}
-      <line x1="28"   y1="11"  x2="30.5" y2="16.5" stroke={c.glow}  strokeWidth="2.6" strokeLinecap="round" opacity="0.5"/>
-      <line x1="30"   y1="10"  x2="32.5" y2="15.5" stroke={c.glow}  strokeWidth="1.5" strokeLinecap="round" opacity="0.3"/>
-      <line x1="28.8" y1="11"  x2="31.3" y2="16.5" stroke={c.light} strokeWidth="0.5" strokeLinecap="round" opacity="0.5"/>
-
-      {/* ══ BOTTOM LIMB ══
-          Back face = lower edge (bright); belly face = upper edge (dark)  */}
-
-      {/* 1 · dark base */}
-      <path d="M 21,32
-               C 24,38 31,44 38,46
-               C 41,47 45,43 43,39
-               L 43,34
-               C 40,33 32,36 24,26
-               Z"
-            fill={c.dark}/>
-
-      {/* 2 · primary body — belly (upper) edge pulled 2 px toward back */}
-      <path d="M 21,32
-               C 24,38 31,44 38,46
-               C 41,47 45,43 43,39
-               L 43,36
-               C 40,35 32,38 24,28
-               Z"
-            fill={c.primary}/>
-
-      {/* 3 · rim highlight on back/lower edge */}
-      <path d="M 22,32 C 25,38 31,44 38,46 C 41,47 44,43 43,39"
-            fill="none" stroke={c.light} strokeWidth="1.6" strokeLinecap="round" opacity="0.55"/>
-
-      <path d="M 23,30 C 26,36 31,41 37,43 C 40,44 43,40 43,37"
-            fill="none" stroke={c.dark} strokeWidth="0.7" strokeLinecap="round" opacity="0.5"/>
-
-      <line x1="28"   y1="37"  x2="30.5" y2="31.5" stroke={c.glow}  strokeWidth="2.6" strokeLinecap="round" opacity="0.5"/>
-      <line x1="30"   y1="38"  x2="32.5" y2="32.5" stroke={c.glow}  strokeWidth="1.5" strokeLinecap="round" opacity="0.3"/>
-      <line x1="28.8" y1="37"  x2="31.3" y2="31.5" stroke={c.light} strokeWidth="0.5" strokeLinecap="round" opacity="0.5"/>
-
-      {/* ══ RISER — 3-layer shading same technique as limbs ══
-          Light source from upper-left → left face bright, right face dark */}
-
-      {/* riser dark silhouette */}
-      <path d="M 19,13 C 21,11 25,11 28,12
-               L 29,14 L 29,19
-               C 27,20 26,22 26,24 C 26,26 27,28 29,29
-               L 29,34 L 28,36
-               C 25,37 21,37 19,35
-               C 17,33 16,30 17,27
-               L 17,21
-               C 16,18 17,15 19,13 Z"
-            fill={c.dark}/>
-
-      {/* riser primary — clipped slightly away from right/dark face */}
-      <path d="M 19,13 C 21,11 25,11 27,12
-               L 28,14 L 28,19
-               C 26,20 25,22 25,24 C 25,26 26,28 28,29
-               L 28,34 L 27,36
-               C 25,37 21,37 19,35
-               C 17,33 16,30 17,27
-               L 17,21
-               C 16,18 17,15 19,13 Z"
-            fill={c.primary}/>
-
-      {/* riser left-edge rim highlight (light comes from left) */}
-      <path d="M 19,13 C 17,15 16,18 17,21 L 17,27 C 16,30 17,33 19,35"
-            fill="none" stroke={c.light} strokeWidth="1.2" strokeLinecap="round" opacity="0.45"/>
-
-      {/* limb-bolt pockets (machined aluminum blocks) */}
-      <rect x="21" y="11.5" width="8" height="3"   rx="1" fill={c.dark} opacity="0.85"/>
-      <line x1="22" y1="12.5" x2="28" y2="12.5" stroke={c.light} strokeWidth="0.5" opacity="0.4"/>
-      <rect x="21" y="33.5" width="8" height="3"   rx="1" fill={c.dark} opacity="0.85"/>
-      <line x1="22" y1="34.5" x2="28" y2="34.5" stroke={c.light} strokeWidth="0.5" opacity="0.4"/>
-
-      {/* grip — diagonal rubber ridges */}
-      <line x1="18" y1="25.5" x2="24" y2="26"   stroke={c.dark}  strokeWidth="1.5" opacity="0.35"/>
-      <line x1="18" y1="27"   x2="24" y2="27.5" stroke={c.dark}  strokeWidth="1.5" opacity="0.35"/>
-      <line x1="18" y1="28.5" x2="24" y2="29"   stroke={c.dark}  strokeWidth="1.5" opacity="0.35"/>
-      <line x1="18.5" y1="25.5" x2="23.5" y2="26"   stroke={c.light} strokeWidth="0.4" opacity="0.25"/>
-      <line x1="18.5" y1="27"   x2="23.5" y2="27.5" stroke={c.light} strokeWidth="0.4" opacity="0.25"/>
-      <line x1="18.5" y1="28.5" x2="23.5" y2="29"   stroke={c.light} strokeWidth="0.4" opacity="0.25"/>
-
-      {/* arrow shelf / rest */}
-      <path d="M 19,22 L 14,21.5 C 13,21.5 12.5,22 12.5,23 L 12.5,25 C 12.5,26 13,26.5 14,26.5 L 19,26 Z"
-            fill={c.primary}/>
-      <path d="M 14,22 C 13.2,22 13,22.4 13,23 L 13,25 C 13,25.6 13.2,26 14,26"
-            fill="none" stroke={c.light} strokeWidth="0.5" opacity="0.4"/>
-
-      {/* pin sight with aperture */}
-      <circle cx="14.5" cy="20" r="2.4" fill="none" stroke={c.glow} strokeWidth="1"   opacity="0.65"/>
-      <circle cx="14.5" cy="20" r="0.7" fill={c.glow}                                  opacity="0.85"/>
-      <line x1="12.8" y1="20"   x2="16.2" y2="20"   stroke={c.glow} strokeWidth="0.5" opacity="0.5"/>
-      <line x1="14.5" y1="18.3" x2="14.5" y2="21.7" stroke={c.glow} strokeWidth="0.5" opacity="0.5"/>
-
-      {/* ══ TIP NOCK CAPS — rotated ellipses flush with limb axis ══ */}
-      <ellipse cx="43" cy="9"  rx="3.2" ry="2"
-               transform="rotate(-18 43 9)"  fill={c.glow} opacity="0.9"/>
-      <ellipse cx="43" cy="9"  rx="1.6" ry="1"
-               transform="rotate(-18 43 9)"  fill={c.dark} opacity="0.65"/>
-      <ellipse cx="43" cy="39" rx="3.2" ry="2"
-               transform="rotate(18 43 39)"  fill={c.glow} opacity="0.9"/>
-      <ellipse cx="43" cy="39" rx="1.6" ry="1"
-               transform="rotate(18 43 39)"  fill={c.dark} opacity="0.65"/>
-
-      {/* ══ BOWSTRING ══ */}
-      {/* soft aura bloom */}
-      <line x1="43" y1="9"  x2="29" y2="24" stroke={c.glow} strokeWidth="8"   opacity="0.07" strokeLinecap="round"/>
-      <line x1="43" y1="39" x2="29" y2="24" stroke={c.glow} strokeWidth="8"   opacity="0.07" strokeLinecap="round"/>
-      {/* mid bloom */}
-      <line x1="43" y1="9"  x2="29" y2="24" stroke={c.glow} strokeWidth="3.5" opacity="0.18" strokeLinecap="round"/>
-      <line x1="43" y1="39" x2="29" y2="24" stroke={c.glow} strokeWidth="3.5" opacity="0.18" strokeLinecap="round"/>
-      {/* white inner core strand */}
-      <line x1="43" y1="9"  x2="29" y2="24" stroke={c.light} strokeWidth="1.1" opacity="0.4"  strokeLinecap="round"/>
-      <line x1="43" y1="39" x2="29" y2="24" stroke={c.light} strokeWidth="1.1" opacity="0.4"  strokeLinecap="round"/>
-      {/* main energy line */}
-      <line x1="43" y1="9"  x2="29" y2="24" stroke={c.glow} strokeWidth="1.6" opacity="0.95" strokeLinecap="round"/>
-      <line x1="43" y1="39" x2="29" y2="24" stroke={c.glow} strokeWidth="1.6" opacity="0.95" strokeLinecap="round"/>
-      {/* serving / nocking-point wrap */}
-      <rect x="27.5" y="22" width="3" height="4" rx="0.7"
-            fill="none" stroke={c.glow} strokeWidth="1.1" opacity="0.6"/>
-      <line x1="28.8" y1="22" x2="28.8" y2="26" stroke={c.glow} strokeWidth="0.4" opacity="0.5"/>
-      {/* idle brace arc (tip-to-tip silhouette when undrawn) */}
-      <path d="M 43,9 Q 46,24 43,39"
-            fill="none" stroke={c.glow} strokeWidth="0.9" opacity="0.18" strokeDasharray="2,3"/>
-
-      {/* ══ ARROW ══ */}
-      {/* shaft — dark underside for cylindrical depth */}
-      <line x1="7" y1="24"   x2="34" y2="24"   stroke={c.dark}  strokeWidth="3"   strokeLinecap="round"/>
-      <line x1="7" y1="24"   x2="34" y2="24"   stroke={c.light} strokeWidth="2"   strokeLinecap="round"/>
-      <line x1="7" y1="24.8" x2="34" y2="24.8" stroke={c.dark}  strokeWidth="1.2" strokeLinecap="round" opacity="0.5"/>
-      {/* fletching — 3 vanes (top/bottom in primary, side foreshortened in dark) */}
-      <path d="M 7,24 L 11,18 L 16,24"  fill={c.primary} opacity="0.92"/>
-      <line x1="11.5" y1="18.5" x2="12" y2="24" stroke={c.light} strokeWidth="0.5" opacity="0.5"/>
-      <path d="M 7,24 L 11,30 L 16,24"  fill={c.primary} opacity="0.92"/>
-      <line x1="11.5" y1="29.5" x2="12" y2="24" stroke={c.light} strokeWidth="0.5" opacity="0.5"/>
-      <path d="M 8.5,23 L 11.5,21 L 16,23" fill={c.dark}    opacity="0.65"/>
-      {/* nock — small V groove clips onto string serving */}
-      <path d="M 4.5,22.5 L 7,24 L 4.5,25.5"
-            fill="none" stroke={c.primary} strokeWidth="1.6" strokeLinecap="round"/>
-      <circle cx="4.5" cy="24" r="1" fill={c.dark} opacity="0.55"/>
-      {/* field point (target tip) — bright with specular edge */}
-      <path d="M 34,22.5 L 39,24 L 34,25.5 Z" fill={c.light}/>
-      <path d="M 35,23.2 L 39,24 L 35,24.8"   fill={c.primary} opacity="0.5"/>
+      {/* ── ARROW ── */}
+      {/* shaft */}
+      <line x1="8" y1="24" x2="33" y2="24" stroke={c.light} strokeWidth="2" strokeLinecap="round"/>
+      {/* shaft underside shadow for depth */}
+      <line x1="8" y1="24.7" x2="33" y2="24.7" stroke={c.dark} strokeWidth="0.7" opacity="0.3"/>
+      {/* 3 vanes — top, bottom, and angled side */}
+      <path d="M8,24 L12,19 L16.5,24" fill={c.primary} opacity="0.92"/>
+      <line x1="12.5" y1="19.5" x2="13" y2="24" stroke={c.light} strokeWidth="0.5" opacity="0.5"/>
+      <path d="M8,24 L12,29 L16.5,24" fill={c.primary} opacity="0.92"/>
+      <line x1="12.5" y1="28.5" x2="13" y2="24" stroke={c.light} strokeWidth="0.5" opacity="0.5"/>
+      {/* side vane (rotated ~120° — gives 3D depth illusion) */}
+      <path d="M9,23 L12,20.5 L16,23" fill={c.dark} opacity="0.65"/>
+      {/* nock — the V-shaped notch at the rear of the arrow */}
+      <path d="M5,22.5 L8,24 L5,25.5" fill="none" stroke={c.primary} strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="5" cy="24" r="1" fill={c.dark} opacity="0.6"/>
+      {/* field point tip */}
+      <path d="M33,22.8 L38.5,24 L33,25.2 Z" fill={c.light}/>
+      <line x1="33.5" y1="23.5" x2="38" y2="24" stroke={c.primary} strokeWidth="0.5" opacity="0.4"/>
     </>
   );
 }
