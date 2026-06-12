@@ -99,9 +99,13 @@ export default function MysteryBoxModal() {
 
   const rc = RC[display.rarity];
   const isDone = phase === 'done';
+  const modalRoot = document.getElementById('modal-root') ?? document.body;
 
+  // key={phase} forces a full DOM remount on spinning→done transition,
+  // preventing removeChild reconciliation errors in React 18 concurrent mode
+  // (the two phases have different numbers/types of children).
   return createPortal(
-    <div style={{
+    <div key={phase} style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.88)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -185,6 +189,6 @@ export default function MysteryBoxModal() {
         )}
       </div>
     </div>,
-    document.body
+    modalRoot
   );
 }
