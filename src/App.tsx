@@ -33,6 +33,7 @@ import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './componen
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import AdminPanel from './components/AdminPanel';
+import ErrorLogPanel from './components/ErrorLogPanel';
 import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
@@ -407,7 +408,7 @@ export default function App() {
               maxWidth: tab === 'lobby' ? undefined : (tab === 'hero' ? 1400 : 960),
               height: tab === 'lobby' ? '100%' : undefined,
             }}>
-              {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
+              {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
@@ -562,7 +563,7 @@ export default function App() {
           gap: tab === 'lobby' ? 0 : 8,
           height: tab === 'lobby' ? '100%' : undefined,
         }}>
-          {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <AdminPanel userEmail={user.email} />}</>}
+          {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
           {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
           {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
           {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
