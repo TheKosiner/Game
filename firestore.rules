@@ -70,7 +70,22 @@ service cloud.firestore {
     function validGoldEarned(old, nw) {
       let oldEarned = old.hero.goldEarnedToday == null ? 0 : old.hero.goldEarnedToday;
       let dailyReset = nw.hero.lastDailyReset != old.hero.lastDailyReset;
-      let earnedDelta = dailyReset ? 0 : nw.hero.goldEarnedToday - oldEarned;
+      // After a daily reset the baseline is 0, not yesterday's total.
+      let earnedDelta = nw.hero.goldEarnedToday - (dailyReset ? 0 : oldEarned);
+      // Completed tasks started before today's reset are collected outside goldEarnedToday
+      // (client adds gold directly without touching the cap).
+      // beggingUntil elapsed check distinguishes full collect from early cancel.
+      let beggingPending = (dailyReset
+        && old.hero.beggingReward != null && nw.hero.beggingReward == null
+        && old.hero.beggingStartAt != null && old.hero.beggingStartAt < nw.hero.lastDailyReset
+        && old.hero.beggingUntil != null && old.hero.beggingUntil <= request.time.toMillis())
+        ? old.hero.beggingReward : 0;
+      let questPending = (dailyReset
+        && old.activeQuest != null && nw.activeQuest == null
+        && old.activeQuest.startedAt != null && old.activeQuest.startedAt < nw.hero.lastDailyReset
+        && old.activeQuest.endsAt != null && old.activeQuest.endsAt <= request.time.toMillis()
+        && old.activeQuest.quest != null)
+        ? (old.activeQuest.quest.goldReward == null ? 0 : old.activeQuest.quest.goldReward) : 0;
       return
         (dailyReset
           ? nw.hero.goldEarnedToday >= 0
@@ -78,7 +93,7 @@ service cloud.firestore {
         && nw.hero.goldEarnedToday <= 250000000
         && nw.hero.gold >= 0
         && nw.hero.gold <= 1000000000
-        && nw.hero.gold <= old.hero.gold + earnedDelta;
+        && nw.hero.gold <= old.hero.gold + earnedDelta + beggingPending + questPending;
     }
 
     // Null-safe: beggingReward must not exceed the daily gold cap when set.

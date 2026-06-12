@@ -646,8 +646,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (!activeQuest) return;
     if (Date.now() < activeQuest.endsAt) return;
     cancelQuestNotification();
+    const goldReward = activeQuest.quest.goldReward;
+    // Quest started before today's daily reset → reward is "from yesterday",
+    // don't deduct from today's goldEarnedToday cap.
+    const fromYesterday = activeQuest.startedAt < get().hero.lastDailyReset;
     get().addXp(activeQuest.quest.xpReward);
-    get().addGold(activeQuest.quest.goldReward);
+    if (fromYesterday) {
+      const h = get().hero;
+      set({ hero: { ...h, gold: h.gold + goldReward } });
+    } else {
+      get().addGold(goldReward);
+    }
     // Read hero AFTER addXp/addGold so level-up results are not overwritten
     const freshHero = get().hero;
     set({ activeQuest: null, hero: { ...freshHero, questsCompletedToday: freshHero.questsCompletedToday + 1 } });
@@ -849,9 +858,17 @@ export const useGameStore = create<GameState>((set, get) => ({
     const reward = hero.beggingReward ?? 0;
     const t = getT();
     cancelBeggingNotification();
-    get().addGold(reward);
-    const freshHero = get().hero;
-    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    // Begging started before today's daily reset → reward is "from yesterday",
+    // don't deduct from today's goldEarnedToday cap.
+    const fromYesterday = hero.beggingStartAt != null && hero.beggingStartAt < hero.lastDailyReset;
+    if (fromYesterday) {
+      const freshHero = get().hero;
+      set({ hero: { ...freshHero, gold: freshHero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    } else {
+      get().addGold(reward);
+      const freshHero = get().hero;
+      set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+    }
     get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
   },
