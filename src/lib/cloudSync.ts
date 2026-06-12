@@ -1,4 +1,4 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId, increment } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId, increment, serverTimestamp, type Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
@@ -36,7 +36,7 @@ const _lastGuildSync = new Map<string, number>();
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
-  const savedAt = Date.now();
+  const savedAt = Date.now(); // used only for non-validated fields (players collection)
   useGameStore.getState().saveGame();
   const { hero, activeQuest, pvpWins, pvpLosses, pvpRating } = useGameStore.getState();
   const { pvpLog, lastPvpFight, challengeUnlocked, lastChallengeAt } = useGameStore.getState();
@@ -65,7 +65,7 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
         lastShopRefresh: lastShopRefresh ?? 0,
         shopPurchased: shopPurchased ?? [],
         lastPassiveRegenAt: lastPassiveRegenAt ?? Date.now(),
-        updatedAt: savedAt,
+        updatedAt: serverTimestamp(),
       }),
       getDoc(playerRef),
     ] as const);
@@ -200,9 +200,14 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
 
   if (!raw?.hero) return null;
 
-  const cloudTs: number = saveSnap.exists()
-    ? (saveSnap.data().updatedAt ?? 0)
-    : (playerSnap.data()?.updatedAt ?? 0);
+  const rawTs = saveSnap.exists()
+    ? saveSnap.data().updatedAt
+    : playerSnap.data()?.updatedAt;
+  // updatedAt is now a Firestore serverTimestamp (Timestamp object) for new saves,
+  // but legacy saves stored a plain millisecond number — handle both.
+  const cloudTs: number = typeof rawTs === 'number'
+    ? rawTs
+    : ((rawTs as Timestamp | null)?.toMillis?.() ?? 0);
 
   // Admin override: if updatedAt is far in the future (e.g. 9999999999999),
   // always load from cloud regardless of local state.

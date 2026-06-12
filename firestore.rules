@@ -61,9 +61,10 @@ service cloud.firestore {
         || request.time.toMillis() - oldAt >= COOLDOWN_MS;
     }
 
+    // updatedAt is written as serverTimestamp() — Firestore sets it to request.time.
+    // This check is exact and independent of the client's device clock.
     function validTimestamp(nw) {
-      return nw.updatedAt <= request.time.toMillis() + 60000
-        && nw.updatedAt >= request.time.toMillis() - 300000;
+      return nw.updatedAt == request.time;
     }
 
     // Gold earned today. Null-safe: missing goldEarnedToday treated as 0.
