@@ -18,6 +18,7 @@ interface ClientError {
   ts: number;
   ua: string;
   type: 'react' | 'js' | 'promise';
+  build?: string;
 }
 
 const TYPE_COLOR: Record<string, string> = {
@@ -150,6 +151,11 @@ export default function ErrorLogPanel({ userEmail }: { userEmail: string }) {
                         <span style={{ ...MONO, fontSize: 9, color: '#ffc83a' }}>{err.username}</span>
                         <span style={{ ...MONO, fontSize: 8, color: '#444' }}>{err.uid.slice(0, 8)}</span>
                         <span style={{ ...MONO, fontSize: 8, color: '#555' }}>{err.url}</span>
+                        {err.build && (
+                          <span style={{ ...MONO, fontSize: 8, color: '#2a6', background: '#0a1a0a', border: '1px solid #2a6', borderRadius: 2, padding: '0 4px' }}>
+                            {err.build}
+                          </span>
+                        )}
                         <span style={{ ...MONO, fontSize: 8, color: '#444', marginLeft: 'auto' }}>{timeAgo(err.ts)}</span>
                       </div>
                       <p

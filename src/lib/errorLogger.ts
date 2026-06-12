@@ -41,6 +41,7 @@ export async function logClientError(
       ts:      Date.now(),
       ua:      navigator.userAgent.slice(0, 120),
       type,
+      build:   __BUILD_ID__,
     });
   } catch {
     // never throw — logging must not crash the app
