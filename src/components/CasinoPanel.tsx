@@ -213,16 +213,28 @@ export default function CasinoPanel() {
     setLastResult(null);
     setSpinError(null);
 
-    // 12-second hard deadline: if something deadlocks, reset to a clean state
+    // Safety deadline — must outlast the worst-case full flow:
+    // syncToCloud (≤3s) + CF call (≤10s) + decel animation (3s) + margin = 20s.
+    // IMPORTANT: if the CF already succeeded and onDoneRef is set, the timer must
+    // CALL the callback (not null it) so gold is applied even when animation
+    // overruns the deadline.
     clearTimeout(safetyTimerRef.current);
     safetyTimerRef.current = setTimeout(() => {
+      const pendingCb = onDoneRef.current;
+      onDoneRef.current = null;
       reelRef.current.phase = 'idle';
       if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = undefined; }
-      onDoneRef.current = null;
       spinLockRef.current = false;
       setSpinning(false);
-      setSpinError(t.casino.serverError);
-    }, 12000);
+      if (pendingCb) {
+        // CF succeeded but animation overran the deadline — apply gold now.
+        pendingCb();
+      } else {
+        // CF never responded — show error and reload authoritative balance.
+        setSpinError(t.casino.serverError);
+        if (user) loadFromCloud(user.uid, false).catch(() => {});
+      }
+    }, 20000);
 
     // Always cancel any lingering RAF and force-start a fresh loop
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -253,8 +265,14 @@ export default function CasinoPanel() {
       spinLockRef.current = false;
       setSpinning(false);
       setSpinError(err?.message ?? t.casino.serverError);
-      // Reload authoritative gold — CF may have deducted it before the network error
-      if (user) loadFromCloud(user.uid, false).catch(() => {});
+      // Reload authoritative gold — CF may have already processed the spin on the
+      // server side before the network error reached the client.
+      // Retry after a short delay to let Firestore settle.
+      if (user) {
+        const uid = user.uid;
+        loadFromCloud(uid, false).catch(() => {});
+        setTimeout(() => loadFromCloud(uid, false).catch(() => {}), 3000);
+      }
       return;
     }
 
