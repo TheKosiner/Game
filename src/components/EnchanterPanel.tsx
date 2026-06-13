@@ -291,7 +291,7 @@ export default function EnchanterPanel() {
   const canAfford = hero.gold >= cost;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
       <ResultModal
         result={result}
