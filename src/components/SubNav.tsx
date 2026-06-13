@@ -15,13 +15,17 @@ export function SubNavBar<T extends string>({ tabs, active, onChange, centered }
       position: 'sticky',
       top: 0,
       zIndex: 35,
-      background: 'linear-gradient(180deg, #07070f 0%, #0c0c1a 100%)',
-      borderBottom: '2px solid rgba(255,45,120,0.25)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+      backdropFilter: 'blur(16px) saturate(160%)',
+      WebkitBackdropFilter: 'blur(16px) saturate(160%)',
+      background: 'rgba(5, 5, 15, 0.92)',
+      borderBottom: '1px solid rgba(255,45,120,0.2)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.7), inset 0 -1px 0 rgba(255,45,120,0.1)',
       display: 'flex',
       justifyContent: centered ? 'center' : 'stretch',
       overflowX: 'auto',
       scrollbarWidth: 'none',
+      gap: 2,
+      padding: '6px 6px 0',
     }}>
       {tabs.map(tab => {
         const isActive = active === tab.id;
@@ -32,33 +36,48 @@ export function SubNavBar<T extends string>({ tabs, active, onChange, centered }
             style={{
               flex: centered ? '0 0 auto' : 1,
               minWidth: centered ? 80 : 0,
-              padding: '12px 6px',
+              padding: '8px 10px 10px',
               background: isActive
-                ? 'linear-gradient(180deg, rgba(255,45,120,0.15) 0%, rgba(255,45,120,0.05) 100%)'
+                ? 'linear-gradient(180deg, rgba(255,45,120,0.18) 0%, rgba(255,45,120,0.08) 100%)'
                 : 'transparent',
               border: 'none',
-              borderBottom: `3px solid ${isActive ? '#ff2d78' : 'transparent'}`,
+              borderRadius: '4px 4px 0 0',
+              borderBottom: `2px solid ${isActive ? '#ff2d78' : 'transparent'}`,
               cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              transition: 'all 0.15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              transition: 'all 0.18s',
+              position: 'relative',
             }}
           >
+            {/* Active glow line */}
+            {isActive && (
+              <div style={{
+                position: 'absolute',
+                bottom: -1, left: '20%', right: '20%',
+                height: 2,
+                background: 'linear-gradient(90deg, transparent, #ff2d78, transparent)',
+                filter: 'blur(3px)',
+              }} />
+            )}
             <span style={{
-              ...ORB, fontSize: 10,
-              color: isActive ? '#ff2d78' : 'rgba(255,255,255,0.45)',
-              textShadow: isActive ? '0 0 10px rgba(255,45,120,0.7)' : 'none',
-              letterSpacing: '0.1em',
+              ...ORB, fontSize: 9,
+              color: isActive ? '#ff2d78' : 'rgba(255,255,255,0.38)',
+              textShadow: isActive ? '0 0 12px rgba(255,45,120,0.9), 0 0 24px rgba(255,45,120,0.4)' : 'none',
+              letterSpacing: '0.12em',
               whiteSpace: 'nowrap',
+              transition: 'color 0.18s, text-shadow 0.18s',
             }}>
               {tab.label}
             </span>
             {tab.badge != null && tab.badge > 0 && (
               <span style={{
-                ...ORB, fontSize: 10,
-                background: '#ff2d78', color: '#000',
-                borderRadius: 10, padding: '1px 6px',
-                minWidth: 18, textAlign: 'center',
+                ...ORB, fontSize: 8,
+                background: 'linear-gradient(135deg, #ff2d78, #ff6eb4)',
+                color: '#fff',
+                borderRadius: 8, padding: '1px 5px',
+                minWidth: 16, textAlign: 'center',
                 lineHeight: '14px',
+                boxShadow: '0 0 8px rgba(255,45,120,0.6)',
               }}>
                 {tab.badge}
               </span>

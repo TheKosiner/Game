@@ -175,56 +175,64 @@ body::after {
 }
 
 /* ============================================================
-   CARD / PANEL — glassmorphism upgrade
+   CARD / PANEL — dark glass with neon frame
 ============================================================ */
 .card {
   position: relative;
-  background: rgba(14, 14, 31, 0.82);
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  background: rgba(8, 8, 22, 0.88);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
   border: 1px solid rgba(255,45,120,0.22);
   box-shadow:
-    0 0 24px rgba(255,45,120,0.06),
-    0 8px 32px rgba(0,0,0,0.6),
-    inset 0 0 30px rgba(0,0,0,0.4);
-  transition: border-color 0.2s, box-shadow 0.2s;
+    0 0 0 0.5px rgba(0,245,255,0.04) inset,
+    0 2px 24px rgba(0,0,0,0.7),
+    0 0 40px rgba(255,45,120,0.04);
+  transition: border-color 0.25s, box-shadow 0.25s;
+  overflow: hidden;
 }
 
 .card:hover {
-  border-color: rgba(255,45,120,0.32);
+  border-color: rgba(255,45,120,0.35);
   box-shadow:
-    0 0 32px rgba(255,45,120,0.09),
-    0 8px 32px rgba(0,0,0,0.7),
-    inset 0 0 30px rgba(0,0,0,0.4);
+    0 0 0 0.5px rgba(0,245,255,0.07) inset,
+    0 4px 32px rgba(0,0,0,0.8),
+    0 0 24px rgba(255,45,120,0.1);
 }
 
 .card.p-3 { padding: 12px; }
 .card.p-4 { padding: 16px; }
 
+/* Top neon line */
 .card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--pink), transparent);
-  opacity: 0.6;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,45,120,0.7) 30%,
+    rgba(0,245,255,0.5) 70%,
+    transparent 100%);
+  opacity: 0.7;
+  z-index: 1;
 }
 
-/* Corner accents */
+/* Bottom-right corner bracket */
 .card::after {
   content: '';
   position: absolute;
   bottom: 0; right: 0;
-  width: 20px; height: 20px;
-  border-bottom: 1px solid rgba(0,245,255,0.25);
-  border-right:  1px solid rgba(0,245,255,0.25);
+  width: 18px; height: 18px;
+  border-bottom: 1px solid rgba(0,245,255,0.3);
+  border-right:  1px solid rgba(0,245,255,0.3);
   pointer-events: none;
+  z-index: 1;
 }
 
 /* Sub-panel */
 .df-section {
-  background: var(--bg-inset);
-  border: 1px solid rgba(255,45,120,0.12);
+  background: rgba(6, 6, 16, 0.6);
+  border: 1px solid rgba(255,45,120,0.1);
   padding: 8px 10px;
   position: relative;
 }
@@ -315,77 +323,119 @@ textarea:focus-visible {
 .btn:hover::after { left: 100%; }
 
 .btn-primary {
-  background: linear-gradient(135deg, rgba(255,45,120,0.15), rgba(255,45,120,0.05));
-  border-color: var(--pink);
+  background: linear-gradient(135deg, rgba(255,45,120,0.18) 0%, rgba(255,45,120,0.06) 100%);
+  border-color: rgba(255,45,120,0.7);
   color: var(--pink);
   padding: 8px 14px;
-  box-shadow: 0 0 10px rgba(255,45,120,0.2), inset 0 0 10px rgba(255,45,120,0.05);
-  text-shadow: 0 0 8px var(--pink);
+  box-shadow:
+    0 0 12px rgba(255,45,120,0.25),
+    0 2px 8px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,45,120,0.2),
+    inset 0 0 12px rgba(255,45,120,0.06);
+  text-shadow: 0 0 10px var(--pink);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, rgba(255,45,120,0.25), rgba(255,45,120,0.1));
-  box-shadow: 0 0 20px rgba(255,45,120,0.4), inset 0 0 15px rgba(255,45,120,0.1);
+  background: linear-gradient(135deg, rgba(255,45,120,0.28) 0%, rgba(255,45,120,0.12) 100%);
+  border-color: var(--pink);
+  box-shadow:
+    0 0 20px rgba(255,45,120,0.45),
+    0 4px 12px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,45,120,0.3),
+    inset 0 0 16px rgba(255,45,120,0.1);
 }
 
-.btn-primary:disabled { opacity: 0.25; cursor: not-allowed; }
+.btn-primary:disabled { opacity: 0.22; cursor: not-allowed; }
 
 .btn-secondary {
   background: rgba(0,245,255,0.05);
-  border-color: rgba(0,245,255,0.3);
+  border-color: rgba(0,245,255,0.35);
   color: var(--cyan);
   padding: 8px 12px;
-  text-shadow: 0 0 6px var(--cyan);
+  text-shadow: 0 0 8px var(--cyan);
+  box-shadow: 0 0 8px rgba(0,245,255,0.08), inset 0 1px 0 rgba(0,245,255,0.1);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(0,245,255,0.12);
-  box-shadow: 0 0 14px rgba(0,245,255,0.25);
+  background: rgba(0,245,255,0.1);
+  border-color: var(--cyan);
+  box-shadow: 0 0 18px rgba(0,245,255,0.3), inset 0 1px 0 rgba(0,245,255,0.15);
 }
 
-.btn-secondary:disabled { opacity: 0.25; cursor: not-allowed; }
+.btn-secondary:disabled { opacity: 0.22; cursor: not-allowed; }
 
 .btn-danger {
-  background: rgba(255,68,68,0.08);
-  border-color: rgba(255,68,68,0.4);
+  background: rgba(255,68,68,0.07);
+  border-color: rgba(255,68,68,0.45);
   color: #ff6666;
   padding: 8px 14px;
+  box-shadow: 0 0 8px rgba(255,68,68,0.08);
 }
 
 .btn-danger:hover:not(:disabled) {
-  box-shadow: 0 0 14px rgba(255,68,68,0.3);
+  background: rgba(255,68,68,0.13);
+  box-shadow: 0 0 18px rgba(255,68,68,0.3);
+}
+
+/* ============================================================
+   PANEL SECTION HEADERS — glowing label
+============================================================ */
+.panel-section-title {
+  font-family: 'Orbitron', monospace;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(255,45,120,0.7);
+  text-shadow: 0 0 8px rgba(255,45,120,0.4);
+  border-bottom: 1px solid rgba(255,45,120,0.12);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-section-title::before {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, #ff2d78, transparent);
+  flex-shrink: 0;
 }
 
 /* ============================================================
    EQUIPMENT & INVENTORY SLOTS
 ============================================================ */
 .df-slot {
-  background: var(--bg-inset);
+  background: rgba(6,6,16,0.7);
   border: 1px solid rgba(255,45,120,0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
   padding: 6px;
 }
 
 .df-slot:hover:not(.empty) {
-  border-color: var(--pink);
-  box-shadow: 0 0 12px rgba(255,45,120,0.2);
+  border-color: rgba(255,45,120,0.55);
+  box-shadow: 0 0 14px rgba(255,45,120,0.18);
+  background: rgba(255,45,120,0.04);
 }
 
 .df-slot.empty {
-  border: 1px dashed rgba(255,45,120,0.1);
-  opacity: 0.4;
+  border: 1px dashed rgba(255,45,120,0.08);
+  opacity: 0.35;
 }
 
 /* ============================================================
    COMBAT LOG
 ============================================================ */
 .combat-log {
-  background: var(--bg-deep);
+  background: rgba(0, 0, 5, 0.75);
   border: 1px solid rgba(0,245,255,0.1);
   font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
@@ -393,7 +443,7 @@ textarea:focus-visible {
   padding: 8px;
   max-height: 130px;
   overflow-y: auto;
-  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: inset 0 2px 12px rgba(0,0,0,0.6);
 }
 
 .combat-log::-webkit-scrollbar { width: 3px; }

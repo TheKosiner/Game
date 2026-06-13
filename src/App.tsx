@@ -39,7 +39,7 @@ import KryptaPanel from './components/KryptaPanel';
 import EnchanterPanel from './components/EnchanterPanel';
 import LobbyPanel from './components/LobbyPanel';
 import CyberpunkBg from './components/CyberpunkBg';
-import LoadingScreen from './components/LoadingScreen';
+import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import { animateTabIn } from './lib/gsapAnimations';
 
@@ -68,6 +68,7 @@ export default function App() {
   const [shopSub, setShopSub]     = useState<ShopSub>('shop');
   const [guildTab, setGuildTab]   = useState<GuildTabSub>('info');
   const [gameLoaded, setGameLoaded] = useState(false);
+  const [minTimeReady, setMinTimeReady] = useState(false);
   const [mailUnread, setMailUnread] = useState(0);
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
@@ -84,6 +85,12 @@ export default function App() {
       animateTabIn(desktopMainRef.current);
     }
   }, [animKey]);
+
+  // Minimum loading screen duration
+  useEffect(() => {
+    const id = setTimeout(() => setMinTimeReady(true), LOADING_MIN_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   // Quest is ready when timer expired and user isn't already on quests sub-tab
   const questReady = activeQuest !== null && nowTick >= activeQuest.endsAt;
@@ -324,7 +331,7 @@ export default function App() {
     }).catch(() => {});
   }, [user?.uid, gameLoaded]);
 
-  if (authLoading || !gameLoaded) {
+  if (authLoading || !gameLoaded || !minTimeReady) {
     return <LoadingScreen text={t.app.loading} />;
   }
 
