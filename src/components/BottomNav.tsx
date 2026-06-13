@@ -86,11 +86,10 @@ export default function BottomNav({ active, onChange, badges }: Props) {
   ];
 
   return (
-    <nav style={{
+    <nav className="bottom-nav-glass" style={{
       flexShrink: 0,
-      background: 'linear-gradient(0deg, #040408 0%, #0a0a14 100%)',
       borderTop: '1px solid rgba(255,45,120,0.3)',
-      boxShadow: '0 -4px 24px rgba(255,45,120,0.08)',
+      boxShadow: '0 -4px 32px rgba(255,45,120,0.1), 0 -1px 0 rgba(0,245,255,0.06)',
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     }}>
       <div style={{ display: 'flex', maxWidth: 480, margin: '0 auto' }}>
@@ -124,7 +123,7 @@ export default function BottomNav({ active, onChange, badges }: Props) {
                 }} />
               )}
               {badges?.[tab.id] && !isActive && (
-                <span style={{
+                <span className="badge-pulse" style={{
                   position: 'absolute', top: 8, right: '50%', transform: 'translateX(14px)',
                   width: 8, height: 8, borderRadius: '50%',
                   background: '#ff2d78', boxShadow: '0 0 8px #ff2d78',

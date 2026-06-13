@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
-
 import { PORTRAIT_LIST } from '../data/portraits';
+import CyberpunkBg from './CyberpunkBg';
 
 export default function CharacterCreation() {
   const [name, setName] = useState('');
@@ -20,19 +20,21 @@ export default function CharacterCreation() {
   return (
     <div style={{
       minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: 16, background: '#060912',
-      backgroundImage: 'radial-gradient(ellipse 80% 60% at 20% 20%, rgba(59,51,140,0.2) 0%, transparent 60%)',
+      padding: 16, position: 'relative', overflow: 'hidden',
+      background: 'radial-gradient(ellipse 80% 60% at 20% 20%, rgba(59,51,140,0.15) 0%, transparent 60%), #060912',
     }}>
-      <div style={{ width: '100%', maxWidth: 420 }}>
+      <CyberpunkBg />
+      <div style={{ width: '100%', maxWidth: 420, position: 'relative', zIndex: 1 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <p style={{ fontSize: 36, marginBottom: 8 }}>⊕</p>
           <h1 style={{
             fontFamily: "'Orbitron', monospace", fontWeight: 900,
-            fontSize: 14, marginBottom: 8,
-            background: 'linear-gradient(90deg, #ff2d78, #ff2d78, #ff2d78)',
+            fontSize: 18, marginBottom: 8,
+            background: 'linear-gradient(135deg, #00f5ff 0%, #9d4edd 50%, #ff2d78 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
-            filter: 'drop-shadow(0 0 10px rgba(255,45,120,0.5))',
+            filter: 'drop-shadow(0 0 16px rgba(255,45,120,0.6))',
+            letterSpacing: '0.08em',
           }}>GlitchSoul</h1>
           <p style={{ fontFamily: "'Share Tech Mono', monospace", color: '#475569', fontSize: 10 }}>{t.creation.subtitle}</p>
         </div>

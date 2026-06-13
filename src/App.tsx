@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
-import logoImg from './assets/logo.webp';
 import { useGameStore } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
@@ -39,6 +38,10 @@ import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
 import EnchanterPanel from './components/EnchanterPanel';
 import LobbyPanel from './components/LobbyPanel';
+import CyberpunkBg from './components/CyberpunkBg';
+import LoadingScreen from './components/LoadingScreen';
+import AnimatedPanel from './components/AnimatedPanel';
+import { animateTabIn } from './lib/gsapAnimations';
 
 export default function App() {
   const t = useT();
@@ -72,6 +75,15 @@ export default function App() {
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
+  const desktopMainRef = useRef<HTMLElement>(null);
+  const animKey = `${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`;
+  const prevAnimKey = useRef(animKey);
+  useEffect(() => {
+    if (prevAnimKey.current !== animKey) {
+      prevAnimKey.current = animKey;
+      animateTabIn(desktopMainRef.current);
+    }
+  }, [animKey]);
 
   // Quest is ready when timer expired and user isn't already on quests sub-tab
   const questReady = activeQuest !== null && nowTick >= activeQuest.endsAt;
@@ -313,34 +325,7 @@ export default function App() {
   }, [user?.uid, gameLoaded]);
 
   if (authLoading || !gameLoaded) {
-    return (
-      <div style={{
-        minHeight: '100dvh',
-        background: '#040408',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', gap: 24,
-      }}>
-        <img
-          src={logoImg}
-          alt="Glitch Soul"
-          style={{
-            width: 200, height: 'auto',
-            filter: 'drop-shadow(0 0 24px rgba(140,60,255,0.7)) drop-shadow(0 0 48px rgba(0,200,255,0.3))',
-            animation: 'pulse 2s ease-in-out infinite',
-          }}
-        />
-        <p style={{
-          fontFamily: "'Orbitron', monospace",
-          fontSize: 10,
-          color: '#ff2d78',
-          letterSpacing: '0.3em',
-          textShadow: '0 0 10px #ff2d78',
-          animation: 'pulse 2s ease-in-out infinite',
-          margin: 0,
-        }}>{t.app.loading}</p>
-        <style>{`@keyframes pulse { 0%,100%{opacity:.7} 50%{opacity:1} }`}</style>
-      </div>
-    );
+    return <LoadingScreen text={t.app.loading} />;
   }
 
   if (isFirebaseConfigured && !user) return <AuthScreen />;
@@ -361,7 +346,8 @@ export default function App() {
     };
     return (
       <>
-      <div className="desktop-layout" style={{ display: 'flex', background: '#040408', overflow: 'hidden' }}>
+      <CyberpunkBg />
+      <div className="desktop-layout" style={{ display: 'flex', background: 'transparent', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
         <DesktopSidebar
           tab={tab} playSub={playSub} socialSub={socialSub} shopSub={shopSub}
           questBadge={questBadge} mailUnread={mailUnread} chatHasNew={chatHasNew}
@@ -373,9 +359,8 @@ export default function App() {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
           {/* Thin top bar */}
-          <header style={{
+          <header className="glass-header" style={{
             flexShrink: 0,
-            background: 'linear-gradient(180deg, #080810 0%, #0a0a18 100%)',
             borderBottom: '1px solid rgba(255,45,120,0.2)',
             padding: '8px 24px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -383,11 +368,12 @@ export default function App() {
           }}>
             <p style={{
               fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 700,
-              color: 'rgba(255,255,255,0.35)', letterSpacing: 3, textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.4)', letterSpacing: 3, textTransform: 'uppercase',
+              textShadow: '0 0 12px rgba(0,245,255,0.2)',
             }}>
               {sectionLabel[tab]}
             </p>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: 1 }}>
+            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.3)', letterSpacing: 1 }}>
               {hero.name}
             </p>
           </header>
@@ -399,7 +385,7 @@ export default function App() {
             overflowX: 'hidden',
           }}>
             {tab === 'guild' && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
-            <main style={{
+            <main ref={desktopMainRef} style={{
               padding: tab === 'lobby' ? 0 : '20px 28px',
               display: tab === 'hero' ? 'grid' : 'flex',
               gridTemplateColumns: tab === 'hero' ? '1fr 1fr' : undefined,
@@ -435,17 +421,19 @@ export default function App() {
 
   // ── MOBILE LAYOUT ───────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <>
+    <CyberpunkBg />
+    <div style={{ maxWidth: 480, margin: '0 auto', height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
 
       {/* CYBERPUNK TOP BAR */}
-      <header style={{
-        background: 'linear-gradient(180deg, #080810 0%, #0a0a18 100%)',
+      <header className="glass-header" style={{
         borderBottom: '1px solid rgba(255,45,120,0.3)',
         flexShrink: 0,
         zIndex: 40,
         padding: '4px 8px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        boxShadow: '0 0 20px rgba(255,45,120,0.1), 0 4px 20px rgba(0,0,0,0.8)',
+        boxShadow: '0 0 20px rgba(255,45,120,0.12), 0 4px 24px rgba(0,0,0,0.7)',
+        position: 'relative',
       }}>
         <span style={{ fontFamily: "'Orbitron', monospace", fontSize: 15, fontWeight: 900, letterSpacing: 1, flexShrink: 0 }}>
           <span style={{ color: '#00f5ff', textShadow: '0 0 8px #00f5ff, 0 0 20px #00e5ff' }}>Glitch</span>
@@ -563,22 +551,27 @@ export default function App() {
           gap: tab === 'lobby' ? 0 : 8,
           height: tab === 'lobby' ? '100%' : undefined,
         }}>
-          {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
-          {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
-          {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
-          {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
-          {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
-          {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
-          {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
-          {tab === 'lobby'  && <LobbyPanel />}
-          {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
-          {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
-          {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
-          {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
-          {tab === 'shop'   && shopSub === 'enchanter' && <EnchanterPanel />}
-          {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
-          {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
-          {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+          <AnimatedPanel
+            animKey={`${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`}
+            style={tab === 'lobby' ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : undefined}
+          >
+            {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
+            {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
+            {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
+            {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
+            {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
+            {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
+            {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
+            {tab === 'lobby'  && <LobbyPanel />}
+            {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
+            {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
+            {tab === 'shop'   && shopSub === 'smith'     && <SmithPanel />}
+            {tab === 'shop'   && shopSub === 'casino'    && <CasinoPanel />}
+            {tab === 'shop'   && shopSub === 'enchanter' && <EnchanterPanel />}
+            {tab === 'social' && socialSub === 'ranking' && <LeaderboardPanel />}
+            {tab === 'social' && socialSub === 'mail'    && <MailPanel onUnreadChange={setMailUnread} />}
+            {tab === 'social' && socialSub === 'chat'    && <ChatPanel />}
+          </AnimatedPanel>
         </main>
       </div>
 
@@ -586,5 +579,6 @@ export default function App() {
       <MysteryBoxModal />
       <LevelUpModal />
     </div>
+    </>
   );
 }
