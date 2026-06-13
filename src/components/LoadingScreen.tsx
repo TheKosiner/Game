@@ -94,28 +94,8 @@ export default function LoadingScreen({ text }: { text: string }) {
     const pts = new THREE.Points(geo, mat);
     scene.add(pts);
 
-    // Ring glow
-    const ringGeo = new THREE.RingGeometry(1.2, 1.35, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0xff2d78, transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-    });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    scene.add(ring);
-
-    // Outer ring
-    const ring2Geo = new THREE.RingGeometry(2.0, 2.08, 64);
-    const ring2Mat = new THREE.MeshBasicMaterial({
-      color: 0x00f5ff, transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-    });
-    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-    scene.add(ring2);
-
     // GSAP animations
-    gsap.to(mat,   { opacity: 0.85, duration: 0.9, ease: 'power2.out' });
-    gsap.to(ringMat,  { opacity: 0.4, duration: 0.7, delay: 0.2, ease: 'power2.out' });
-    gsap.to(ring2Mat, { opacity: 0.25, duration: 0.7, delay: 0.35, ease: 'power2.out' });
+    gsap.to(mat, { opacity: 0.85, duration: 0.9, ease: 'power2.out' });
 
     if (titleRef.current) {
       gsap.fromTo(titleRef.current,
@@ -148,14 +128,6 @@ export default function LoadingScreen({ text }: { text: string }) {
 
       pts.rotation.y += 0.0025;
       pts.rotation.x += 0.0012;
-
-      ring.rotation.z  -= 0.006;
-      ring2.rotation.z += 0.003;
-
-      // Pulse rings
-      const pulse = 0.3 + 0.12 * Math.sin(frame * 0.04);
-      ringMat.opacity  = Math.max(0, Math.min(0.6, pulse));
-      ring2Mat.opacity = Math.max(0, Math.min(0.35, pulse * 0.6));
 
       if (frame > 80) mat.opacity = Math.max(0.25, mat.opacity - 0.0006);
 
