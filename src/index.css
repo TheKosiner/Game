@@ -46,6 +46,25 @@
   100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
 }
 
+@keyframes aurora-drift-1 {
+  0%,100% { transform: translate(0%, 0%) scale(1); }
+  33%     { transform: translate(6%, -4%) scale(1.08); }
+  66%     { transform: translate(-3%, 6%) scale(0.96); }
+}
+@keyframes aurora-drift-2 {
+  0%,100% { transform: translate(0%, 0%) scale(1); }
+  40%     { transform: translate(-8%, 5%) scale(1.1); }
+  70%     { transform: translate(4%, -6%) scale(0.94); }
+}
+@keyframes aurora-drift-3 {
+  0%,100% { transform: translate(0%, 0%) scale(1); }
+  50%     { transform: translate(5%, 8%) scale(1.06); }
+}
+@keyframes aurora-drift-4 {
+  0%,100% { transform: translate(0%, 0%) scale(1); }
+  45%     { transform: translate(-6%, -5%) scale(1.04); }
+}
+
 @keyframes bossShake {
   0%,100% { transform: translateX(0) rotate(0deg); }
   15%      { transform: translateX(-7px) rotate(-2deg); }

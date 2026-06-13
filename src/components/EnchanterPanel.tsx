@@ -291,7 +291,7 @@ export default function EnchanterPanel() {
   const canAfford = hero.gold >= cost;
 
   return (
-    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(8,4,20,0.97)', border: '1px solid rgba(168,0,255,0.28)' }}>
 
       <ResultModal
         result={result}
@@ -375,7 +375,8 @@ export default function EnchanterPanel() {
         <div style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {!freshSel ? (
             <div style={{
-              border: '1px dashed rgba(168,0,255,0.2)', borderRadius: 8,
+              background: 'rgba(10,6,24,0.7)',
+              border: '1px dashed rgba(168,0,255,0.25)', borderRadius: 6,
               padding: 20, textAlign: 'center',
             }}>
               <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
@@ -384,9 +385,9 @@ export default function EnchanterPanel() {
             </div>
           ) : (
             <div style={{
-              background: 'rgba(168,0,255,0.05)',
-              border: '1px solid rgba(168,0,255,0.2)',
-              borderRadius: 8, padding: '14px 16px',
+              background: 'rgba(168,0,255,0.12)',
+              border: '1px solid rgba(168,0,255,0.32)',
+              borderRadius: 6, padding: '14px 16px',
               display: 'flex', flexDirection: 'column', gap: 10,
             }}>
               {/* Item header */}
@@ -408,7 +409,7 @@ export default function EnchanterPanel() {
 
               {/* Current stats */}
               <div style={{
-                background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                background: 'rgba(10,6,24,0.65)', border: '1px solid rgba(168,0,255,0.18)',
                 borderRadius: 6, padding: '8px 10px',
               }}>
                 <p style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '0 0 6px', letterSpacing: 1 }}>

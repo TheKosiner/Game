@@ -319,7 +319,7 @@ export default function SmithPanel() {
   })();
 
   return (
-    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="card p-4" style={{ display: 'flex', flexDirection: 'column', gap: 12, background: 'rgba(8,5,18,0.97)', border: '1px solid rgba(255,150,50,0.25)' }}>
 
       <ResultModal
         result={result}
@@ -344,9 +344,9 @@ export default function SmithPanel() {
 
           {/* Header */}
           <div style={{
-            background: 'linear-gradient(135deg, rgba(255,150,50,0.08), rgba(255,45,120,0.05))',
-            border: '1px solid rgba(255,150,50,0.2)',
-            borderRadius: 8, padding: '14px 16px',
+            background: 'linear-gradient(135deg, rgba(255,150,50,0.18), rgba(255,45,120,0.08))',
+            border: '1px solid rgba(255,150,50,0.35)',
+            borderRadius: 6, padding: '12px 16px',
           }}>
             <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#ff9632', letterSpacing: 2 }}>{t.smith.title}</h2>
             <p style={{ ...MONO, margin: '4px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{t.smith.subtitle}</p>
@@ -399,16 +399,17 @@ export default function SmithPanel() {
         <div style={{ flex: '1 1 180px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           {!freshSelected ? (
             <div style={{
-              border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 8,
+              background: 'rgba(10,8,22,0.7)',
+              border: '1px dashed rgba(255,150,50,0.2)', borderRadius: 6,
               padding: 20, textAlign: 'center',
             }}>
               <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{t.smith.selectItem}</p>
             </div>
           ) : (
             <div style={{
-              background: 'rgba(255,150,50,0.05)',
-              border: '1px solid rgba(255,150,50,0.2)',
-              borderRadius: 8, padding: '14px 16px',
+              background: 'rgba(255,150,50,0.1)',
+              border: '1px solid rgba(255,150,50,0.3)',
+              borderRadius: 6, padding: '14px 16px',
               display: 'flex', flexDirection: 'column', gap: 10,
             }}>
               {/* Item preview */}
