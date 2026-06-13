@@ -511,7 +511,7 @@ function DungeonList() {
       {/* ── Selected dungeon details ─────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'flex-start', gap: 10,
-        background: 'rgba(255,45,120,0.04)', border: '1px solid rgba(255,45,120,0.2)',
+        background: 'rgba(255,45,120,0.10)', border: '1px solid rgba(255,45,120,0.28)',
         padding: '10px 12px',
       }}>
         <div style={{ flexShrink: 0, width: 48, height: 48 }}>

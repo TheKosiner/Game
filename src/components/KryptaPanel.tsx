@@ -495,7 +495,7 @@ export default function KryptaPanel() {
     if (!enemy) return null;
     return (
       <div style={{
-        background: 'rgba(255,45,120,0.06)', border: '1px solid rgba(255,45,120,0.2)',
+        background: 'rgba(255,45,120,0.12)', border: '1px solid rgba(255,45,120,0.3)',
         padding: '12px 16px', marginBottom: 12, textAlign: 'center',
       }}>
         <EnemyPortrait id={enemy.id} emoji={enemy.emoji} size={72} style={{ margin: '0 auto 4px' }} />
@@ -552,7 +552,7 @@ export default function KryptaPanel() {
           </div>
           <div style={{
             display: 'flex', gap: 6, alignItems: 'center',
-            background: blocked ? 'rgba(255,45,120,0.08)' : 'rgba(153,68,204,0.08)',
+            background: blocked ? 'rgba(255,45,120,0.14)' : 'rgba(153,68,204,0.14)',
             border: `1px solid ${blocked ? 'rgba(255,45,120,0.3)' : 'rgba(153,68,204,0.25)'}`,
             padding: '6px 16px',
           }}>
@@ -722,7 +722,7 @@ export default function KryptaPanel() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '8px 0' }}>
           {renderHeader()}
           <div style={{
-            background: 'rgba(153,68,204,0.08)', border: '1px solid rgba(153,68,204,0.25)',
+            background: 'rgba(153,68,204,0.14)', border: '1px solid rgba(153,68,204,0.3)',
             padding: '20px 16px', textAlign: 'center',
           }}>
             {eventContent()}
@@ -737,7 +737,7 @@ export default function KryptaPanel() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: '8px 0' }}>
           {renderHeader()}
           <div style={{
-            background: 'rgba(255,45,120,0.08)', border: '1px solid rgba(255,45,120,0.3)',
+            background: 'rgba(255,45,120,0.14)', border: '1px solid rgba(255,45,120,0.35)',
             padding: '20px 16px', textAlign: 'center',
           }}>
             <div style={{ fontSize: 48, marginBottom: 8 }}>☠️</div>
@@ -811,5 +811,5 @@ export default function KryptaPanel() {
     return null;
   }
 
-  return <div key={phase}>{renderPhase()}</div>;
+  return <div className="card p-3" key={phase} style={{ background: 'rgba(8,4,20,0.97)', border: '1px solid rgba(153,68,204,0.28)' }}>{renderPhase()}</div>;
 }

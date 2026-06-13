@@ -129,7 +129,7 @@ function FightView() {
   const bossHpColor = bossHpPct > 60 ? '#44cc44' : bossHpPct > 30 ? '#ff9900' : '#ff4444';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(14,4,4,0.97)', border: '1px solid rgba(120,30,30,0.5)' }}>
 
       {/* Boss card */}
       <div style={{
@@ -352,7 +352,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
   const borderColor = won ? 'rgba(255,215,0,0.35)' : 'rgba(255,68,68,0.35)';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(6,6,18,0.97)' }}>
 
       {/* Result header */}
       <div style={{
@@ -1257,7 +1257,7 @@ function SelectView() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+    <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'rgba(6,6,18,0.97)' }}>
 
       {/* Progress header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
