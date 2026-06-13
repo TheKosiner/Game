@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { gsap } from 'gsap';
 import logoImg from '../assets/logo.webp';
 
-export const LOADING_MIN_MS = 2800; // minimum screen display time
+export const LOADING_MIN_MS = 4000; // minimum screen display time
 
 export default function LoadingScreen({ text }: { text: string }) {
   const mountRef    = useRef<HTMLDivElement>(null);

@@ -996,6 +996,7 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
   const category = getCategory(item);
   const render = ICON_MAP[category] ?? ICON_MAP.sword;
   const filterId = `glow-${item.rarity}`;
+  const bgId = `bg-${item.rarity}`;
 
   return (
     <svg
@@ -1006,11 +1007,29 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        <radialGradient id={bgId} cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stopColor={colors.primary} stopOpacity="0.13" />
+          <stop offset="100%" stopColor="#020208" stopOpacity="0.88" />
+        </radialGradient>
+        <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
+      {/* Background */}
+      <rect x="0" y="0" width="48" height="48" fill={`url(#${bgId})`} />
+      {/* Outer border */}
+      <rect x="0.5" y="0.5" width="47" height="47" fill="none"
+            stroke={colors.primary} strokeWidth="0.7" opacity="0.4" />
+      {/* Corner brackets */}
+      <path d="M0,7 L0,0 L7,0" fill="none" stroke={colors.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+      <path d="M41,0 L48,0 L48,7" fill="none" stroke={colors.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+      <path d="M0,41 L0,48 L7,48" fill="none" stroke={colors.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+      <path d="M48,41 L48,48 L41,48" fill="none" stroke={colors.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+      {/* Icon */}
       <g filter={`url(#${filterId})`}>
         {render(colors)}
       </g>

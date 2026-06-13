@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
+// Neon data-stream columns + hex node grid
 export default function CyberpunkBg() {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -8,125 +9,186 @@ export default function CyberpunkBg() {
     const mount = mountRef.current;
     if (!mount) return;
 
-    // ── Renderer ────────────────────────────────────────────────
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+
     const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(W, H);
     renderer.setClearColor(0x000000, 0);
     mount.appendChild(renderer.domElement);
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 8);
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 200);
+    camera.position.set(0, 14, 22);
     camera.lookAt(0, 0, 0);
 
-    // ── Grid floor (perspective tron grid scrolling toward viewer) ──
-    const GRID_W = 32;
-    const GRID_D = 40;
-    const positions: number[] = [];
-    const colors: number[] = [];
+    // ── HEX GRID NODES ─────────────────────────────────────────────
+    // Generate hex grid positions on the XZ plane
+    const HEX_R = 1.2;
+    const HEX_ROWS = 12;
+    const HEX_COLS = 20;
 
-    // Horizontal lines (along X axis, varying Z)
-    for (let z = 0; z <= GRID_D; z++) {
-      const t = z / GRID_D;
-      const r = 1.0 - t * 0.7;
-      positions.push(-GRID_W / 2, 0, z - GRID_D / 2 + 2);
-      positions.push( GRID_W / 2, 0, z - GRID_D / 2 + 2);
-      colors.push(0.0, r * 0.18, r * 0.35);
-      colors.push(0.0, r * 0.18, r * 0.35);
-    }
-    // Vertical lines (along Z axis, varying X)
-    for (let x = 0; x <= GRID_W; x++) {
-      const t = Math.abs(x - GRID_W / 2) / (GRID_W / 2);
-      const fade = 1.0 - t * 0.6;
-      positions.push(x - GRID_W / 2, 0, -GRID_D / 2 + 2);
-      positions.push(x - GRID_W / 2, 0,  GRID_D / 2 + 2);
-      colors.push(0.0, fade * 0.14, fade * 0.28);
-      colors.push(0.0, fade * 0.04, fade * 0.08);
-    }
-
-    const gridGeo = new THREE.BufferGeometry();
-    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    gridGeo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-    const gridMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.7 });
-    const gridMesh = new THREE.LineSegments(gridGeo, gridMat);
-    gridMesh.rotation.x = -Math.PI * 0.08;
-    gridMesh.position.y = -2.5;
-    scene.add(gridMesh);
-
-    // ── Particles ────────────────────────────────────────────────
-    const PARTICLE_COUNT = 200;
-    const pPositions = new Float32Array(PARTICLE_COUNT * 3);
-    const pColors    = new Float32Array(PARTICLE_COUNT * 3);
-    const pSpeeds    = new Float32Array(PARTICLE_COUNT);
+    type NodeInfo = { pos: THREE.Vector3; color: number; phase: number };
+    const nodes: NodeInfo[] = [];
 
     const palette = [
-      [1.0, 0.18, 0.47],  // pink #ff2d78
-      [0.0, 0.96, 1.0],   // cyan #00f5ff
-      [0.62, 0.31, 0.93], // purple #9d4edd
-      [1.0, 0.84, 0.0],   // gold #ffd700
+      0xff2d78, // pink
+      0x00f5ff, // cyan
+      0x9d4edd, // purple
+      0xffd700, // gold
+      0x00ff88, // green
     ];
 
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pPositions[i * 3]     = (Math.random() - 0.5) * 20;
-      pPositions[i * 3 + 1] = (Math.random() - 0.5) * 14;
-      pPositions[i * 3 + 2] = (Math.random() - 0.5) * 16;
-      pSpeeds[i] = 0.002 + Math.random() * 0.006;
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      const brightness = 0.5 + Math.random() * 0.5;
-      pColors[i * 3]     = c[0] * brightness;
-      pColors[i * 3 + 1] = c[1] * brightness;
-      pColors[i * 3 + 2] = c[2] * brightness;
+    for (let row = -HEX_ROWS / 2; row < HEX_ROWS / 2; row++) {
+      for (let col = -HEX_COLS / 2; col < HEX_COLS / 2; col++) {
+        const x = col * HEX_R * 1.73 + (row % 2) * HEX_R * 0.866;
+        const z = row * HEX_R * 1.5;
+        nodes.push({
+          pos: new THREE.Vector3(x, 0, z),
+          color: palette[Math.floor(Math.random() * palette.length)],
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
     }
 
-    const ptGeo = new THREE.BufferGeometry();
-    ptGeo.setAttribute('position', new THREE.Float32BufferAttribute(pPositions, 3));
-    ptGeo.setAttribute('color',    new THREE.Float32BufferAttribute(pColors, 3));
-    const ptMat = new THREE.PointsMaterial({
-      size: 0.055, vertexColors: true,
-      transparent: true, opacity: 0.85,
+    // Node dots
+    const nodeGeo = new THREE.BufferGeometry();
+    const nodePos = new Float32Array(nodes.length * 3);
+    const nodeCol = new Float32Array(nodes.length * 3);
+    nodes.forEach((n, i) => {
+      nodePos[i * 3]     = n.pos.x;
+      nodePos[i * 3 + 1] = n.pos.y;
+      nodePos[i * 3 + 2] = n.pos.z;
+      const c = new THREE.Color(n.color);
+      nodeCol[i * 3]     = c.r * 0.3;
+      nodeCol[i * 3 + 1] = c.g * 0.3;
+      nodeCol[i * 3 + 2] = c.b * 0.3;
+    });
+    nodeGeo.setAttribute('position', new THREE.Float32BufferAttribute(nodePos, 3));
+    nodeGeo.setAttribute('color',    new THREE.Float32BufferAttribute(nodeCol, 3));
+    const nodeMat = new THREE.PointsMaterial({
+      size: 0.14, vertexColors: true,
+      transparent: true, opacity: 0.9,
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
-    const particles = new THREE.Points(ptGeo, ptMat);
-    scene.add(particles);
+    const nodeMesh = new THREE.Points(nodeGeo, nodeMat);
+    scene.add(nodeMesh);
 
-    // ── Pink horizon glow ────────────────────────────────────────
-    const horizonGeo = new THREE.PlaneGeometry(30, 1.5);
+    // ── GRID LINES (connect adjacent nodes) ────────────────────────
+    const linePositions: number[] = [];
+    const lineColors: number[] = [];
+
+    const DIST_THRESH = HEX_R * 1.9;
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        if (nodes[i].pos.distanceTo(nodes[j].pos) < DIST_THRESH) {
+          linePositions.push(nodes[i].pos.x, 0, nodes[i].pos.z);
+          linePositions.push(nodes[j].pos.x, 0, nodes[j].pos.z);
+          const ci = new THREE.Color(nodes[i].color);
+          const cj = new THREE.Color(nodes[j].color);
+          lineColors.push(ci.r * 0.08, ci.g * 0.08, ci.b * 0.08);
+          lineColors.push(cj.r * 0.08, cj.g * 0.08, cj.b * 0.08);
+        }
+      }
+    }
+
+    const lineGeo = new THREE.BufferGeometry();
+    lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    lineGeo.setAttribute('color',    new THREE.Float32BufferAttribute(lineColors, 3));
+    const lineMat = new THREE.LineBasicMaterial({
+      vertexColors: true, transparent: true, opacity: 0.7,
+      blending: THREE.AdditiveBlending,
+    });
+    scene.add(new THREE.LineSegments(lineGeo, lineMat));
+
+    // ── ENERGY PACKETS (flowing glowing dots on lines) ────────────
+    const PACKET_COUNT = 60;
+    type Packet = { ni: number; nj: number; t: number; speed: number; color: THREE.Color };
+    const adjacentPairs: Array<[number, number]> = [];
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        if (nodes[i].pos.distanceTo(nodes[j].pos) < DIST_THRESH) {
+          adjacentPairs.push([i, j]);
+        }
+      }
+    }
+
+    const packets: Packet[] = Array.from({ length: PACKET_COUNT }, () => {
+      const pair = adjacentPairs[Math.floor(Math.random() * adjacentPairs.length)];
+      return {
+        ni: pair[0], nj: pair[1], t: Math.random(),
+        speed: 0.008 + Math.random() * 0.014,
+        color: new THREE.Color(palette[Math.floor(Math.random() * palette.length)]),
+      };
+    });
+
+    const packetGeo = new THREE.BufferGeometry();
+    const packetPos = new Float32Array(PACKET_COUNT * 3);
+    const packetCol = new Float32Array(PACKET_COUNT * 3);
+    packetGeo.setAttribute('position', new THREE.Float32BufferAttribute(packetPos, 3));
+    packetGeo.setAttribute('color',    new THREE.Float32BufferAttribute(packetCol, 3));
+    const packetMat = new THREE.PointsMaterial({
+      size: 0.28, vertexColors: true,
+      transparent: true, opacity: 0.95,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    scene.add(new THREE.Points(packetGeo, packetMat));
+
+    // ── VERTICAL GLOWING COLUMNS (data rain effect, above the grid) ─
+    const COL_COUNT = 60;
+    const PARTICLES_PER_COL = 10;
+    const TOTAL_RAIN = COL_COUNT * PARTICLES_PER_COL;
+
+    type ColInfo = { x: number; z: number; speed: number; color: THREE.Color };
+    const columns: ColInfo[] = Array.from({ length: COL_COUNT }, () => ({
+      x: (Math.random() - 0.5) * 24,
+      z: (Math.random() - 0.5) * 20,
+      speed: 0.08 + Math.random() * 0.12,
+      color: new THREE.Color(palette[Math.floor(Math.random() * palette.length)]),
+    }));
+
+    const rainPos = new Float32Array(TOTAL_RAIN * 3);
+    const rainCol = new Float32Array(TOTAL_RAIN * 3);
+    const rainY   = new Float32Array(TOTAL_RAIN);
+
+    for (let c = 0; c < COL_COUNT; c++) {
+      for (let p = 0; p < PARTICLES_PER_COL; p++) {
+        const i = c * PARTICLES_PER_COL + p;
+        rainPos[i * 3]     = columns[c].x;
+        rainPos[i * 3 + 1] = 8 + Math.random() * 20;
+        rainPos[i * 3 + 2] = columns[c].z;
+        rainY[i] = rainPos[i * 3 + 1];
+        const t = p / (PARTICLES_PER_COL - 1); // head=0, tail=1
+        const brightness = (1 - t) * 0.9 + 0.05;
+        rainCol[i * 3]     = columns[c].color.r * brightness;
+        rainCol[i * 3 + 1] = columns[c].color.g * brightness;
+        rainCol[i * 3 + 2] = columns[c].color.b * brightness;
+      }
+    }
+
+    const rainGeo = new THREE.BufferGeometry();
+    rainGeo.setAttribute('position', new THREE.Float32BufferAttribute(rainPos, 3));
+    rainGeo.setAttribute('color',    new THREE.Float32BufferAttribute(rainCol, 3));
+    const rainMat = new THREE.PointsMaterial({
+      size: 0.12, vertexColors: true,
+      transparent: true, opacity: 0.6,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    scene.add(new THREE.Points(rainGeo, rainMat));
+
+    // ── HORIZON GLOW ────────────────────────────────────────────────
+    const horizonGeo = new THREE.PlaneGeometry(40, 0.8);
     const horizonMat = new THREE.MeshBasicMaterial({
-      color: 0xff2d78, transparent: true, opacity: 0.06,
+      color: 0xff2d78, transparent: true, opacity: 0.07,
       blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
     });
     const horizon = new THREE.Mesh(horizonGeo, horizonMat);
-    horizon.rotation.x = -Math.PI * 0.08;
-    horizon.position.set(0, -2.5, -6);
+    horizon.rotation.x = Math.PI / 2;
+    horizon.position.set(0, 0, -8);
     scene.add(horizon);
 
-    // ── Vertical neon pillars ────────────────────────────────────
-    const pillarColors = [0xff2d78, 0x00f5ff, 0x9d4edd];
-    const pillars: THREE.Mesh[] = [];
-    [-8, -4, 0, 4, 8].forEach((x, i) => {
-      const geo = new THREE.PlaneGeometry(0.04, 12);
-      const mat = new THREE.MeshBasicMaterial({
-        color: pillarColors[i % 3], transparent: true, opacity: 0.08,
-        blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-      });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, 0, -10);
-      scene.add(mesh);
-      pillars.push(mesh);
-    });
-
-    // ── Scan line ────────────────────────────────────────────────
-    const scanGeo = new THREE.PlaneGeometry(30, 0.08);
-    const scanMat = new THREE.MeshBasicMaterial({
-      color: 0x00f5ff, transparent: true, opacity: 0.12,
-      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
-    });
-    const scan = new THREE.Mesh(scanGeo, scanMat);
-    scene.add(scan);
-    let scanY = 8;
-
-    // ── Resize ───────────────────────────────────────────────────
+    // ── RESIZE ──────────────────────────────────────────────────────
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -134,49 +196,69 @@ export default function CyberpunkBg() {
     };
     window.addEventListener('resize', handleResize);
 
-    // ── Animation loop ───────────────────────────────────────────
-    let frame = 0;
+    // ── ANIMATION LOOP ───────────────────────────────────────────────
     let rafId = 0;
-    const posAttr = ptGeo.getAttribute('position') as THREE.BufferAttribute;
+    let frame = 0;
+    const nodeColAttr   = nodeGeo.getAttribute('color') as THREE.BufferAttribute;
+    const packetPosAttr = packetGeo.getAttribute('position') as THREE.BufferAttribute;
+    const packetColAttr = packetGeo.getAttribute('color') as THREE.BufferAttribute;
+    const rainPosAttr   = rainGeo.getAttribute('position') as THREE.BufferAttribute;
 
     const animate = () => {
-      if (document.hidden) {
-        rafId = requestAnimationFrame(animate);
-        return;
-      }
+      if (document.hidden) { rafId = requestAnimationFrame(animate); return; }
       rafId = requestAnimationFrame(animate);
       frame++;
 
-      // Scroll grid forward slowly
-      gridMesh.position.z = (frame * 0.04) % 1.25;
+      // Pulse node brightness with phase
+      for (let i = 0; i < nodes.length; i++) {
+        const pulse = 0.12 + 0.18 * Math.abs(Math.sin(frame * 0.018 + nodes[i].phase));
+        const c = new THREE.Color(nodes[i].color);
+        nodeColAttr.array[i * 3]     = c.r * pulse;
+        nodeColAttr.array[i * 3 + 1] = c.g * pulse;
+        nodeColAttr.array[i * 3 + 2] = c.b * pulse;
+      }
+      nodeColAttr.needsUpdate = true;
 
-      // Float particles upward, wrap
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        posAttr.array[i * 3 + 1] += pSpeeds[i];
-        if (posAttr.array[i * 3 + 1] > 7) {
-          posAttr.array[i * 3 + 1] = -7;
+      // Move energy packets along edges
+      for (let k = 0; k < PACKET_COUNT; k++) {
+        const pkt = packets[k];
+        pkt.t += pkt.speed;
+        if (pkt.t > 1) {
+          pkt.t = 0;
+          const pair = adjacentPairs[Math.floor(Math.random() * adjacentPairs.length)];
+          pkt.ni = pair[0]; pkt.nj = pair[1];
+          pkt.color = new THREE.Color(palette[Math.floor(Math.random() * palette.length)]);
+        }
+        const a = nodes[pkt.ni].pos;
+        const b = nodes[pkt.nj].pos;
+        packetPosAttr.array[k * 3]     = a.x + (b.x - a.x) * pkt.t;
+        packetPosAttr.array[k * 3 + 1] = a.y;
+        packetPosAttr.array[k * 3 + 2] = a.z + (b.z - a.z) * pkt.t;
+        const glow = 0.7 + 0.3 * Math.sin(frame * 0.04 + k);
+        packetColAttr.array[k * 3]     = pkt.color.r * glow;
+        packetColAttr.array[k * 3 + 1] = pkt.color.g * glow;
+        packetColAttr.array[k * 3 + 2] = pkt.color.b * glow;
+      }
+      packetPosAttr.needsUpdate = true;
+      packetColAttr.needsUpdate = true;
+
+      // Fall data rain
+      for (let i = 0; i < TOTAL_RAIN; i++) {
+        const col = Math.floor(i / PARTICLES_PER_COL);
+        rainPosAttr.array[i * 3 + 1] -= columns[col].speed;
+        if (rainPosAttr.array[i * 3 + 1] < -2) {
+          rainPosAttr.array[i * 3 + 1] = 22 + Math.random() * 8;
         }
       }
-      posAttr.needsUpdate = true;
-
-      // Scan line sweep downward
-      scanY -= 0.04;
-      if (scanY < -8) scanY = 8;
-      scan.position.set(0, scanY, -2);
-
-      // Pulse horizon glow
-      horizonMat.opacity = 0.04 + 0.03 * Math.sin(frame * 0.02);
-
-      // Pulse pillars
-      pillars.forEach((p, i) => {
-        (p.material as THREE.MeshBasicMaterial).opacity =
-          0.05 + 0.04 * Math.sin(frame * 0.018 + i * 1.2);
-      });
+      rainPosAttr.needsUpdate = true;
 
       // Slow camera drift
-      camera.position.x = Math.sin(frame * 0.003) * 0.4;
-      camera.position.y = 3 + Math.sin(frame * 0.005) * 0.2;
+      camera.position.x = Math.sin(frame * 0.004) * 1.5;
+      camera.position.z = 22 + Math.sin(frame * 0.006) * 1.0;
       camera.lookAt(0, 0, 0);
+
+      // Horizon pulse
+      horizonMat.opacity = 0.05 + 0.04 * Math.sin(frame * 0.02);
 
       renderer.render(scene, camera);
     };
@@ -193,12 +275,7 @@ export default function CyberpunkBg() {
   return (
     <div
       ref={mountRef}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: 'none',
-      }}
+      style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}
     />
   );
 }
