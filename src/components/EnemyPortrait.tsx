@@ -1,21 +1,16 @@
-import { useState } from 'react';
 import EnemyIcon from './EnemyIcon';
-
-const ASSETS_BASE = 'https://raw.githubusercontent.com/thekosiner/game/assets/enemies';
 
 export default function EnemyPortrait({
   id,
-  emoji,
   size = 64,
   style,
 }: {
   id: string;
+  /** @deprecated kept for call-site compatibility — portraits are SVG now */
   emoji?: string;
   size?: number;
   style?: React.CSSProperties;
 }) {
-  const [failed, setFailed] = useState(false);
-
   const b = Math.max(6, Math.round(size * 0.16));
   const frameStyle: React.CSSProperties = {
     position: 'relative',
@@ -46,35 +41,9 @@ export default function EnemyPortrait({
     }} />
   );
 
-  if (failed) {
-    if (emoji) {
-      return (
-        <div style={{ ...frameStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.55) }}>
-          {emoji}
-          {corners}
-          {scanlines}
-        </div>
-      );
-    }
-    return (
-      <div style={frameStyle}>
-        <EnemyIcon id={id} size={size} />
-        {corners}
-        {scanlines}
-      </div>
-    );
-  }
-
   return (
     <div style={frameStyle}>
-      <img
-        src={`${ASSETS_BASE}/${id}.webp`}
-        width={size}
-        height={size}
-        alt=""
-        onError={() => setFailed(true)}
-        style={{ display: 'block', objectFit: 'contain' }}
-      />
+      <EnemyIcon id={id} size={size} />
       {corners}
       {scanlines}
     </div>

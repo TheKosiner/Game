@@ -11,7 +11,9 @@ type Category =
   | 'corp_boss' | 'warlock' | 'drone' | 'turret' | 'swarm' | 'android' | 'mech'
   | 'ai' | 'electric_golem' | 'sand_golem' | 'arcane_golem' | 'rat'
   | 'cyber_animal' | 'wolf' | 'bear' | 'spider' | 'cockroach' | 'ghost'
-  | 'ghul' | 'demon' | 'dragon';
+  | 'ghul' | 'demon' | 'dragon'
+  | 'soldier' | 'bio' | 'berserker' | 'plasma' | 'commander' | 'psi'
+  | 'glitch' | 'void' | 'reaper';
 
 const ENEMY_CATEGORY: Record<string, Category> = {
   scavenger:           'street_thug',
@@ -62,10 +64,46 @@ const ENEMY_CATEGORY: Record<string, Category> = {
   energy_phantom:      'ghost',
   quantum_ghost:       'ghost',
   void_specter:        'ghost',
+  arcane_ghost:        'ghost',
   ghul:                'ghul',
   cyber_demon:         'demon',
   neon_dragon:         'dragon',
   void_dragon:         'dragon',
+  // ── High-tier zones (lvl 40+) ───────────────────────────────────────────
+  spec_ops_soldier:    'soldier',
+  plasma_guard:        'plasma',
+  plasma_titan:        'plasma',
+  bio_hazard_unit:     'bio',
+  bio_overlord:        'bio',
+  nano_berserker:      'berserker',
+  apocalypse_warrior:  'berserker',
+  apex_predator:       'cyber_animal',
+  zero_commander:      'commander',
+  cyber_overlord:      'commander',
+  ghost_overlord:      'commander',
+  psi_storm:           'psi',
+  psi_annihilator:     'psi',
+  data_specter:        'glitch',
+  digital_phantom:     'glitch',
+  glitch_entity:       'glitch',
+  system_wraith:       'glitch',
+  null_entity:         'glitch',
+  network_hunter:      'assassin',
+  quantum_assassin:    'assassin',
+  matrix_reaper:       'reaper',
+  code_reaper:         'reaper',
+  end_entity:          'reaper',
+  network_titan:       'mech',
+  omega_destroyer:     'mech',
+  quantum_giant:       'arcane_golem',
+  nuclear_overlord:    'sand_golem',
+  void_weaver:         'void',
+  void_destroyer:      'void',
+  void_sovereign:      'void',
+  void_prime:          'void',
+  nexus_guard:         'void',
+  nexus_prime:         'void',
+  zero_absolute:       'void',
 };
 
 const CATEGORY_COLOR: Record<Category, string> = {
@@ -96,6 +134,15 @@ const CATEGORY_COLOR: Record<Category, string> = {
   ghul:           '#88ff88',
   demon:          '#ff4444',
   dragon:         '#ff00aa',
+  soldier:        '#aacc55',
+  bio:            '#66ff33',
+  berserker:      '#ff3322',
+  plasma:         '#33ffff',
+  commander:      '#ffcc33',
+  psi:            '#cc44ff',
+  glitch:         '#ff0066',
+  void:           '#9933ff',
+  reaper:         '#88ffaa',
 };
 
 function getEnemyCategory(id: string): Category {
@@ -1016,6 +1063,287 @@ function IconDragon({ c }: { c: string }): React.ReactElement {
   );
 }
 
+function IconSoldier({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* combat helmet */}
+      <path d="M22 12 Q22 4 32 4 Q42 4 42 12 L42 18 L22 18 Z" fill="#1a2008" />
+      <rect x="20" y="16" width="24" height="5" rx="2" fill="#222a0c" />
+      {/* night-vision visor */}
+      <rect x="24" y="11" width="7" height="5" rx="1.5" fill={c} opacity="0.85" />
+      <rect x="33" y="11" width="7" height="5" rx="1.5" fill={c} opacity="0.85" />
+      <line x1="31" y1="13" x2="33" y2="13" stroke="#1a2008" strokeWidth="1" />
+      {/* armored torso + plate carrier */}
+      <path d="M16 22 L14 50 L50 50 L48 22 Q40 18 32 18 Q24 18 16 22 Z" fill="#1a2008" />
+      <rect x="22" y="24" width="20" height="18" rx="2" fill="#222a0c" />
+      {/* mag pouches */}
+      <rect x="24" y="30" width="5" height="8" rx="1" fill="#2c3410" />
+      <rect x="30" y="30" width="5" height="8" rx="1" fill="#2c3410" />
+      <rect x="36" y="30" width="4" height="8" rx="1" fill="#2c3410" />
+      {/* shoulder pads */}
+      <rect x="10" y="22" width="9" height="12" rx="3" fill="#222a0c" />
+      <rect x="45" y="22" width="9" height="12" rx="3" fill="#222a0c" />
+      {/* assault rifle held across body */}
+      <line x1="12" y1="46" x2="50" y2="30" stroke="#0d1004" strokeWidth="4" strokeLinecap="round" />
+      <rect x="30" y="33" width="10" height="4" rx="1" fill="#11160a" transform="rotate(-22 35 35)" />
+      <circle cx="50" cy="30" r="1.6" fill={c} opacity="0.7" />
+      {/* status light */}
+      <circle cx="32" cy="46" r="1.4" fill={c} opacity="0.8" />
+    </>
+  );
+}
+
+function IconBio({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* dripping mutant blob body */}
+      <path d="M14 30 Q12 16 26 14 Q32 10 40 14 Q52 16 50 32 Q52 44 44 50 Q38 56 32 52 Q26 56 20 50 Q12 44 14 30 Z"
+            fill="#0a1a04" />
+      <path d="M18 30 Q16 20 28 18 Q32 16 38 18 Q48 20 46 32 Q48 42 42 47 Q36 52 32 48 Q28 52 22 47 Q16 42 18 30 Z"
+            fill={c} opacity="0.12" />
+      {/* drips */}
+      <path d="M22 50 Q21 56 22 60" stroke={c} strokeWidth="2.5" strokeLinecap="round" opacity="0.5" fill="none" />
+      <path d="M42 50 Q43 55 42 59" stroke={c} strokeWidth="2.5" strokeLinecap="round" opacity="0.5" fill="none" />
+      <circle cx="22" cy="61" r="1.5" fill={c} opacity="0.5" />
+      <circle cx="42" cy="60" r="1.5" fill={c} opacity="0.5" />
+      {/* glowing toxic eyes */}
+      <circle cx="26" cy="28" r="3.5" fill="#0a1a04" />
+      <circle cx="38" cy="28" r="3.5" fill="#0a1a04" />
+      <circle cx="26" cy="28" r="2" fill={c} opacity="0.9" />
+      <circle cx="38" cy="28" r="2" fill={c} opacity="0.9" />
+      {/* biohazard symbol on core */}
+      <circle cx="32" cy="38" r="6" fill="#0a1a04" />
+      <circle cx="32" cy="38" r="2" fill="none" stroke={c} strokeWidth="1.2" opacity="0.8" />
+      <path d="M32 38 L32 33 M32 38 L36 41 M32 38 L28 41" stroke={c} strokeWidth="1.2" opacity="0.8" />
+      <circle cx="32" cy="33" r="1.6" fill="none" stroke={c} strokeWidth="1" opacity="0.8" />
+      <circle cx="36.5" cy="41" r="1.6" fill="none" stroke={c} strokeWidth="1" opacity="0.8" />
+      <circle cx="27.5" cy="41" r="1.6" fill="none" stroke={c} strokeWidth="1" opacity="0.8" />
+      {/* spore bubbles */}
+      <circle cx="16" cy="20" r="1.5" fill={c} opacity="0.5" />
+      <circle cx="48" cy="22" r="1.5" fill={c} opacity="0.5" />
+      <circle cx="20" cy="44" r="1" fill={c} opacity="0.4" />
+      <circle cx="46" cy="42" r="1" fill={c} opacity="0.4" />
+    </>
+  );
+}
+
+function IconBerserker({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* rage aura */}
+      <circle cx="32" cy="32" r="28" fill={c} opacity="0.05" />
+      {/* hunched brute head */}
+      <ellipse cx="32" cy="16" rx="9" ry="8" fill="#1a0604" />
+      {/* furious eyes */}
+      <polygon points="25,15 30,14 29,18 25,18" fill={c} opacity="0.9" />
+      <polygon points="39,15 34,14 35,18 39,18" fill={c} opacity="0.9" />
+      {/* snarling mouth */}
+      <path d="M27 21 L37 21 L35 24 L29 24 Z" fill="#0d0302" />
+      <polygon points="29,21 30,24 31,21" fill="white" opacity="0.6" />
+      <polygon points="33,21 34,24 35,21" fill="white" opacity="0.6" />
+      {/* massive hunched shoulders/torso */}
+      <path d="M8 30 Q6 24 14 22 Q22 20 32 22 Q42 20 50 22 Q58 24 56 30 L52 50 L12 50 Z" fill="#1a0604" />
+      {/* chest core */}
+      <circle cx="32" cy="34" r="5" fill="#2a0a06" />
+      <circle cx="32" cy="34" r="3" fill={c} opacity="0.4" />
+      <circle cx="32" cy="34" r="1.4" fill="white" opacity="0.8" />
+      {/* arm blades (left) */}
+      <line x1="12" y1="30" x2="4" y2="42" stroke="#1a0604" strokeWidth="6" strokeLinecap="round" />
+      <polygon points="4,42 0,52 6,46 8,40" fill="#3a1008" />
+      <line x1="2" y1="46" x2="5" y2="44" stroke={c} strokeWidth="1" opacity="0.7" />
+      {/* arm blades (right) */}
+      <line x1="52" y1="30" x2="60" y2="42" stroke="#1a0604" strokeWidth="6" strokeLinecap="round" />
+      <polygon points="60,42 64,52 58,46 56,40" fill="#3a1008" />
+      <line x1="62" y1="46" x2="59" y2="44" stroke={c} strokeWidth="1" opacity="0.7" />
+      {/* rage cracks on torso */}
+      <polyline points="24,38 26,42 23,46" fill="none" stroke={c} strokeWidth="1" opacity="0.5" />
+      <polyline points="40,38 38,42 41,46" fill="none" stroke={c} strokeWidth="1" opacity="0.5" />
+    </>
+  );
+}
+
+function IconPlasma({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* containment ring */}
+      <circle cx="32" cy="32" r="24" fill="none" stroke={c} strokeWidth="0.6" opacity="0.3" />
+      {/* glowing energy body */}
+      <path d="M32 8 Q26 18 24 26 Q20 30 22 38 Q24 48 32 54 Q40 48 42 38 Q44 30 40 26 Q38 18 32 8 Z"
+            fill={c} opacity="0.18" />
+      <path d="M32 12 Q28 20 27 28 Q24 32 26 38 Q28 46 32 50 Q36 46 38 38 Q40 32 37 28 Q36 20 32 12 Z"
+            fill={c} opacity="0.3" />
+      {/* bright core */}
+      <ellipse cx="32" cy="32" rx="5" ry="9" fill={c} opacity="0.6" />
+      <ellipse cx="32" cy="32" rx="2.5" ry="6" fill="white" opacity="0.85" />
+      {/* plasma eyes */}
+      <circle cx="28" cy="24" r="1.6" fill="white" opacity="0.9" />
+      <circle cx="36" cy="24" r="1.6" fill="white" opacity="0.9" />
+      {/* arcing electricity */}
+      <polyline points="22,26 16,22 20,30 12,28" fill="none" stroke={c} strokeWidth="1" opacity="0.7" />
+      <polyline points="42,26 48,22 44,30 52,28" fill="none" stroke={c} strokeWidth="1" opacity="0.7" />
+      <polyline points="26,48 22,54 28,52 24,58" fill="none" stroke={c} strokeWidth="1" opacity="0.5" />
+      <polyline points="38,48 42,54 36,52 40,58" fill="none" stroke={c} strokeWidth="1" opacity="0.5" />
+      {/* floating sparks */}
+      <circle cx="14" cy="20" r="1.4" fill={c} opacity="0.7" />
+      <circle cx="50" cy="20" r="1.4" fill={c} opacity="0.7" />
+      <circle cx="18" cy="44" r="1" fill={c} opacity="0.5" />
+      <circle cx="46" cy="44" r="1" fill={c} opacity="0.5" />
+    </>
+  );
+}
+
+function IconCommander({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* crown */}
+      <polygon points="22,8 26,2 30,8 32,2 34,8 38,2 42,8 42,12 22,12" fill={c} opacity="0.85" />
+      <circle cx="26" cy="3" r="1" fill="white" opacity="0.8" />
+      <circle cx="32" cy="1.5" r="1.2" fill="white" opacity="0.9" />
+      <circle cx="38" cy="3" r="1" fill="white" opacity="0.8" />
+      {/* head */}
+      <ellipse cx="32" cy="17" rx="8" ry="8" fill="#1a1500" />
+      {/* cybernetic eye */}
+      <circle cx="35" cy="16" r="2.5" fill={c} opacity="0.5" />
+      <circle cx="35" cy="16" r="1.2" fill={c} opacity="0.9" />
+      <circle cx="29" cy="16" r="1.4" fill={c} opacity="0.7" />
+      {/* armored regal torso */}
+      <path d="M16 24 L12 52 L52 52 L48 24 Q40 20 32 22 Q24 20 16 24 Z" fill="#1a1500" />
+      {/* cape over shoulders */}
+      <path d="M14 24 Q8 30 10 52 L18 52 L20 26 Z" fill="#241c00" opacity="0.9" />
+      <path d="M50 24 Q56 30 54 52 L46 52 L44 26 Z" fill="#241c00" opacity="0.9" />
+      {/* chest insignia */}
+      <polygon points="32,28 35,34 32,40 29,34" fill={c} opacity="0.4" />
+      <circle cx="32" cy="34" r="2" fill={c} opacity="0.8" />
+      {/* rank bars */}
+      <rect x="24" y="30" width="5" height="2" rx="1" fill={c} opacity="0.6" />
+      <rect x="35" y="30" width="5" height="2" rx="1" fill={c} opacity="0.6" />
+      <rect x="24" y="44" width="16" height="2" rx="1" fill={c} opacity="0.4" />
+      {/* shoulder epaulets */}
+      <rect x="12" y="24" width="8" height="5" rx="2" fill={c} opacity="0.5" />
+      <rect x="44" y="24" width="8" height="5" rx="2" fill={c} opacity="0.5" />
+    </>
+  );
+}
+
+function IconPsi({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* swirling vortex arms */}
+      <path d="M32 32 Q44 14 56 22 Q44 20 38 30" fill="none" stroke={c} strokeWidth="2.5" opacity="0.5" strokeLinecap="round" />
+      <path d="M32 32 Q50 44 42 56 Q44 44 34 38" fill="none" stroke={c} strokeWidth="2.5" opacity="0.5" strokeLinecap="round" />
+      <path d="M32 32 Q20 50 8 42 Q20 44 26 34" fill="none" stroke={c} strokeWidth="2.5" opacity="0.5" strokeLinecap="round" />
+      <path d="M32 32 Q14 20 22 8 Q20 20 30 26" fill="none" stroke={c} strokeWidth="2.5" opacity="0.5" strokeLinecap="round" />
+      {/* inner swirl */}
+      <path d="M32 32 Q40 24 48 28" fill="none" stroke={c} strokeWidth="1.5" opacity="0.4" strokeLinecap="round" />
+      <path d="M32 32 Q24 40 16 36" fill="none" stroke={c} strokeWidth="1.5" opacity="0.4" strokeLinecap="round" />
+      {/* central psionic eye */}
+      <ellipse cx="32" cy="32" rx="9" ry="11" fill="#14001a" />
+      <ellipse cx="32" cy="32" rx="7" ry="9" fill={c} opacity="0.25" />
+      <ellipse cx="32" cy="32" rx="3.5" ry="5" fill={c} opacity="0.6" />
+      <ellipse cx="32" cy="32" rx="1.5" ry="3" fill="white" opacity="0.85" />
+      {/* psi sparks */}
+      <circle cx="32" cy="14" r="1.6" fill={c} opacity="0.8" />
+      <circle cx="52" cy="22" r="1.4" fill={c} opacity="0.7" />
+      <circle cx="50" cy="48" r="1.4" fill={c} opacity="0.7" />
+      <circle cx="12" cy="44" r="1.4" fill={c} opacity="0.7" />
+      <circle cx="14" cy="20" r="1.4" fill={c} opacity="0.7" />
+    </>
+  );
+}
+
+function IconGlitch({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* fragmented humanoid silhouette */}
+      <rect x="24" y="8" width="16" height="14" fill="#16000a" />
+      <rect x="20" y="22" width="24" height="20" fill="#16000a" />
+      <rect x="24" y="42" width="6" height="14" fill="#16000a" />
+      <rect x="34" y="42" width="6" height="14" fill="#16000a" />
+      {/* displaced glitch slices (chromatic shift) */}
+      <rect x="18" y="14" width="16" height="3" fill={c} opacity="0.6" />
+      <rect x="34" y="26" width="18" height="3" fill="#00f5ff" opacity="0.5" />
+      <rect x="14" y="34" width="16" height="3" fill={c} opacity="0.5" />
+      <rect x="30" y="46" width="14" height="2" fill="#00f5ff" opacity="0.4" />
+      {/* scan-corruption blocks */}
+      <rect x="26" y="10" width="5" height="5" fill={c} opacity="0.3" />
+      <rect x="33" y="30" width="6" height="6" fill="#00f5ff" opacity="0.25" />
+      <rect x="22" y="36" width="4" height="4" fill={c} opacity="0.3" />
+      {/* glitch eyes (misaligned) */}
+      <rect x="26" y="14" width="4" height="3" fill={c} opacity="0.95" />
+      <rect x="35" y="13" width="4" height="3" fill="#00f5ff" opacity="0.9" />
+      {/* data noise dots */}
+      <rect x="42" y="18" width="2" height="2" fill={c} opacity="0.7" />
+      <rect x="20" y="28" width="2" height="2" fill="#00f5ff" opacity="0.6" />
+      <rect x="44" y="40" width="2" height="2" fill={c} opacity="0.6" />
+      <rect x="16" y="44" width="2" height="2" fill="#00f5ff" opacity="0.5" />
+      {/* tear line */}
+      <line x1="12" y1="24" x2="52" y2="24" stroke={c} strokeWidth="0.5" opacity="0.4" strokeDasharray="3,2" />
+    </>
+  );
+}
+
+function IconVoid({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* accretion swirl */}
+      <circle cx="32" cy="32" r="26" fill="none" stroke={c} strokeWidth="0.6" opacity="0.25" />
+      <path d="M32 8 Q54 14 56 36 Q40 30 32 32" fill="none" stroke={c} strokeWidth="2" opacity="0.4" strokeLinecap="round" />
+      <path d="M32 56 Q10 50 8 28 Q24 34 32 32" fill="none" stroke={c} strokeWidth="2" opacity="0.4" strokeLinecap="round" />
+      {/* event-horizon ring */}
+      <circle cx="32" cy="32" r="16" fill="none" stroke={c} strokeWidth="2.5" opacity="0.6" />
+      <circle cx="32" cy="32" r="16" fill={c} opacity="0.08" />
+      {/* dark core */}
+      <circle cx="32" cy="32" r="11" fill="#08000f" />
+      <circle cx="32" cy="32" r="11" fill="none" stroke={c} strokeWidth="1" opacity="0.5" />
+      {/* glowing void eyes */}
+      <circle cx="28" cy="30" r="2" fill={c} opacity="0.9" />
+      <circle cx="36" cy="30" r="2" fill={c} opacity="0.9" />
+      <circle cx="28" cy="30" r="0.8" fill="white" opacity="0.7" />
+      <circle cx="36" cy="30" r="0.8" fill="white" opacity="0.7" />
+      {/* drifting matter / stars */}
+      <circle cx="14" cy="18" r="1.2" fill={c} opacity="0.7" />
+      <circle cx="50" cy="16" r="1" fill="white" opacity="0.6" />
+      <circle cx="52" cy="46" r="1.2" fill={c} opacity="0.6" />
+      <circle cx="12" cy="44" r="1" fill="white" opacity="0.5" />
+      <circle cx="44" cy="52" r="1" fill={c} opacity="0.5" />
+      <circle cx="20" cy="52" r="1" fill={c} opacity="0.5" />
+    </>
+  );
+}
+
+function IconReaper({ c }: { c: string }): React.ReactElement {
+  return (
+    <>
+      {/* flowing cloak */}
+      <path d="M18 18 Q10 26 10 60 L54 60 Q54 26 46 18 Q40 26 32 26 Q24 26 18 18 Z" fill="#0a1408" />
+      <path d="M22 22 Q16 30 16 60 L48 60 Q48 30 42 22 Q38 28 32 28 Q26 28 22 22 Z" fill="#0d1a0a" />
+      {/* tattered cloak edges */}
+      <polygon points="10,60 14,52 18,60" fill="#06100a" />
+      <polygon points="22,60 26,52 30,60" fill="#06100a" />
+      <polygon points="34,60 38,52 42,60" fill="#06100a" />
+      <polygon points="46,60 50,52 54,60" fill="#06100a" />
+      {/* hood */}
+      <path d="M22 14 Q22 4 32 4 Q42 4 42 14 L42 22 Q37 28 32 28 Q27 28 22 22 Z" fill="#0a1408" />
+      {/* dark hollow inside hood */}
+      <ellipse cx="32" cy="16" rx="6" ry="8" fill="#020602" />
+      {/* glowing eyes in the dark */}
+      <circle cx="29" cy="15" r="1.8" fill={c} opacity="0.9" />
+      <circle cx="35" cy="15" r="1.8" fill={c} opacity="0.9" />
+      <circle cx="29" cy="15" r="0.7" fill="white" opacity="0.8" />
+      <circle cx="35" cy="15" r="0.7" fill="white" opacity="0.8" />
+      {/* scythe shaft */}
+      <line x1="50" y1="6" x2="40" y2="58" stroke="#1a2410" strokeWidth="2.5" strokeLinecap="round" />
+      {/* scythe blade */}
+      <path d="M50 6 Q62 8 58 22 Q54 14 48 14 Q50 10 50 6 Z" fill={c} opacity="0.25" />
+      <path d="M50 6 Q62 8 58 22" fill="none" stroke={c} strokeWidth="2" opacity="0.8" strokeLinecap="round" />
+      <path d="M50 6 Q58 9 55 18" fill="none" stroke="white" strokeWidth="0.6" opacity="0.5" />
+      {/* skeletal hand on shaft */}
+      <line x1="42" y1="36" x2="46" y2="34" stroke="#c8d0b0" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+      <line x1="42" y1="38" x2="46" y2="37" stroke="#c8d0b0" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+    </>
+  );
+}
+
 // ─── Icon map ─────────────────────────────────────────────────────────────────
 
 const ICON_MAP: Record<Category, (c: string) => React.ReactElement> = {
@@ -1046,6 +1374,15 @@ const ICON_MAP: Record<Category, (c: string) => React.ReactElement> = {
   ghul:           (c) => <IconGhul c={c} />,
   demon:          (c) => <IconDemon c={c} />,
   dragon:         (c) => <IconDragon c={c} />,
+  soldier:        (c) => <IconSoldier c={c} />,
+  bio:            (c) => <IconBio c={c} />,
+  berserker:      (c) => <IconBerserker c={c} />,
+  plasma:         (c) => <IconPlasma c={c} />,
+  commander:      (c) => <IconCommander c={c} />,
+  psi:            (c) => <IconPsi c={c} />,
+  glitch:         (c) => <IconGlitch c={c} />,
+  void:           (c) => <IconVoid c={c} />,
+  reaper:         (c) => <IconReaper c={c} />,
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
