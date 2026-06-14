@@ -286,7 +286,7 @@ export default function GuildOperationPanel({
         {/* Floor header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--gold-main)' }}>
-            {loc?.emoji} {loc?.name}
+            {loc?.name}
           </p>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {/* floor dots */}
@@ -465,7 +465,7 @@ export default function GuildOperationPanel({
           <GameIcon name="skull" size={28} color="#f87171" style={{ display: 'block', margin: '0 auto 6px' }} />
           <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>OPERACJA NIEUKOŃCZONA</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-            {loc?.emoji} {loc?.name} — czas minął
+            {loc?.name} — czas minął
           </p>
         </div>
         {participants.length > 0 && (
@@ -504,7 +504,7 @@ export default function GuildOperationPanel({
           <GameIcon name="trophy" size={28} color="#44cc44" style={{ display: 'block', margin: '0 auto 6px' }} />
           <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>OPERACJA UKOŃCZONA!</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
-            {loc?.emoji} {loc?.name}
+            {loc?.name}
           </p>
           {op.pendingReward && (
             <div style={{ background: 'rgba(10,25,10,0.7)', border: '1px solid rgba(34,197,94,0.25)', padding: '8px 12px', marginBottom: 10 }}>
@@ -609,7 +609,7 @@ export default function GuildOperationPanel({
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ ...ORB, fontSize: 10, color: sel ? rc : 'var(--text-bright)' }}>
-                      {loc.emoji} {loc.name}
+                      {loc.name}
                     </span>
                     <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '1px 5px' }}>
                       {loc.finalRarity.toUpperCase()}
