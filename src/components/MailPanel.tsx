@@ -11,6 +11,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 
 import { PX, MONO } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 function timeAgo(ts: number): string {
   const d = Date.now() - ts;
@@ -44,7 +45,7 @@ function InviteCard({ invite, onAccept, onDecline }: {
       boxShadow: '0 0 16px rgba(160,80,255,0.08)',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-        <span style={{ fontSize: 22, flexShrink: 0 }}>🏰</span>
+        <span style={{ flexShrink: 0 }}><GameIcon name="crown" size={22} color="#c080ff" /></span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ ...PX(6), color: '#c080ff', marginBottom: 4 }}>
             {t.mail.guildInviteLabel}
@@ -111,8 +112,8 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
         style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}
       >
-        <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>
-          {msg.read ? '📩' : '📨'}
+        <span style={{ flexShrink: 0, marginTop: 1 }}>
+          <GameIcon name="email" size={16} color={msg.read ? 'var(--text-dim)' : '#00c8ff'} />
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
@@ -425,10 +426,10 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
       {/* Content */}
       {view === 'inbox' ? (
         loading ? (
-          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ Ładowanie...</p>
+          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> Ładowanie...</p>
         ) : totalCount === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <p style={{ fontSize: 32, marginBottom: 10 }}>📭</p>
+            <GameIcon name="email" size={32} color="var(--text-dim)" style={{ display: 'block', margin: '0 auto 10px' }} />
             <p style={{ ...PX(6), color: 'var(--text-muted)' }}>{t.mail.noMessages}</p>
           </div>
         ) : (

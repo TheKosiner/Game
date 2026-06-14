@@ -12,17 +12,18 @@ import neuralPhantomImg from '../assets/bosses/neural-phantom.webp';
 import ironWarlordImg from '../assets/bosses/iron-warlord.webp';
 import quantumBerserkerImg from '../assets/bosses/quantum-berserker.webp';
 import { MONO, ORB } from '../utils/styles';
+import GameIcon, { type GameIconName, LogLine } from './GameIcon';
 
-function getPowerInfo(t: Translations): Record<ChallengePower, { label: string; color: string; emoji: string; desc: string }> {
+function getPowerInfo(t: Translations): Record<ChallengePower, { label: string; color: string; icon: GameIconName; desc: string }> {
   return {
-    regen:         { label: t.challenge.regenLabel,      color: '#ff4444', emoji: '🔴', desc: t.challenge.regenDesc },
-    double_strike: { label: t.challenge.doubleLabel,     color: '#ff9900', emoji: '⚡', desc: t.challenge.doubleDesc },
-    armor_break:   { label: t.challenge.armorBreakLabel, color: '#cc44ff', emoji: '💥', desc: t.challenge.armorBreakDesc },
-    dodge:         { label: t.challenge.dodgeLabel,      color: '#00f5ff', emoji: '💨', desc: t.challenge.dodgeDesc },
-    rage:          { label: t.challenge.furyLabel,       color: '#ff6600', emoji: '🔥', desc: t.challenge.furyDesc },
-    shield:        { label: t.challenge.shieldLabel,     color: '#4488ff', emoji: '🛡', desc: t.challenge.shieldDesc },
-    lifesteal:     { label: t.challenge.vampLabel,       color: '#cc0066', emoji: '💉', desc: t.challenge.vampDesc },
-    poison:        { label: t.challenge.poisonLabel,     color: '#44cc44', emoji: '🟢', desc: t.challenge.poisonDesc },
+    regen:         { label: t.challenge.regenLabel,      color: '#ff4444', icon: 'regen',         desc: t.challenge.regenDesc },
+    double_strike: { label: t.challenge.doubleLabel,     color: '#ff9900', icon: 'lightning',     desc: t.challenge.doubleDesc },
+    armor_break:   { label: t.challenge.armorBreakLabel, color: '#cc44ff', icon: 'explosion',     desc: t.challenge.armorBreakDesc },
+    dodge:         { label: t.challenge.dodgeLabel,      color: '#00f5ff', icon: 'wind',          desc: t.challenge.dodgeDesc },
+    rage:          { label: t.challenge.furyLabel,       color: '#ff6600', icon: 'fire',          desc: t.challenge.furyDesc },
+    shield:        { label: t.challenge.shieldLabel,     color: '#4488ff', icon: 'shield',        desc: t.challenge.shieldDesc },
+    lifesteal:     { label: t.challenge.vampLabel,       color: '#cc0066', icon: 'syringe',       desc: t.challenge.vampDesc },
+    poison:        { label: t.challenge.poisonLabel,     color: '#44cc44', icon: 'poison',        desc: t.challenge.poisonDesc },
   };
 }
 
@@ -56,7 +57,7 @@ function PowerBadge({ power, active }: { power: ChallengePower; active?: boolean
       boxShadow: active ? `0 0 8px ${info.color}60` : 'none',
       transition: 'all 0.3s',
     }}>
-      {info.emoji} {info.label}
+      <GameIcon name={info.icon} size={10} color={info.color} style={{ marginRight: 3 }} />{info.label}
     </span>
   );
 }
@@ -172,7 +173,7 @@ function FightView() {
                   animation: 'floatDmg 0.9s ease forwards',
                 }}
               >
-                -{floatBoss.val}{floatBoss.crit ? '💥' : ''}
+                -{floatBoss.val}{floatBoss.crit ? <GameIcon name="explosion" size={12} color="#ffd700" /> : ''}
               </span>
             )}
           </div>
@@ -320,7 +321,7 @@ function FightView() {
             'var(--text-dim)';
           return (
             <p key={i} style={{ ...MONO, fontSize: 10, color, lineHeight: 1.7, marginBottom: 0 }}>
-              {line}
+              <LogLine text={line} iconSize={10} />
             </p>
           );
         })}
@@ -360,7 +361,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
         padding: 20, textAlign: 'center',
         boxShadow: `0 0 30px ${accentColor}18`,
       }}>
-        <p style={{ fontSize: 48, marginBottom: 8 }}>{won ? '🏆' : '💀'}</p>
+        <GameIcon name={won ? 'trophy' : 'skull'} size={48} color={won ? '#ffd700' : '#ff4444'} style={{ display: 'block', margin: '0 auto 8px' }} />
         <p style={{
           fontFamily: "'Press Start 2P', monospace", fontSize: 11,
           color: accentColor, textShadow: `0 0 16px ${accentColor}`,
@@ -391,7 +392,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
             <div style={{ textAlign: 'center' }}>
               <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 2 }}>{t.challenge.gold}</p>
               <p style={{ ...ORB, fontSize: 13, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
-                +{boss.goldReward.toLocaleString()} 🪙
+                +{boss.goldReward.toLocaleString()} <GameIcon name="coin" size={13} />
               </p>
             </div>
           )}
@@ -448,7 +449,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
       {showLog && (
         <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.07)', padding: 8, maxHeight: 200, overflowY: 'auto' }}>
           {result.log.map((line, i) => (
-            <p key={i} style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
+            <p key={i} style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', lineHeight: 1.6 }}><LogLine text={line} iconSize={10} /></p>
           ))}
         </div>
       )}
@@ -1245,7 +1246,7 @@ function SelectView() {
   if (allDefeated) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', padding: '20px 0' }}>
-        <p style={{ fontSize: 56 }}>🏆</p>
+        <GameIcon name="trophy" size={56} color="#ffd700" style={{ display: 'block', margin: '0 auto' }} />
         <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: '#ffd700', textShadow: '0 0 20px #ffd700', textAlign: 'center' }}>
           WSZYSCY BOSSOWIE POKONANI
         </p>
@@ -1262,10 +1263,10 @@ function SelectView() {
       {/* Progress header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ ...ORB, fontSize: 10, color: accentColor, textShadow: `0 0 10px ${accentColor}80` }}>
-          ⚡ BOSS
+          <GameIcon name="lightning" size={10} color={accentColor} /> BOSS
         </p>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', padding: '2px 8px' }}>
-          {bossIdx}/{CHALLENGE_BOSSES.length} 💀
+          {bossIdx}/{CHALLENGE_BOSSES.length} <GameIcon name="skull" size={10} color="var(--text-dim)" />
         </span>
       </div>
 
@@ -1327,15 +1328,15 @@ function SelectView() {
           background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.06)', padding: 10,
         }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>❤ HP</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}><GameIcon name="heart" size={10} color="#ff4444" /> HP</p>
             <p style={{ ...ORB, fontSize: 11, color: '#ff4444' }}>{boss!.maxHp.toLocaleString()}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>⚔ ATK</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}><GameIcon name="sword" size={10} color="#ff8800" /> ATK</p>
             <p style={{ ...ORB, fontSize: 11, color: '#ff8800' }}>{boss!.attack}</p>
           </div>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}>🛡 DEF</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 3 }}><GameIcon name="shield" size={10} color="#4488ff" /> DEF</p>
             <p style={{ ...ORB, fontSize: 11, color: '#4488ff' }}>{boss!.defense}</p>
           </div>
         </div>
@@ -1363,7 +1364,7 @@ function SelectView() {
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>ZŁOTO</p>
-            <p style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{boss!.goldReward.toLocaleString()} 🪙</p>
+            <p style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{boss!.goldReward.toLocaleString()} <GameIcon name="coin" size={10} /></p>
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
@@ -1380,7 +1381,7 @@ function SelectView() {
       {/* Cooldown / fight button */}
       {cooldownLeft > 0 ? (
         <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(255,68,68,0.06)', border: '1px solid rgba(255,68,68,0.25)' }}>
-          <p style={{ ...MONO, fontSize: 10, color: '#ff4444', marginBottom: 4 }}>⏱ COOLDOWN</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#ff4444', marginBottom: 4 }}><GameIcon name="hourglass" size={10} color="#ff4444" /> COOLDOWN</p>
           <p style={{ ...ORB, fontSize: 16, color: '#ff4444', textShadow: '0 0 10px rgba(255,68,68,0.5)' }}>
             {fmtMs(cooldownLeft)}
           </p>
@@ -1392,7 +1393,7 @@ function SelectView() {
             boxShadow: `0 0 20px ${accentColor}30` }}
           onClick={() => startChallengeFight(bossIdx)}
         >
-          ⚡ {lang === 'en' ? 'FIGHT' : 'WALCZ Z'} {boss!.name.toUpperCase()}
+          <GameIcon name="lightning" size={11} color="#fff" /> {lang === 'en' ? 'FIGHT' : 'WALCZ Z'} {boss!.name.toUpperCase()}
         </button>
       )}
     </div>

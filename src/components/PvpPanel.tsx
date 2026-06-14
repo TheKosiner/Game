@@ -7,6 +7,7 @@ import { PVP_COOLDOWN } from '../store/gameStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp, calcCritChance, getEquipmentStats } from '../utils/combat';
+import GameIcon, { LogLine } from './GameIcon';
 
 import { PX, MONO, ORB } from '../utils/styles';
 import arenaSrc from '../assets/arena.webp';
@@ -184,7 +185,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
                   animation: 'floatDmg 0.9s ease forwards',
                 }}
               >
-                -{floatOpp.val}{floatOpp.crit ? '💥' : ''}
+                -{floatOpp.val}{floatOpp.crit ? <GameIcon name="explosion" size={12} color="#ffd700" /> : ''}
               </span>
             )}
           </div>
@@ -279,7 +280,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
               {combat.won ? t.challenge.victory : t.challenge.defeat}
             </p>
             <p style={{ ...PX(6), color: 'var(--gold-bright)', marginBottom: 4 }}>
-              +{combat.xpGained} XP{combat.goldGained > 0 ? `   +${combat.goldGained}🪙` : ''}
+              +{combat.xpGained} XP{combat.goldGained > 0 ? <>&nbsp;&nbsp;+{combat.goldGained}<GameIcon name="coin" size={10} /></> : ''}
             </p>
             <p style={{ ...PX(6), color: combat.won ? '#c084fc' : '#a855f7' }}>
               {combat.won ? '+25' : '-15'} RANKING
@@ -299,7 +300,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
       >
         {[...combat.log].reverse().map((entry, i) => (
           <p key={i} style={{ ...MONO, fontSize: 10, color: logColor(entry.message), lineHeight: 1.7, marginBottom: 0 }}>
-            {entry.message}
+            <LogLine text={entry.message} iconSize={10} />
           </p>
         ))}
       </div>
@@ -499,7 +500,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
           {myRank > 0 && <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', marginBottom: 3 }}>{t.pvp.rank(myRank)}</p>}
           {canFight
             ? <p style={{ ...MONO, fontSize: 11, color: '#6aaa30' }}>{t.pvp.ready}</p>
-            : <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>⏳ <CooldownTimer end={cooldownEnd} /></p>
+            : <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="hourglass" size={11} /> <CooldownTimer end={cooldownEnd} /></p>
           }
         </div>
       </div>
@@ -529,7 +530,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
           >
             {canReroll
               ? t.pvp.reroll
-              : <>{t.pvp.reroll} · ⏳ <CooldownTimer end={rerollEnd} /></>
+              : <>{t.pvp.reroll} · <GameIcon name="hourglass" size={10} /> <CooldownTimer end={rerollEnd} /></>
             }
           </button>
         </>
@@ -538,7 +539,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
       {/* Fight history */}
       <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
         <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 8 }}>{t.pvp.history}</p>
-        {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>⏳ {t.pvp.loading}</p>}
+        {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}><GameIcon name="hourglass" size={11} /> {t.pvp.loading}</p>}
         {!historyLoading && globalHistory.length === 0 && (
           <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>{t.pvp.noHistory}</p>
         )}
@@ -553,8 +554,8 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
                   border: `1px solid ${isMe ? 'var(--gold-darker)' : 'var(--border-dark)'}`,
                   padding: '6px 8px', display: 'flex', alignItems: 'center', gap: 6,
                 }}>
-                  <span style={{ ...PX(6), color: r.attackerWon ? '#6aaa30' : 'var(--hp-bright)', flexShrink: 0 }}>
-                    {r.attackerWon ? '⚔' : '💀'}
+                  <span style={{ flexShrink: 0 }}>
+                    <GameIcon name={r.attackerWon ? 'sword' : 'skull'} size={12} color={r.attackerWon ? '#6aaa30' : 'var(--hp-bright)'} />
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ ...PX(5), color: 'var(--text-bright)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

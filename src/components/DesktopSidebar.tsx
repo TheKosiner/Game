@@ -4,6 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { TabIcon, type MainTab, type PlaySub, type SocialSub, type ShopSub } from './BottomNav';
+import GameIcon, { type GameIconName } from './GameIcon';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -26,7 +27,7 @@ interface Props {
 function NavItem({
   label, icon, active, onClick, badge,
 }: {
-  label: string; icon: string; active: boolean;
+  label: string; icon: GameIconName; active: boolean;
   onClick: () => void; badge?: number | boolean;
 }) {
   return (
@@ -57,7 +58,7 @@ function NavItem({
           boxShadow: '0 0 6px #ff2d78',
         }} />
       )}
-      {icon && <span style={{ fontSize: 12, width: 16, textAlign: 'center', flexShrink: 0, opacity: active ? 1 : 0.5 }}>{icon}</span>}
+      {icon && <span style={{ width: 16, textAlign: 'center', flexShrink: 0, opacity: active ? 1 : 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GameIcon name={icon} size={12} /></span>}
       <span style={{
         ...MONO, fontSize: 10,
         color: active ? '#ffffff' : 'rgba(255,255,255,0.45)',
@@ -139,7 +140,7 @@ function SectionNavItem({
   );
 }
 
-function StatChip({ value, color, icon }: { value: string | number; color: string; icon: string }) {
+function StatChip({ value, color, icon }: { value: string | number; color: string; icon: GameIconName }) {
   return (
     <span style={{
       ...ORB, fontSize: 9, color,
@@ -150,7 +151,7 @@ function StatChip({ value, color, icon }: { value: string | number; color: strin
       boxShadow: `0 0 8px ${color}10`,
       transition: 'box-shadow 0.2s',
     }}>
-      {icon} {value}
+      <GameIcon name={icon} size={11} color={color} /> {value}
     </span>
   );
 }
@@ -226,15 +227,15 @@ export default function DesktopSidebar({
           }} />
         {open['play'] && (
           <div style={{ borderLeft: '1px solid rgba(255,45,120,0.12)', marginLeft: 14 }}>
-            <NavItem icon="⚔" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
+            <NavItem icon="sword" label={t.nav.dungeon} active={tab === 'play' && playSub === 'dungeon'}
               onClick={() => { onTab('play'); onPlay('dungeon'); }} />
-            <NavItem icon="👾" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
+            <NavItem icon="monster" label={t.nav.boss} active={tab === 'play' && playSub === 'challenge'}
               onClick={() => { onTab('play'); onPlay('challenge'); }} />
-            <NavItem icon="📜" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
+            <NavItem icon="scroll" label={t.nav.quests} active={tab === 'play' && playSub === 'quests'}
               onClick={() => { onTab('play'); onPlay('quests'); }} badge={questBadge} />
-            <NavItem icon="🗡" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
+            <NavItem icon="sword" label={t.nav.arena} active={tab === 'play' && playSub === 'pvp'}
               onClick={() => { onTab('play'); onPlay('pvp'); }} />
-            <NavItem icon="💀" label="Krypta" active={tab === 'play' && playSub === 'krypta'}
+            <NavItem icon="skull" label="Krypta" active={tab === 'play' && playSub === 'krypta'}
               onClick={() => { onTab('play'); onPlay('krypta'); }} />
           </div>
         )}
@@ -252,11 +253,11 @@ export default function DesktopSidebar({
           }} />
         {open['social'] && (
           <div style={{ borderLeft: '1px solid rgba(255,45,120,0.12)', marginLeft: 14 }}>
-            <NavItem icon="🏆" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
+            <NavItem icon="trophy" label={t.nav.ranking} active={tab === 'social' && socialSub === 'ranking'}
               onClick={() => { onTab('social'); onSocial('ranking'); }} />
-            <NavItem icon="💬" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
+            <NavItem icon="chat" label={t.nav.chat} active={tab === 'social' && socialSub === 'chat'}
               onClick={() => { onTab('social'); onSocial('chat'); }} badge={chatHasNew} />
-            <NavItem icon="📨" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
+            <NavItem icon="email" label={t.nav.mail} active={tab === 'social' && socialSub === 'mail'}
               onClick={() => { onTab('social'); onSocial('mail'); }} badge={mailUnread || undefined} />
           </div>
         )}
@@ -268,15 +269,15 @@ export default function DesktopSidebar({
           }} />
         {open['shop'] && (
           <div style={{ borderLeft: '1px solid rgba(255,45,120,0.12)', marginLeft: 14 }}>
-            <NavItem icon="🛒" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
+            <NavItem icon="cart" label={t.nav.shop} active={tab === 'shop' && shopSub === 'shop'}
               onClick={() => { onTab('shop'); onShop('shop'); }} />
-            <NavItem icon="⚒" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
+            <NavItem icon="anvil" label={t.nav.smith} active={tab === 'shop' && shopSub === 'smith'}
               onClick={() => { onTab('shop'); onShop('smith'); }} />
-            <NavItem icon="🎰" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
+            <NavItem icon="slot_machine" label={t.nav.casino} active={tab === 'shop' && shopSub === 'casino'}
               onClick={() => { onTab('shop'); onShop('casino'); }} />
-            <NavItem icon="✨" label="Zaklinacz" active={tab === 'shop' && shopSub === 'enchanter'}
+            <NavItem icon="magic_sparkle" label="Zaklinacz" active={tab === 'shop' && shopSub === 'enchanter'}
               onClick={() => { onTab('shop'); onShop('enchanter'); }} />
-            <NavItem icon="💎" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
+            <NavItem icon="gem" label={t.nav.gems} active={tab === 'shop' && shopSub === 'gems'}
               onClick={() => { onTab('shop'); onShop('gems'); }} />
           </div>
         )}
@@ -300,9 +301,9 @@ export default function DesktopSidebar({
         </div>
 
         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          <StatChip value={hero.gold} color="#ffd700" icon="🪙" />
-          <StatChip value={hero.gems} color="#00e5ff" icon="💎" />
-          <StatChip value={`LV.${hero.level}`} color="#9d4edd" icon="⚡" />
+          <StatChip value={hero.gold} color="#ffd700" icon="coin" />
+          <StatChip value={hero.gems} color="#00e5ff" icon="gem" />
+          <StatChip value={`LV.${hero.level}`} color="#9d4edd" icon="lightning" />
         </div>
 
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>

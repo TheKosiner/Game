@@ -12,13 +12,14 @@ import { useAuthStore } from '../store/authStore';
 import { collectQuestServer } from '../lib/serverActions';
 import { syncToCloud } from '../lib/cloudSync';
 import { PX, MONO, ORB } from '../utils/styles';
+import GameIcon, { type GameIconName } from './GameIcon';
 
 const VARIANTS_BASE = [
   {
     key: 'xp',
     labelKey: 'typeXp' as const,
     descKey: 'typeXpDesc' as const,
-    badge: '⚡',
+    badge: 'lightning' as GameIconName,
     xpMult: 1.8, goldMult: 0.3,
     color: '#4488ff',
     bg: 'linear-gradient(135deg, rgba(20,30,60,0.97), rgba(10,18,50,0.99))',
@@ -29,7 +30,7 @@ const VARIANTS_BASE = [
     key: 'bal',
     labelKey: 'typeContract' as const,
     descKey: 'typeContractDesc' as const,
-    badge: '⚖',
+    badge: 'scale' as GameIconName,
     xpMult: 1.0, goldMult: 1.0,
     color: '#aaaaaa',
     bg: 'linear-gradient(135deg, rgba(20,20,25,0.97), rgba(12,12,18,0.99))',
@@ -40,7 +41,7 @@ const VARIANTS_BASE = [
     key: 'gold',
     labelKey: 'typeLoot' as const,
     descKey: 'typeLootDesc' as const,
-    badge: '🪙',
+    badge: 'coin' as GameIconName,
     xpMult: 0.3, goldMult: 1.8,
     color: '#ffd700',
     bg: 'linear-gradient(135deg, rgba(40,28,5,0.97), rgba(28,18,3,0.99))',
@@ -157,7 +158,7 @@ export default function QuestPanel() {
             width: '100%',
           }}
         >
-          🔔 {lang === 'en' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
+          <GameIcon name="bell" size={11} color="#fbbf24" /> {lang === 'en' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
         </button>
       )}
 
@@ -201,7 +202,7 @@ export default function QuestPanel() {
               {canCollect ? t.quests.readyToCollect : formatTime(remaining)}
             </p>
             <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)' }}>+{activeQuest.quest.goldReward}🪙</span>
+              <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', display: 'flex', alignItems: 'center', gap: 2 }}>+{activeQuest.quest.goldReward}<GameIcon name="coin" size={10} /></span>
               <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{activeQuest.quest.xpReward} XP</span>
             </div>
           </div>
@@ -284,14 +285,14 @@ export default function QuestPanel() {
                       boxShadow: `0 0 16px ${v.glow}`,
                       display: 'flex', alignItems: 'center', gap: 10,
                     }}>
-                      <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
+                      <GameIcon name={v.badge} size={20} color={v.color} />
                       <div style={{ flex: 1 }}>
                         <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 4 }}>{t.quests[v.labelKey]}</p>
                         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 5 }}>{t.quests[v.descKey]}</p>
                         <div style={{ display: 'flex', gap: 12 }}>
                           <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{xp} XP</span>
-                          <span style={{ ...ORB, fontSize: 10, color: '#c8a020' }}>+{gold}🪙</span>
-                          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>⏱ {formatTime(duration)}</span>
+                          <span style={{ ...ORB, fontSize: 10, color: '#c8a020', display: 'flex', alignItems: 'center', gap: 2 }}>+{gold}<GameIcon name="coin" size={10} color="#c8a020" /></span>
+                          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}><GameIcon name="hourglass" size={10} color="var(--text-dim)" /> {formatTime(duration)}</span>
                         </div>
                       </div>
                       <button

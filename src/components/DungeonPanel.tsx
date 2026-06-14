@@ -9,13 +9,14 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { PX, MONO, ORB } from '../utils/styles';
 import DungeonMapView from './DungeonMapView';
+import GameIcon, { type GameIconName, LogLine } from './GameIcon';
 const LOG_COLORS = { hero: '#5a9040', enemy: '#903040', loot: '#9c7a3c', system: '#7a7060' };
 
 type DungeonMode = 'xp' | 'balanced' | 'loot';
 type DungeonDifficulty = 'easy' | 'normal' | 'hard';
 
-type DifficultyOption = { key: DungeonDifficulty; label: string; badge: string; desc: string; color: string; border: string };
-type DungeonVariant = { key: DungeonMode; label: string; badge: string; desc: string; color: string; bg: string; border: string; glow: string };
+type DifficultyOption = { key: DungeonDifficulty; label: string; badge: GameIconName; desc: string; color: string; border: string };
+type DungeonVariant = { key: DungeonMode; label: string; badge: GameIconName; desc: string; color: string; bg: string; border: string; glow: string };
 
 // ── LocationIcon ───────────────────────────────────────────────────────────
 function LocationIcon({ id, size = 24, color = '#ffc83a' }: { id: string; size?: number; color?: string }) {
@@ -407,12 +408,12 @@ function EnemyBattleCard() {
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.attack}</button>
         <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.quickFight}</button>
-        <button onClick={handleFleeExit} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}>🚪</button>
+        <button onClick={handleFleeExit} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}><GameIcon name="run" size={11} color="#fff" /></button>
       </div>
 
       <div className="combat-log">
         {combatLog.slice(0, 15).map((log, i) => (
-          <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
+          <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}><LogLine text={log.message} iconSize={10} /></p>
         ))}
       </div>
     </div>
@@ -467,14 +468,14 @@ function DungeonList() {
   const blocked = isResting || limitReached;
 
   const DIFFICULTY_OPTIONS: DifficultyOption[] = [
-    { key: 'easy',   label: t.dungeon.diffEasy,   badge: '🌿', desc: t.dungeon.diffEasyDesc,   color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
-    { key: 'normal', label: t.dungeon.diffNormal,  badge: '⚔',  desc: t.dungeon.diffNormalDesc, color: '#aaaaaa', border: 'rgba(160,160,160,0.3)' },
-    { key: 'hard',   label: t.dungeon.diffHard,    badge: '💀', desc: t.dungeon.diffHardDesc,   color: '#ff4444', border: 'rgba(255,68,68,0.45)'  },
+    { key: 'easy',   label: t.dungeon.diffEasy,   badge: 'leaf'  as GameIconName, desc: t.dungeon.diffEasyDesc,   color: '#44cc77', border: 'rgba(68,204,119,0.4)' },
+    { key: 'normal', label: t.dungeon.diffNormal,  badge: 'sword' as GameIconName, desc: t.dungeon.diffNormalDesc, color: '#aaaaaa', border: 'rgba(160,160,160,0.3)' },
+    { key: 'hard',   label: t.dungeon.diffHard,    badge: 'skull' as GameIconName, desc: t.dungeon.diffHardDesc,   color: '#ff4444', border: 'rgba(255,68,68,0.45)'  },
   ];
   const DUNGEON_VARIANTS: DungeonVariant[] = [
-    { key: 'xp',       label: t.dungeon.modeTraining, badge: '⚡', desc: t.dungeon.modeTrainingDesc, color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
-    { key: 'balanced', label: t.dungeon.modePatrol,   badge: '⚖',  desc: t.dungeon.modePatrolDesc,   color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
-    { key: 'loot',     label: t.dungeon.modeLoot,     badge: '💎', desc: t.dungeon.modeLootDesc,      color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
+    { key: 'xp',       label: t.dungeon.modeTraining, badge: 'lightning' as GameIconName, desc: t.dungeon.modeTrainingDesc, color: '#4488ff', bg: 'linear-gradient(135deg,rgba(20,30,60,0.97),rgba(10,18,50,0.99))', border: 'rgba(68,136,255,0.35)',  glow: 'rgba(68,136,255,0.08)' },
+    { key: 'balanced', label: t.dungeon.modePatrol,   badge: 'scale'     as GameIconName, desc: t.dungeon.modePatrolDesc,   color: '#aaaaaa', bg: 'linear-gradient(135deg,rgba(20,20,25,0.97),rgba(12,12,18,0.99))', border: 'rgba(160,160,160,0.2)',  glow: 'rgba(160,160,160,0.04)' },
+    { key: 'loot',     label: t.dungeon.modeLoot,     badge: 'gem'       as GameIconName, desc: t.dungeon.modeLootDesc,      color: '#cc44ff', bg: 'linear-gradient(135deg,rgba(35,10,55,0.97),rgba(22,5,40,0.99))',  border: 'rgba(200,68,255,0.35)', glow: 'rgba(200,68,255,0.08)' },
   ];
 
   return (
@@ -523,7 +524,7 @@ function DungeonList() {
               {isEn ? (selected as typeof selected & { nameEn?: string }).nameEn ?? selected.name : selected.name}
             </p>
             {completed.includes(selected.id) && (
-              <span style={{ ...MONO, fontSize: 8, color: '#4ade80' }}>✓ ukończony</span>
+              <span style={{ ...MONO, fontSize: 8, color: '#4ade80' }}><GameIcon name="check" size={8} color="#4ade80" /> ukończony</span>
             )}
           </div>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 3 }}>
@@ -554,7 +555,7 @@ function DungeonList() {
                 boxShadow: active ? `0 0 10px ${d.border}` : 'none',
                 transition: 'border-color 0.15s, box-shadow 0.15s',
               }}>
-                <span style={{ fontSize: 14 }}>{d.badge}</span>
+                <GameIcon name={d.badge} size={16} color={active ? d.color : 'rgba(150,150,150,0.5)'} />
                 <span style={{ ...ORB, fontSize: 10, color: active ? d.color : 'var(--text-dim)' }}>{d.label}</span>
               </button>
             );
@@ -574,7 +575,7 @@ function DungeonList() {
             display: 'flex', alignItems: 'center', gap: 10,
             opacity: blocked ? 0.5 : 1,
           }}>
-            <span style={{ fontSize: 20, flexShrink: 0 }}>{v.badge}</span>
+            <GameIcon name={v.badge} size={22} color={v.color} style={{ flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <p style={{ ...ORB, fontSize: 10, color: v.color, marginBottom: 3 }}>{v.label}</p>
               <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{v.desc}</p>
@@ -622,7 +623,7 @@ export default function DungeonPanel() {
           border: '1px solid rgba(120,20,20,0.6)',
           boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.6)',
         }}>
-          <p style={{ fontSize: 40, marginBottom: 10 }}>💀</p>
+          <GameIcon name="skull" size={40} color="#ff4444" style={{ display: 'block', margin: '0 auto 10px' }} />
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 11, color: 'var(--hp-bright)', textShadow: '0 0 16px #ff000066', marginBottom: 10 }}>
             {t.dungeon.defeated}
           </p>
@@ -635,7 +636,7 @@ export default function DungeonPanel() {
         </div>
         <div className="combat-log">
           {combatLog.slice(0, 8).map((log, i) => (
-            <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
+            <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}><LogLine text={log.message} iconSize={10} /></p>
           ))}
         </div>
         <button onClick={clearDefeat} className="btn btn-secondary" style={{ width: '100%', fontSize: 10 }}>
@@ -649,7 +650,7 @@ export default function DungeonPanel() {
     return (
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <p style={{ fontSize: 32, marginBottom: 8 }}>🏆</p>
+          <GameIcon name="trophy" size={32} color="#ffd700" style={{ display: 'block', margin: '0 auto 8px' }} />
           <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 10, color: 'var(--gold-bright)', textShadow: '0 0 12px var(--gold-glow)', marginBottom: 6 }}>
             {t.dungeon.opComplete}
           </p>
@@ -667,14 +668,14 @@ export default function DungeonPanel() {
               </span>
               <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>|</span>
               <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 13, color: '#ffd700' }}>
-                +{pendingDungeonGold} 🪙
+                +{pendingDungeonGold} <GameIcon name="coin" size={12} />
               </span>
             </div>
           )}
         </div>
         <div className="combat-log">
           {combatLog.slice(0, 10).map((log, i) => (
-            <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}>{log.message}</p>
+            <p key={i} style={{ color: LOG_COLORS[log.type], marginBottom: 1 }}><LogLine text={log.message} iconSize={10} /></p>
           ))}
         </div>
         <button onClick={handleExit} className="btn btn-primary" style={{ width: '100%', fontSize: 10 }}>

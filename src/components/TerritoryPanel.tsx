@@ -11,6 +11,7 @@ import { useGameStore } from '../store/gameStore';
 import { useLangStore } from '../store/langStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
+import GameIcon, { LogLine } from './GameIcon';
 
 import { PX, MONO } from '../utils/styles';
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -319,7 +320,7 @@ function CityMap({
                 fill={locked ? '#5a4a78' : col}
                 paintOrder="stroke" stroke="rgba(6,3,13,0.95)" strokeWidth="0.3"
               >
-                {locked ? `⌧ ${def.minLevel}` : state?.siegeCurrentHp != null && (state.siegeCurrentHp ?? 0) > 0 ? '⚔' : ''}
+                {locked ? `X ${def.minLevel}` : state?.siegeCurrentHp != null && (state.siegeCurrentHp ?? 0) > 0 ? '//' : ''}
               </text>
             </g>
           );
@@ -402,7 +403,7 @@ function CityMap({
             ) : heroLevel < pd.minLevel ? (
               <span style={{ fontSize: 9, fontFamily: 'monospace', color: '#5a4a78',
                 border: '1px solid #5a4a78', padding: '2px 6px' }}>
-                ⌧ {isEn ? 'LOCKED' : 'ZABLOKOWANA'}
+                X {isEn ? 'LOCKED' : 'ZABLOKOWANA'}
               </span>
             ) : (
               <span style={{ fontSize: 9, fontFamily: 'monospace', color: '#ffc83a',
@@ -415,7 +416,7 @@ function CityMap({
           {/* Siege indicator */}
           {pSt?.siegeCurrentHp != null && (pSt.siegeCurrentHp ?? 0) > 0 && (
             <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#f87171', marginBottom: 8 }}>
-              ⚔ {isEn ? 'SIEGE IN PROGRESS' : 'OBLĘŻENIE W TOKU'} — {pSt.siegeGuildTag}
+              <GameIcon name="sword" size={9} color="#f87171" /> {isEn ? 'SIEGE IN PROGRESS' : 'OBLĘŻENIE W TOKU'} — {pSt.siegeGuildTag}
             </p>
           )}
 
@@ -509,17 +510,17 @@ function SiegeCombat({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p style={{ ...PX(7), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>
-        ⚔ {isEn ? 'SIEGE' : 'OBLĘŻENIE'} — {state.territory.emoji} {(isEn ? (state.territory as typeof state.territory & { nameEn?: string }).nameEn ?? state.territory.name : state.territory.name).toUpperCase()}
+        <GameIcon name="sword" size={11} color="var(--gold-main)" /> {isEn ? 'SIEGE' : 'OBLĘŻENIE'} — {state.territory.emoji} {(isEn ? (state.territory as typeof state.territory & { nameEn?: string }).nameEn ?? state.territory.name : state.territory.name).toUpperCase()}
       </p>
 
       {/* Siege overall progress */}
       <div style={{ background: 'var(--bg-inset)', border: '1px solid rgba(100,60,180,0.4)', padding: 8 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-          <p style={{ ...PX(4), color: '#a080e0' }}>⚡ {isEn ? 'Siege (total)' : 'Oblężenie (łącznie)'}</p>
+          <p style={{ ...PX(4), color: '#a080e0', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="lightning" size={10} color="#a080e0" /> {isEn ? 'Siege (total)' : 'Oblężenie (łącznie)'}</p>
           <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{state.enemyHp}/{state.enemyMaxHp} HP</p>
         </div>
         <HpBar current={state.enemyHp} max={state.enemyMaxHp} color="#7040c0" />
-        <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>⚔ {isEn ? `Dealt so far: ${state.damageDealt} dmg (session)` : `Zadałeś już: ${state.damageDealt} obrażeń (sesja)`}</p>
+        <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="sword" size={10} /> {isEn ? `Dealt so far: ${state.damageDealt} dmg (session)` : `Zadałeś już: ${state.damageDealt} obrażeń (sesja)`}</p>
       </div>
 
       {/* Enemy */}
@@ -577,7 +578,7 @@ function SiegeCombat({
                     <img src={portraitSrc(d.portrait)} alt={d.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <span style={{ ...MONO, fontSize: 10, color: current ? '#e06060' : 'rgba(200,120,120,0.8)', textDecoration: beaten ? 'line-through' : 'none' }}>
-                    {beaten ? '✓' : current ? '⚔' : '○'} {d.name} {d.level}
+                    {beaten ? <GameIcon name="check" size={10} color="#60c060" /> : current ? <GameIcon name="sword" size={10} color="#e06060" /> : '○'} {d.name} {d.level}
                   </span>
                 </div>
               );
@@ -589,7 +590,7 @@ function SiegeCombat({
       {/* Hero */}
       <div style={{ background: 'var(--bg-inset)', border: '1px solid rgba(40,130,40,0.4)', padding: 10 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-          <p style={{ ...PX(6), color: '#60c060' }}>🛡 {isEn ? 'YOU' : 'TY'}</p>
+          <p style={{ ...PX(6), color: '#60c060', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="shield" size={11} color="#60c060" /> {isEn ? 'YOU' : 'TY'}</p>
           <p style={{ ...PX(5), color: 'var(--text-muted)' }}>{state.heroHp}/{state.heroMaxHp} HP</p>
         </div>
         <HpBar current={state.heroHp} max={state.heroMaxHp} color="#30a030" />
@@ -603,7 +604,7 @@ function SiegeCombat({
           padding: 12, textAlign: 'center',
         }}>
           <p style={{ ...PX(9), color: state.won ? '#60e060' : '#e06060', marginBottom: 6 }}>
-            {state.won ? (isEn ? '⚡ ZONE CAPTURED!' : '⚡ STREFA PRZEJĘTA!') : (isEn ? '💀 RETREAT' : '💀 ODWRÓT')}
+            {state.won ? <><GameIcon name="lightning" size={13} color={state.won ? '#60e060' : '#e06060'} /> {isEn ? 'ZONE CAPTURED!' : 'STREFA PRZEJĘTA!'}</> : <><GameIcon name="skull" size={13} color="#e06060" /> {isEn ? 'RETREAT' : 'ODWRÓT'}</>}
           </p>
           <p style={{ ...PX(5), color: 'var(--text-dim)' }}>
             {state.won
@@ -620,10 +621,10 @@ function SiegeCombat({
       {!state.done && (
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={onAttack} className="btn btn-danger" style={{ flex: 1, fontSize: 10, padding: '10px' }}>
-            ⚔ {isEn ? 'ATTACK' : 'ATAKUJ'}
+            <GameIcon name="sword" size={11} color="#fff" /> {isEn ? 'ATTACK' : 'ATAKUJ'}
           </button>
           <button onClick={onAutoFight} className="btn btn-secondary" style={{ flex: 1, fontSize: 10, padding: '10px' }}>
-            ⚡ {isEn ? 'Quick fight' : 'Szybka walka'}
+            <GameIcon name="lightning" size={11} /> {isEn ? 'Quick fight' : 'Szybka walka'}
           </button>
           <button onClick={onRetreat} className="btn btn-secondary" style={{ fontSize: 10, padding: '10px 14px' }}>
             {isEn ? 'Retreat' : 'Odwrót'}
@@ -634,7 +635,7 @@ function SiegeCombat({
       {/* Log */}
       <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 8, maxHeight: 120, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {state.log.slice().reverse().map((line, i) => (
-          <p key={i} style={{ ...PX(4), color: 'var(--text-dim)', lineHeight: 1.6 }}>{line}</p>
+          <p key={i} style={{ ...PX(4), color: 'var(--text-dim)', lineHeight: 1.6 }}><LogLine text={line} iconSize={10} /></p>
         ))}
       </div>
     </div>
@@ -988,7 +989,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
   if (committing) {
     return (
       <div style={{ textAlign: 'center', padding: 30 }}>
-        <p style={{ ...PX(6), color: 'var(--gold-main)' }}>⏳ {isEn ? 'Saving damage...' : 'Zapisywanie obrażeń...'}</p>
+        <p style={{ ...PX(6), color: 'var(--gold-main)' }}><GameIcon name="hourglass" size={11} color="var(--gold-main)" /> {isEn ? 'Saving damage...' : 'Zapisywanie obrażeń...'}</p>
       </div>
     );
   }
@@ -1063,9 +1064,9 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
         return (
           <div style={{ background: 'rgba(40,20,0,0.7)', border: '1px solid rgba(180,100,0,0.4)', padding: 8 }}>
             <p style={{ ...PX(4), color: '#e09040' }}>
-              {lostCd
-                ? (isEn ? `⏳ Lost a zone — next attack in ${formatCountdown(lostCd)}` : `⏳ Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`)
-                : (isEn ? `⏳ Zone captured — next capture in ${formatCountdown(capCd!)}` : `⏳ Przejęliście strefę — kolejne przejęcie za ${formatCountdown(capCd!)}`)}
+              <GameIcon name="hourglass" size={10} color="#e09040" /> {lostCd
+                ? (isEn ? `Lost a zone — next attack in ${formatCountdown(lostCd)}` : `Straciliście strefę — kolejny atak za ${formatCountdown(lostCd)}`)
+                : (isEn ? `Zone captured — next capture in ${formatCountdown(capCd!)}` : `Przejęliście strefę — kolejne przejęcie za ${formatCountdown(capCd!)}`)}
             </p>
           </div>
         );
@@ -1079,7 +1080,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
       )}
 
       {loading && (
-        <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>⏳ {isEn ? 'Loading...' : 'Ładowanie...'}</p>
+        <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {isEn ? 'Loading...' : 'Ładowanie...'}</p>
       )}
 
 
@@ -1151,8 +1152,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
                 <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 2 }}>{isEn ? 'Reward/day' : 'Nagroda/dzień'}</p>
-                <p style={{ ...PX(5), color: 'var(--gold-bright)' }}>🪙{def.dailyGold}</p>
-                <p style={{ ...PX(4), color: '#80a0ff' }}>✨{def.dailyXp} XP</p>
+                <p style={{ ...PX(5), color: 'var(--gold-bright)' }}><GameIcon name="coin" size={10} />{def.dailyGold}</p>
+                <p style={{ ...PX(4), color: '#80a0ff' }}><GameIcon name="magic_sparkle" size={10} color="#80a0ff" />{def.dailyXp} XP</p>
               </div>
             </div>
 
@@ -1166,8 +1167,8 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                   <p style={{ ...PX(4), color: mySiegeActive ? '#a080e0' : '#e09040' }}>
                     {mySiegeActive
-                      ? (isEn ? '⚔ Your siege' : '⚔ Wasze oblężenie')
-                      : `⚔ ${isEn ? 'Siege' : 'Oblężenie'} [${state.siegeGuildTag}]`}
+                      ? <><GameIcon name="sword" size={10} color={mySiegeActive ? '#a080e0' : '#e09040'} /> {isEn ? 'Your siege' : 'Wasze oblężenie'}</>
+                      : <><GameIcon name="sword" size={10} color="#e09040" /> {isEn ? 'Siege' : 'Oblężenie'} [{state.siegeGuildTag}]</>}
                   </p>
                   <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
                     {state.siegeCurrentHp}/{state.siegeMaxHp} HP
@@ -1177,18 +1178,18 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 {mySiegeActive && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                     <p style={{ ...MONO, fontSize: 10, color: '#a080e0' }}>
-                      👥 {attackerCount} {isEn ? (attackerCount === 1 ? 'player attacked' : 'players attacked') : (attackerCount === 1 ? 'gracz zaatakował' : 'graczy zaatakowało')}
+                      <GameIcon name="users" size={10} color="#a080e0" /> {attackerCount} {isEn ? (attackerCount === 1 ? 'player attacked' : 'players attacked') : (attackerCount === 1 ? 'gracz zaatakował' : 'graczy zaatakowało')}
                     </p>
                     {siegeTimeLeft !== null && (
                       <p style={{ ...MONO, fontSize: 10, color: siegeTimeLeft < 30 * 60 * 1000 ? '#ff6060' : 'var(--text-muted)' }}>
-                        ⏱ {formatCountdown(Math.max(0, siegeTimeLeft))}
+                        <GameIcon name="hourglass" size={10} color={siegeTimeLeft < 30 * 60 * 1000 ? '#ff6060' : 'var(--text-muted)'} /> {formatCountdown(Math.max(0, siegeTimeLeft))}
                       </p>
                     )}
                   </div>
                 )}
                 {mySiegeActive && alreadyAttacked && (
                   <p style={{ ...MONO, fontSize: 10, color: '#e09040', marginTop: 3 }}>
-                    {isEn ? '✓ Already attacked — wait for allies' : '✓ Już zaatakowałeś — czekaj na sojuszników'}
+                    <GameIcon name="check" size={10} color="#e09040" /> {isEn ? 'Already attacked — wait for allies' : 'Już zaatakowałeś — czekaj na sojuszników'}
                   </p>
                 )}
               </div>
@@ -1198,26 +1199,26 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
             {unowned        && <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 6 }}>{isEn ? 'Zone uncontrolled' : 'Strefa niekontrolowana'}</p>}
             {ownedByMyGuild && (
               <div style={{ marginBottom: 6 }}>
-                <p style={{ ...PX(5), color: '#60c060', marginBottom: 3 }}>⚡ Wasza gildia [{guild?.tag}]</p>
+                <p style={{ ...PX(5), color: '#60c060', marginBottom: 3 }}><GameIcon name="lightning" size={10} color="#60c060" /> Wasza gildia [{guild?.tag}]</p>
                 {(() => {
                   const ttl = state?.expiresAt ? state.expiresAt - Date.now() : null;
                   return ttl !== null && ttl > 0
-                    ? <p style={{ ...PX(4), color: 'var(--text-muted)' }}>⏳ {isEn ? `Expires in ${formatCountdown(ttl)}` : `Wygasa za ${formatCountdown(ttl)}`}</p>
+                    ? <p style={{ ...PX(4), color: 'var(--text-muted)' }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {isEn ? `Expires in ${formatCountdown(ttl)}` : `Wygasa za ${formatCountdown(ttl)}`}</p>
                     : null;
                 })()}
               </div>
             )}
-            {ownedByEnemy   && <p style={{ ...PX(5), color: '#e06060', marginBottom: 6 }}>⚡ [{state.guildTag}] {state.guildName}</p>}
+            {ownedByEnemy   && <p style={{ ...PX(5), color: '#e06060', marginBottom: 6 }}><GameIcon name="lightning" size={10} color="#e06060" /> [{state.guildTag}] {state.guildName}</p>}
 
             {/* Actions */}
-            {locked && <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 {isEn ? `Level ${def.minLevel} required` : `Wymagany poziom ${def.minLevel}`}</p>}
+            {locked && <p style={{ ...PX(4), color: 'var(--text-muted)' }}>LVL{def.minLevel}+ {isEn ? `required` : `wymagany`}</p>}
 
             {!locked && !ownedByMyGuild && !guild && (
               <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? 'Join a guild to capture zones' : 'Dołącz do gildii, by przejmować strefy'}</p>
             )}
 
             {!locked && !ownedByMyGuild && guild && myOwnedCount >= MAX_TERRITORIES && (
-              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>🔒 {isEn ? `Guild zone limit reached (${MAX_TERRITORIES}/${MAX_TERRITORIES})` : `Limit stref gildii osiągnięty (${MAX_TERRITORIES}/${MAX_TERRITORIES})`}</p>
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? `Guild zone limit reached (${MAX_TERRITORIES}/${MAX_TERRITORIES})` : `Limit stref gildii osiągnięty (${MAX_TERRITORIES}/${MAX_TERRITORIES})`}</p>
             )}
 
             {canAttack && (
@@ -1226,11 +1227,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 className={mySiegeActive ? 'btn btn-primary' : 'btn btn-danger'}
                 style={{ width: '100%', fontSize: 10, padding: '7px' }}
               >
-                {mySiegeActive
-                  ? (isEn ? `⚔ Continue siege (${state.siegeCurrentHp} HP left)` : `⚔ Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`)
-                  : unowned
-                  ? (isEn ? `⚔ Capture zone (vs ${def.guardianEmoji} ${def.guardianNameEn ?? def.guardianName})` : `⚔ Przejmij strefę (vs ${def.guardianEmoji} ${def.guardianName})`)
-                  : (isEn ? `⚔ Besiege (vs ⚔ Master [${state.guildTag}] — stronger defender!)` : `⚔ Oblęż (vs ⚔ Mistrz [${state.guildTag}] — silniejszy obrońca!)`)}
+                {mySiegeActive ? <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? `Continue siege (${state.siegeCurrentHp} HP left)` : `Kontynuuj oblężenie (${state.siegeCurrentHp} HP zostało)`}</> : unowned ? <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? `Capture zone (vs ${def.guardianEmoji} ${def.guardianNameEn ?? def.guardianName})` : `Przejmij strefę (vs ${def.guardianEmoji} ${def.guardianName})`}</> : <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? `Besiege [${state.guildTag}] — stronger defender!` : `Oblęż [${state.guildTag}] — silniejszy obrońca!`}</>}
               </button>
             )}
 
@@ -1242,14 +1239,14 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 style={{ width: '100%', fontSize: 10, padding: '7px', marginTop: 4 }}
               >
                 {claimingId === def.id
-                  ? (isEn ? '⏳ Claiming...' : '⏳ Odbieram...')
-                  : (isEn ? `🪙 Claim tax (+${def.dailyGold}🪙, +${def.dailyXp}XP)` : `🪙 Odbierz podatek (+${def.dailyGold}🪙, +${def.dailyXp}XP)`)}
+                  ? <><GameIcon name="hourglass" size={10} color="#fff" /> {isEn ? 'Claiming...' : 'Odbieram...'}</>
+                  : <><GameIcon name="coin" size={10} /> {isEn ? `Claim tax (+${def.dailyGold}` : `Odbierz podatek (+${def.dailyGold}`}<GameIcon name="coin" size={9} />, +{def.dailyXp}XP)</>}
               </button>
             )}
 
             {ownedByMyGuild && !canClaim && nextClaimIn !== null && (
               <p style={{ ...PX(4), color: 'var(--text-muted)', marginTop: 4 }}>
-                ⏳ {isEn ? `Next tax in ${formatCountdown(nextClaimIn)}` : `Następny podatek za ${formatCountdown(nextClaimIn)}`}
+                <GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {isEn ? `Next tax in ${formatCountdown(nextClaimIn)}` : `Następny podatek za ${formatCountdown(nextClaimIn)}`}
               </p>
             )}
 
@@ -1260,7 +1257,7 @@ export default function TerritoryPanel({ guild, onBack, onRefresh }: { guild: Gu
                 className="btn btn-secondary"
                 style={{ width: '100%', fontSize: 10, padding: '7px', marginTop: 4 }}
               >
-                🏳 {isEn ? 'Abandon zone' : 'Porzuć strefę'}
+                {isEn ? 'Abandon zone' : 'Porzuć strefę'}
               </button>
             )}
           </div>

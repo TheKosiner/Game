@@ -17,6 +17,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
+import GameIcon from './GameIcon';
 
 // ── Create Guild Form ────────────────────────────────────────────────────────
 
@@ -338,7 +339,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
               ) : canManage ? (
                 <button onClick={() => handleUpgrade(type)} disabled={!!upgrading || !canAfford} className="btn btn-primary"
                   style={{ fontSize: 9, padding: '5px 4px', opacity: canAfford ? 1 : 0.4, marginTop: 'auto' }}>
-                  {upgrading === type ? '⏳' : t.guild.upgradeBtn}
+                  {upgrading === type ? <GameIcon name="hourglass" size={10} /> : t.guild.upgradeBtn}
                 </button>
               ) : (
                 <p style={{ ...PX(4), color: '#555', textAlign: 'center' }}>{t.guild.upgradeNotLeader}</p>
@@ -355,7 +356,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
               padding: '8px 7px', display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center',
             }}>
               <p style={{ ...PX(4), color: '#ffd700' }}>{t.guild.treasury}</p>
-              <p style={{ ...PX(7), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{treasury.toLocaleString()}🪙</p>
+              <p style={{ ...PX(7), color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)', display: 'flex', alignItems: 'center', gap: 2 }}>{treasury.toLocaleString()}<GameIcon name="coin" size={10} /></p>
               <input
                 type="number" min={1} max={hero.gold} value={depositAmt}
                 onChange={e => { setDepositAmt(e.target.value); setDepositErr(''); }}
@@ -363,7 +364,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
                 style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid rgba(255,215,0,0.3)', color: '#ffd700', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '5px 6px', boxSizing: 'border-box' }}
               />
               <button onClick={handleDeposit} disabled={depositing} className="btn btn-primary" style={{ fontSize: 9, padding: '5px 8px', width: '100%' }}>
-                {depositing ? '⏳' : t.guild.depositBtn}
+                {depositing ? <GameIcon name="hourglass" size={10} /> : t.guild.depositBtn}
               </button>
               {depositErr && <p style={{ ...PX(4), color: 'var(--hp-bright)' }}>{depositErr}</p>}
             </div>
@@ -382,7 +383,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
               style={{ width: '100%', background: 'var(--bg-deep)', border: '1px solid var(--border-main)', color: 'var(--text-dim)', fontFamily: "'Press Start 2P', monospace", fontSize: 9, padding: '6px 8px', boxSizing: 'border-box', resize: 'none' }}
             />
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={handleSaveDesc} disabled={savingDesc} className="btn btn-primary" style={{ flex: 1, fontSize: 9, padding: '5px' }}>{savingDesc ? '⏳' : '✓ ZAPISZ'}</button>
+              <button onClick={handleSaveDesc} disabled={savingDesc} className="btn btn-primary" style={{ flex: 1, fontSize: 9, padding: '5px' }}>{savingDesc ? <GameIcon name="hourglass" size={10} /> : <><GameIcon name="check" size={9} /> ZAPISZ</>}</button>
               <button onClick={() => { setEditingDesc(false); setDescVal(guild.description ?? ''); }} className="btn btn-secondary" style={{ flex: 1, fontSize: 9, padding: '5px' }}>✕ ANULUJ</button>
             </div>
           </div>
@@ -561,7 +562,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 2 }}>
                   <p style={{ ...PX(6), color: nameColor }}>
-                    {m.role === 'leader' ? '👑 ' : ''}{m.username}{isMe ? ' ◀' : ''}
+                    {m.role === 'leader' ? <><GameIcon name="crown" size={10} color="#ffd700" /> </> : ''}{m.username}{isMe ? ' ◀' : ''}
                   </p>
                   {m.role === 'officer' && (
                     <span style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 7, color: '#7dd3fc', background: 'rgba(100,180,255,0.1)', border: '1px solid rgba(100,180,255,0.35)', padding: '1px 4px' }}>
@@ -571,8 +572,8 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
                 </div>
                 <p style={{ ...PX(4), color: 'var(--text-muted)' }}>POZ.{m.level}</p>
                 {(guild.contributions?.[m.uid] ?? 0) > 0 && (
-                  <p style={{ ...PX(4), color: '#ffd700', marginTop: 2 }}>
-                    🪙 {(guild.contributions?.[m.uid] ?? 0).toLocaleString()}
+                  <p style={{ ...PX(4), color: '#ffd700', marginTop: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <GameIcon name="coin" size={10} /> {(guild.contributions?.[m.uid] ?? 0).toLocaleString()}
                   </p>
                 )}
               </div>
@@ -586,7 +587,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
                       style={{ fontSize: 10, padding: '3px 5px', color: m.role === 'officer' ? '#fbbf24' : '#7dd3fc' }}
                       title={m.role === 'officer' ? (isEn ? 'Demote from Officer' : 'Odbierz stopień oficera') : (isEn ? 'Promote to Officer' : 'Mianuj oficerem')}
                     >
-                      {m.role === 'officer' ? '★' : '☆'}
+                      <GameIcon name="star" size={11} color={m.role === 'officer' ? '#fbbf24' : '#7dd3fc'} />
                     </button>
                     <button
                       onClick={() => handleTransfer(m.uid, m.username)}
@@ -594,7 +595,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
                       className="btn btn-secondary"
                       style={{ fontSize: 10, padding: '3px 5px' }}
                       title={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'}
-                    >👑</button>
+                    ><GameIcon name="crown" size={11} color="#ffd700" /></button>
                   </>
                 )}
                 {canKick && (

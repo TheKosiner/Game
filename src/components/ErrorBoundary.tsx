@@ -1,5 +1,6 @@
 import React, { Component, type ReactNode } from 'react';
 import { logClientError } from '../lib/errorLogger';
+import GameIcon from './GameIcon';
 
 interface Props {
   children: ReactNode;
@@ -55,7 +56,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
           <div className="max-w-md w-full bg-slate-900 border-2 border-red-500 rounded-lg p-6 text-center">
-            <p className="text-red-400 text-xl mb-4">⚠️ Coś poszło nie tak</p>
+            <p className="text-red-400 text-xl mb-4"><GameIcon name="warning" size={16} color="#f87171" /> Coś poszło nie tak</p>
             <p className="text-slate-400 text-sm mb-4">
               {this.state.error?.message || 'Nieznany błąd'}
             </p>

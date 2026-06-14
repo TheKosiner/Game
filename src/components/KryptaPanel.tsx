@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import EnemyPortrait from './EnemyPortrait';
+import GameIcon, { LogLine } from './GameIcon';
 import { useGameStore, MAX_DAILY_KRYPTA } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
@@ -326,7 +327,7 @@ export default function KryptaPanel() {
       const xp   = Math.round((20 + Math.random() * 40) * (1 + hero.level * 0.05) * (1 + (depth - 1) * 0.15));
       setTotalXp(prev => prev + xp);
       setTotalGold(prev => prev + gold);
-      pushLog([`💰 Skrzynia skrywa skarb! +${xp} XP, +${gold} 🪙`]);
+      pushLog([`📈 Skrzynia skrywa skarb! +${xp} XP, +${gold} 🪙`]);
       setEventType(null);
       afterRoom(depth, raidHp, raidMaxHp);
     }
@@ -375,9 +376,9 @@ export default function KryptaPanel() {
     const healAmt = Math.round(raidMaxHp * 0.22);
     const newHp = Math.min(raidMaxHp, raidHp + healAmt);
     const healed = newHp - raidHp;
-    const msgs = [`🕯️ Kaplica cię uzdrawia: +${healed} HP`];
+    const msgs = [`✅ Kaplica cię uzdrawia: +${healed} HP`];
     if (Math.random() < 0.30) {
-      const grace: ActiveBuff = { id: 'divine_grace', label: '🙏 Łaska Boska', desc: '+15% DEF', color: '#ffdd44', atkMult: 1.00, defMult: 1.15, hpMult: 1.00 };
+      const grace: ActiveBuff = { id: 'divine_grace', label: 'Łaska Boska', desc: '+15% DEF', color: '#ffdd44', atkMult: 1.00, defMult: 1.15, hpMult: 1.00 };
       setBuffs(prev => [...prev.filter(x => x.id !== 'divine_grace'), grace]);
       msgs.push(t.krypta.shrineBlessing);
     }
@@ -425,7 +426,7 @@ export default function KryptaPanel() {
       afterRoom(depth, raidHp, raidMaxHp);
       return;
     }
-    const pact: ActiveBuff = { id: 'blood_pact', label: '🩸 Pakt Krwi', desc: '+30% ATK', color: '#ff0044', atkMult: 1.30, defMult: 1.00, hpMult: 1.00 };
+    const pact: ActiveBuff = { id: 'blood_pact', label: 'Pakt Krwi', desc: '+30% ATK', color: '#ff0044', atkMult: 1.30, defMult: 1.00, hpMult: 1.00 };
     const newHp = raidHp - sacrifice;
     setRaidHp(newHp);
     setBuffs(prev => [...prev.filter(x => x.id !== 'blood_pact'), pact]);
@@ -442,7 +443,7 @@ export default function KryptaPanel() {
 
   function handleInscriptionRead() {
     if (Math.random() < 0.65) {
-      const ward: ActiveBuff = { id: 'arcane_ward', label: '📜 Magiczna Osłona', desc: '+25% DEF  +5% HP', color: '#4488ff', atkMult: 1.00, defMult: 1.25, hpMult: 1.05 };
+      const ward: ActiveBuff = { id: 'arcane_ward', label: 'Mag. Osłona', desc: '+25% DEF  +5% HP', color: '#4488ff', atkMult: 1.00, defMult: 1.25, hpMult: 1.05 };
       setBuffs(prev => [...prev.filter(x => x.id !== 'arcane_ward'), ward]);
       pushLog([t.krypta.inscriptionShield]);
     } else {
@@ -469,11 +470,11 @@ export default function KryptaPanel() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ ...ORB, fontSize: 11, color: '#00f5ff', letterSpacing: 1 }}>
             {phase === 'boss_combat' || phase === 'pre_boss'
-              ? '☠️ BOSS'
+              ? <><GameIcon name="boss_skull" size={11} color="#ff2d78" style={{ marginRight: 4 }} />BOSS</>
               : `POKÓJ ${depth}/${TOTAL_ROOMS}`}
           </span>
           <span style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.5)', display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'flex-end' }}>
-            {hasCompanion && <span>🤝</span>}
+            {hasCompanion && <GameIcon name="companion" size={12} color="#4ade80" />}
             {buffs.map(b => (
               <span key={b.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
                 <span style={{ color: b.color }}>{b.label}</span>
@@ -485,7 +486,7 @@ export default function KryptaPanel() {
         <HpBar hp={raidHp} max={raidMaxHp} color="#00f5ff" />
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 3 }}>
           <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>HP: {raidHp}/{raidMaxHp}</span>
-          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>⚔️ {effectiveAtk} 🛡️ {effectiveDef}</span>
+          <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="sword" size={10} color="#ff2d78" /> {effectiveAtk} <GameIcon name="shield" size={10} color="#00f5ff" /> {effectiveDef}</span>
         </div>
       </div>
     );
@@ -502,7 +503,7 @@ export default function KryptaPanel() {
         <div style={{ ...ORB, fontSize: 13, color: '#ff2d78', marginBottom: 8 }}>{enemy.name}</div>
         <HpBar hp={enemy.hp} max={enemy.maxHp} color="#ff2d78" />
         <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>
-          HP: {enemy.hp}/{enemy.maxHp} · ⚔️ {enemy.attack} · 🛡️ {enemy.defense}
+          HP: {enemy.hp}/{enemy.maxHp} · <GameIcon name="sword" size={10} color="rgba(255,255,255,0.5)" /> {enemy.attack} · <GameIcon name="shield" size={10} color="rgba(255,255,255,0.5)" /> {enemy.defense}
         </div>
       </div>
     );
@@ -520,7 +521,7 @@ export default function KryptaPanel() {
             ...MONO, fontSize: 10,
             color: i === 0 ? '#fff' : `rgba(255,255,255,${Math.max(0.2, 0.7 - i * 0.05)})`,
             lineHeight: 1.6,
-          }}>{line}</div>
+          }}><LogLine text={line} iconSize={10} /></div>
         ))}
       </div>
     );
@@ -539,14 +540,14 @@ export default function KryptaPanel() {
       const blocked = runsLeft <= 0;
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 56, filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}>⚰️</div>
+          <div style={{ filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}><GameIcon name="boss_skull" size={56} color={blocked ? 'rgba(153,68,204,0.4)' : '#9944cc'} style={{ display: 'block', margin: '0 auto' }} /></div>
           <div style={{ ...ORB, fontSize: 20, color: blocked ? 'rgba(153,68,204,0.4)' : '#9944cc', letterSpacing: 2, textShadow: blocked ? 'none' : '0 0 16px #9944cc' }}>{t.krypta.title}</div>
           <div style={{ ...MONO, fontSize: 12, color: 'rgba(255,255,255,0.5)', maxWidth: 360, lineHeight: 1.7 }}>
             Starożytna krypta skrywa mroczne tajemnice. Przemierzaj 15 pięter, walcz z potworami,
             odkrywaj sekrety — kaplice, skarby, kompanów — i zmierz się z Lordem Cienia.
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-            <span>💀 {TOTAL_ROOMS} Pokoi</span>
+            <span><GameIcon name="skull" size={11} color="rgba(255,255,255,0.4)" /> {TOTAL_ROOMS} Pokoi</span>
             <span>{t.krypta.bossFinal}</span>
             <span>{t.krypta.bossReward}</span>
           </div>
@@ -557,7 +558,7 @@ export default function KryptaPanel() {
             padding: '6px 16px',
           }}>
             {Array.from({ length: MAX_DAILY_KRYPTA }).map((_, i) => (
-              <span key={i} style={{ fontSize: 14, opacity: i < todayRuns ? 0.2 : 1 }}>⚰️</span>
+              <span key={i} style={{ opacity: i < todayRuns ? 0.2 : 1 }}><GameIcon name="boss_skull" size={14} color="#9944cc" /></span>
             ))}
             <span style={{ ...MONO, fontSize: 10, color: blocked ? '#ff2d78' : 'rgba(255,255,255,0.5)', marginLeft: 6 }}>
               {blocked ? 'Limit dzienny wyczerpany' : `${runsLeft}/${MAX_DAILY_KRYPTA} krypt dziś`}
@@ -568,7 +569,7 @@ export default function KryptaPanel() {
               Wróć jutro, by ponownie wkroczyć w mroki Krypty.
             </div>
           ) : (
-            <Btn onClick={enterCrypt} color="#9944cc">⚰️ WEJDŹ DO KRYPTY</Btn>
+            <Btn onClick={enterCrypt} color="#9944cc"><GameIcon name="boss_skull" size={11} color="#fff" /> WEJDŹ DO KRYPTY</Btn>
           )}
         </div>
       );
@@ -598,9 +599,9 @@ export default function KryptaPanel() {
           {renderHeader()}
           {renderEnemy()}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Btn onClick={() => doAttack(isBoss)} color="#ff2d78">⚔️ ATAKUJ</Btn>
+            <Btn onClick={() => doAttack(isBoss)} color="#ff2d78"><GameIcon name="sword" size={11} color="#fff" /> ATAKUJ</Btn>
             {!isBoss && depth < TOTAL_ROOMS && (
-              <Btn onClick={flee} color="#888888" small>🏃 UCIEKAJ</Btn>
+              <Btn onClick={flee} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> UCIEKAJ</Btn>
             )}
           </div>
           {renderLog()}
@@ -612,34 +613,34 @@ export default function KryptaPanel() {
       const eventContent = () => {
         if (eventType === 'chest') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>📦</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="bag" size={40} color="#ffd700" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#ffd700', marginBottom: 6 }}>{t.krypta.eventChest}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Widzisz starożytną skrzynię pokrytą kurzem wieków. Czy ją otworzysz?
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn onClick={handleChestOpen} color="#ffd700">📦 Otwórz skrzynię</Btn>
-              <Btn onClick={handleChestLeave} color="#888888" small>🚶 Idź dalej</Btn>
+              <Btn onClick={handleChestOpen} color="#ffd700"><GameIcon name="bag" size={11} color="#fff" /> Otwórz skrzynię</Btn>
+              <Btn onClick={handleChestLeave} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Idź dalej</Btn>
             </div>
           </>
         );
         if (eventType === 'lake') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>💧</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="magic_orb" size={40} color="#00f5ff" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#00f5ff', marginBottom: 6 }}>{t.krypta.eventLake}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Przed tobą jarzy się magiczne jezioro o nieznanych właściwościach. Wypijesz z niego?
               <br /><span style={{ color: '#aaaaaa' }}>50% buff · 50% klątwa</span>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn onClick={handleLakeDrink} color="#00f5ff">💧 Wypij z jeziora</Btn>
-              <Btn onClick={handleLakeLeave} color="#888888" small>🚶 Omij jezioro</Btn>
+              <Btn onClick={handleLakeDrink} color="#00f5ff"><GameIcon name="magic_orb" size={11} color="#fff" /> Wypij z jeziora</Btn>
+              <Btn onClick={handleLakeLeave} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Omij jezioro</Btn>
             </div>
           </>
         );
         if (eventType === 'companion') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🗡️</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="companion" size={40} color="#00ff88" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#00ff88', marginBottom: 6 }}>{t.krypta.eventCompanion}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Nieznajomy wojownik wyłania się z cienia i oferuje pomoc. Przyjmiesz go?
@@ -649,27 +650,27 @@ export default function KryptaPanel() {
               <Btn onClick={handleCompanionAccept} color="#00ff88" disabled={hasCompanion}>
                 {hasCompanion ? t.krypta.companionHave : t.krypta.companionTake}
               </Btn>
-              <Btn onClick={handleCompanionDecline} color="#888888" small>🚶 Odrzuć ofertę</Btn>
+              <Btn onClick={handleCompanionDecline} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Odrzuć ofertę</Btn>
             </div>
           </>
         );
         if (eventType === 'shrine') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🕯️</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="magic_sparkle" size={40} color="#ffdd44" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#ffdd44', marginBottom: 6 }}>{t.krypta.eventShrine}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Opuszczona kaplica emanuje świętym blaskiem. Czy odmówisz modlitwę?
               <br /><span style={{ color: '#00ff88' }}>{t.krypta.shrineDesc}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn onClick={handleShrinePray} color="#ffdd44">🕯️ Módl się</Btn>
-              <Btn onClick={handleShrineLeave} color="#888888" small>🚶 Idź dalej</Btn>
+              <Btn onClick={handleShrinePray} color="#ffdd44"><GameIcon name="magic_sparkle" size={11} color="#fff" /> Módl się</Btn>
+              <Btn onClick={handleShrineLeave} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Idź dalej</Btn>
             </div>
           </>
         );
         if (eventType === 'trap') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>⚠️</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="warning" size={40} color="#ffaa00" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#ffaa00', marginBottom: 6 }}>{t.krypta.eventTrap}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Podłoga pokryta jest ukrytymi mechanizmami. Jak przejdziesz?
@@ -679,14 +680,14 @@ export default function KryptaPanel() {
               <span style={{ color: '#ff8844' }}>{t.krypta.trapRushDesc}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Btn onClick={handleTrapCareful} color="#ffaa00" small>🐢 Ostrożnie (−5% HP)</Btn>
-              <Btn onClick={handleTrapRush}    color="#ff4444" small>💨 Sprintem (ryzyko)</Btn>
+              <Btn onClick={handleTrapCareful} color="#ffaa00" small><GameIcon name="shield" size={11} color="#fff" /> Ostrożnie (−5% HP)</Btn>
+              <Btn onClick={handleTrapRush}    color="#ff4444" small><GameIcon name="wind" size={11} color="#fff" /> Sprintem (ryzyko)</Btn>
             </div>
           </>
         );
         if (eventType === 'altar') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>🔥</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="fire" size={40} color="#ff4400" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#ff4400', marginBottom: 6 }}>{t.krypta.eventAltar}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Mroczny ołtarz woła o ofiarę. Złożysz krew w zamian za moc?
@@ -695,24 +696,24 @@ export default function KryptaPanel() {
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <Btn onClick={handleAltarSacrifice} color="#ff4400" disabled={raidHp <= Math.round(raidMaxHp * 0.20) + 1}>
-                🔥 Złóż ofiarę
+                <GameIcon name="fire" size={11} color="#fff" /> Złóż ofiarę
               </Btn>
-              <Btn onClick={handleAltarLeave} color="#888888" small>🚶 Ignoruj ołtarz</Btn>
+              <Btn onClick={handleAltarLeave} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Ignoruj ołtarz</Btn>
             </div>
           </>
         );
         if (eventType === 'inscription') return (
           <>
-            <div style={{ fontSize: 40, marginBottom: 8 }}>📜</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="scroll" size={40} color="#4488ff" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 13, color: '#4488ff', marginBottom: 6 }}>{t.krypta.eventInscription}</div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.55)', marginBottom: 14, lineHeight: 1.6 }}>
               Na ścianie widnieje starożytne pismo. Odczytasz je?
-              <br /><span style={{ color: '#4488ff' }}>65% szansa na 📜 Magiczną Osłonę (+25% DEF, +5% HP)</span>
+              <br /><span style={{ color: '#4488ff' }}>65% szansa na <GameIcon name="scroll" size={10} color="#4488ff" /> Magiczną Osłonę (+25% DEF, +5% HP)</span>
               <br /><span style={{ color: '#9944cc' }}>35% szansa na klątwę</span>
             </div>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <Btn onClick={handleInscriptionRead} color="#4488ff">📜 Odczytaj inskrypcję</Btn>
-              <Btn onClick={handleInscriptionLeave} color="#888888" small>🚶 Ignoruj</Btn>
+              <Btn onClick={handleInscriptionRead} color="#4488ff"><GameIcon name="scroll" size={11} color="#fff" /> Odczytaj inskrypcję</Btn>
+              <Btn onClick={handleInscriptionLeave} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> Ignoruj</Btn>
             </div>
           </>
         );
@@ -740,7 +741,7 @@ export default function KryptaPanel() {
             background: 'rgba(255,45,120,0.14)', border: '1px solid rgba(255,45,120,0.35)',
             padding: '20px 16px', textAlign: 'center',
           }}>
-            <div style={{ fontSize: 48, marginBottom: 8 }}>☠️</div>
+            <div style={{ marginBottom: 8 }}><GameIcon name="boss_skull" size={48} color="#ff2d78" style={{ display: 'block', margin: '0 auto' }} /></div>
             <div style={{ ...ORB, fontSize: 15, color: '#ff2d78', letterSpacing: 2, marginBottom: 8, textShadow: '0 0 12px #ff2d78' }}>
               LORD CIENIA
             </div>
@@ -749,8 +750,8 @@ export default function KryptaPanel() {
               <br />To ostatnia szansa na ucieczkę.
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <Btn onClick={startBoss} color="#ff2d78">☠️ ZMIERZ SIĘ Z BOSSEM</Btn>
-              <Btn onClick={flee} color="#888888" small>🏃 UCIEKAJ</Btn>
+              <Btn onClick={startBoss} color="#ff2d78"><GameIcon name="boss_skull" size={11} color="#fff" /> ZMIERZ SIĘ Z BOSSEM</Btn>
+              <Btn onClick={flee} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> UCIEKAJ</Btn>
             </div>
           </div>
           {renderLog()}
@@ -761,19 +762,19 @@ export default function KryptaPanel() {
     if (phase === 'victory') {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 56 }}>🏆</div>
+          <GameIcon name="trophy" size={56} color="#ffd700" style={{ display: 'block', margin: '0 auto' }} />
           <div style={{ ...ORB, fontSize: 18, color: '#ffd700', letterSpacing: 2, textShadow: '0 0 16px #ffd700' }}>{t.krypta.victory}</div>
           <div style={{
             background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.25)',
             padding: '14px 24px', width: '100%', maxWidth: 320,
           }}>
             <div style={{ ...MONO, fontSize: 12, color: '#ffd700', marginBottom: 6 }}>{t.krypta.rewardsGranted}</div>
-            <div style={{ ...ORB, fontSize: 13, color: '#fff' }}>+{totalXp} XP · +{totalGold} 🪙</div>
+            <div style={{ ...ORB, fontSize: 13, color: '#fff' }}>+{totalXp} XP · +{totalGold} <GameIcon name="coin" size={12} /></div>
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>
               {t.krypta.bossReward}
             </div>
           </div>
-          <Btn onClick={reset} color="#9944cc">⚰️ ZAGRAJ PONOWNIE</Btn>
+          <Btn onClick={reset} color="#9944cc"><GameIcon name="boss_skull" size={11} color="#fff" /> ZAGRAJ PONOWNIE</Btn>
           {renderLog()}
         </div>
       );
@@ -782,7 +783,7 @@ export default function KryptaPanel() {
     if (phase === 'dead') {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 56 }}>💀</div>
+          <GameIcon name="skull" size={56} color="#ff2d78" style={{ display: 'block', margin: '0 auto' }} />
           <div style={{ ...ORB, fontSize: 18, color: '#ff2d78', letterSpacing: 2 }}>{t.krypta.defeated}</div>
           <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
             Mroczne siły Krypty okazały się zbyt potężne.<br />
@@ -797,7 +798,7 @@ export default function KryptaPanel() {
     if (phase === 'fled') {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 16px', textAlign: 'center' }}>
-          <div style={{ fontSize: 56 }}>🏃</div>
+          <GameIcon name="run" size={56} color="#888888" style={{ display: 'block', margin: '0 auto' }} />
           <div style={{ ...ORB, fontSize: 18, color: '#888888', letterSpacing: 2 }}>{t.krypta.fled}</div>
           <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
             Opuszczasz Kryptę z życiem, lecz bez nagród.

@@ -13,9 +13,10 @@ import type { Item, ItemSlot } from '../types';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB, WeaponBadges } from '../utils/styles';
+import GameIcon, { type GameIconName } from './GameIcon';
 
 function StatBox({ icon, value, label, color }: {
-  icon: string; value: number | string; label: string; color: string; glow?: string;
+  icon: GameIconName; value: number | string; label: string; color: string; glow?: string;
 }) {
   return (
     <div style={{
@@ -26,7 +27,7 @@ function StatBox({ icon, value, label, color }: {
       flex: 1,
       boxShadow: `inset 0 0 8px rgba(0,0,0,0.4)`,
     }}>
-      <span style={{ fontSize: 10, marginBottom: 2 }}>{icon}</span>
+      <GameIcon name={icon} size={10} color={color} style={{ marginBottom: 2 }} />
       <span style={{ ...ORB, fontSize: 14, color, textShadow: `0 0 10px ${color}` }}>{value}</span>
       <span style={{ ...MONO, fontSize: 10, color: `${color}99`, marginTop: 1 }}>{label}</span>
     </div>
@@ -55,8 +56,9 @@ function NeonBar({ pct, color, height = 10 }: { pct: number; color: string; glow
 const RARITY_COLOR: Record<string, string> = {
   common: '#94a3b8', uncommon: '#4ade80', rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b',
 };
-const SLOT_ICON: Record<string, string> = {
-  weapon: '⚔', armor: '🦺', helmet: '⛑', boots: '👟', ring: '💉', amulet: '📿',
+const SLOT_ICON: Record<string, GameIconName> = {
+  weapon: 'sword', armor: 'slot_armor', helmet: 'slot_helmet',
+  boots: 'slot_boots', ring: 'slot_ring', amulet: 'slot_amulet',
 };
 
 function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
@@ -93,7 +95,7 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
               }}>+{item.enhanceLevel}</span>
             )}
           </>
-        : <span style={{ fontSize: size * 0.34, opacity: 0.18 }}>{SLOT_ICON[slot] ?? '?'}</span>
+        : <GameIcon name={SLOT_ICON[slot] ?? 'sword'} size={Math.round(size * 0.34)} color="rgba(100,116,139,0.4)" />
       }
       <span style={{
         ...MONO, fontSize: 10, color: item ? color : 'rgba(100,116,139,0.35)',
@@ -160,25 +162,25 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{item.magicDamage ? (lang === 'en' ? '🔮 Magic Dmg.' : '🔮 Obrażenia mag.') : t.equipment.atk}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>{item.magicDamage ? <><GameIcon name="magic_orb" size={10} color="#c078f0" />{lang === 'en' ? 'Magic Dmg.' : 'Obrażenia mag.'}</> : <><GameIcon name="sword" size={10} color="#ff2d78" />{lang === 'en' ? 'Attack' : 'Atak'}</>}</span>
             <span style={{ ...ORB, fontSize: 10, color: item.magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
         {item.defenseBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)' }}>{t.equipment.def}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="shield" size={10} color="#00f5ff" />{t.equipment.def}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
         {getEnhanceAttackBonus(item) > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {lang === 'en' ? 'Enhance ATK' : 'Bonus kowal ATK'}</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang === 'en' ? 'Enhance ATK' : 'Bonus kowal ATK'}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceAttackBonus(item)}</span>
           </div>
         )}
         {getEnhanceDefenseBonus(item) > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {lang === 'en' ? 'Enhance DEF' : 'Bonus kowal DEF'}</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang === 'en' ? 'Enhance DEF' : 'Bonus kowal DEF'}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceDefenseBonus(item)}</span>
           </div>
         )}
@@ -189,7 +191,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           const STAT_NAMES: Record<string, string> = { strength: lang === 'en' ? 'Strength' : 'Siła', dexterity: lang === 'en' ? 'Dexterity' : 'Zręczność', intelligence: lang === 'en' ? 'Accuracy' : 'Celność', vitality: lang === 'en' ? 'Vitality' : 'Żywotność', magic: 'Magic', magicResistance: lang === 'en' ? 'Mag. Res.' : 'Odp. Mag.' };
           return enhStatEntries.map(([stat, val]) => (
             <div key={stat} style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>⚒ {STAT_NAMES[stat] ?? stat}</span>
+              <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{STAT_NAMES[stat] ?? stat}</span>
               <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{val}</span>
             </div>
           ));
@@ -201,7 +203,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</span>
-        <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>{item.goldValue}🪙</span>
+        <span style={{ ...ORB, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 2 }}>{item.goldValue}<GameIcon name="coin" size={10} color="#ffd700" /></span>
       </div>
 
       <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '6px' }}>
@@ -246,7 +248,7 @@ function RestTimer({ endsAt, restHp, startAt, cancelRest, gemSpeedupRest, gems }
       display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 20, filter: 'drop-shadow(0 0 6px #ff6600)' }}>🔥</span>
+        <GameIcon name="fire" size={22} color="#ff6600" style={{ filter: 'drop-shadow(0 0 6px #ff6600)', flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 10, color: '#00f5ff', textShadow: '0 0 10px #00f5ff', marginBottom: 3 }}>
             {t.hero.restingActive(`${mins}:${secs.toString().padStart(2, '0')}`)}
@@ -294,7 +296,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
 
   if (blocked && blockedReason) return (
     <div style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,245,255,0.1)', padding: '8px 12px', textAlign: 'center' }}>
-      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.hero.restBlocked(blockedReason)}</p>
+      <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}><GameIcon name="tent" size={11} color="var(--text-dim)" />{t.hero.restBlocked(blockedReason)}</p>
     </div>
   );
 
@@ -314,7 +316,7 @@ function RestSlider({ hero, onRest, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.restTitle}</p>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name="tent" size={10} color="var(--text-dim)" />{t.hero.restTitle}</p>
         <p style={{ ...ORB, fontSize: 10, color: '#00ff88', textShadow: '0 0 8px #00ff88' }}>{t.hero.restPreview(healPreview, clamped)}</p>
       </div>
       <input type="range" min={1} max={maxMinutes} value={clamped}
@@ -362,12 +364,12 @@ function BeggingTimer({ endsAt, reward, startAt, cancelBegging }: {
       display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 20 }}>🙏</span>
+        <GameIcon name="wrench" size={22} color="#9d4edd" style={{ flexShrink: 0 }} />
         <div style={{ flex: 1 }}>
           <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 10px #9d4edd', marginBottom: 3 }}>
             {t.hero.beggingActive(timeStr)}
           </p>
-          <p style={{ ...MONO, fontSize: 11, color: '#ffd700' }}>{t.hero.beggingProgress(earnedNow, reward)}</p>
+          <p style={{ ...MONO, fontSize: 11, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 2 }}>{t.hero.beggingProgress(earnedNow, reward)}<GameIcon name="coin" size={11} color="#ffd700" /></p>
         </div>
         <button onClick={cancelBegging} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px', flexShrink: 0 }}>
           {t.hero.restStop}
@@ -387,11 +389,11 @@ function BeggingCollect({ reward, onCollect }: { reward: number; onCollect: () =
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
       boxShadow: '0 0 16px rgba(255,215,0,0.1)',
     }}>
-      <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 10px #ffd700' }}>
-        {t.hero.beggingDoneMsg(reward)}
+      <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 10px #ffd700', display: 'flex', alignItems: 'center', gap: 4 }}>
+        <GameIcon name="wrench" size={10} color="#ffd700" />{t.hero.beggingDoneMsg(reward)}<GameIcon name="coin" size={10} color="#ffd700" />
       </p>
-      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 10, padding: '8px' }}>
-        {t.hero.beggingPickup}
+      <button onClick={onCollect} className="btn btn-primary" style={{ width: '100%', fontSize: 10, padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <GameIcon name="coin" size={10} color="#ffd700" />{t.hero.beggingPickup}
       </button>
     </div>
   );
@@ -420,7 +422,7 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
       padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingTitle}</p>
+        <p style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name="wrench" size={10} color="var(--text-dim)" />{t.hero.beggingTitle}</p>
         <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px #9d4edd' }}>{t.hero.beggingHours(hours)}</p>
       </div>
       <input type="range" min={1} max={10} value={hours}
@@ -429,8 +431,8 @@ function BeggingSlider({ onBeg, inCombat, blocked, blockedReason }: {
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMin}</span>
         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.hero.beggingMax}</span>
       </div>
-      <p style={{ ...MONO, fontSize: 10, color: '#ffd700', textAlign: 'center' }}>
-        ~{goldPerHour}🪙/h · ~{goldTotal}🪙
+      <p style={{ ...MONO, fontSize: 10, color: '#ffd700', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+        ~{goldPerHour}<GameIcon name="coin" size={10} color="#ffd700" />/h · ~{goldTotal}<GameIcon name="coin" size={10} color="#ffd700" />
       </p>
       <button onClick={() => onBeg(hours)} disabled={inCombat} className="btn btn-secondary" style={{
         width: '100%', fontSize: 10, padding: '8px',
@@ -541,7 +543,7 @@ export default function HeroCard() {
             background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
             padding: '3px 7px', display: 'inline-flex', alignItems: 'center', gap: 4,
           }}>
-            <span style={{ fontSize: 12 }}>🪙</span>
+            <GameIcon name="coin" size={12} />
             <span style={{ ...ORB, fontSize: 11, color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.6)' }}>{hero.gold}</span>
           </div>
         </div>
@@ -583,7 +585,7 @@ export default function HeroCard() {
           padding: '5px 0', ...MONO, fontSize: 10,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
         }}>
-          ✏ {t.hero.appearance}
+          <GameIcon name="wrench" size={10} color="rgba(255,45,120,0.7)" /> {t.hero.appearance}
         </button>
 
         {/* Selected item detail */}
@@ -597,10 +599,10 @@ export default function HeroCard() {
 
         {/* Main stats */}
         <div style={{ display: 'flex', gap: 4 }}>
-          <StatBox icon="⚔" value={attack} label={t.hero.attack} color="#ff2d78" />
-          <StatBox icon="🛡" value={defense}   label={t.hero.defense}  color="#00f5ff" />
-          <StatBox icon="♥" value={hero.maxHp} label={t.hero.maxHp} color="#ff4444" />
-          <StatBox icon="✨" value={magicRes}  label={t.hero.magRes} color="#9d4edd" />
+          <StatBox icon="sword"         value={attack}     label={t.hero.attack}  color="#ff2d78" />
+          <StatBox icon="shield"        value={defense}    label={t.hero.defense} color="#00f5ff" />
+          <StatBox icon="heart"         value={hero.maxHp} label={t.hero.maxHp}   color="#ff4444" />
+          <StatBox icon="magic_sparkle" value={magicRes}   label={t.hero.magRes}  color="#9d4edd" />
         </div>
 
         {/* DMG range */}
@@ -622,8 +624,8 @@ export default function HeroCard() {
               {dmgRange.min}–{dmgRange.max}
             </span>
             <span style={{ ...MONO, fontSize: 10, color: '#475569' }}>·</span>
-            <span style={{ ...MONO, fontSize: 10, color: '#f59e0b' }}>
-              💥 {lang === 'en' ? 'CRIT' : 'KRYT'} {critPct}%
+            <span style={{ ...MONO, fontSize: 10, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <GameIcon name="explosion" size={10} color="#f59e0b" /> {lang === 'en' ? 'CRIT' : 'KRYT'} {critPct}%
             </span>
             <span style={{ ...ORB, fontSize: 11, color: '#f59e0b' }}>
               {dmgRange.critMin}–{dmgRange.critMax}
@@ -672,12 +674,12 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 10, color: '#ff2d78', textShadow: '0 0 8px rgba(255,45,120,0.5)', marginBottom: 2 }}>{t.hero.dailyLimit}</p>
         {[
-          { label: t.hero.dungeons, cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
-          { label: t.hero.quests,   cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
-        ].map(({ label, cur, max, pct, color }) => (
+          { icon: 'sword'  as GameIconName, label: t.hero.dungeons, cur: hero.dungeonRunsToday,     max: MAX_DAILY_DUNGEONS, pct: dungeonPct, color: hero.dungeonRunsToday >= MAX_DAILY_DUNGEONS ? '#ff4444' : '#ff2d78' },
+          { icon: 'scroll' as GameIconName, label: t.hero.quests,   cur: hero.questsCompletedToday, max: MAX_DAILY_QUESTS,   pct: questPct,   color: hero.questsCompletedToday >= MAX_DAILY_QUESTS ? '#ff4444' : '#00f5ff' },
+        ].map(({ icon, label, cur, max, pct, color }) => (
           <div key={label}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{label}</span>
+              <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name={icon} size={11} color={color} />{label}</span>
               <span style={{ ...ORB, fontSize: 10, color, textShadow: `0 0 6px ${color}` }}>{cur}/{max}</span>
             </div>
             <NeonBar pct={pct} color={color} height={8} />
@@ -689,13 +691,13 @@ export default function HeroCard() {
       <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', marginBottom: 2 }}>{t.hero.statsTitle}</p>
         {([
-          { attr: 'vitality',       icon: '♥',  name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
-          { attr: 'strength',       icon: '💪', name: t.hero.statStrength,   desc: t.hero.statStrDesc,    note: t.hero.statStrNote,    color: '#ff2d78' },
-          { attr: 'dexterity',      icon: '🏃', name: t.hero.statDexterity,  desc: t.hero.statDexDesc,    note: t.hero.statDexNote,    color: '#00f5ff' },
-          { attr: 'intelligence',   icon: '🎯', name: t.hero.statAccuracy,   desc: t.hero.statAccDesc,    note: t.hero.statAccNote,    color: '#9d4edd' },
-          { attr: 'magic',          icon: '🔮', name: t.hero.statMagic,      desc: t.hero.statMagDesc,    note: t.hero.statMagNote,    color: '#cc44ff' },
-          { attr: 'magicResistance',icon: '✨', name: t.hero.statMagRes,     desc: t.hero.statMagResDesc, note: t.hero.statMagResNote, color: '#00ff88' },
-        ] as { attr: 'strength'|'dexterity'|'intelligence'|'vitality'|'magic'|'magicResistance'; icon: string; name: string; desc: string; note: string; color: string }[]).map(({ attr, icon, name, desc, note, color }) => {
+          { attr: 'vitality',       icon: 'heart'         as GameIconName, name: t.hero.statVitality,   desc: t.hero.statVitDesc,    note: t.hero.statVitNote,    color: '#ff4444' },
+          { attr: 'strength',       icon: 'fist'          as GameIconName, name: t.hero.statStrength,   desc: t.hero.statStrDesc,    note: t.hero.statStrNote,    color: '#ff2d78' },
+          { attr: 'dexterity',      icon: 'run'           as GameIconName, name: t.hero.statDexterity,  desc: t.hero.statDexDesc,    note: t.hero.statDexNote,    color: '#00f5ff' },
+          { attr: 'intelligence',   icon: 'crosshair'     as GameIconName, name: t.hero.statAccuracy,   desc: t.hero.statAccDesc,    note: t.hero.statAccNote,    color: '#9d4edd' },
+          { attr: 'magic',          icon: 'magic_orb'     as GameIconName, name: t.hero.statMagic,      desc: t.hero.statMagDesc,    note: t.hero.statMagNote,    color: '#cc44ff' },
+          { attr: 'magicResistance',icon: 'magic_sparkle' as GameIconName, name: t.hero.statMagRes,     desc: t.hero.statMagResDesc, note: t.hero.statMagResNote, color: '#00ff88' },
+        ] as { attr: 'strength'|'dexterity'|'intelligence'|'vitality'|'magic'|'magicResistance'; icon: GameIconName; name: string; desc: string; note: string; color: string }[]).map(({ attr, icon, name, desc, note, color }) => {
           const base = hero.stats[attr];
           const eq   = eqStats[attr];
           const cost = Math.round(base * 75);
@@ -704,16 +706,16 @@ export default function HeroCard() {
             <div key={attr} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ fontSize: 12 }}>{icon}</span>
+                  <GameIcon name={icon} size={13} color={color} />
                   <span style={{ ...MONO, fontSize: 11, color }}>{name}</span>
                   {attr === 'vitality' && (
-                    <span style={{ ...ORB, fontSize: 10, color: '#ff4444', opacity: 0.85, marginLeft: 4 }}>
-                      ❤ {hero.maxHp} HP
+                    <span style={{ ...ORB, fontSize: 10, color: '#ff4444', opacity: 0.85, marginLeft: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <GameIcon name="heart" size={10} color="#ff4444" /> {hero.maxHp} HP
                     </span>
                   )}
                   {attr === 'dexterity' && (
-                    <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', opacity: 0.85, marginLeft: 4 }}>
-                      💥 {critPct}%
+                    <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', opacity: 0.85, marginLeft: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <GameIcon name="explosion" size={10} color="#00f5ff" /> {critPct}%
                     </span>
                   )}
                 </div>
@@ -726,9 +728,9 @@ export default function HeroCard() {
                 onClick={() => upgradeAttribute(attr)}
                 disabled={!canAfford}
                 className="btn btn-primary"
-                style={{ fontSize: 10, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52 }}
+                style={{ fontSize: 10, padding: '4px 6px', opacity: canAfford ? 1 : 0.3, minWidth: 52, display: 'flex', alignItems: 'center', gap: 2 }}
               >
-                🪙{cost}
+                <GameIcon name="coin" size={10} color="#ffd700" />{cost}
               </button>
             </div>
           );

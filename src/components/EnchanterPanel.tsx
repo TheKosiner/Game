@@ -10,6 +10,7 @@ import ItemIcon from './ItemIcon';
 import { WeaponBadges } from '../utils/styles';
 import type { Item, Equipment, Stats } from '../types/index';
 import enchanterSrc from '../assets/enchanter.webp';
+import GameIcon from './GameIcon';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -139,7 +140,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
         width: '100%', maxWidth: 340,
         display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
       }}>
-        <span style={{ fontSize: 44 }}>✨</span>
+        <GameIcon name="magic_sparkle" size={44} color="#a800ff" />
 
         <p style={{ ...ORB, fontSize: 13, color: '#a800ff', textAlign: 'center', letterSpacing: 1, margin: 0 }}>
           {lang === 'en' ? 'REROLL COMPLETE!' : 'PRZELOSOWANIE ZAKOŃCZONE!'}
@@ -205,7 +206,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
             textShadow: canAfford ? '0 0 8px rgba(168,0,255,0.5)' : 'none',
           }}
         >
-          🎲 {lang === 'en' ? `TRY AGAIN — ${cost.toLocaleString()}🪙` : `SPRÓBUJ PONOWNIE — ${cost.toLocaleString()}🪙`}
+          <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {lang === 'en' ? `TRY AGAIN — ${cost.toLocaleString()}` : `SPRÓBUJ PONOWNIE — ${cost.toLocaleString()}`}<GameIcon name="coin" size={10} color="#ffd700" />
         </button>
         <button
           onClick={onClose}
@@ -319,7 +320,7 @@ export default function EnchanterPanel() {
 
           <div style={{ padding: isDesktop ? '2px 4px' : '10px 4px 2px' }}>
             <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
-              🔮 {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+              <GameIcon name="magic_orb" size={14} color="#c87dff" /> {lang === 'en' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
             </h2>
             <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
               {lang === 'en'
@@ -329,7 +330,6 @@ export default function EnchanterPanel() {
           </div>
 
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-
             {/* Item list */}
             <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 4 }}>
@@ -423,8 +423,8 @@ export default function EnchanterPanel() {
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
                   {lang === 'en' ? 'Cost' : 'Koszt'}
                 </span>
-                <span style={{ ...ORB, fontSize: 10, color: canAfford ? '#ffd700' : '#ff4444' }}>
-                  {cost.toLocaleString()}🪙
+                <span style={{ ...ORB, fontSize: 10, color: canAfford ? '#ffd700' : '#ff4444', display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {cost.toLocaleString()}<GameIcon name="coin" size={10} color={canAfford ? '#ffd700' : '#ff4444'} />
                 </span>
               </div>
 
@@ -433,8 +433,8 @@ export default function EnchanterPanel() {
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
                   {lang === 'en' ? 'Your gold' : 'Twoje złoto'}
                 </span>
-                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>
-                  {hero.gold.toLocaleString()}🪙
+                <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {hero.gold.toLocaleString()}<GameIcon name="coin" size={10} color="#ffd700" />
                 </span>
               </div>
 
@@ -459,7 +459,7 @@ export default function EnchanterPanel() {
                   transition: 'all 0.15s',
                 }}
               >
-                🎲 {lang === 'en' ? 'REROLL STATS' : 'PRZELOSUJ STATY'}
+                <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {lang === 'en' ? 'REROLL STATS' : 'PRZELOSUJ STATY'}
               </button>
             </div>
           )}

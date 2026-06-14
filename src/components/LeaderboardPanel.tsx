@@ -6,6 +6,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
+import GameIcon from './GameIcon';
 
 const RANK_COLORS = ['#ffd700', '#c0c0c0', '#cd7f32'];
 import { PX, MONO, ORB } from '../utils/styles';
@@ -64,13 +65,13 @@ function ItemDetailPopup({ item, onClose, lang }: { item: EquipItem; onClose: ()
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>⚔ Atak</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="sword" size={10} color="#ff2d78" /> Atak</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
         {item.defenseBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>🛡 Obrona</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="shield" size={10} color="#00f5ff" /> Obrona</span>
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
@@ -158,7 +159,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {rank <= 3
-            ? <span style={{ fontSize: 16 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+            ? <GameIcon name="medal" size={16} color={RANK_COLORS[rank-1]} />
             : <span style={{ ...PX(7), color: rankColor }}>#{rank}</span>
           }
           <span style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)' }}>{t.leaderboard.profileTitle}</span>
@@ -270,7 +271,7 @@ function GuildLeaderboard() {
               }}>
                 <div style={{ minWidth: 26, textAlign: 'center', flexShrink: 0 }}>
                   {rank <= 3
-                    ? <span style={{ fontSize: 15 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+                    ? <GameIcon name="medal" size={15} color={RANK_COLORS[rank-1]} />
                     : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
                   }
                 </div>
@@ -291,7 +292,7 @@ function GuildLeaderboard() {
 
                 <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                   <span style={{ ...ORB, fontSize: 10, color: '#00f5ff', background: 'rgba(0,245,255,0.08)', border: '1px solid rgba(0,245,255,0.2)', padding: '1px 6px' }}>
-                    👥 {guild.memberCount}
+                    <GameIcon name="users" size={10} color="#00f5ff" /> {guild.memberCount}
                   </span>
                   <span style={{ ...ORB, fontSize: 10, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', padding: '1px 6px' }}>
                     POZ.Ø {guild.averageLevel}
@@ -329,7 +330,7 @@ export default function LeaderboardPanel() {
 
   const myRank = entries.findIndex(e => e.uid === user?.uid) + 1;
 
-  function selectEntry(entry: LeaderboardEntry) {
+  function selectEntry(entry: LeaderboardEntry, _rank?: number) {
     if (selected?.uid === entry.uid) { setSelected(null); return; }
     setSelected(entry);
   }
@@ -358,7 +359,7 @@ export default function LeaderboardPanel() {
               color: tab === t2 ? 'var(--gold-bright)' : 'var(--text-dim)',
             }}
           >
-            {t2 === 'players' ? '👤 Gracze' : '⚔ Gildie'}
+            {t2 === 'players' ? <><GameIcon name="user" size={10} /> Gracze</> : <><GameIcon name="sword" size={10} /> Gildie</>}
           </button>
         ))}
       </div>
@@ -391,7 +392,7 @@ export default function LeaderboardPanel() {
                     <div
                       role="button"
                       tabIndex={0}
-                      onClick={() => selectEntry(entry)}
+                      onClick={() => selectEntry(entry, rank)}
                       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
                       style={{
                         background: isSelected ? 'rgba(255,215,0,0.06)' : isMe ? 'rgba(28,20,8,0.7)' : 'var(--bg-inset)',
@@ -404,7 +405,7 @@ export default function LeaderboardPanel() {
                     >
                       <div style={{ minWidth: 22, textAlign: 'center', flexShrink: 0 }}>
                         {rank <= 3
-                          ? <span style={{ fontSize: 13 }}>{['🥇','🥈','🥉'][rank-1]}</span>
+                          ? <GameIcon name="medal" size={13} color={RANK_COLORS[rank-1]} />
                           : <p style={{ ...PX(5), color: rankColor }}>#{rank}</p>
                         }
                       </div>
@@ -428,7 +429,7 @@ export default function LeaderboardPanel() {
                         <p style={{ ...PX(7), color: 'var(--gold-bright)' }}>POZ.{entry.level}</p>
                         {entry.pvpRating !== undefined && (
                           <span style={{ ...ORB, fontSize: 10, color: '#c084fc', background: 'rgba(192,132,252,0.1)', border: '1px solid rgba(192,132,252,0.3)', padding: '1px 5px' }}>
-                            ⚔ {entry.pvpRating}
+                            <GameIcon name="sword" size={10} color="#c084fc" /> {entry.pvpRating}
                           </span>
                         )}
                         {entry.guildTag && (

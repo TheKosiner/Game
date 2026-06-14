@@ -12,6 +12,7 @@ import { generateItem, getItemName } from '../data/itemGenerator';
 import { syncToCloud } from '../lib/cloudSync';
 
 import { MONO, ORB } from '../utils/styles';
+import GameIcon, { LogLine } from './GameIcon';
 
 function fmtNum(n: number): string {
   if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(2) + 'B';
@@ -240,7 +241,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             </span>
             {!boss.defeated && !isExpired && (
               <span style={{ ...MONO, fontSize: 10, color: timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)' }}>
-                ⏱ {fmtTime(timeLeft, isEn ? 'EXPIRED' : 'CZAS MINĄŁ')}
+                <GameIcon name="hourglass" size={10} color={timeLeft < 3_600_000 ? '#ff6030' : 'var(--text-dim)'} /> {fmtTime(timeLeft, isEn ? 'EXPIRED' : 'CZAS MINĄŁ')}
               </span>
             )}
             {nextResetLabel && (
@@ -254,14 +255,14 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           <span style={{ ...ORB, fontSize: 10, background: 'rgba(68,200,68,0.15)',
             border: '1px solid rgba(68,200,68,0.4)', color: '#44cc44',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
-            ✅ {isEn ? 'DEFEATED' : 'POKONANY'}
+            <GameIcon name="check" size={10} color="#44cc44" /> {isEn ? 'DEFEATED' : 'POKONANY'}
           </span>
         )}
         {isExpired && !boss.defeated && (
           <span style={{ ...ORB, fontSize: 10, background: 'rgba(200,120,20,0.15)',
             border: '1px solid rgba(200,120,20,0.4)', color: '#e08030',
             padding: '3px 8px', borderRadius: 2, flexShrink: 0 }}>
-            ⏰ {isEn ? 'EXPIRED' : 'CZAS MINĄŁ'}
+            <GameIcon name="hourglass" size={10} color="#e08030" /> {isEn ? 'EXPIRED' : 'CZAS MINĄŁ'}
           </span>
         )}
       </div>
@@ -272,7 +273,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
             <span style={{ ...ORB, fontSize: 10, color: 'var(--text-dim)' }}>{isEn ? 'YOUR ATTACK TODAY' : 'TWÓJ ATAK DZIŚ'}</span>
             <span style={{ ...MONO, fontSize: 10, color: alreadyAttackedToday ? '#44cc44' : 'var(--text-dim)' }}>
-              {alreadyAttackedToday ? `✅ ${fmtNum(myDamage)} dmg` : `~${fmtNum(estimatedDmg)} dmg`}
+              {alreadyAttackedToday ? <><GameIcon name="check" size={10} color="#44cc44" /> {fmtNum(myDamage)} dmg</> : `~${fmtNum(estimatedDmg)} dmg`}
             </span>
           </div>
           <button
@@ -282,8 +283,8 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
             style={{ width: '100%', fontSize: 10, cursor: alreadyAttackedToday ? 'not-allowed' : 'pointer',
               opacity: alreadyAttackedToday ? 0.5 : 1 }}>
             {attacking ? '...' : alreadyAttackedToday
-              ? (isEn ? '⚔ ALREADY ATTACKED TODAY' : '⚔ JUŻ ZAATAKOWAŁEŚ DZIŚ')
-              : (isEn ? '⚔ ATTACK BOSS' : '⚔ ATAKUJ BOSSA')}
+              ? <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? 'ALREADY ATTACKED TODAY' : 'JUŻ ZAATAKOWAŁEŚ DZIŚ'}</>
+              : <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? 'ATTACK BOSS' : 'ATAKUJ BOSSA'}</>}
           </button>
         </div>
       )}
@@ -297,14 +298,14 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           boxShadow: '0 0 16px rgba(68,200,68,0.1)',
         }}>
           <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 6 }}>
-            {isEn ? '🏆 BOSS DEFEATED — REWARD AWAITS!' : '🏆 BOSS POKONANY — NAGRODA CZEKA!'}
+            <GameIcon name="trophy" size={10} color="#44cc44" /> {isEn ? 'BOSS DEFEATED — REWARD AWAITS!' : 'BOSS POKONANY — NAGRODA CZEKA!'}
           </p>
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', marginBottom: 10 }}>
             {isEn ? `Your contribution: ${fmtNum(myDamage)} dmg` : `Twój udział: ${fmtNum(myDamage)} obrażeń`}
           </p>
           <button onClick={handleClaim} disabled={claiming} className="btn btn-primary"
             style={{ width: '100%', fontSize: 10, borderColor: 'rgba(68,200,68,0.5)', background: 'rgba(68,200,68,0.15)' }}>
-            {claiming ? '...' : (isEn ? '🎁 CLAIM REWARD' : '🎁 ODBIERZ NAGRODĘ')}
+            {claiming ? '...' : <><GameIcon name="bag" size={10} color="#fff" /> {isEn ? 'CLAIM REWARD' : 'ODBIERZ NAGRODĘ'}</>}
           </button>
         </div>
       )}
@@ -317,15 +318,15 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
           padding: 12, textAlign: 'center',
           boxShadow: '0 0 20px rgba(150,80,255,0.1)',
         }}>
-          <p style={{ ...ORB, fontSize: 10, color: '#cc88ff', marginBottom: 8 }}>✨ {isEn ? 'REWARDS CLAIMED' : 'NAGRODY ODEBRANE'}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#cc88ff', marginBottom: 8 }}><GameIcon name="magic_sparkle" size={10} color="#cc88ff" /> {isEn ? 'REWARDS CLAIMED' : 'NAGRODY ODEBRANE'}</p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 6 }}>
             <span style={{ ...ORB, fontSize: 10, color: '#4488ff' }}>+{fmtNum(claimResult.xp)} XP</span>
-            <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{fmtNum(claimResult.gold)} 🪙</span>
+            <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{fmtNum(claimResult.gold)} <GameIcon name="coin" size={10} /></span>
           </div>
           <p style={{ ...MONO, fontSize: 10, color: claimResult.item.rarity === 'legendary' ? '#ffd700' : '#cc44ff' }}>
             {claimResult.item.rarity === 'legendary'
-              ? (isEn ? '✨ LEGENDARY' : '✨ LEGENDARNY')
-              : (isEn ? '💜 EPIC' : '💜 EPICKI')}: {claimResult.item.emoji} {getItemName(claimResult.item, lang)}
+              ? <><GameIcon name="magic_sparkle" size={10} color="#ffd700" /> {isEn ? 'LEGENDARY' : 'LEGENDARNY'}</>
+              : <><GameIcon name="gem" size={10} color="#cc44ff" /> {isEn ? 'EPIC' : 'EPICKI'}</>}: {claimResult.item.emoji} {getItemName(claimResult.item, lang)}
           </p>
         </div>
       )}
@@ -335,7 +336,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
         <p style={{ ...ORB, fontSize: 10, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
         <div style={{ display: 'flex', gap: 12 }}>
           <span style={{ ...MONO, fontSize: 10, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
-          <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} 🪙</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} <GameIcon name="coin" size={10} /></span>
           <span style={{ ...MONO, fontSize: 10, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
         </div>
       </div>
@@ -368,14 +369,14 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                   ...MONO, fontSize: 10, lineHeight: 1.7,
                   color: isVictory ? '#ffd700' : isMe ? '#ff2d78' : 'var(--text-dim)',
                 }}>
-                  {line}
+                  <LogLine text={line} iconSize={10} />
                 </p>
               );
             })
           )}
           {boss.defeated && (
             <p style={{ ...ORB, fontSize: 10, color: '#ffd700', marginTop: 6, textAlign: 'center' }}>
-              🏆 {isEn ? 'BOSS DEFEATED!' : 'BOSS POKONANY!'}
+              <GameIcon name="trophy" size={10} color="#ffd700" /> {isEn ? 'BOSS DEFEATED!' : 'BOSS POKONANY!'}
             </p>
           )}
         </div>
@@ -420,7 +421,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
                       background: isMe ? '#ff2d78' : '#4488ff' }} />
                   </div>
                 </div>
-                {p.rewardClaimed && <span style={{ fontSize: 10 }}>✅</span>}
+                {p.rewardClaimed && <GameIcon name="check" size={10} color="#44cc44" />}
               </div>
             );
           })}

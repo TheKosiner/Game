@@ -42,6 +42,7 @@ import CyberpunkBg from './components/CyberpunkBg';
 import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import { animateTabIn } from './lib/gsapAnimations';
+import GameIcon from './components/GameIcon';
 
 export default function App() {
   const t = useT();
@@ -456,7 +457,7 @@ export default function App() {
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
             display: 'inline-flex', alignItems: 'center', gap: 3,
-          }}><span style={{ fontSize: 11 }}>🪙</span>{hero.gold}</span>
+          }}><GameIcon name="coin" size={11} />{hero.gold}</span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00e5ff', fontSize: 10, fontWeight: 700,
@@ -465,7 +466,7 @@ export default function App() {
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(0,229,255,0.5)',
             display: 'inline-flex', alignItems: 'center', gap: 3,
-          }}><span style={{ fontSize: 11 }}>💎</span>{hero.gems}</span>
+          }}><GameIcon name="gem" size={11} color="#00e5ff" />{hero.gems}</span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00f5ff', fontSize: 10,
@@ -526,7 +527,7 @@ export default function App() {
             textDecoration: 'none',
           }}
         >
-          <span style={{ fontSize: 14 }}>📱</span>
+          <GameIcon name="user" size={14} color="#00f5ff" />
           <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00f5ff' }}>
             {lang === 'en' ? 'Download Android app' : 'Pobierz aplikację Android'}
           </span>

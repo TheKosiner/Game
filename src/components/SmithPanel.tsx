@@ -11,6 +11,7 @@ import ItemIcon from './ItemIcon';
 import { getItemName } from '../data/itemGenerator';
 import { WeaponBadges } from '../utils/styles';
 import type { Item, Equipment, Stats } from '../types';
+import GameIcon from './GameIcon';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -95,7 +96,7 @@ function ResultModal({ result, onClose, onRetry }: {
   const color = success ? '#00e676' : '#ff4444';
   const bgColor = success ? 'rgba(0,230,118,0.07)' : 'rgba(255,68,68,0.07)';
   const borderColor = success ? 'rgba(0,230,118,0.35)' : 'rgba(255,68,68,0.35)';
-  const icon = success ? '✅' : '❌';
+  const icon = success ? 'check' : 'x_mark';
   const title = success
     ? (lang === 'en' ? 'ENHANCEMENT SUCCESS!' : 'ULEPSZENIE UDANE!')
     : (lang === 'en' ? 'ENHANCEMENT FAILED!' : 'ULEPSZENIE NIEUDANE!');
@@ -121,7 +122,7 @@ function ResultModal({ result, onClose, onRetry }: {
         width: '100%', maxWidth: 320,
         display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
       }}>
-        <span style={{ fontSize: 48 }}>{icon}</span>
+        <GameIcon name={icon} size={48} color={color} />
 
         <p style={{ ...ORB, fontSize: 13, color, textAlign: 'center', letterSpacing: 1, margin: 0 }}>
           {title}
@@ -160,8 +161,8 @@ function ResultModal({ result, onClose, onRetry }: {
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
                   {lang === 'en' ? 'Cost' : 'Koszt'}
                 </span>
-                <span style={{ ...ORB, fontSize: 11, color: '#ffd700' }}>
-                  🪙 {nextCost.toLocaleString()}
+                <span style={{ ...ORB, fontSize: 11, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <GameIcon name="coin" size={11} /> {nextCost.toLocaleString()}
                 </span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -187,7 +188,7 @@ function ResultModal({ result, onClose, onRetry }: {
               textShadow: '0 0 8px rgba(255,150,50,0.4)',
             }}
           >
-            ⚒ {lang === 'en' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
+            <GameIcon name="anvil" size={12} color="#ff9632" /> {lang === 'en' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
           </button>
           <button
             onClick={onClose}
@@ -503,8 +504,8 @@ export default function SmithPanel() {
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
                         {lang === 'en' ? 'Cost' : 'Koszt'}
                       </span>
-                      <span style={{ ...ORB, fontSize: 10, color: hasGold ? '#ffd700' : '#ff4444' }}>
-                        {freshCost}🪙
+                      <span style={{ ...ORB, fontSize: 10, color: hasGold ? '#ffd700' : '#ff4444', display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {freshCost}<GameIcon name="coin" size={10} color={hasGold ? '#ffd700' : '#ff4444'} />
                       </span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>

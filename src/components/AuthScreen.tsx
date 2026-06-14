@@ -5,6 +5,7 @@ import { useLangStore } from '../store/langStore';
 
 import logoImg from '../assets/logo.webp';
 import { PX, MONO } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 type Mode = 'login' | 'register' | 'reset';
 
@@ -58,7 +59,7 @@ function VerificationScreen() {
       <div style={{ width: '100%', maxWidth: 380 }}>
         <LangToggle />
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <p style={{ fontSize: 48, marginBottom: 8 }}>📧</p>
+          <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'center' }}><GameIcon name="email" size={48} color="#fbbf24" /></div>
           <h1 style={{ ...PX(10), color: '#fbbf24', marginBottom: 10 }}>{t.auth.verifyTitle}</h1>
         </div>
 
@@ -84,7 +85,7 @@ function VerificationScreen() {
 
           {error && (
             <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-              <p style={{ color: '#f87171', ...MONO, fontSize: 10 }}>⚠ {error}</p>
+              <p style={{ color: '#f87171', ...MONO, fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name="warning" size={10} color="#f87171" /> {error}</p>
             </div>
           )}
 
@@ -109,7 +110,7 @@ function VerificationScreen() {
             className="btn btn-secondary"
             style={{ width: '100%', padding: '10px', ...PX(7), opacity: sent ? 0.6 : 1 }}
           >
-            {sending ? '...' : sent ? t.auth.verifySentOk : t.auth.verifyResend}
+            {sending ? '...' : sent ? t.auth.verifySentOk : <><GameIcon name="retry" size={10} color="#00f5ff" style={{ marginRight: 4 }} />{t.auth.verifyResend}</>}
           </button>
 
           <button
@@ -230,7 +231,7 @@ export default function AuthScreen() {
               letterSpacing: 3,
               textShadow: '0 0 10px #dc2626, 0 0 20px #dc2626',
             }}>
-              ⚠ EARLY ACCESS ⚠
+              <GameIcon name="warning" size={11} color="#f87171" /> EARLY ACCESS <GameIcon name="warning" size={11} color="#f87171" />
             </span>
           </div>
           <p style={{ color: '#475569', fontSize: 10 }}>{t.app.tagline}</p>
@@ -330,12 +331,12 @@ export default function AuthScreen() {
                   />
                   {usernameError && (
                     <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#f87171', marginTop: 4 }}>
-                      ⚠ {usernameError}
+                      <GameIcon name="warning" size={9} color="#f87171" /> {usernameError}
                     </p>
                   )}
                   {!usernameError && username.length >= 3 && (
                     <p style={{ fontFamily: "'Press Start 2P', monospace", fontSize: 9, color: '#4ade80', marginTop: 4 }}>
-                      ✓
+                      <GameIcon name="check" size={9} color="#4ade80" />
                     </p>
                   )}
                 </div>
@@ -383,7 +384,7 @@ export default function AuthScreen() {
 
               {error && (
                 <div style={{ background: '#1c0a0a', border: '2px solid #7f1d1d', padding: '6px 8px' }}>
-                  <p style={{ color: '#f87171', fontSize: 10 }}>⚠ {error}</p>
+                  <p style={{ color: '#f87171', fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name="warning" size={10} color="#f87171" /> {error}</p>
                 </div>
               )}
 

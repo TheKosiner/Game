@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
 import { useT } from '../hooks/useT';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import GameIcon from './GameIcon';
 
 interface SpinResult { result: number; won: boolean; net: number; newGold: number }
 
@@ -29,7 +30,7 @@ type BetType =
 
 function betLabel(bet: BetType, tBetLabel?: (n: string) => string): string {
   const map: Record<string, string> = {
-    red: '🔴', black: '⚫',
+    red: 'R', black: 'B',
     odd: '', even: '',
     low: '▼ 1–18', high: '▲ 19–36',
     dozen1: '1–12', dozen2: '13–24', dozen3: '25–36',
@@ -553,10 +554,10 @@ export default function CasinoPanel() {
 
             <div style={{ display: 'flex', gap: 5 }}>
               <button onClick={() => setBetType('red')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'red' ? 'rgba(239,68,68,0.25)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'red' ? '#ef4444' : 'rgba(239,68,68,0.25)'}`, color: '#fca5a5', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
-                🔴 {t.casino.colorRed}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+                <GameIcon name="dot" size={10} color="#ef4444" /> {t.casino.colorRed}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
               </button>
               <button onClick={() => setBetType('black')} disabled={spinning} style={{ flex: 1, padding: '10px 4px', cursor: 'pointer', background: betType === 'black' ? 'rgba(148,163,184,0.15)' : 'rgba(5,8,20,0.8)', border: `2px solid ${betType === 'black' ? '#94a3b8' : 'rgba(148,163,184,0.2)'}`, color: '#cbd5e1', fontFamily: "'Share Tech Mono', monospace", fontSize: 10, transition: 'border-color 0.1s' }}>
-                ⚫ {t.casino.colorBlack}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
+                <GameIcon name="dot" size={10} color="#64748b" /> {t.casino.colorBlack}<br /><span style={{ fontSize: 8, opacity: 0.65 }}>1:1 — 18 numerów</span>
               </button>
             </div>
 
@@ -608,7 +609,7 @@ export default function CasinoPanel() {
               <span style={{ ...MONO, fontSize: 10, color: '#fbbf24' }}>
                 {betLabel(betType, t.casino.betLabel)}<span style={{ opacity: 0.55, marginLeft: 6 }}>({betOdds(betType)})</span>
               </span>
-              <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>🪙 {stake.toLocaleString()}</span>
+              <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'inline-flex', alignItems: 'center', gap: 3 }}><GameIcon name="coin" size={10} /> {stake.toLocaleString()}</span>
             </div>
           )}
 
@@ -630,7 +631,7 @@ export default function CasinoPanel() {
           </button>
 
           {spinError && (
-            <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center' }}>⚠ {spinError}</p>
+            <p style={{ ...MONO, fontSize: 9, color: '#f87171', textAlign: 'center', display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}><GameIcon name="warning" size={9} color="#f87171" /> {spinError}</p>
           )}
 
         </div>{/* end right column */}
@@ -644,14 +645,14 @@ export default function CasinoPanel() {
             {topWin && (
               <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.3)' }}>
                 <p style={{ ...MONO, fontSize: 8, color: '#6ee7b7', marginBottom: 3 }}>{t.casino.biggestWin}</p>
-                <p style={{ ...MONO, fontSize: 11, color: '#4ade80' }}>+{topWin.net.toLocaleString()} 🪙</p>
+                <p style={{ ...MONO, fontSize: 11, color: '#4ade80', display: 'flex', alignItems: 'center', gap: 3 }}>+{topWin.net.toLocaleString()} <GameIcon name="coin" size={10} /></p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topWin.username}</p>
               </div>
             )}
             {topLoss && (
               <div style={{ flex: 1, padding: '7px 8px', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.25)' }}>
                 <p style={{ ...MONO, fontSize: 8, color: '#fca5a5', marginBottom: 3 }}>{t.casino.biggestLoss}</p>
-                <p style={{ ...MONO, fontSize: 11, color: '#f87171' }}>−{Math.abs(topLoss.net).toLocaleString()} 🪙</p>
+                <p style={{ ...MONO, fontSize: 11, color: '#f87171', display: 'flex', alignItems: 'center', gap: 3 }}>−{Math.abs(topLoss.net).toLocaleString()} <GameIcon name="coin" size={10} /></p>
                 <p style={{ ...MONO, fontSize: 8, color: 'var(--text-muted)', marginTop: 2 }}>{topLoss.username}</p>
               </div>
             )}
@@ -673,7 +674,7 @@ export default function CasinoPanel() {
                 <span style={{ ...MONO, fontSize: 9, minWidth: 22, textAlign: 'center', color: rc, background: rc + '18', border: `1px solid ${rc}44`, padding: '1px 4px', flexShrink: 0 }}>{e.result}</span>
                 <span style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.username}</span>
                 <span style={{ ...MONO, fontSize: 9, flexShrink: 0, color: won ? '#4ade80' : '#f87171' }}>
-                  {won ? `+${e.net.toLocaleString()}` : `−${Math.abs(e.net).toLocaleString()}`} 🪙
+                  {won ? `+${e.net.toLocaleString()}` : `−${Math.abs(e.net).toLocaleString()}`} <GameIcon name="coin" size={9} />
                 </span>
               </div>
             );

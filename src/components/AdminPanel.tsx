@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { loadFromCloud } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { MONO } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 const ADMIN_EMAIL = 'thekosiner@gmail.com';
 
@@ -293,7 +294,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
 
   return (
     <div style={s}>
-      <p style={{ ...MONO, fontSize: 11, color: '#ff4466', marginBottom: 8, letterSpacing: '0.1em' }}>⚙ ADMIN PANEL</p>
+      <p style={{ ...MONO, fontSize: 11, color: '#ff4466', marginBottom: 8, letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 4 }}><GameIcon name="gear" size={11} color="#ff4466" /> ADMIN PANEL</p>
 
       {/* Self recovery */}
       <div style={{ marginBottom: 10, padding: '6px 8px', background: '#110022', border: '1px solid #6644aa', borderRadius: 3 }}>
@@ -304,7 +305,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
           </p>
         )}
         <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
-          🔄 Force reload z chmury
+          <GameIcon name="retry" size={11} color="#cc88ff" /> Force reload z chmury
         </button>
       </div>
 
@@ -312,7 +313,7 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
       <div style={{ marginBottom: 10, padding: '6px 8px', background: '#1a0000', border: '1px solid #ff4444', borderRadius: 3 }}>
         <p style={{ ...MONO, fontSize: 9, color: '#ff8888', marginBottom: 4 }}>AKCJE GLOBALNE</p>
         <button onClick={resetAllLimits} style={{ ...MONO, fontSize: 9, background: '#2a0000', border: '1px solid #ff4444', color: '#ff8888', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
-          🔄 Reset limitów WSZYSTKICH graczy
+          <GameIcon name="retry" size={11} color="#ff8888" /> Reset limitów WSZYSTKICH graczy
         </button>
       </div>
 
@@ -343,10 +344,10 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
               Operacje: {player.dungeonRunsToday}/10 | Krypta: {player.kryptaRunsToday}/5 | Misje: {player.questsCompletedToday}/5
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.activeQuest ? '#ff8844' : '#666' }}>
-              Misja: {player.activeQuest ? '⚠ aktywna' : 'brak'}
+              Misja: {player.activeQuest ? <><GameIcon name="warning" size={9} color="#ff8844" /> aktywna</> : 'brak'}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: (player.restingUntil || player.voluntaryRestUntil) ? '#ff8844' : '#666' }}>
-              Odpoczynek: {(player.restingUntil || player.voluntaryRestUntil) ? '⚠ aktywny' : 'brak'}
+              Odpoczynek: {(player.restingUntil || player.voluntaryRestUntil) ? <><GameIcon name="warning" size={9} color="#ff8844" /> aktywny</> : 'brak'}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.guildId ? '#88aaff' : '#444' }}>
               Gildia: {player.guildId ? player.guildId.slice(0, 12) + '...' : 'brak'}

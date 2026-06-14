@@ -10,6 +10,7 @@ import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { ComparePanel } from './ItemCompare';
 import { WeaponBadges } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#94a3b8',
@@ -160,7 +161,7 @@ export default function ShopPanel() {
             boxShadow: canAfford && isRare ? `0 0 8px ${rarityColor}33` : 'none',
           }}
         >
-          🪙{price}
+          <GameIcon name="coin" size={9} />{price}
         </button>
       </div>
     );
@@ -195,8 +196,8 @@ export default function ShopPanel() {
               <p style={{ color: '#475569', fontSize: 10 }}>{t.shop.subtitle}</p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: '#fbbf24', fontSize: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 8px' }}>
-                🪙 {hero.gold}
+              <span style={{ color: '#fbbf24', fontSize: 10, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <GameIcon name="coin" size={10} /> {hero.gold}
               </span>
               <button onClick={refreshShop} disabled={!canRefresh} className="btn btn-secondary"
                 style={{ fontSize: 10, padding: '5px 8px', opacity: canRefresh ? 1 : 0.6 }}>

@@ -1,5 +1,6 @@
 import { useGameStore } from '../store/gameStore';
 import { MONO } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 export default function LevelUpModal() {
   const level = useGameStore(s => s.levelUpPending);
@@ -30,7 +31,7 @@ export default function LevelUpModal() {
           width: '90%',
         }}
       >
-        <div style={{ fontSize: 48, marginBottom: 12 }}>⭐</div>
+        <div style={{ marginBottom: 12 }}><GameIcon name="star" size={48} color="#ffc83a" style={{ display: 'block', margin: '0 auto' }} /></div>
         <p style={{ ...MONO, fontSize: 22, color: '#ffc83a', marginBottom: 6, letterSpacing: '0.05em' }}>
           POZIOM {level}!
         </p>
@@ -38,7 +39,7 @@ export default function LevelUpModal() {
           Gratulacje!
         </p>
         <p style={{ ...MONO, fontSize: 11, color: '#aaa', marginBottom: 20 }}>
-          Wbiłeś kolejny poziom!!! 🎉
+          Wbiłeś kolejny poziom!!!
         </p>
         <p style={{ ...MONO, fontSize: 10, color: '#5a9040', marginBottom: 20 }}>
           +3 gemy • +{(level > 1 ? 8 : 0)} MaxHP

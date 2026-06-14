@@ -9,6 +9,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB, WeaponBadges } from '../utils/styles';
+import GameIcon from './GameIcon';
 import { getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { ComparePanel } from './ItemCompare';
 import mysteryBoxSrc from '../assets/mystery-box.webp';
@@ -118,17 +119,17 @@ function ItemCard({
               ? `♥ +${Math.round((item.healPercent ?? 1) * 100)}% HP`
               : <>
                   {statEntries.map(([k, v]) => `+${v} ${statAbbr[k] ?? k}`).join('  ')}
-                  {item.attackBonus ? `  ⚔+${item.attackBonus}` : ''}
-                  {item.defenseBonus ? `  🛡+${item.defenseBonus}` : ''}
-                  {getEnhanceAttackBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒⚔+${getEnhanceAttackBonus(item)}`}</span>}
-                  {getEnhanceDefenseBonus(item) > 0 && <span style={{ color: '#ffd700' }}>{`  ⚒🛡+${getEnhanceDefenseBonus(item)}`}</span>}
+                  {item.attackBonus ? <> <GameIcon name="sword" size={9} color="var(--text-main)" />+{item.attackBonus}</> : ''}
+                  {item.defenseBonus ? <> <GameIcon name="shield" size={9} color="var(--text-main)" />+{item.defenseBonus}</> : ''}
+                  {getEnhanceAttackBonus(item) > 0 && <span style={{ color: '#ffd700' }}>  <GameIcon name="anvil" size={9} color="#ffd700" /><GameIcon name="sword" size={9} color="#ffd700" />+{getEnhanceAttackBonus(item)}</span>}
+                  {getEnhanceDefenseBonus(item) > 0 && <span style={{ color: '#ffd700' }}>  <GameIcon name="anvil" size={9} color="#ffd700" /><GameIcon name="shield" size={9} color="#ffd700" />+{getEnhanceDefenseBonus(item)}</span>}
                   {(() => {
                     const sb = getEnhanceStatBonus(item);
                     const entries = Object.entries(sb).filter(([, v]) => (v ?? 0) > 0);
                     if (!entries.length) return null;
                     const [stat, val] = entries[0];
                     const abbr: Record<string, string> = { strength: 'STR', dexterity: 'DEX', intelligence: 'ACC', vitality: 'VIT', magic: 'MAG', magicResistance: 'RES' };
-                    return <span style={{ color: '#ffd700' }}>{`  ⚒${abbr[stat] ?? stat}+${val}`}</span>;
+                    return <span style={{ color: '#ffd700' }}>  <GameIcon name="anvil" size={9} color="#ffd700" />{abbr[stat] ?? stat}+{val}</span>;
                   })()}
                 </>
             }
@@ -136,12 +137,12 @@ function ItemCard({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           {isBox
-            ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}>📦 OTWÓRZ</button>
+            ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}><GameIcon name="bag" size={10} color="#fff" /> OTWÓRZ</button>
             : item.slot === 'consumable'
             ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} disabled={inDungeon} className="btn btn-primary" style={{ padding: '5px 8px', opacity: inDungeon ? 0.4 : 1, cursor: inDungeon ? 'not-allowed' : 'pointer' }}>{t.inventory.use}</button>
             : <button onClick={e => { e.stopPropagation(); onEquip(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
           }
-          <button onClick={e => { e.stopPropagation(); onSell(); }} className="btn btn-secondary" style={{ padding: '5px 8px' }}>🪙{item.goldValue}</button>
+          <button onClick={e => { e.stopPropagation(); onSell(); }} className="btn btn-secondary" style={{ padding: '5px 8px' }}><GameIcon name="coin" size={9} />{item.goldValue}</button>
         </div>
       </div>
 
@@ -170,7 +171,7 @@ export default function InventoryPanel() {
   return (
     <div className="card p-3" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)' }}>{t.inventory.title}</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#9d4edd', textShadow: '0 0 8px rgba(157,78,221,0.5)', display: 'flex', alignItems: 'center', gap: 5 }}><GameIcon name="bag" size={10} color="#9d4edd" />{t.inventory.title}</p>
         <span style={{
           ...MONO, fontSize: 10, color: inventory.length >= 18 ? '#ff4444' : 'var(--text-dim)',
           background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(157,78,221,0.2)',

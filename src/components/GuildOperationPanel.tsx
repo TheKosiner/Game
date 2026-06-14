@@ -11,6 +11,7 @@ import { createMysteryBox } from '../data/mysteryBoxes';
 import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
 import { ORB, MONO } from '../utils/styles';
+import GameIcon, { LogLine } from './GameIcon';
 
 
 const RARITY_COLOR: Record<string, string> = {
@@ -224,7 +225,7 @@ export default function GuildOperationPanel({
       const boxLevel = opLoc?.minLevel ?? hero.level;
       const box = createMysteryBox(reward.rarity as 'rare' | 'epic' | 'legendary', boxLevel);
       addToInventory(box);
-      notify(`+${reward.xp} XP  +${reward.gold} 🪙  📦 ${box.name}!`, true);
+      notify(`+${reward.xp} XP  +${reward.gold} gold  ${box.name}!`, true);
     } finally {
       setClaiming(false);
     }
@@ -299,7 +300,7 @@ export default function GuildOperationPanel({
               ))}
             </div>
             <span style={{ ...MONO, fontSize: 9, color: timeLeft < 3_600_000 ? '#f87171' : 'var(--text-dim)' }}>
-              ⏱ {fmtTime(timeLeft)}
+              <GameIcon name="hourglass" size={9} color={timeLeft < 3_600_000 ? '#f87171' : 'var(--text-dim)'} /> {fmtTime(timeLeft)}
             </span>
           </div>
         </div>
@@ -340,7 +341,7 @@ export default function GuildOperationPanel({
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
-              {isDead ? '💀' : '❤'} {hero.name}
+              {isDead ? <GameIcon name="skull" size={10} color="#f87171" /> : <GameIcon name="heart" size={10} color="#f87171" />} {hero.name}
             </span>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : '#86efac' }}>
               {fmtNum(raidHp)} / {fmtNum(hero.maxHp)} HP
@@ -365,7 +366,7 @@ export default function GuildOperationPanel({
             padding: '10px 12px', textAlign: 'center',
           }}>
             <p style={{ ...MONO, fontSize: 10, color: '#f87171', marginBottom: 2 }}>
-              💀 Pokonany!
+              <GameIcon name="skull" size={10} color="#f87171" /> Pokonany!
             </p>
             <p style={{ ...MONO, fontSize: 9, color: 'rgba(248,113,113,0.6)' }}>
               Nie możesz już atakować w tej operacji.
@@ -379,14 +380,14 @@ export default function GuildOperationPanel({
               className="btn btn-primary"
               style={{ flex: 1, fontSize: 10 }}
             >
-              {attacking ? '⚔ Atakuję...' : '⚔ Atakuj!'}
+              {attacking ? <><GameIcon name="sword" size={10} color="#fff" /> Atakuję...</> : <><GameIcon name="sword" size={10} color="#fff" /> Atakuj!</>}
             </button>
             <button
               onClick={() => setAutoFight(f => !f)}
               className={autoFight ? 'btn btn-primary' : 'btn btn-secondary'}
               style={{ fontSize: 10, padding: '0 10px', minWidth: 80 }}
             >
-              {autoFight ? '⏹ Stop' : '▶ Auto'}
+              {autoFight ? '■ Stop' : '▶ Auto'}
             </button>
           </div>
         )}
@@ -403,7 +404,7 @@ export default function GuildOperationPanel({
           ) : (
             log.map((entry, i) => (
               <p key={i} style={{ color: LOG_COLORS[entry.type], marginBottom: 1 }}>
-                {entry.text}
+                <LogLine text={entry.text} iconSize={10} />
               </p>
             ))
           )}
@@ -461,7 +462,7 @@ export default function GuildOperationPanel({
           border: '1px solid rgba(200,20,20,0.3)',
           padding: '14px 12px', textAlign: 'center',
         }}>
-          <p style={{ fontSize: 28, marginBottom: 6 }}>💀</p>
+          <GameIcon name="skull" size={28} color="#f87171" style={{ display: 'block', margin: '0 auto 6px' }} />
           <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>OPERACJA NIEUKOŃCZONA</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
             {loc?.emoji} {loc?.name} — czas minął
@@ -500,7 +501,7 @@ export default function GuildOperationPanel({
           padding: '14px 12px', textAlign: 'center',
           boxShadow: '0 0 20px rgba(68,200,68,0.1)',
         }}>
-          <p style={{ fontSize: 28, marginBottom: 6 }}>🏆</p>
+          <GameIcon name="trophy" size={28} color="#44cc44" style={{ display: 'block', margin: '0 auto 6px' }} />
           <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>OPERACJA UKOŃCZONA!</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
             {loc?.emoji} {loc?.name}
@@ -508,7 +509,7 @@ export default function GuildOperationPanel({
           {op.pendingReward && (
             <div style={{ background: 'rgba(10,25,10,0.7)', border: '1px solid rgba(34,197,94,0.25)', padding: '8px 12px', marginBottom: 10 }}>
               <p style={{ ...MONO, fontSize: 12, color: '#4ade80' }}>
-                +{op.pendingReward.xp} XP &nbsp;·&nbsp; +{op.pendingReward.gold} 🪙
+                +{op.pendingReward.xp} XP &nbsp;·&nbsp; +{op.pendingReward.gold} <GameIcon name="coin" size={11} />
               </p>
               <p style={{ ...MONO, fontSize: 11, color: RARITY_COLOR[op.pendingReward.rarity] ?? '#aaa', marginTop: 4 }}>
                 [{op.pendingReward.rarity.toUpperCase()}]
@@ -516,10 +517,10 @@ export default function GuildOperationPanel({
             </div>
           )}
           {alreadyClaimed ? (
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)' }}>✓ Nagrodę odebrano</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)' }}><GameIcon name="check" size={9} color="var(--text-muted)" /> Nagrodę odebrano</p>
           ) : (
             <button onClick={handleClaim} disabled={claiming} className="btn btn-primary" style={{ fontSize: 10, padding: '8px 16px' }}>
-              {claiming ? '⏳' : '🎁'} ODBIERZ NAGRODĘ
+              {claiming ? <GameIcon name="hourglass" size={10} color="#fff" /> : <GameIcon name="bag" size={10} color="#fff" />} ODBIERZ NAGRODĘ
             </button>
           )}
         </div>
@@ -550,7 +551,7 @@ export default function GuildOperationPanel({
         {inCooldown && (
           <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '8px 10px', textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-              ⏳ Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
+              <GameIcon name="hourglass" size={10} color="var(--text-muted)" /> Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
             </p>
           </div>
         )}
@@ -573,18 +574,18 @@ export default function GuildOperationPanel({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)' }}>OPERACJA GILDYJNA</p>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>
-          👥 {memberCount} członków · POZ. {hero.level}
+          <GameIcon name="users" size={9} color="var(--text-muted)" /> {memberCount} członków · POZ. {hero.level}
         </p>
       </div>
 
       <p style={{ ...MONO, fontSize: 9, color: '#f59e0b' }}>
-        ⚡ Operacja kończy się o północy UTC. Każdy walczy swoim HP.
+        <GameIcon name="lightning" size={9} color="#f59e0b" /> Operacja kończy się o północy UTC. Każdy walczy swoim HP.
       </p>
 
       {inCooldown && op ? (
         <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '10px', textAlign: 'center' }}>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-            ⏳ Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
+            <GameIcon name="hourglass" size={10} color="var(--text-muted)" /> Następna operacja za: {fmtTime(Math.max(0, op.cooldownUntil - now))}
           </p>
         </div>
       ) : canStart ? (
@@ -634,10 +635,10 @@ export default function GuildOperationPanel({
             style={{ fontSize: 10 }}
           >
             {starting
-              ? '⏳ Uruchamianie...'
+              ? <><GameIcon name="hourglass" size={10} color="#fff" /> Uruchamianie...</>
               : selectedLocation
-                ? `▶ ROZPOCZNIJ — ${availableLocations.find(l => l.id === selectedLocation)?.emoji} ${availableLocations.find(l => l.id === selectedLocation)?.name}`
-                : '▶ ROZPOCZNIJ OPERACJĘ (losowa)'}
+                ? <>ROZPOCZNIJ — {availableLocations.find(l => l.id === selectedLocation)?.emoji} {availableLocations.find(l => l.id === selectedLocation)?.name}</>
+                : 'ROZPOCZNIJ OPERACJĘ (losowa)'}
           </button>
         </>
       ) : !isLeaderOrOfficer ? (

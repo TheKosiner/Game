@@ -6,6 +6,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB, WeaponBadges } from '../utils/styles';
+import GameIcon, { type GameIconName } from './GameIcon';
 
 const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -25,14 +26,14 @@ function primaryStat(item: Item): string | null {
   return `${STAT_NAMES[k] ?? k} +${v}`;
 }
 
-function mainBonus(item: Item, lang?: string): { label: string; value: string; color: string } | null {
+function mainBonus(item: Item, lang?: string): { icon: GameIconName; label: string; value: string; color: string } | null {
   if (item.attackBonus) {
     const isMagic = (item as any).magicDamage;
-    return { label: isMagic ? '🔮 Mag' : '⚔ Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
+    return { icon: isMagic ? 'magic_orb' : 'sword', label: isMagic ? 'Mag' : 'Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
   }
-  if (item.defenseBonus) return { label: lang === 'en' ? '🛡 Defense' : '🛡 Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
+  if (item.defenseBonus) return { icon: 'shield', label: lang === 'en' ? 'Defense' : 'Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
   const ps = primaryStat(item);
-  if (ps) return { label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
+  if (ps) return { icon: 'up_arrow', label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
   return null;
 }
 
@@ -84,7 +85,10 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{(item as any).magicDamage ? (lang === 'en' ? '🔮 Magic Dmg.' : '🔮 Obrażenia mag.') : t.equipment.atk}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <GameIcon name={(item as any).magicDamage ? 'magic_orb' : 'sword'} size={10} color={(item as any).magicDamage ? '#c078f0' : '#ff2d78'} />
+              {(item as any).magicDamage ? (lang === 'en' ? 'Magic Dmg.' : 'Obrażenia mag.') : t.equipment.atk}
+            </span>
             <span style={{ ...ORB, fontSize: 10, color: (item as any).magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
@@ -101,7 +105,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
-        <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)' }}>{item.goldValue}🪙</p>
+        <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)', display: 'flex', alignItems: 'center', gap: 2 }}>{item.goldValue}<GameIcon name="coin" size={10} /></p>
       </div>
 
       <button onClick={onUnequip} className="btn btn-secondary" style={{ width: '100%', fontSize: 10, padding: '7px' }}>
@@ -162,8 +166,8 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
             <p style={{ ...ORB, fontSize: 12, color: rc, textShadow: `0 0 8px ${rc}88`, marginBottom: 4 }}>{getItemName(item, lang)}</p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               {bonus && (
-                <span style={{ ...ORB, fontSize: 10, color: bonus.color, textShadow: `0 0 6px ${bonus.color}88` }}>
-                  {bonus.label} {bonus.value}
+                <span style={{ ...ORB, fontSize: 10, color: bonus.color, textShadow: `0 0 6px ${bonus.color}88`, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <GameIcon name={bonus.icon} size={10} color={bonus.color} />{bonus.label} {bonus.value}
                 </span>
               )}
               {ps && bonus && ps !== `${bonus.label} ${bonus.value}` && (
@@ -176,7 +180,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
         </>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-          <span style={{ fontSize: 28, opacity: 0.1 }}>⚔</span>
+          <GameIcon name="sword" size={28} color="rgba(255,255,255,0.1)" />
           <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.equipment.slotWeapon}</span>
         </div>
       )}
@@ -184,7 +188,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
   );
 }
 
-function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; label: string; icon: string; onSelect: () => void }) {
+function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; label: string; icon: GameIconName; onSelect: () => void }) {
   const lang = useLangStore(s => s.lang);
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
   const bonus = item ? mainBonus(item, lang) : null;
@@ -230,7 +234,7 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
         </>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-          <span style={{ fontSize: 18, opacity: 0.1 }}>{icon}</span>
+          <GameIcon name={icon} size={18} color="rgba(255,255,255,0.1)" />
           <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{label}</span>
         </div>
       )}
@@ -240,12 +244,12 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
 
 export default function EquipmentPanel() {
   const t = useT();
-  const SIDE_SLOTS: { slot: ItemSlot; label: string; icon: string }[] = [
-    { slot: 'helmet', label: t.equipment.slotHelmet, icon: '⛑' },
-    { slot: 'armor',  label: t.equipment.slotArmor,  icon: '🛡' },
-    { slot: 'ring',   label: t.equipment.slotRing,   icon: '💍' },
-    { slot: 'boots',  label: t.equipment.slotBoots,  icon: '👢' },
-    { slot: 'amulet', label: t.equipment.slotAmulet, icon: '💿' },
+  const SIDE_SLOTS: { slot: ItemSlot; label: string; icon: GameIconName }[] = [
+    { slot: 'helmet', label: t.equipment.slotHelmet, icon: 'slot_helmet' },
+    { slot: 'armor',  label: t.equipment.slotArmor,  icon: 'slot_armor' },
+    { slot: 'ring',   label: t.equipment.slotRing,   icon: 'slot_ring' },
+    { slot: 'boots',  label: t.equipment.slotBoots,  icon: 'slot_boots' },
+    { slot: 'amulet', label: t.equipment.slotAmulet, icon: 'slot_amulet' },
   ];
   const equipment   = useGameStore(s => s.hero.equipment);
   const unequipItem = useGameStore(s => s.unequipItem);

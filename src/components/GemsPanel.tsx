@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import GameIcon from './GameIcon';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { PORTRAIT_LIST } from '../data/portraits';
@@ -21,13 +22,13 @@ export default function GemsPanel() {
   const isDesktop = useIsDesktop();
 
   const [buyingId, setBuyingId]     = useState<string | null>(null);
-  const [flashMsg, setFlashMsg]     = useState<{ text: string; ok: boolean } | null>(null);
+  const [flashMsg, setFlashMsg]     = useState<{ text: React.ReactNode; ok: boolean } | null>(null);
   // Handle return from Stripe Checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('gems_success') === '1') {
       const gems = params.get('gems');
-      setFlashMsg({ text: `+${gems} 💎 ${t.gems.purchaseSuccess}`, ok: true });
+      setFlashMsg({ text: <span>+{gems} <GameIcon name="gem" size={11} color="#00e5ff" /> {t.gems.purchaseSuccess}</span>, ok: true });
       window.history.replaceState({}, '', window.location.pathname);
     } else if (params.get('gems_cancelled') === '1') {
       setFlashMsg({ text: t.gems.purchaseCancelled, ok: false });
@@ -94,7 +95,7 @@ export default function GemsPanel() {
             </div>
             <div style={{ textAlign: 'right' }}>
               <p style={{ ...ORB, fontSize: 28, color: '#00e5ff', textShadow: '0 0 16px rgba(0,229,255,0.8)', lineHeight: 1 }}>
-                💎 {hero.gems}
+                <GameIcon name="gem" size={24} color="#00e5ff" /> {hero.gems}
               </p>
             </div>
           </div>
@@ -105,11 +106,11 @@ export default function GemsPanel() {
               {t.gems.earnTitle}
             </p>
             {[
-              { icon: '📅', text: t.gems.earnDaily },
-              { icon: '⬆', text: t.gems.earnLevel },
+              { icon: 'bell' as const, text: t.gems.earnDaily },
+              { icon: 'up_arrow' as const, text: t.gems.earnLevel },
             ].map(({ icon, text }) => (
               <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, width: 24, textAlign: 'center' }}>{icon}</span>
+                <span style={{ width: 24, textAlign: 'center' }}><GameIcon name={icon} size={16} color="#00e5ff" /></span>
                 <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{text}</span>
               </div>
             ))}
@@ -146,7 +147,7 @@ export default function GemsPanel() {
                     }}
                   >
                     <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', margin: 0 }}>
-                      {isLoading ? '⏳' : `${pkg.gems} 💎`}
+                      {isLoading ? <GameIcon name="hourglass" size={10} color="#00e5ff" /> : <>{pkg.gems} <GameIcon name="gem" size={10} color="#00e5ff" /></>}
                     </p>
                     <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{pkg.price}</p>
                   </button>
@@ -204,7 +205,7 @@ export default function GemsPanel() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: 'rgba(0,0,0,0.3)',
                     }}>
-                      <span style={{ fontSize: 20 }}>🔒</span>
+                      <GameIcon name="x_mark" size={20} color="rgba(255,255,255,0.7)" />
                     </div>
                   )}
                 </div>

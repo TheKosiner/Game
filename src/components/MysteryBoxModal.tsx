@@ -7,6 +7,7 @@ import { useLangStore } from '../store/langStore';
 import { getItemName } from '../data/itemGenerator';
 import type { Item, Rarity } from '../types';
 import { MONO, ORB } from '../utils/styles';
+import GameIcon from './GameIcon';
 
 const RC: Record<Rarity, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
@@ -116,7 +117,7 @@ export default function MysteryBoxModal() {
     }}>
       {/* Header */}
       <p style={{ ...ORB, fontSize: 11, color: 'var(--gold-main)', marginBottom: 20, letterSpacing: 2 }}>
-        {pending.box.emoji} {getItemName(pending.box, lang).toUpperCase()}
+        <ItemIcon item={pending.box} scale={1.5} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} /> {getItemName(pending.box, lang).toUpperCase()}
       </p>
 
       {/* Spinning card */}
@@ -159,12 +160,12 @@ export default function MysteryBoxModal() {
           background: 'rgba(5,10,20,0.9)', border: `1px solid ${rc}44`,
           padding: '8px 14px', marginBottom: 16, minWidth: 200, textAlign: 'center',
         }}>
-          {wonItem.attackBonus  ? <p style={{ ...MONO, fontSize: 10, color: wonItem.magicDamage ? '#c078f0' : '#86efac' }}>{wonItem.magicDamage ? '🔮' : '⚔'} +{wonItem.attackBonus} {wonItem.magicDamage ? 'Obrażenia mag.' : 'Atak'}</p> : null}
-          {wonItem.defenseBonus ? <p style={{ ...MONO, fontSize: 10, color: '#86efac' }}>🛡 +{wonItem.defenseBonus} Obrona</p> : null}
+          {wonItem.attackBonus  ? <p style={{ ...MONO, fontSize: 10, color: wonItem.magicDamage ? '#c078f0' : '#86efac', display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}><GameIcon name={wonItem.magicDamage ? 'magic_orb' : 'sword'} size={10} color={wonItem.magicDamage ? '#c078f0' : '#86efac'} /> +{wonItem.attackBonus} {wonItem.magicDamage ? 'Obrażenia mag.' : 'Atak'}</p> : null}
+          {wonItem.defenseBonus ? <p style={{ ...MONO, fontSize: 10, color: '#86efac', display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}><GameIcon name="shield" size={10} color="#86efac" /> +{wonItem.defenseBonus} Obrona</p> : null}
           {Object.entries(wonItem.stats).filter(([, v]) => v).map(([k, v]) => (
             <p key={k} style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>+{v} {k}</p>
           ))}
-          <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>🪙 {wonItem.goldValue} sprzedaż</p>
+          <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4, display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}><GameIcon name="coin" size={10} /> {wonItem.goldValue} sprzedaż</p>
         </div>
       )}
 
@@ -182,12 +183,12 @@ export default function MysteryBoxModal() {
             </>
           ) : (
             <p style={{ ...ORB, fontSize: 10, color: '#4ade80', textAlign: 'center' }}>
-              ✓ Dodano do plecaka!
+              <GameIcon name="check" size={10} color="#4ade80" /> Dodano do plecaka!
             </p>
           )
         ) : (
           <button onClick={handleSkip} className="btn btn-secondary" style={{ fontSize: 10 }}>
-            ⏭ Pomiń animację
+            <GameIcon name="run" size={10} color="#fff" /> Pomiń animację
           </button>
         )}
       </div>
