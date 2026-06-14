@@ -127,10 +127,7 @@ export default function ShopPanel() {
         }}
       >
         {/* Icon */}
-        <div style={{
-          background: 'rgba(5,8,20,0.9)',
-          padding: '4px 5px', boxShadow: isRare ? `0 0 8px ${rarityColor}44` : 'none',
-        }}>
+        <div style={{ lineHeight: 0 }}>
           <ItemIcon item={item} scale={2} />
         </div>
         {/* Slot label */}

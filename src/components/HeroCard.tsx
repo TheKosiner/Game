@@ -129,7 +129,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
         <div style={{
-          background: 'rgba(0,0,0,0.6)', border: `1px solid ${rc}44`, padding: 6, flexShrink: 0,
+          flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <ItemIcon item={item} size={48} />

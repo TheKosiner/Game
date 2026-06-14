@@ -149,10 +149,8 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
       {item ? (
         <>
           <div style={{
-            background: 'rgba(0,0,0,0.6)',
-            padding: 8, flexShrink: 0,
+            flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: `0 0 12px ${rc}30`,
           }}>
             <ItemIcon item={item} size={56} />
           </div>
@@ -216,8 +214,7 @@ function SmallSlot({ item, label, icon, onSelect }: { item: Item | undefined; la
       {item ? (
         <>
           <div style={{
-            background: 'rgba(0,0,0,0.5)',
-            padding: 5, flexShrink: 0,
+            flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <ItemIcon item={item} size={36} />

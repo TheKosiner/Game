@@ -86,10 +86,8 @@ function ItemCard({
         }}
       >
         <div style={{
-          background: 'rgba(0,0,0,0.5)',
-          padding: 5, flexShrink: 0,
+          flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 0 8px ${rc}15`,
         }}>
           <ItemIcon item={item} scale={3} />
         </div>
