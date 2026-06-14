@@ -6,6 +6,7 @@ import {
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
+import EnemyPortrait from './EnemyPortrait';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
@@ -272,6 +273,10 @@ export default function GuildOperationPanel({
   if (isActive && op) {
     const enemyIdx   = op.enemyInFloor  ?? 0;
     const enemyTotal = op.enemiesOnFloor ?? 1;
+    // The enemy template is chosen by floor (same logic as getFloorEnemy),
+    // so we can derive its id here for the SVG portrait.
+    const enemyTpl   = loc?.enemies[Math.min(op.floor - 1, loc.enemies.length - 1)];
+    const enemyId    = enemyTpl?.id ?? op.locationId ?? 'op_data_guardian';
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -307,7 +312,7 @@ export default function GuildOperationPanel({
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-            <span style={{ fontSize: 60, lineHeight: 1, flexShrink: 0 }}>{op.enemyEmoji}</span>
+            <EnemyPortrait id={enemyId} emoji={op.enemyEmoji} size={60} style={{ flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
               <p style={{ ...MONO, fontSize: 11, color: '#c05050', marginBottom: 3 }}>{op.enemyName}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>

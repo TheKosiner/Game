@@ -1,4 +1,5 @@
 export interface GuildOpEnemy {
+  id: string;
   name: string;
   emoji: string;
   hpMult: number;
@@ -29,10 +30,10 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     minLevel: 5,
     floors: 4,
     enemies: [
-      { name: 'Strażnik Danych',   emoji: '🤖', hpMult: 1.0 },
-      { name: 'Duch Sieci',        emoji: '👻', hpMult: 1.2 },
-      { name: 'Fragmentator',      emoji: '💀', hpMult: 1.5 },
-      { name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 2.0 },
+      { id: 'op_data_guardian', name: 'Strażnik Danych',   emoji: '🤖', hpMult: 1.0 },
+      { id: 'op_net_ghost',     name: 'Duch Sieci',        emoji: '👻', hpMult: 1.2 },
+      { id: 'op_fragmentator',  name: 'Fragmentator',      emoji: '💀', hpMult: 1.5 },
+      { id: 'op_neural_core',   name: 'Rdzeń Neuronowy',   emoji: '🧠', hpMult: 2.0 },
     ],
     enemiesPerFloor: 8,
     baseHpPerMember: 60,
@@ -49,11 +50,11 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     minLevel: 15,
     floors: 5,
     enemies: [
-      { name: 'Akwa-Dron',         emoji: '🦈', hpMult: 1.0 },
-      { name: 'Zatopiony Android', emoji: '🤖', hpMult: 1.2 },
-      { name: 'Lewiatan Rekin',    emoji: '🐋', hpMult: 1.5 },
-      { name: 'Kraken Mech',       emoji: '🦑', hpMult: 1.8 },
-      { name: 'Terror Głębin',     emoji: '👾', hpMult: 2.2 },
+      { id: 'op_aqua_drone',       name: 'Akwa-Dron',         emoji: '🦈', hpMult: 1.0 },
+      { id: 'op_sunken_android',   name: 'Zatopiony Android', emoji: '🤖', hpMult: 1.2 },
+      { id: 'op_leviathan_shark',  name: 'Lewiatan Rekin',    emoji: '🐋', hpMult: 1.5 },
+      { id: 'op_kraken_mech',      name: 'Kraken Mech',       emoji: '🦑', hpMult: 1.8 },
+      { id: 'op_deep_terror',      name: 'Terror Głębin',     emoji: '👾', hpMult: 2.2 },
     ],
     enemiesPerFloor: 10,
     baseHpPerMember: 90,
@@ -70,11 +71,11 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     minLevel: 25,
     floors: 5,
     enemies: [
-      { name: 'Strażnik Orbity',   emoji: '🛸', hpMult: 1.0 },
-      { name: 'Satelita Bojowy',   emoji: '⚡', hpMult: 1.3 },
-      { name: 'Łowca Kosmiczny',   emoji: '🚀', hpMult: 1.6 },
-      { name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 2.0 },
-      { name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 2.5 },
+      { id: 'op_orbit_guardian',    name: 'Strażnik Orbity',   emoji: '🛸', hpMult: 1.0 },
+      { id: 'op_battle_satellite',  name: 'Satelita Bojowy',   emoji: '⚡', hpMult: 1.3 },
+      { id: 'op_cosmic_hunter',     name: 'Łowca Kosmiczny',   emoji: '🚀', hpMult: 1.6 },
+      { id: 'op_orbital_colossus',  name: 'Kolos Orbitalny',   emoji: '☄️', hpMult: 2.0 },
+      { id: 'op_ares_destroyer',    name: 'Niszczyciel ARES',  emoji: '💥', hpMult: 2.5 },
     ],
     enemiesPerFloor: 10,
     baseHpPerMember: 120,
@@ -91,12 +92,12 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     minLevel: 35,
     floors: 6,
     enemies: [
-      { name: 'Skażony Strażnik',  emoji: '☢️', hpMult: 1.0 },
-      { name: 'Nano-Zaraza',       emoji: '🧬', hpMult: 1.3 },
-      { name: 'Reaktorowy Mech',   emoji: '⚗️', hpMult: 1.6 },
-      { name: 'Mutant Radiacji',   emoji: '💀', hpMult: 2.0 },
-      { name: 'Sigma Kolos',       emoji: '🤖', hpMult: 2.4 },
-      { name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 3.0 },
+      { id: 'op_contaminated_guard', name: 'Skażony Strażnik',  emoji: '☢️', hpMult: 1.0 },
+      { id: 'op_nano_plague',        name: 'Nano-Zaraza',       emoji: '🧬', hpMult: 1.3 },
+      { id: 'op_reactor_mech',       name: 'Reaktorowy Mech',   emoji: '⚗️', hpMult: 1.6 },
+      { id: 'op_radiation_mutant',   name: 'Mutant Radiacji',   emoji: '💀', hpMult: 2.0 },
+      { id: 'op_sigma_colossus',     name: 'Sigma Kolos',       emoji: '🤖', hpMult: 2.4 },
+      { id: 'op_sigma_reactor',      name: 'Reaktor SIGMA',     emoji: '☣️', hpMult: 3.0 },
     ],
     enemiesPerFloor: 12,
     baseHpPerMember: 160,
@@ -113,13 +114,13 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     minLevel: 50,
     floors: 7,
     enemies: [
-      { name: 'Kwantowy Cień',       emoji: '👁️', hpMult: 1.0 },
-      { name: 'Rozdarcie Realności', emoji: '🌀', hpMult: 1.3 },
-      { name: 'Nieskończony Pętlarz',emoji: '♾️', hpMult: 1.6 },
-      { name: 'Fazowy Kolos',        emoji: '⚛️', hpMult: 2.0 },
-      { name: 'Strażnik Singul.',    emoji: '🔮', hpMult: 2.5 },
-      { name: 'Aberacja Kodu',       emoji: '💠', hpMult: 3.0 },
-      { name: 'Kwantowy Tytan',      emoji: '🌌', hpMult: 3.6 },
+      { id: 'op_quantum_shadow',       name: 'Kwantowy Cień',       emoji: '👁️', hpMult: 1.0 },
+      { id: 'op_reality_tear',         name: 'Rozdarcie Realności', emoji: '🌀', hpMult: 1.3 },
+      { id: 'op_infinite_looper',      name: 'Nieskończony Pętlarz',emoji: '♾️', hpMult: 1.6 },
+      { id: 'op_phase_colossus',       name: 'Fazowy Kolos',        emoji: '⚛️', hpMult: 2.0 },
+      { id: 'op_singularity_guardian', name: 'Strażnik Singul.',    emoji: '🔮', hpMult: 2.5 },
+      { id: 'op_code_aberration',      name: 'Aberacja Kodu',       emoji: '💠', hpMult: 3.0 },
+      { id: 'op_quantum_titan',        name: 'Kwantowy Tytan',      emoji: '🌌', hpMult: 3.6 },
     ],
     enemiesPerFloor: 15,
     baseHpPerMember: 200,
@@ -150,8 +151,8 @@ export function getFloorEnemy(
   location: GuildOpLocation,
   floor: number,
   memberCount: number,
-): { name: string; emoji: string; hp: number; maxHp: number; count: number } {
+): { id: string; name: string; emoji: string; hp: number; maxHp: number; count: number } {
   const e = location.enemies[Math.min(floor - 1, location.enemies.length - 1)];
   const hp = Math.max(1, Math.round(location.baseHpPerMember * memberCount * e.hpMult));
-  return { name: e.name, emoji: e.emoji, hp, maxHp: hp, count: location.enemiesPerFloor };
+  return { id: e.id, name: e.name, emoji: e.emoji, hp, maxHp: hp, count: location.enemiesPerFloor };
 }
