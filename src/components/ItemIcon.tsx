@@ -968,14 +968,24 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
       legendary: mysteryBoxLegendarySrc,
     };
     const src = BOX_IMG[item.rarity] ?? mysteryBoxSrc;
+    const bc = RARITY_COLORS[item.rarity as Rarity] ?? RARITY_COLORS.common;
+    const bbgId = `bg-box-${item.rarity}`;
     return (
-      <img
-        src={src}
-        width={px}
-        height={px}
-        style={{ display: 'block', flexShrink: 0, objectFit: 'contain', ...style }}
-        alt={item.name}
-      />
+      <svg viewBox="0 0 48 48" width={px} height={px} style={{ display: 'block', flexShrink: 0, ...style }} xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id={bbgId} cx="50%" cy="50%" r="70%">
+            <stop offset="0%" stopColor={bc.primary} stopOpacity="0.13" />
+            <stop offset="100%" stopColor="#020208" stopOpacity="0.88" />
+          </radialGradient>
+        </defs>
+        <rect x="0" y="0" width="48" height="48" fill={`url(#${bbgId})`} />
+        <rect x="0.5" y="0.5" width="47" height="47" fill="none" stroke={bc.primary} strokeWidth="0.7" opacity="0.4" />
+        <path d="M0,7 L0,0 L7,0" fill="none" stroke={bc.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+        <path d="M41,0 L48,0 L48,7" fill="none" stroke={bc.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+        <path d="M0,41 L0,48 L7,48" fill="none" stroke={bc.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+        <path d="M48,41 L48,48 L41,48" fill="none" stroke={bc.glow} strokeWidth="1.4" strokeLinecap="square" opacity="0.9" />
+        <image href={src} x="4" y="4" width="40" height="40" />
+      </svg>
     );
   }
 

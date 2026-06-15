@@ -74,7 +74,7 @@ function EquipSlot({ item, slot, label, size = 50, selected, onClick }: {
       style={{
         width: size, height: size, flexShrink: 0,
         background: selected ? `${color}22` : item ? `${color}10` : 'rgba(0,0,0,0.35)',
-        border: `1px solid ${selected ? color + 'bb' : item ? color + '55' : 'rgba(100,116,139,0.2)'}`,
+        border: `1px solid ${selected ? color + 'bb' : item ? 'transparent' : 'rgba(100,116,139,0.2)'}`,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         gap: 1, cursor: item ? 'pointer' : 'default',
         boxShadow: selected ? `0 0 14px ${color}44` : item ? `0 0 8px ${color}22` : 'none',
