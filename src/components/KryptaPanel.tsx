@@ -7,6 +7,7 @@ import { syncToCloud } from '../lib/cloudSync';
 import { useT } from '../hooks/useT';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp } from '../utils/combat';
 import { createMysteryBox } from '../data/mysteryBoxes';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import {
   type ActiveBuff, BUFFS, DEBUFFS,
   type KryptaEnemy, buildEnemy, pickRandomEnemy,
@@ -72,6 +73,9 @@ function Btn({ onClick, children, color = '#ff2d78', disabled = false, small = f
 
 function SvgDoor({ label, onClick, imgSrc }: { label: string; onClick: () => void; imgSrc: string }) {
   const [hov, setHov] = useState(false);
+  const isDesktop = useIsDesktop();
+  const w = isDesktop ? 148 : 88;
+  const h = isDesktop ? 208 : 124;
   return (
     <button
       onClick={onClick}
@@ -82,21 +86,22 @@ function SvgDoor({ label, onClick, imgSrc }: { label: string; onClick: () => voi
       <img
         src={imgSrc}
         alt={label}
-        width={88}
-        height={124}
+        width={w}
+        height={h}
         style={{
           objectFit: 'contain',
           filter: hov ? 'drop-shadow(0 0 14px #9944cc) brightness(1.15)' : 'drop-shadow(0 0 4px rgba(153,68,204,0.35))',
           transition: 'filter 0.2s',
         }}
       />
-      <span style={{ ...MONO, fontSize: 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
+      <span style={{ ...MONO, fontSize: isDesktop ? 12 : 10, color: hov ? '#cc88ff' : 'rgba(255,255,255,0.6)', letterSpacing: 1, transition: 'color 0.15s' }}>{label}</span>
     </button>
   );
 }
 
 export default function KryptaPanel() {
   const t = useT();
+  const isDesktop = useIsDesktop();
   const hero = useGameStore(s => s.hero);
   const addXp = useGameStore(s => s.addXp);
   const addGold = useGameStore(s => s.addGold);
@@ -582,7 +587,7 @@ export default function KryptaPanel() {
           <div style={{ textAlign: 'center', ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>
             Wybierz kierunek eksploracji:
           </div>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: isDesktop ? 24 : 8, justifyContent: 'center' }}>
             <SvgDoor label="← LEWO"    onClick={() => chooseDirection('left')}   imgSrc="/krypta/Drzwi_1.webp" />
             <SvgDoor label="↑ ŚRODEK"  onClick={() => chooseDirection('center')} imgSrc="/krypta/Drzwi_2.webp" />
             <SvgDoor label="→ PRAWO"   onClick={() => chooseDirection('right')}  imgSrc="/krypta/Drzwi_3.webp" />
