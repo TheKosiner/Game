@@ -47,9 +47,3 @@ export async function resetAllDailyLimits(): Promise<{ ok: boolean; resetCount: 
   return result.data;
 }
 
-export async function sendVerificationEmailServer(lang: string): Promise<{ ok: boolean }> {
-  if (!functions) throw new Error('Firebase not configured');
-  const fn = httpsCallable<{ lang: string }, { ok: boolean }>(functions, 'sendVerificationEmail');
-  const result = await fn({ lang });
-  return result.data;
-}

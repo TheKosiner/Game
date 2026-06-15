@@ -11,8 +11,6 @@ import {
 import { doc, getDoc, runTransaction } from 'firebase/firestore';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { getT } from '../hooks/useT';
-import { getLang } from './langStore';
-import { sendVerificationEmailServer } from '../lib/serverActions';
 
 export interface AuthUser {
   uid: string;
@@ -192,14 +190,9 @@ export const useAuthStore = create<AuthState>((set) => {
 
         let emailError: string | null = null;
         try {
-          await sendVerificationEmailServer(getLang());
-        } catch {
-          // fallback to Firebase built-in if Cloud Function fails
-          try {
-            await sendEmailVerification(cred.user);
-          } catch (e) {
-            emailError = getErrorMessage(e);
-          }
+          await sendEmailVerification(cred.user);
+        } catch (e) {
+          emailError = getErrorMessage(e);
         }
         _pendingFirebaseUser = cred.user;
         // Keep user signed in — needed so resendVerification can call sendEmailVerification
@@ -214,15 +207,10 @@ export const useAuthStore = create<AuthState>((set) => {
       if (!auth) return;
       set({ error: null });
       try {
-        await sendVerificationEmailServer(getLang());
-      } catch {
-        // fallback to Firebase built-in
-        try {
-          const target = auth.currentUser ?? _pendingFirebaseUser;
-          if (target) await sendEmailVerification(target);
-        } catch (e) {
-          set({ error: getErrorMessage(e) });
-        }
+        const target = auth.currentUser ?? _pendingFirebaseUser;
+        if (target) await sendEmailVerification(target);
+      } catch (e) {
+        set({ error: getErrorMessage(e) });
       }
     },
 
