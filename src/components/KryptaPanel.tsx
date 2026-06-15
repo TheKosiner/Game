@@ -232,6 +232,8 @@ export default function KryptaPanel() {
       if (hp <= 0) {
         pushLog([...msgs, '💀 Padasz pokonany...'].reverse());
         setRaidHp(0);
+        setTotalXp(0);
+        setTotalGold(0);
         setPhase('dead');
         saveGame();
         if (user) syncToCloud(user.uid, user.username).catch(() => {});
@@ -296,6 +298,8 @@ export default function KryptaPanel() {
 
     if (hp <= 0) {
       pushLog([`💀 ${t.krypta.defeated}...`]);
+      setTotalXp(0);
+      setTotalGold(0);
       setPhase('dead');
       useGameStore.setState(s => ({ hero: { ...s.hero, hp: 1 } }));
       saveGame();
@@ -305,6 +309,8 @@ export default function KryptaPanel() {
 
   function flee() {
     pushLog([`🏃 ${t.krypta.fled}!`]);
+    setTotalXp(0);
+    setTotalGold(0);
     setPhase('fled');
     useGameStore.setState(s => ({ hero: { ...s.hero, hp: Math.max(1, raidHp) } }));
     saveGame();
