@@ -822,7 +822,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (hero.voluntaryRestUntil !== null && Date.now() < hero.voluntaryRestUntil) return;
     if (activeQuest) return;
     const clampedHours = Math.max(1, Math.min(10, Math.round(hours)));
-    const goldReward = Math.floor(clampedHours * 97 * Math.pow(1.09, hero.level - 1) * (0.8 + Math.random() * 0.4));
+    const goldReward = Math.min(
+      Math.floor(clampedHours * 97 * Math.pow(1.09, hero.level - 1) * (0.8 + Math.random() * 0.4)),
+      250_000_000,
+    );
     const endsAt = Date.now() + clampedHours * 60 * 60 * 1000;
     const t = getT();
     set({ hero: { ...hero, beggingUntil: endsAt, beggingReward: goldReward, beggingStartAt: Date.now() } });
