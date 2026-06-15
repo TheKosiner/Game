@@ -6,6 +6,7 @@ import { useGameStore } from '../store/gameStore';
 import { PVP_COOLDOWN } from '../store/gameStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { PvpOpponent, CombatLog } from '../types';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import { getHeroAttack, getHeroDefense, getHeroMaxHp, calcCritChance, getEquipmentStats } from '../utils/combat';
 import GameIcon, { LogLine } from './GameIcon';
 
@@ -413,6 +414,7 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
   onReroll: () => void;
 }) {
   const t = useT();
+  const isDesktop  = useIsDesktop();
   const user    = useAuthStore(s => s.user);
   const hero    = useGameStore(s => s.hero);
   const pvpWins   = useGameStore(s => s.pvpWins);
@@ -469,74 +471,87 @@ function ArenaList({ onChallenge, lastReroll, onReroll }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {/* Arena header image */}
-      <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid rgba(180,40,40,0.5)', boxShadow: '0 0 24px rgba(180,40,40,0.2)' }}>
-        <img src={arenaSrc} alt="Arena" style={{ width: '100%', display: 'block' }} />
-      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.pvp.title}</p>
-        <button onClick={fetchAll} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>↻</button>
-      </div>
-
-      <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...ORB, fontSize: 13, color: '#6aaa30' }}>{pvpWins}</p>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.wins}</p>
-          </div>
-          <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...ORB, fontSize: 13, color: 'var(--hp-bright)' }}>{pvpLosses}</p>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.losses}</p>
-          </div>
-          <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ ...ORB, fontSize: 13, color: '#c084fc' }}>{pvpRating}</p>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.rating}</p>
-          </div>
+        {/* Arena image – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 120, overflow: 'hidden', boxShadow: '0 0 24px rgba(180,40,40,0.2)' }}>
+          <img
+            src={arenaSrc}
+            alt="Arena"
+            style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block', border: '1px solid rgba(180,40,40,0.35)' }}
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)' }} />
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          {myRank > 0 && <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', marginBottom: 3 }}>{t.pvp.rank(myRank)}</p>}
-          {canFight
-            ? <p style={{ ...MONO, fontSize: 11, color: '#6aaa30' }}>{t.pvp.ready}</p>
-            : <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="hourglass" size={11} /> <CooldownTimer end={cooldownEnd} /></p>
-          }
-        </div>
-      </div>
 
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>{t.pvp.loading}</p>}
-      {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
+        {/* Right column */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
 
-      {!loading && !error && (
-        <>
-          {pair ? (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <ArenaCard entry={pair[0]} canFight={canFight} onChallenge={onChallenge} />
-              <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)', writingMode: 'vertical-rl' }}>VS</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)' }}>{t.pvp.title}</p>
+            <button onClick={fetchAll} aria-label="Refresh" className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>↻</button>
+          </div>
+
+          <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ ...ORB, fontSize: 13, color: '#6aaa30' }}>{pvpWins}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.wins}</p>
               </div>
-              <ArenaCard entry={pair[1]} canFight={canFight} onChallenge={onChallenge} />
+              <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ ...ORB, fontSize: 13, color: 'var(--hp-bright)' }}>{pvpLosses}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.losses}</p>
+              </div>
+              <div style={{ color: 'var(--border-main)', alignSelf: 'center', fontSize: 14 }}>|</div>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ ...ORB, fontSize: 13, color: '#c084fc' }}>{pvpRating}</p>
+                <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{t.pvp.rating}</p>
+              </div>
             </div>
-          ) : (
-            <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.pvp.noPlayers}</p>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              {myRank > 0 && <p style={{ ...ORB, fontSize: 10, color: 'var(--gold-bright)', marginBottom: 3 }}>{t.pvp.rank(myRank)}</p>}
+              {canFight
+                ? <p style={{ ...MONO, fontSize: 11, color: '#6aaa30' }}>{t.pvp.ready}</p>
+                : <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="hourglass" size={11} /> <CooldownTimer end={cooldownEnd} /></p>
+              }
+            </div>
+          </div>
+
+          {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}>{t.pvp.loading}</p>}
+          {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
+
+          {!loading && !error && (
+            <>
+              {pair ? (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <ArenaCard entry={pair[0]} canFight={canFight} onChallenge={onChallenge} />
+                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <p style={{ ...PX(8), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)', writingMode: 'vertical-rl' }}>VS</p>
+                  </div>
+                  <ArenaCard entry={pair[1]} canFight={canFight} onChallenge={onChallenge} />
+                </div>
+              ) : (
+                <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.pvp.noPlayers}</p>
+              )}
+
+              <button
+                onClick={reroll}
+                disabled={!canReroll}
+                className="btn btn-secondary"
+                style={{ width: '100%', fontSize: 10, padding: '7px', opacity: canReroll ? 1 : 0.5 }}
+              >
+                {canReroll
+                  ? t.pvp.reroll
+                  : <>{t.pvp.reroll} · <GameIcon name="hourglass" size={10} /> <CooldownTimer end={rerollEnd} /></>
+                }
+              </button>
+            </>
           )}
 
-          <button
-            onClick={reroll}
-            disabled={!canReroll}
-            className="btn btn-secondary"
-            style={{ width: '100%', fontSize: 10, padding: '7px', opacity: canReroll ? 1 : 0.5 }}
-          >
-            {canReroll
-              ? t.pvp.reroll
-              : <>{t.pvp.reroll} · <GameIcon name="hourglass" size={10} /> <CooldownTimer end={rerollEnd} /></>
-            }
-          </button>
-        </>
-      )}
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
 
-      {/* Fight history */}
+      {/* Fight history – full width below */}
       <div style={{ borderTop: '1px solid var(--border-dark)', paddingTop: 8 }}>
         <p style={{ ...PX(5), color: 'var(--gold-main)', marginBottom: 8 }}>{t.pvp.history}</p>
         {historyLoading && <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}><GameIcon name="hourglass" size={11} /> {t.pvp.loading}</p>}

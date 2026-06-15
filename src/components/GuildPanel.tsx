@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useIsDesktop } from '../hooks/useIsDesktop';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership, setMemberRole,
@@ -256,6 +257,7 @@ function InviteModal({ guild, onClose }: { guild: Guild; onClose: () => void }) 
 
 function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; onRefresh: () => void }) {
   const t = useT();
+  const isDesktop = useIsDesktop();
   const hero = useGameStore(s => s.hero);
   const [depositAmt, setDepositAmt] = useState('');
   const [depositing, setDepositing] = useState(false);
@@ -305,17 +307,23 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Guild base image — clean, no overlay */}
-      <div style={{ position: 'relative', border: '1px solid rgba(157,78,221,0.3)', overflow: 'hidden' }}>
-        <img src="/guild_base.webp" alt="Guild base" style={{ width: '100%', height: 'auto', display: 'block' }} />
-        {/* Name / tag badge at top-left */}
-        <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-          <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', border: '1px solid rgba(255,215,0,0.35)' }}>[{guild.tag}]</span>
-          <span style={{ ...PX(6), color: '#fff', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', textShadow: '0 0 6px #000' }}>{guild.name}</span>
-        </div>
-      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: isDesktop ? 'nowrap' : 'wrap' }}>
 
-      {/* Three boxes below the image */}
+        {/* Guild image – left column on PC */}
+        <div style={{ flex: isDesktop ? '0 0 240px' : '0 0 100%', position: 'relative', alignSelf: 'stretch', minHeight: 120, overflow: 'hidden', border: '1px solid rgba(157,78,221,0.3)' }}>
+          <img src="/guild_base.webp" alt="Guild base" style={{ width: '100%', height: isDesktop ? '100%' : 'auto', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 60%)' }} />
+          {/* Name / tag badge */}
+          <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ ...PX(5), color: 'var(--gold-main)', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', border: '1px solid rgba(255,215,0,0.35)' }}>[{guild.tag}]</span>
+            <span style={{ ...PX(6), color: '#fff', background: 'rgba(0,0,0,0.65)', padding: '2px 6px', textShadow: '0 0 6px #000' }}>{guild.name}</span>
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+      {/* Three boxes */}
       <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
         {/* EXP upgrade */}
         {(['exp', 'gold'] as const).map((type, idx) => {
@@ -398,6 +406,9 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
           </div>
         )}
       </div>
+
+        </div>{/* end right column */}
+      </div>{/* end image+content row */}
     </div>
   );
 }
