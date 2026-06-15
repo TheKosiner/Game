@@ -1073,7 +1073,6 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (heroHp <= 0) {
         log.push(t.combat.bossDefeat(r));
         set({ hero: { ...hero, hp: 1 }, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] } });
-        get().addXp(Math.floor(boss.xpReward * 0.1));
         get().saveGame();
         return;
       }
@@ -1096,7 +1095,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (heroHp <= 0) {
       log.push(t.combat.bossDefeat(r));
       set({ hero: { ...hero, hp: 1 }, challengeFight: null, challengeFightLog: [], challengeLastHit: { ...event, ts: Date.now() }, challengeResult: { won: false, bossIdx: challengeFight.bossIdx, log, loot: [] } });
-      get().addXp(Math.floor(boss.xpReward * 0.1));
       get().saveGame();
       return;
     }
