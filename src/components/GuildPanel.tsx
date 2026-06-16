@@ -415,7 +415,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
 
 const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
-function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuildTabChange }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGuildTabChange: (t: import('./BottomNav').GuildTabSub) => void }) {
+function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
@@ -715,7 +715,7 @@ export default function GuildPanel({ guildTab, onGuildTabChange }: { guildTab: i
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} guildTab={guildTab} onGuildTabChange={onGuildTabChange} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} guildTab={guildTab} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}
