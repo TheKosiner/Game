@@ -1137,12 +1137,6 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().saveGame();
   },
 
-  recordTerritoryClaimAt: (territoryId: string) => {
-    const { hero } = get();
-    set({ hero: { ...hero, lastTerritoryClaimAt: { ...(hero.lastTerritoryClaimAt ?? {}), [territoryId]: Date.now() } } });
-    get().saveGame();
-  },
-
   enhanceItem: (source, idxOrSlot) => {
     const { hero } = get();
     const ENHANCE_COST_PER_LV = [20, 50, 100, 200, 400, 800, 1500, 2500, 4000];

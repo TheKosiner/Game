@@ -193,11 +193,11 @@ service cloud.firestore {
         && request.auth.uid in resource.data.members
         && resource.data.members[request.auth.uid].role == 'officer'
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
-      // Regular members may only touch treasury (deposit only), contributions, and capture/loss timestamps
+      // Regular members may only deposit to treasury
       allow update: if isAuthenticated()
         && request.auth.uid in resource.data.members
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions', 'lastLostAt', 'lastCaptureAt'])
+             .hasOnly(['treasury', 'contributions'])
         && request.resource.data.treasury >= resource.data.treasury;
       // Regular members may update operation progress but cannot increase pendingReward amounts
       allow update: if isAuthenticated()
@@ -209,10 +209,6 @@ service cloud.firestore {
             || request.resource.data.guildOperation.pendingReward == null
             || (request.resource.data.guildOperation.pendingReward.gold <= resource.data.guildOperation.pendingReward.gold
                 && request.resource.data.guildOperation.pendingReward.xp <= resource.data.guildOperation.pendingReward.xp));
-      // Attacker (non-member) may stamp lastLostAt on the defending guild after capture — limited to guild members of any guild
-      allow update: if isAuthenticated()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastLostAt'])
-        && get(/databases/$(database)/documents/players/$(request.auth.uid)).data.guildId != null;
       // Joining via invite: non-member adds only themselves as role='member'
       allow update: if isAuthenticated()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
@@ -245,30 +241,9 @@ service cloud.firestore {
         && request.resource.data.attackerUid == request.auth.uid;
     }
 
-    // Guild territories — write requires membership in the guild claiming/updating the territory
-    match /territories/{territoryId} {
+    // Guild Wars — all writes via Cloud Functions (admin SDK); clients read-only
+    match /guildWars/{warId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated()
-        && (
-          // New territory doc (claim or siege start on unclaimed territory that has no Firestore doc yet)
-          (resource == null
-            && (
-              (request.resource.data.guildId != null
-                && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.guildId)).data.members)
-              || (request.resource.data.siegeGuildId != null
-                && request.auth.uid in get(/databases/$(database)/documents/guilds/$(request.resource.data.siegeGuildId)).data.members)
-            )
-          )
-          // Existing territory: caller is in the owning (defending) guild
-          || (resource != null
-              && resource.data.guildId != null
-              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.guildId)).data.members)
-          // Existing territory: caller is in the currently attacking / sieging guild
-          // (covers siege updates AND the final capture write that clears siegeGuildId)
-          || (resource != null
-              && resource.data.siegeGuildId != null
-              && request.auth.uid in get(/databases/$(database)/documents/guilds/$(resource.data.siegeGuildId)).data.members)
-        );
     }
 
     // In-game mail

@@ -1,9 +1,8 @@
-import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, writeBatch, documentId, increment, serverTimestamp, type Timestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc, collection, query, orderBy, limit, getDocs, addDoc, updateDoc, where, deleteField, runTransaction, documentId, increment, serverTimestamp, type Timestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
-import { TERRITORY_LIST } from '../data/territories';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -407,14 +406,12 @@ export interface Guild {
   members: Record<string, GuildMemberData>;
   createdAt: number;
   guildXp: number;
-  lastSiegeAt: number | null;
-  lastCaptureAt: number | null;
-  lastLostAt: number | null;
   treasury: number;
   expUpgrade: number;
   goldUpgrade: number;
   contributions: Record<string, number>;
   guildOperation?: GuildOperationState | null;
+  activeWarId?: string;
 }
 
 export function guildUpgradeCost(currentLevel: number): number {
@@ -717,293 +714,20 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   // Remove pending invites
   const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
   for (const d of invites.docs) await deleteDoc(d.ref);
-  // Release territories owned by this guild (also clear any active siege by this guild)
-  const ownedTerritories = await getDocs(query(collection(db, 'territories'), where('guildId', '==', guildId)));
-  const siegingTerritories = await getDocs(query(collection(db, 'territories'), where('siegeGuildId', '==', guildId)));
-  const resetTerritory = {
-    guildId: null, guildName: null, guildTag: null,
-    capturedAt: null, lastRewardAt: null, expiresAt: null,
-    defenderMemberCount: 0, defenderAvgLevel: 0, defenderMembers: [],
-    siegeGuildId: null, siegeGuildTag: null,
-    siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
-    siegeStartedAt: null, siegeAttackers: [],
-  };
-  for (const d of ownedTerritories.docs) await setDoc(d.ref, resetTerritory);
-  for (const d of siegingTerritories.docs) {
-    await updateDoc(d.ref, {
-      siegeGuildId: null, siegeGuildTag: null,
-      siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
-      siegeStartedAt: null, siegeAttackers: [],
-    });
-  }
   await deleteDoc(doc(db, 'guilds', guildId));
 }
 
-// ── TERRITORIES ───────────────────────────────────────────────────────────────
+// ── GUILD LIST ────────────────────────────────────────────────────────────────
 
-export interface TerritoryState {
-  id: string;
-  guildId: string | null;
-  guildName: string | null;
-  guildTag: string | null;
-  capturedAt: number | null;
-  lastRewardAt: number | null;
-  expiresAt: number | null;
-  defenderMemberCount: number;
-  defenderAvgLevel: number;
-  defenderMembers: Array<{ uid?: string; name: string; username?: string; level: number; portrait?: number; attack?: number; defense?: number; maxHp?: number }>;
-  // Cooperative siege fields
-  siegeGuildId: string | null;
-  siegeGuildTag: string | null;
-  siegeCurrentHp: number | null;
-  siegeMaxHp: number | null;
-  siegeLastHitAt: number | null;
-  siegeStartedAt: number | null;
-  siegeAttackers: string[]; // UIDs who already attacked in this siege
-}
-
-const EMPTY_TERRITORY = {
-  guildId: null, guildName: null, guildTag: null,
-  capturedAt: null, lastRewardAt: null, expiresAt: null,
-  defenderMemberCount: 0, defenderAvgLevel: 0, defenderMembers: [],
-  siegeGuildId: null, siegeGuildTag: null,
-  siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
-  siegeStartedAt: null, siegeAttackers: [],
-};
-
-const SIEGE_DURATION = 5 * 60 * 60 * 1000; // 5h — siege window
-const WEEK_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — territory stays until recaptured
-
-export async function getTerritories(): Promise<Record<string, TerritoryState>> {
-  if (!db) return {};
-  const snap = await getDocs(collection(db, 'territories'));
-  const result: Record<string, TerritoryState> = {};
-
-  // Collect unique guild IDs referenced by territories
-  const guildIds = new Set<string>();
-  snap.docs.forEach(d => {
-    const data = d.data() as TerritoryState;
-    if (data.guildId) guildIds.add(data.guildId);
-    if (data.siegeGuildId) guildIds.add(data.siegeGuildId);
-  });
-
-  // Check which guilds still exist
-  const existingGuilds = new Set<string>();
-  await Promise.all([...guildIds].map(async id => {
-    const g = await getDoc(doc(db!, 'guilds', id));
-    if (g.exists()) existingGuilds.add(id);
+export async function listGuilds(): Promise<Array<{ id: string; name: string; tag: string; memberCount: number }>> {
+  if (!db) return [];
+  const snap = await getDocs(collection(db, 'guilds'));
+  return snap.docs.map(d => ({
+    id: d.id,
+    name: d.data().name as string,
+    tag: d.data().tag as string,
+    memberCount: Object.keys(d.data().members ?? {}).length,
   }));
-
-  // Build result, auto-cleaning orphaned ownership/siege data and expired territories
-  const now = Date.now();
-  const expiryWrites: Promise<void>[] = [];
-
-  await Promise.all(snap.docs.map(async d => {
-    const data = { id: d.id, ...d.data() } as TerritoryState;
-    let dirty = false;
-
-    // Lazy expiry: reset territory to neutral if expiresAt has passed
-    if (data.guildId && data.expiresAt !== null && data.expiresAt < now) {
-      Object.assign(data, EMPTY_TERRITORY, { id: d.id });
-      expiryWrites.push(setDoc(d.ref, { ...EMPTY_TERRITORY }));
-      result[d.id] = data;
-      return;
-    }
-
-    if (data.guildId && !existingGuilds.has(data.guildId)) {
-      // Owner guild deleted — wipe the territory completely
-      Object.assign(data, EMPTY_TERRITORY, { id: d.id });
-      await setDoc(d.ref, { ...EMPTY_TERRITORY });
-    } else if (data.siegeGuildId && !existingGuilds.has(data.siegeGuildId)) {
-      // Siege guild deleted — cancel the siege only
-      data.siegeGuildId = null;
-      data.siegeGuildTag = null;
-      data.siegeCurrentHp = null;
-      data.siegeMaxHp = null;
-      data.siegeLastHitAt = null;
-      data.siegeStartedAt = null;
-      data.siegeAttackers = [];
-      dirty = true;
-    }
-
-    if (dirty) await updateDoc(d.ref, {
-      siegeGuildId: null, siegeGuildTag: null,
-      siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
-      siegeStartedAt: null, siegeAttackers: [],
-    });
-    result[d.id] = data;
-  }));
-
-  Promise.all(expiryWrites).catch(() => {});
-
-  return result;
-}
-
-/** Fetch real attack/defense/maxHp for a list of player UIDs from the leaderboard. */
-export async function getPlayersStats(
-  uids: string[],
-): Promise<Record<string, { attack: number; defense: number; maxHp: number; level: number }>> {
-  if (!db || uids.length === 0) return {};
-  const result: Record<string, { attack: number; defense: number; maxHp: number; level: number }> = {};
-  // Firestore 'in' supports up to 30 items per query
-  for (let i = 0; i < uids.length; i += 30) {
-    const chunk = uids.slice(i, i + 30);
-    const snap = await getDocs(query(collection(db, 'players'), where(documentId(), 'in', chunk)));
-    snap.forEach(d => {
-      const data = d.data();
-      result[d.id] = {
-        attack:  data.attack  ?? 0,
-        defense: data.defense ?? 0,
-        maxHp:   data.maxHp   ?? 100,
-        level:   data.level   ?? 1,
-      };
-    });
-  }
-  return result;
-}
-
-/** Start or rejoin a siege. Returns current siege state, or blocked info. */
-export async function initOrJoinSiege(
-  territoryId: string,
-  attackingGuildId: string,
-  attackingGuildTag: string,
-  overrideSiegeMaxHp?: number,
-): Promise<{ currentHp: number; siegeMaxHp: number; startedAt: number; attackers: string[] } | { blocked: true; byTag: string; endsAt: number }> {
-  const defaultMaxHp = TERRITORY_LIST.find(t => t.id === territoryId)?.siegeHp ?? 100;
-  const siegeMaxHp = overrideSiegeMaxHp ?? defaultMaxHp;
-  if (!db) return { currentHp: siegeMaxHp, siegeMaxHp, startedAt: Date.now(), attackers: [] };
-  const ref = doc(db, 'territories', territoryId);
-  return runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    const data = snap.exists() ? snap.data() as TerritoryState : {} as TerritoryState;
-    const now = Date.now();
-    const siegeExpired = data.siegeStartedAt !== null && now - data.siegeStartedAt >= SIEGE_DURATION;
-
-    // Active siege by same guild that hasn't expired — rejoin
-    if (data.siegeGuildId === attackingGuildId && (data.siegeCurrentHp ?? 0) > 0 && !siegeExpired) {
-      return {
-        currentHp: data.siegeCurrentHp!,
-        siegeMaxHp: data.siegeMaxHp ?? siegeMaxHp,
-        startedAt: data.siegeStartedAt!,
-        attackers: data.siegeAttackers ?? [],
-      };
-    }
-    // Active siege by different guild that hasn't expired — blocked
-    if (
-      data.siegeGuildId && data.siegeGuildId !== attackingGuildId &&
-      (data.siegeCurrentHp ?? 0) > 0 &&
-      !siegeExpired
-    ) {
-      return { blocked: true as const, byTag: data.siegeGuildTag ?? '?', endsAt: (data.siegeStartedAt ?? now) + SIEGE_DURATION };
-    }
-    // Start fresh siege (previous expired or no siege)
-    const startedAt = now;
-    tx.set(ref, {
-      ...(snap.exists() ? data : {}),
-      siegeGuildId: attackingGuildId,
-      siegeGuildTag: attackingGuildTag,
-      siegeCurrentHp: siegeMaxHp,
-      siegeMaxHp,
-      siegeLastHitAt: now,
-      siegeStartedAt: startedAt,
-      siegeAttackers: [],
-    }, { merge: true });
-    return { currentHp: siegeMaxHp, siegeMaxHp, startedAt, attackers: [] };
-  });
-}
-
-/** Apply damage dealt by one player. Returns remaining siege HP. */
-export async function commitSiegeDamage(
-  territoryId: string,
-  attackingGuildId: string,
-  damage: number,
-  playerUid: string,
-): Promise<number> {
-  if (!db) return 0;
-  const ref = doc(db, 'territories', territoryId);
-  if (damage <= 0) {
-    const snap = await getDoc(ref);
-    if (!snap.exists()) return 0;
-    return (snap.data() as TerritoryState).siegeCurrentHp ?? 0;
-  }
-  return runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return 0;
-    const data = snap.data() as TerritoryState;
-    if (data.siegeGuildId !== attackingGuildId) return data.siegeCurrentHp ?? 0;
-    const newHp = Math.max(0, (data.siegeCurrentHp ?? 0) - damage);
-    const attackers = [...new Set([...(data.siegeAttackers ?? []), playerUid])];
-    tx.update(ref, { siegeCurrentHp: newHp, siegeLastHitAt: Date.now(), siegeAttackers: attackers });
-    return newHp;
-  });
-}
-
-export async function captureTerritory(
-  territoryId: string,
-  guildId: string,
-  guildName: string,
-  guildTag: string,
-  memberCount: number,
-  avgLevel: number,
-  defenderMembers: TerritoryState['defenderMembers'] = [],
-  prevOwnerGuildId?: string,
-): Promise<void> {
-  if (!db) return;
-  const now = Date.now();
-
-  // Territory write + attacker cooldown in one batch (attacker IS a guild member — rules allow it)
-  const batch = writeBatch(db);
-  batch.set(doc(db, 'territories', territoryId), {
-    guildId, guildName, guildTag,
-    capturedAt: now,
-    lastRewardAt: null,
-    expiresAt: now + WEEK_MS,
-    defenderMemberCount: memberCount,
-    defenderAvgLevel: avgLevel,
-    defenderMembers,
-    siegeGuildId: null, siegeGuildTag: null,
-    siegeCurrentHp: null, siegeMaxHp: null,
-    siegeLastHitAt: null, siegeStartedAt: null, siegeAttackers: [],
-  });
-  batch.update(doc(db, 'guilds', guildId), { lastCaptureAt: now });
-  await batch.commit();
-
-  // Defender cooldown is a separate write — attacker is not a member of the defending guild,
-  // so it must be allowed by a dedicated Firestore rule (lastLostAt-only update).
-  if (prevOwnerGuildId && prevOwnerGuildId !== guildId) {
-    await updateDoc(doc(db, 'guilds', prevOwnerGuildId), { lastLostAt: now }).catch(() => {});
-  }
-}
-
-export async function abandonTerritory(territoryId: string, guildId: string): Promise<void> {
-  if (!db) return;
-  await setDoc(doc(db, 'territories', territoryId), {
-    guildId: null, guildName: null, guildTag: null,
-    capturedAt: null, lastRewardAt: null, expiresAt: null,
-    defenderMemberCount: 0, defenderAvgLevel: 0,
-    siegeGuildId: null, siegeGuildTag: null,
-    siegeCurrentHp: null, siegeMaxHp: null, siegeLastHitAt: null,
-  });
-  await updateDoc(doc(db, 'guilds', guildId), { lastSiegeAt: Date.now() });
-}
-
-
-export async function claimTerritoryReward(
-  territoryId: string,
-  guildId: string,
-): Promise<{ gold: number; xp: number } | null> {
-  const def = TERRITORY_LIST.find(t => t.id === territoryId);
-  if (!def) return null;
-  if (!db) return { gold: def.dailyGold, xp: def.dailyXp };
-  const ref = doc(db, 'territories', territoryId);
-  return runTransaction(db, async tx => {
-    const snap = await tx.get(ref);
-    if (!snap.exists()) return null;
-    const data = snap.data() as TerritoryState;
-    if (data.guildId !== guildId) return null;
-    tx.update(ref, { lastRewardAt: Date.now() });
-    return { gold: def.dailyGold, xp: def.dailyXp };
-  });
 }
 
 // ── Mail ─────────────────────────────────────────────────────────────────────

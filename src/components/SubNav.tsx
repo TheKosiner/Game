@@ -137,7 +137,7 @@ export function GuildTabSubNav({ active, onChange }: { active: GuildTabSub; onCh
         { id: 'info'      as GuildTabSub, label: 'INFO' },
         { id: 'boss'      as GuildTabSub, label: 'BOSS' },
         { id: 'chat'      as GuildTabSub, label: 'CHAT' },
-        { id: 'territory' as GuildTabSub, label: 'MAPA' },
+        { id: 'war'       as GuildTabSub, label: 'WOJNA' },
         { id: 'ops'       as GuildTabSub, label: 'RAJD' },
       ]}
       active={active}

@@ -7,7 +7,7 @@ import {
   getGuildMemberLevels,
   type Guild, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
-import TerritoryPanel from './TerritoryPanel';
+import GuildWarPanel from './GuildWarPanel';
 import GuildChat from './GuildChat';
 import GuildBossPanel from './GuildBossPanel';
 import GuildOperationPanel from './GuildOperationPanel';
@@ -532,9 +532,9 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
         />
       )}
 
-      {/* TERRITORY view */}
-      {guildTab === 'territory' && (
-        <TerritoryPanel guild={guild} onBack={() => setGuildTab('info')} onRefresh={onRefresh} />
+      {/* WAR view */}
+      {guildTab === 'war' && (
+        <GuildWarPanel guild={guild} myUid={myUid} />
       )}
 
       {/* INFO view */}

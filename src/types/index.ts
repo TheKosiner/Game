@@ -69,7 +69,6 @@ export interface Hero {
   unlockedPortraits: number[];
   lastRespecAt: number | null;
   completedDungeons: string[];
-  lastTerritoryClaimAt?: Record<string, number>;
   lastCasinoSpinAt: number;
   goldEarnedToday: number;
   kryptaRunsToday: number;
@@ -276,7 +275,6 @@ export interface GameState {
   fleeChallengeFight: () => void;
   clearChallengeResult: () => void;
   takeDamageInGuildRaid: (amount: number) => void;
-  recordTerritoryClaimAt: (territoryId: string) => void;
   enhanceItem: (source: 'inventory' | 'equipment', idxOrSlot: number | ItemSlot) => void;
   addToInventory: (item: Item) => void;
   openMysteryBoxModal: (box: Item, invIdx: number) => void;

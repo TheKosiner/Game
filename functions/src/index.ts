@@ -347,3 +347,189 @@ export const resetAllDailyLimits = functions.https.onCall(async (_data, context)
 
   return { ok: true, resetCount };
 });
+
+// ── Guild Wars ────────────────────────────────────────────────────────────────
+
+export const declareGuildWar = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const uid = context.auth.uid;
+  const { defenderGuildId } = data as { defenderGuildId: string };
+  if (!defenderGuildId) throw new functions.https.HttpsError('invalid-argument', 'Missing defenderGuildId');
+
+  const playerSnap = await db.doc(`players/${uid}`).get();
+  if (!playerSnap.exists) throw new functions.https.HttpsError('not-found', 'Player not found');
+
+  const attackerGuildId: string = playerSnap.data()!.guildId;
+  if (!attackerGuildId) throw new functions.https.HttpsError('failed-precondition', 'Not in a guild');
+  if (attackerGuildId === defenderGuildId) throw new functions.https.HttpsError('invalid-argument', 'Cannot declare war on own guild');
+
+  const [attackerSnap, defenderSnap] = await Promise.all([
+    db.doc(`guilds/${attackerGuildId}`).get(),
+    db.doc(`guilds/${defenderGuildId}`).get(),
+  ]);
+  if (!attackerSnap.exists) throw new functions.https.HttpsError('not-found', 'Attacker guild not found');
+  if (!defenderSnap.exists) throw new functions.https.HttpsError('not-found', 'Defender guild not found');
+
+  const attackerGuild = attackerSnap.data()!;
+  const defenderGuild = defenderSnap.data()!;
+
+  const memberData = attackerGuild.members?.[uid];
+  if (!memberData) throw new functions.https.HttpsError('permission-denied', 'Not a member');
+  if (memberData.role !== 'leader' && memberData.role !== 'officer') {
+    throw new functions.https.HttpsError('permission-denied', 'Only officers and leaders can declare war');
+  }
+  if (attackerGuild.activeWarId) throw new functions.https.HttpsError('failed-precondition', 'Your guild already has an active war');
+  if (defenderGuild.activeWarId) throw new functions.https.HttpsError('failed-precondition', 'Defender guild already has an active war');
+
+  const now = Date.now();
+  const warRef = db.collection('guildWars').doc();
+  const batch = db.batch();
+  batch.set(warRef, {
+    attackerGuildId,
+    attackerGuildName: attackerGuild.name,
+    attackerGuildTag: attackerGuild.tag,
+    defenderGuildId,
+    defenderGuildName: defenderGuild.name,
+    defenderGuildTag: defenderGuild.tag,
+    declaredBy: uid,
+    declaredAt: now,
+    signupEndsAt: now + 24 * 60 * 60 * 1000,
+    status: 'signup',
+    attackers: {},
+    defenders: {},
+  });
+  batch.update(db.doc(`guilds/${attackerGuildId}`), { activeWarId: warRef.id });
+  batch.update(db.doc(`guilds/${defenderGuildId}`), { activeWarId: warRef.id });
+  await batch.commit();
+
+  return { warId: warRef.id };
+});
+
+export const joinGuildWar = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const uid = context.auth.uid;
+  const { warId } = data as { warId: string };
+
+  const playerSnap = await db.doc(`players/${uid}`).get();
+  if (!playerSnap.exists) throw new functions.https.HttpsError('not-found', 'Player not found');
+
+  const myGuildId: string = playerSnap.data()!.guildId;
+  if (!myGuildId) throw new functions.https.HttpsError('failed-precondition', 'Not in a guild');
+
+  const username: string = playerSnap.data()!.username ?? 'Unknown';
+  const portrait: number = playerSnap.data()!.portrait ?? 0;
+
+  const warRef = db.doc(`guildWars/${warId}`);
+  return db.runTransaction(async tx => {
+    const warSnap = await tx.get(warRef);
+    if (!warSnap.exists) throw new functions.https.HttpsError('not-found', 'War not found');
+
+    const war = warSnap.data()!;
+    if (war.status !== 'signup') throw new functions.https.HttpsError('failed-precondition', 'Signup phase has ended');
+    if (Date.now() >= war.signupEndsAt) throw new functions.https.HttpsError('failed-precondition', 'Signup period has ended');
+
+    let side: string;
+    if (myGuildId === war.attackerGuildId) side = 'attackers';
+    else if (myGuildId === war.defenderGuildId) side = 'defenders';
+    else throw new functions.https.HttpsError('permission-denied', 'Not in either warring guild');
+
+    if ((war[side] ?? {})[uid]) return { side };
+
+    const saveSnap = await tx.get(db.doc(`saves/${uid}`));
+    const level: number = saveSnap.exists ? (saveSnap.data()!.hero?.level ?? 1) : 1;
+
+    tx.update(warRef, {
+      [`${side}.${uid}`]: { username, level, portrait, joinedAt: Date.now() },
+    });
+    return { side };
+  });
+});
+
+export const resolveGuildWar = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const { warId } = data as { warId: string };
+  const warRef = db.doc(`guildWars/${warId}`);
+  const warSnap = await warRef.get();
+
+  if (!warSnap.exists) throw new functions.https.HttpsError('not-found', 'War not found');
+  const war = warSnap.data()!;
+
+  if (war.status === 'finished') return { id: warId, ...war };
+  if (war.status === 'battle') return { id: warId, ...war };
+  if (war.status !== 'signup') throw new functions.https.HttpsError('failed-precondition', 'War not in signup phase');
+  if (Date.now() < war.signupEndsAt) throw new functions.https.HttpsError('failed-precondition', 'Signup period not ended yet');
+
+  // Run battle simulation
+  const attackers = Object.entries(war.attackers ?? {}) as [string, { username: string; level: number }][];
+  const defenders = Object.entries(war.defenders ?? {}) as [string, { username: string; level: number }][];
+
+  // Power = level² with ±20% randomness; defenders get 10% home advantage
+  function roll(level: number): number {
+    return level * level * (0.8 + Math.random() * 0.4);
+  }
+
+  const sortedAtk = [...attackers].sort((a, b) => b[1].level - a[1].level);
+  const sortedDef = [...defenders].sort((a, b) => b[1].level - a[1].level);
+  const atkTag = war.attackerGuildTag as string;
+  const defTag = war.defenderGuildTag as string;
+
+  const log: string[] = [];
+  log.push(`⚔ BITWA: [${atkTag}] vs [${defTag}]`);
+  log.push(`Atakujący: ${sortedAtk.length} | Obrońcy: ${sortedDef.length}`);
+
+  let atkWins = 0;
+  let defWins = 0;
+  const pairs = Math.max(sortedAtk.length, sortedDef.length);
+
+  for (let i = 0; i < pairs; i++) {
+    const atk = sortedAtk[i];
+    const def = sortedDef[i];
+    if (atk && def) {
+      const aP = roll(atk[1].level);
+      const dP = roll(def[1].level) * 1.1;
+      if (aP > dP) {
+        atkWins++;
+        log.push(`⚔ ${atk[1].username} [${atkTag}] pokonuje ${def[1].username} [${defTag}]`);
+      } else {
+        defWins++;
+        log.push(`🛡 ${def[1].username} [${defTag}] odpiera atak ${atk[1].username} [${atkTag}]`);
+      }
+    } else if (atk) {
+      atkWins++;
+      log.push(`⚔ ${atk[1].username} [${atkTag}] wygrywa walkower`);
+    } else if (def) {
+      defWins++;
+      log.push(`🛡 ${def[1].username} [${defTag}] wygrywa walkower`);
+    }
+  }
+
+  const winner = atkWins > defWins ? 'attacker' : 'defender';
+  log.push(`Wynik: ${atkWins} : ${defWins}`);
+  log.push(winner === 'attacker'
+    ? `🏆 ZWYCIĘSTWO: [${atkTag}]!`
+    : `🛡 OBRONA UDANA: [${defTag}]!`);
+
+  const result = { winner, attackerScore: atkWins, defenderScore: defWins, log };
+  const now = Date.now();
+
+  try {
+    await db.runTransaction(async tx => {
+      const snap = await tx.get(warRef);
+      if (snap.data()!.status !== 'signup') throw new Error('ALREADY_RESOLVED');
+      tx.update(warRef, { status: 'finished', result, resolvedAt: now });
+      tx.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+      tx.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+    });
+  } catch (e: any) {
+    if (e.message === 'ALREADY_RESOLVED') {
+      const finalSnap = await warRef.get();
+      return { id: warId, ...finalSnap.data() };
+    }
+    throw e;
+  }
+
+  return { id: warId, ...war, status: 'finished', result, resolvedAt: now };
+});

@@ -4,7 +4,7 @@ export type MainTab   = 'hero' | 'play' | 'guild' | 'social' | 'shop' | 'lobby';
 export type PlaySub     = 'dungeon' | 'challenge' | 'quests' | 'pvp' | 'krypta';
 export type SocialSub   = 'ranking' | 'mail' | 'chat';
 export type GuildSub    = SocialSub;
-export type GuildTabSub = 'info' | 'boss' | 'chat' | 'territory' | 'ops';
+export type GuildTabSub = 'info' | 'boss' | 'chat' | 'war' | 'ops';
 export type ShopSub     = 'shop' | 'gems' | 'smith' | 'casino' | 'enchanter';
 
 // legacy alias for any code that still imports Tab
