@@ -19,7 +19,7 @@ function formatCountdown(ms: number): string {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function GuildWarPanel({ guild, myUid }: { guild: Guild; myUid: string }) {
+export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; onRefresh: () => void }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const isLeader = guild.leaderUid === myUid;
@@ -77,6 +77,7 @@ export default function GuildWarPanel({ guild, myUid }: { guild: Guild; myUid: s
     try {
       await declareWar(targetId);
       setShowDeclareForm(false);
+      onRefresh();
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.includes('already has an active war') || msg.includes('jest już')) {
@@ -198,19 +199,40 @@ export default function GuildWarPanel({ guild, myUid }: { guild: Guild; myUid: s
 
       {/* Status section */}
       {isSignup && signupOpen && (
-        <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--gold-darker)', padding: '10px 12px', textAlign: 'center' }}>
-          <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.warSignupEnds}</p>
-          <p style={{ ...PX(10), color: 'var(--gold-bright)', textShadow: '0 0 8px rgba(255,215,0,0.5)', marginBottom: 8 }}>
-            {formatCountdown(timeLeft)}
-          </p>
-          {mySide && !hasJoined && (
-            <button onClick={handleJoin} disabled={joining} className="btn btn-primary" style={{ fontSize: 10, padding: '7px 16px' }}>
-              {joining ? <GameIcon name="hourglass" size={10} /> : t.guild.warJoin}
-            </button>
-          )}
-          {hasJoined && (
-            <p style={{ ...PX(5), color: '#4ade80' }}>{t.guild.warJoined}</p>
-          )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {/* Role banner */}
+          <div style={{
+            background: myGuildId === war.attackerGuildId ? 'rgba(80,10,10,0.7)' : 'rgba(10,20,60,0.7)',
+            border: `1px solid ${myGuildId === war.attackerGuildId ? 'rgba(200,50,50,0.5)' : 'rgba(80,120,255,0.5)'}`,
+            padding: '8px 12px',
+          }}>
+            <p style={{ ...PX(5), color: myGuildId === war.attackerGuildId ? '#f87171' : '#7dd3fc' }}>
+              {myGuildId === war.attackerGuildId
+                ? (isEn ? `⚔ You declared war on [${war.defenderGuildTag}] ${war.defenderGuildName}` : `⚔ Wypowiedziałeś wojnę gildii [${war.defenderGuildTag}] ${war.defenderGuildName}`)
+                : (isEn ? `🛡 Guild [${war.attackerGuildTag}] ${war.attackerGuildName} declared war on you!` : `🛡 Gildia [${war.attackerGuildTag}] ${war.attackerGuildName} wypowiedziała Ci wojnę!`)}
+            </p>
+          </div>
+
+          {/* Countdown + join */}
+          <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--gold-darker)', padding: '10px 12px', textAlign: 'center' }}>
+            <p style={{ ...PX(4), color: 'var(--text-muted)', marginBottom: 4 }}>{t.guild.warSignupEnds}</p>
+            <p style={{ ...PX(10), color: 'var(--gold-bright)', textShadow: '0 0 8px rgba(255,215,0,0.5)', marginBottom: 8 }}>
+              {formatCountdown(timeLeft)}
+            </p>
+            {mySide && !hasJoined && (
+              <button onClick={handleJoin} disabled={joining} className="btn btn-primary" style={{ fontSize: 10, padding: '8px 20px' }}>
+                {joining ? <GameIcon name="hourglass" size={10} /> : t.guild.warJoin}
+              </button>
+            )}
+            {hasJoined && (
+              <p style={{ ...PX(5), color: '#4ade80' }}>{t.guild.warJoined}</p>
+            )}
+            {!mySide && (
+              <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
+                {isEn ? 'You are a spectator of this war.' : 'Jesteś obserwatorem tej wojny.'}
+              </p>
+            )}
+          </div>
         </div>
       )}
 

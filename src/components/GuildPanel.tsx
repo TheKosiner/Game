@@ -533,7 +533,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { gui
 
       {/* WAR view */}
       {guildTab === 'war' && (
-        <GuildWarPanel guild={guild} myUid={myUid} />
+        <GuildWarPanel guild={guild} myUid={myUid} onRefresh={onRefresh} />
       )}
 
       {/* INFO view */}
