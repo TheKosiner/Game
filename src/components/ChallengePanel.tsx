@@ -1369,7 +1369,7 @@ function SelectView() {
           <div style={{ textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>DROP</p>
             <p style={{ ...ORB, fontSize: 10, color: '#cc44ff' }}>
-              {t.challenge.drop(Math.round(bossIdx / 15 * 65))}
+              {t.challenge.drop(Math.round(Math.min(65, bossIdx / (CHALLENGE_BOSSES.length - 1) * 65)))}
             </p>
             <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.challenge.dropLabel}</p>
           </div>

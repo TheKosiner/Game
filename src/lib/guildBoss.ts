@@ -118,7 +118,7 @@ export async function attackGuildBoss(
 
       const existing = data.participants[uid];
       if (existing) {
-        const sameDay = new Date(existing.attackedAt).toDateString() === new Date().toDateString();
+        const sameDay = new Date(existing.attackedAt).toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10);
         if (sameDay) throw new Error('already_attacked');
       }
 
@@ -181,7 +181,7 @@ export async function claimBossReward(
       tx.update(ref, { [`participants.${uid}.rewardClaimed`]: true });
     });
 
-    const legendaryChance = bossIdx / 15 * 0.65;
+    const legendaryChance = Math.min(0.65, bossIdx / Math.max(1, GUILD_BOSSES.length - 1) * 0.65);
     const item = generateItem(hero.level, Math.random() < legendaryChance ? 'legendary' : 'epic');
 
     const store = useGameStore.getState();

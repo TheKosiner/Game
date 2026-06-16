@@ -21,12 +21,11 @@ export function showRewardedAd(): Promise<boolean> {
   return new Promise(resolve => {
     if (!isCrazyGames()) { resolve(false); return; }
     let rewarded = false;
+    const tid = setTimeout(() => resolve(rewarded), 30_000);
     window.CrazyGames!.SDK.ad.requestAd('rewarded', {
-      adFinished: () => { rewarded = true;  resolve(true); },
-      adError:    () => {                    resolve(false); },
+      adFinished: () => { rewarded = true;  clearTimeout(tid); resolve(true); },
+      adError:    () => {                   clearTimeout(tid); resolve(false); },
     });
-    // Safety timeout — if SDK never calls back, don't block the UI forever
-    setTimeout(() => resolve(rewarded), 30_000);
   });
 }
 

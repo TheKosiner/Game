@@ -52,6 +52,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   const user = useAuthStore(s => s.user);
   const lang = useLangStore(s => s.lang);
   const isEn = lang === 'en';
+  const isEnRef = useRef(isEn);
   const [boss, setBoss] = useState<GuildBossState | null | 'loading'>('loading');
   const [now, setNow] = useState(Date.now());
   const [attacking, setAttacking] = useState(false);
@@ -68,6 +69,8 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   const logRef = useRef<HTMLDivElement>(null);
   const initialized = useRef(false);
 
+  useEffect(() => { isEnRef.current = isEn; }, [isEn]);
+
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
@@ -79,7 +82,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
     ensureBossActive(guildId).catch(() => {});
     const unsub = subscribeToBoss(guildId, b => {
       setBoss(b);
-      if (b && user) setLog(buildLog(b, user.uid, isEn));
+      if (b && user) setLog(buildLog(b, user.uid, isEnRef.current));
     });
     return unsub;
   }, [guildId]);
@@ -335,9 +338,9 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
       <div style={{ background: 'rgba(150,80,255,0.05)', border: '1px solid rgba(150,80,255,0.15)', padding: '8px 12px' }}>
         <p style={{ ...ORB, fontSize: 10, color: '#9955cc', marginBottom: 5 }}>{isEn ? 'DEFEAT REWARDS' : 'NAGRODY ZA POKONANIE'}</p>
         <div style={{ display: 'flex', gap: 12 }}>
-          <span style={{ ...MONO, fontSize: 10, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.05)))} XP</span>
-          <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.05)))} <GameIcon name="coin" size={10} /></span>
-          <span style={{ ...MONO, fontSize: 10, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / 15 * 65)}% Legen.</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#4488ff' }}>+{fmtNum(Math.round(bossData.xpReward * (1 + (hero.level-1)*0.08)))} XP</span>
+          <span style={{ ...MONO, fontSize: 10, color: '#ffd700' }}>+{fmtNum(Math.round(bossData.goldReward * (1 + (hero.level-1)*0.08)))} <GameIcon name="coin" size={10} /></span>
+          <span style={{ ...MONO, fontSize: 10, color: '#cc44ff' }}>{isEn ? 'Epic' : 'Epicki'} / {Math.round(bossData.id / (GUILD_BOSSES.length - 1) * 65)}% Legen.</span>
         </div>
       </div>
 

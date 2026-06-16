@@ -107,7 +107,7 @@ function isSameDay(ts: number): boolean {
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
   if (MAX_INVENTORY - inventory.length <= 0) return [];
-  const legendaryChance = bossIdx / 15 * 0.65; // 0% (boss 0) → 65% (boss 15)
+  const legendaryChance = Math.min(0.65, bossIdx / (CHALLENGE_BOSSES.length - 1) * 0.65);
   const rarity: Rarity = Math.random() < legendaryChance ? 'legendary' : 'epic';
   const itemLevel = Math.max(1, heroLevel + rollInt(0, 4));
   return [generateItem(itemLevel, rarity)];
@@ -254,23 +254,23 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     let { xp, xpToNext, level, stats, maxHp, hp, attributePoints } = hero;
     xp += amount;
-    let leveled = false;
+    let levelsGained = 0;
     while (xp >= xpToNext && level < MAX_LEVEL) {
       xp -= xpToNext;
       level++;
       xpToNext = calcXpToNext(level);
-      leveled = true;
+      levelsGained++;
     }
     if (level >= MAX_LEVEL) xp = Math.min(xp, xpToNext - 1);
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
-    const hpGain = leveled ? newMaxHp - maxHp : 0;
-    const newAttributePoints = leveled ? attributePoints + 1 : attributePoints;
+    const hpGain = levelsGained > 0 ? newMaxHp - maxHp : 0;
+    const newAttributePoints = attributePoints + levelsGained;
     set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints: newAttributePoints } });
-    if (leveled) {
+    if (levelsGained > 0) {
       const t = getT();
       get().addCombatLog(t.combat.levelUp(level), 'system');
-      get().addGems(3);
-      get().addCombatLog(t.gems.levelUpLog(3), 'system');
+      get().addGems(3 * levelsGained);
+      get().addCombatLog(t.gems.levelUpLog(3 * levelsGained), 'system');
       set({ levelUpPending: level });
     }
   },
