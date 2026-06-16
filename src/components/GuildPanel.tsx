@@ -420,7 +420,6 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGuild
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
-  const setGuildTab = onGuildTabChange;
   const [leaderWarn, setLeaderWarn] = useState(false);
   type DlgState = { msg: string; okLabel?: string; cancelLabel?: string; onOk: () => void } | null;
   const [dlg, setDlg] = useState<DlgState>(null);
