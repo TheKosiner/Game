@@ -1,6 +1,6 @@
-import { doc, getDoc, setDoc, onSnapshot, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, runTransaction } from 'firebase/firestore';
 import { db } from './firebase';
-import { useGameStore } from '../store/gameStore';
+import { useGameStore, MAX_INVENTORY } from '../store/gameStore';
 import { getHeroAttack } from '../utils/combat';
 import { GUILD_BOSSES } from '../data/guildBosses';
 import { generateItem } from '../data/itemGenerator';
@@ -54,43 +54,39 @@ export function subscribeToBoss(
   }, () => callback(null));
 }
 
-export async function ensureBossActive(guildId: string): Promise<void> {
-  if (!db) return;
-  const ref = doc(db, 'guilds', guildId, 'boss', 'active');
-  const snap = await getDoc(ref);
-  const now = Date.now();
-
-  if (!snap.exists()) {
-    await spawnBoss(guildId, 0);
-    return;
-  }
-
-  const data = snap.data() as GuildBossState;
-
-  // Timed out without defeat → reset same boss
-  if (!data.defeated && now > data.endsAt) {
-    await spawnBoss(guildId, data.bossIdx);
-    return;
-  }
-
-  // Defeated → spawn next boss at midnight after defeat
-  if (data.defeated && data.defeatedAt && now > midnightAfter(data.defeatedAt)) {
-    await spawnBoss(guildId, (data.bossIdx + 1) % GUILD_BOSSES.length);
-  }
-}
-
-async function spawnBoss(guildId: string, bossIdx: number): Promise<void> {
-  if (!db) return;
+function buildBoss(bossIdx: number): GuildBossState {
   const boss = GUILD_BOSSES[bossIdx];
-  const now = Date.now();
-  await setDoc(doc(db, 'guilds', guildId, 'boss', 'active'), {
+  return {
     bossIdx,
     currentHp: boss.hp,
     maxHp: boss.hp,
-    startedAt: now,
+    startedAt: Date.now(),
     endsAt: nextMidnight(),
     defeated: false,
     participants: {},
+  };
+}
+
+export async function ensureBossActive(guildId: string): Promise<void> {
+  if (!db) return;
+  const ref = doc(db, 'guilds', guildId, 'boss', 'active');
+  // Run inside a transaction so two members opening the panel simultaneously
+  // can't both spawn a boss and wipe accumulated participants/HP.
+  await runTransaction(db, async tx => {
+    const snap = await tx.get(ref);
+    const now = Date.now();
+
+    if (!snap.exists()) { tx.set(ref, buildBoss(0)); return; }
+
+    const data = snap.data() as GuildBossState;
+
+    // Timed out without defeat → reset same boss
+    if (!data.defeated && now > data.endsAt) { tx.set(ref, buildBoss(data.bossIdx)); return; }
+
+    // Defeated → spawn next boss at midnight after defeat
+    if (data.defeated && data.defeatedAt && now > midnightAfter(data.defeatedAt)) {
+      tx.set(ref, buildBoss((data.bossIdx + 1) % GUILD_BOSSES.length));
+    }
   });
 }
 
@@ -118,7 +114,10 @@ export async function attackGuildBoss(
 
       const existing = data.participants[uid];
       if (existing) {
-        const sameDay = new Date(existing.attackedAt).toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10);
+        // Use local-time day boundary to match the boss reset (nextMidnight is local).
+        const a = new Date(existing.attackedAt);
+        const b = new Date();
+        const sameDay = a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
         if (sameDay) throw new Error('already_attacked');
       }
 
@@ -188,7 +187,7 @@ export async function claimBossReward(
     store.addXp(xp);
     store.addGold(gold);
     const currentHero = useGameStore.getState().hero;
-    if (currentHero.inventory.length < 20) {
+    if (currentHero.inventory.length < MAX_INVENTORY) {
       useGameStore.setState(s => ({ hero: { ...s.hero, inventory: [...s.hero.inventory, item] } }));
     }
     store.saveGame();

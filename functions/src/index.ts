@@ -160,121 +160,33 @@ export const claimGemCredits = functions.https.onCall(async (_data, context) => 
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
 
   const uid = context.auth.uid;
+  const saveRef = db.doc(`saves/${uid}`);
   return db.runTransaction(async tx => {
-    const snap = await tx.get(
+    // All reads must precede writes in a Firestore transaction.
+    const creditsSnap = await tx.get(
       db.collection('gemCredits').where('uid', '==', uid).where('claimed', '==', false)
     );
-    if (snap.empty) return { gems: 0 };
+    const saveSnap = await tx.get(saveRef);
+    const currentGems: number = saveSnap.exists ? (saveSnap.data()!.hero?.gems ?? 0) : 0;
+
+    if (creditsSnap.empty) return { gems: 0, newGems: currentGems };
 
     let total = 0;
-    const now = admin.firestore.FieldValue.serverTimestamp();
-    snap.docs.forEach(d => {
+    const claimedAt = admin.firestore.FieldValue.serverTimestamp();
+    creditsSnap.docs.forEach(d => {
       total += (d.data().gems as number) ?? 0;
-      tx.update(d.ref, { claimed: true, claimedAt: now });
+      tx.update(d.ref, { claimed: true, claimedAt });
     });
-    return { gems: total };
+
+    // Credit gems into the save server-side (admin SDK bypasses security rules).
+    // This is what lets the rules cap client-side gem increases tightly: by the
+    // time the client saves, the authoritative balance already includes the purchase.
+    const newGems = currentGems + total;
+    if (saveSnap.exists) {
+      tx.update(saveRef, { 'hero.gems': newGems, updatedAt: Date.now() });
+    }
+    return { gems: total, newGems };
   });
-});
-
-interface PvpRequest {
-  attackerId: string;
-  defenderId: string;
-}
-
-interface PvpResult {
-  won: boolean;
-  xpGained: number;
-  goldGained: number;
-  timestamp: number;
-}
-
-const MAX_PVP_ROUNDS = 300;
-const PVP_COOLDOWN_MS = 15 * 60 * 1000;
-
-function simulatePvp(
-  heroAtk: number,
-  heroDef: number,
-  heroHp: number,
-  oppAtk: number,
-  oppDef: number,
-  oppHp: number
-): boolean {
-  let hHp = heroHp;
-  let oHp = oppHp;
-
-  for (let i = 0; i < MAX_PVP_ROUNDS; i++) {
-    oHp -= Math.max(1, Math.round(heroAtk * (0.85 + Math.random() * 0.3)) - oppDef);
-    if (oHp <= 0) return true;
-
-    hHp -= Math.max(1, Math.round(oppAtk * (0.85 + Math.random() * 0.3)) - heroDef);
-    if (hHp <= 0) return false;
-  }
-
-  return hHp >= oHp;
-}
-
-export const performPvp = functions.https.onCall(async (data: PvpRequest, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-  }
-
-  const { attackerId, defenderId } = data;
-
-  if (context.auth.uid !== attackerId) {
-    throw new functions.https.HttpsError('permission-denied', 'Can only fight as yourself');
-  }
-
-  // Read BOTH players from Firestore — never trust client-provided stats
-  const [attackerDoc, defenderDoc] = await Promise.all([
-    db.collection('players').doc(attackerId).get(),
-    db.collection('players').doc(defenderId).get(),
-  ]);
-
-  if (!attackerDoc.exists) throw new functions.https.HttpsError('not-found', 'Attacker not found');
-  if (!defenderDoc.exists) throw new functions.https.HttpsError('not-found', 'Defender not found');
-
-  const attackerData = attackerDoc.data()!;
-  const defenderData = defenderDoc.data()!;
-
-  const lastPvpFight = attackerData.lastPvpFight || 0;
-  if (Date.now() - lastPvpFight < PVP_COOLDOWN_MS) {
-    throw new functions.https.HttpsError('failed-precondition', 'PvP cooldown active');
-  }
-
-  // Use Firestore stats for both sides — client cannot inflate them
-  const won = simulatePvp(
-    attackerData.attack  || 10,
-    attackerData.defense || 5,
-    attackerData.maxHp   || 100,
-    defenderData.attack  || 10,
-    defenderData.defense || 5,
-    defenderData.maxHp   || 100
-  );
-
-  const xpGained = won ? Math.max(20, defenderData.level * 20) : 8;
-  const goldGained = won ? Math.max(10, defenderData.level * 10) : 0;
-
-  const result: PvpResult = {
-    won,
-    xpGained,
-    goldGained,
-    timestamp: Date.now(),
-  };
-
-  await db.collection('players').doc(attackerId).update({
-    lastPvpFight: Date.now(),
-    pvpWins: admin.firestore.FieldValue.increment(won ? 1 : 0),
-    pvpLosses: admin.firestore.FieldValue.increment(won ? 0 : 1),
-  });
-
-  await db.collection('pvp_results').add({
-    attackerId,
-    defenderId,
-    result,
-    timestamp: Date.now(),
-  });
-
-  return result;
 });
 
 // ── claimDailyReward ──────────────────────────────────────────────────────────
@@ -370,9 +282,9 @@ export const collectBeggingServer = functions.https.onCall(async (_data, context
     const now = Date.now();
     if (now < hero.beggingUntil) throw new functions.https.HttpsError('failed-precondition', 'Begging not finished yet');
 
-    // Cap reward to what was promised at start — prevent localStorage tampering
-    const maxGold = Math.floor(10 * (5 + (hero.level ?? 1) * 2) * 1.2); // max possible reward
-    const reward = Math.min(hero.beggingReward ?? 0, maxGold);
+    // Reward is the amount promised at start; clamp to the global daily gold cap
+    // (the same ceiling the Firestore rules enforce via validBeggingReward).
+    const reward = Math.min(hero.beggingReward ?? 0, 250_000_000);
 
     tx.update(saveRef, {
       'hero.beggingUntil': null,
@@ -435,20 +347,3 @@ export const resetAllDailyLimits = functions.https.onCall(async (_data, context)
 
   return { ok: true, resetCount };
 });
-
-export const validatePlayerUpdate = functions.firestore
-  .document('players/{uid}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data();
-    const after = change.after.data();
-
-    if (after.level > before.level + 5) {
-      console.error(`Suspicious level gain for ${context.params.uid}: ${before.level} -> ${after.level}`);
-      await change.after.ref.update({ level: before.level });
-    }
-
-    if (after.gold > before.gold + 10000) {
-      console.error(`Suspicious gold gain for ${context.params.uid}: ${before.gold} -> ${after.gold}`);
-      await change.after.ref.update({ gold: before.gold });
-    }
-  });

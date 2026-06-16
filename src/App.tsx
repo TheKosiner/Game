@@ -53,7 +53,6 @@ export default function App() {
   const initHero = useGameStore(s => s.initHero);
   const checkDailyReset = useGameStore(s => s.checkDailyReset);
   const tickPassiveRegen = useGameStore(s => s.tickPassiveRegen);
-  const addGems = useGameStore(s => s.addGems);
   const addCombatLog = useGameStore(s => s.addCombatLog);
   const challengeResult = useGameStore(s => s.challengeResult);
 
@@ -323,9 +322,11 @@ export default function App() {
   // Claim any pending gem credits from Stripe purchases
   useEffect(() => {
     if (!user || !gameLoaded) return;
-    claimGemCredits().then(gems => {
+    claimGemCredits().then(({ gems, newGems }) => {
       if (gems > 0) {
-        addGems(gems);
+        // Server already credited the purchase into the save; adopt its authoritative
+        // balance (don't add locally) so the next save's gem delta stays within rules.
+        useGameStore.setState(s => ({ hero: { ...s.hero, gems: newGems } }));
         addCombatLog(tRef.current.gems.claimedLog(gems), 'system');
         saveGame();
       }

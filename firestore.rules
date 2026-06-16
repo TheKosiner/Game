@@ -103,6 +103,19 @@ service cloud.firestore {
         || nw.hero.beggingReward <= 250000000;
     }
 
+    // Gems are premium currency. Client writes may only ADD small amounts that come
+    // from level-ups (+3/level, capped to +5 levels = +15 per save) and the daily
+    // reward. All larger sources (Stripe purchases, daily reward) are credited
+    // server-side by Cloud Functions before the client save lands, so by then the
+    // baseline already includes them and the client delta stays ~0. Spending freely
+    // decreases. This blocks "set gems to a million" localStorage tampering.
+    function validGems(old, nw) {
+      let oldGems = old.hero.gems == null ? 0 : old.hero.gems;
+      return nw.hero.gems is number
+        && nw.hero.gems >= 0
+        && nw.hero.gems <= oldGems + 20;
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
@@ -122,6 +135,7 @@ service cloud.firestore {
         && validRestClear(old, nw)
         && validChallengeCooldown(old, nw)
         && validBeggingReward(nw)
+        && validGems(old, nw)
         && validTimestamp(nw);
     }
 

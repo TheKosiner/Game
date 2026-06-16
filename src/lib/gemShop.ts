@@ -11,9 +11,16 @@ export async function startGemCheckout(packageId: string): Promise<void> {
   if (result.data.url) window.location.href = result.data.url;
 }
 
-export async function claimGemCredits(): Promise<number> {
-  if (!functions) return 0;
-  const fn = httpsCallable<Record<string, never>, { gems: number }>(functions, 'claimGemCredits');
+export interface GemClaimResult {
+  /** Gems newly claimed in this call (for the log message). */
+  gems: number;
+  /** Authoritative gem balance after the server credited the purchase. */
+  newGems: number;
+}
+
+export async function claimGemCredits(): Promise<GemClaimResult> {
+  if (!functions) return { gems: 0, newGems: 0 };
+  const fn = httpsCallable<Record<string, never>, { gems: number; newGems: number }>(functions, 'claimGemCredits');
   const result = await fn({});
-  return result.data.gems ?? 0;
+  return { gems: result.data.gems ?? 0, newGems: result.data.newGems ?? 0 };
 }

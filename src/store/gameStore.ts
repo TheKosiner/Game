@@ -16,7 +16,7 @@ import {
 
 const SAVE_KEY = 'glitchsoul_save';
 const OLD_SAVE_KEY = 'cybermagic_save';
-const MAX_INVENTORY = 20;
+export const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 const MAX_LEVEL = 300;
 export const MAX_DAILY_DUNGEONS = 10;
@@ -280,10 +280,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     const bonus = get().guildGoldBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
-    set({ hero: { ...hero, gold: hero.gold + amount, goldEarnedToday: hero.goldEarnedToday + amount } });
+    // Clamp to the same ceilings the Firestore rules enforce (gold 1e9, daily 250M)
+    // so late-game players never hit a hard save rejection / desync.
+    const gold = Math.min(hero.gold + amount, 1_000_000_000);
+    const goldEarnedToday = Math.min(hero.goldEarnedToday + amount, 250_000_000);
+    set({ hero: { ...hero, gold, goldEarnedToday } });
   },
 
   addGems: (amount) => {
+    if (!isFinite(amount) || amount <= 0) return;
     const { hero } = get();
     set({ hero: { ...hero, gems: hero.gems + amount } });
   },
@@ -497,6 +502,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().addCombatLog(`${t.combat.dealDamage(heroDmg)}${critText} ${currentEnemy.emoji} ${currentEnemy.name}`, 'hero');
 
     if (enemyHp <= 0) {
+      // Persist any damage the enemy dealt this round (enemy-first strike) before
+      // rewards are applied — otherwise the opening hit is silently refunded.
+      set({ hero: { ...get().hero, hp: heroHp } });
       get().addCombatLog(t.combat.defeated(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode = get().dungeonMode;
       const diff = get().dungeonDifficulty;
@@ -761,6 +769,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   recordPvpResult: (won: boolean, opponent: PvpOpponent): PvpResult => {
     const { pvpWins, pvpLosses, pvpRating, pvpLog } = get();
     const now = Date.now();
+    // Sanitize a backward-set clock (same guard as performPvp). The cooldown itself
+    // is gated in the UI before a fight can start.
+    if (get().lastPvpFight > now) set({ lastPvpFight: now });
     const xpGained = won ? Math.max(10, opponent.level * 10) : 4;
     const goldGained = won ? Math.max(10, opponent.level * 10) : 0;
     const ratingDelta = won ? 25 : -15;
@@ -1191,7 +1202,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addToInventory: (item) => {
     const { hero } = get();
-    if (hero.inventory.length >= 20) return;
+    if (hero.inventory.length >= MAX_INVENTORY) return;
     set({ hero: { ...hero, inventory: [...hero.inventory, item] } });
     get().saveGame();
   },
