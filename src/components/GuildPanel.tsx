@@ -639,7 +639,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { gui
 
 // ── Main Panel ───────────────────────────────────────────────────────────────
 
-export default function GuildPanel({ guildTab, onGuildTabChange }: { guildTab: import('./BottomNav').GuildTabSub; onGuildTabChange: (t: import('./BottomNav').GuildTabSub) => void }) {
+export default function GuildPanel({ guildTab }: { guildTab: import('./BottomNav').GuildTabSub }) {
   const user = useAuthStore(s => s.user);
   const t = useT();
   const setGuildBonuses = useGameStore(s => s.setGuildBonuses);

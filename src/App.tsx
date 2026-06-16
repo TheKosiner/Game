@@ -409,7 +409,7 @@ export default function App() {
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
               {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
               {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
-              {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
+              {tab === 'guild'  && <GuildPanel guildTab={guildTab} />}
               {tab === 'lobby'  && <LobbyPanel />}
               {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
               {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
@@ -570,7 +570,7 @@ export default function App() {
             {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
             {tab === 'play'   && playSub === 'pvp'       && <PvpPanel />}
             {tab === 'play'   && playSub === 'krypta'    && <KryptaPanel />}
-            {tab === 'guild'  && <GuildPanel guildTab={guildTab} onGuildTabChange={setGuildTab} />}
+            {tab === 'guild'  && <GuildPanel guildTab={guildTab} />}
             {tab === 'lobby'  && <LobbyPanel />}
             {tab === 'shop'   && shopSub === 'shop'      && <ShopPanel />}
             {tab === 'shop'   && shopSub === 'gems'      && <GemsPanel />}
