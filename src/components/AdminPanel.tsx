@@ -20,9 +20,12 @@ interface PlayerInfo {
   kryptaRunsToday: number;
   questsCompletedToday: number;
   activeQuest: boolean;
+  activeQuestEndsAt: number | null;
   restingUntil: number | null;
   voluntaryRestUntil: number | null;
   guildId: string | null;
+  lastDailyReset: number;
+  streakDays: number;
 }
 
 async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
@@ -48,9 +51,12 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
         kryptaRunsToday: d.hero?.kryptaRunsToday ?? 0,
         questsCompletedToday: d.hero?.questsCompletedToday ?? 0,
         activeQuest: !!d.activeQuest,
+        activeQuestEndsAt: d.activeQuest?.endsAt ?? null,
         restingUntil: d.hero?.restingUntil ?? null,
         voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
         guildId: pd?.guildId ?? null,
+        lastDailyReset: d.hero?.lastDailyReset ?? 0,
+        streakDays: d.hero?.streakDays ?? 0,
       };
     }
   } catch {}
@@ -78,9 +84,12 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           kryptaRunsToday: d.hero?.kryptaRunsToday ?? 0,
           questsCompletedToday: d.hero?.questsCompletedToday ?? 0,
           activeQuest: !!d.activeQuest,
+          activeQuestEndsAt: d.activeQuest?.endsAt ?? null,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
           guildId: pd.guildId ?? null,
+          lastDailyReset: d.hero?.lastDailyReset ?? 0,
+          streakDays: d.hero?.streakDays ?? 0,
         };
       }
     }
@@ -109,9 +118,12 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
           kryptaRunsToday: d.hero?.kryptaRunsToday ?? 0,
           questsCompletedToday: d.hero?.questsCompletedToday ?? 0,
           activeQuest: !!d.activeQuest,
+          activeQuestEndsAt: d.activeQuest?.endsAt ?? null,
           restingUntil: d.hero?.restingUntil ?? null,
           voluntaryRestUntil: d.hero?.voluntaryRestUntil ?? null,
           guildId: pd.guildId ?? null,
+          lastDailyReset: d.hero?.lastDailyReset ?? 0,
+          streakDays: d.hero?.streakDays ?? 0,
         };
       }
     }
@@ -366,10 +378,15 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
               Operacje: {player.dungeonRunsToday}/10 | Krypta: {player.kryptaRunsToday}/5 | Misje: {player.questsCompletedToday}/5
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.activeQuest ? '#ff8844' : '#666' }}>
-              Misja: {player.activeQuest ? <><GameIcon name="warning" size={9} color="#ff8844" /> aktywna</> : 'brak'}
+              Misja: {player.activeQuest
+                ? <><GameIcon name="warning" size={9} color="#ff8844" /> aktywna {player.activeQuestEndsAt ? `(kończy ${new Date(player.activeQuestEndsAt).toLocaleTimeString('pl-PL')})` : ''}</>
+                : 'brak'}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: (player.restingUntil || player.voluntaryRestUntil) ? '#ff8844' : '#666' }}>
               Odpoczynek: {(player.restingUntil || player.voluntaryRestUntil) ? <><GameIcon name="warning" size={9} color="#ff8844" /> aktywny</> : 'brak'}
+            </p>
+            <p style={{ ...MONO, fontSize: 9, color: '#aaa' }}>
+              Streak: 🔥{player.streakDays} | Reset: {player.lastDailyReset ? new Date(player.lastDailyReset).toLocaleString('pl-PL') : 'nigdy'}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: player.guildId ? '#88aaff' : '#444' }}>
               Gildia: {player.guildId ? player.guildId.slice(0, 12) + '...' : 'brak'}
