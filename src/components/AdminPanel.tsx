@@ -248,6 +248,23 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
     }
   };
 
+  const resetDailyStreak = async () => {
+    if (!player || !db) return;
+    await patch({ 'hero.lastDailyReset': 0, 'hero.streakDays': 0 });
+    flash(`Zresetowano streak dla ${player.username} — odśwież grę`);
+  };
+
+  const resetMyDailyStreak = async () => {
+    const uid = useAuthStore.getState().user?.uid;
+    if (!uid || !db) return;
+    try {
+      await updateDoc(doc(db!, 'saves', uid), { 'hero.lastDailyReset': 0, 'hero.streakDays': 0, updatedAt: 9999999999999 });
+      flash('✅ Twój streak zresetowany — odśwież stronę żeby zobaczyć modal');
+    } catch (e: any) {
+      flash(`❌ Błąd: ${e?.message ?? e}`);
+    }
+  };
+
   const resetGuildRaid = async () => {
     if (!player?.guildId || !db) return;
     try {
@@ -304,9 +321,14 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             Level w chmurze: <span style={{ color: '#ffd700' }}>{selfInfo.cloudLevel}</span>
           </p>
         )}
-        <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
-          <GameIcon name="retry" size={11} color="#cc88ff" /> Force reload z chmury
-        </button>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <button onClick={forceReloadSelf} style={{ ...MONO, fontSize: 9, background: '#220033', border: '1px solid #aa44ff', color: '#cc88ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
+            <GameIcon name="retry" size={11} color="#cc88ff" /> Force reload z chmury
+          </button>
+          <button onClick={resetMyDailyStreak} style={{ ...MONO, fontSize: 9, background: '#001a1a', border: '1px solid #00e5ff', color: '#00e5ff', padding: '4px 10px', borderRadius: 3, cursor: 'pointer' }}>
+            🔥 Reset mojego streak
+          </button>
+        </div>
       </div>
 
       {/* Global reset */}
@@ -397,6 +419,9 @@ export default function AdminPanel({ userEmail }: { userEmail: string }) {
             </button>
             <button onClick={healFull} style={{ ...MONO, fontSize: 9, background: '#111', border: '1px solid #446644', color: '#88cc88', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
               Heal do pełna
+            </button>
+            <button onClick={resetDailyStreak} style={{ ...MONO, fontSize: 9, background: '#001a1a', border: '1px solid #00e5ff', color: '#00e5ff', padding: '4px 8px', borderRadius: 3, cursor: 'pointer' }}>
+              🔥 Reset streak
             </button>
             <button
               onClick={resetGuildRaid}
