@@ -119,9 +119,19 @@ service cloud.firestore {
     // streakDays is written exclusively by the claimDailyReward Cloud Function
     // (admin SDK, bypasses rules). Clients must never increase it — doing so
     // would let a player fake a 19-day streak and claim a legendary chest.
+    // Exception: when lastDailyReset changes (daily reset, gated by validDailyReset
+    // to max once per 23h), streak may increase by at most 1 — this matches
+    // the checkDailyReset() local fallback when CF is unavailable.
     function validStreakDays(old, nw) {
       let oldStreak = old.hero.streakDays == null ? 0 : old.hero.streakDays;
-      return nw.hero.streakDays == null || nw.hero.streakDays <= oldStreak;
+      let oldReset  = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
+      let newReset  = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
+      if (nw.hero.streakDays == null) return true;
+      // Daily reset just happened — allow +1 increment (checkDailyReset fallback)
+      // The 23h gate in validDailyReset prevents abuse (max once per day).
+      if (newReset != oldReset) return nw.hero.streakDays <= oldStreak + 1;
+      // No daily reset — streak must not increase at all
+      return nw.hero.streakDays <= oldStreak;
     }
 
     // Daily run counters must only go up during a session.
