@@ -712,10 +712,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     const { hero } = get();
     const cost = Math.round(hero.stats[attr] * 75);
     if (hero.gold < cost) return;
-    if (hero.attributePoints <= 0) return;
     const newStats = { ...hero.stats, [attr]: hero.stats[attr] + 1 };
     const newMaxHp = getHeroMaxHp(newStats, hero.level, hero.equipment);
-    set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp, attributePoints: hero.attributePoints - 1 } });
+    set({ hero: { ...hero, stats: newStats, gold: hero.gold - cost, maxHp: newMaxHp } });
     get().saveGame();
   },
 
