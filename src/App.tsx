@@ -249,14 +249,35 @@ export default function App() {
   // Listen for admin overrides on the player's save document.
   // When admin sets updatedAt far in the future, force-reload from cloud
   // so the player sees the admin's changes immediately without refreshing.
+  // Also re-run the daily claim when admin resets lastDailyReset to 0 —
+  // otherwise the player's local state has a stale reset and CF won't run
+  // again until they refresh.
   useEffect(() => {
     if (!gameLoaded || !user || !db) return;
     const ref = doc(db, 'saves', user.uid);
-    const unsub = onSnapshot(ref, (snap) => {
+    const unsub = onSnapshot(ref, async (snap) => {
       if (!snap.exists()) return;
       const cloudTs: number = snap.data().updatedAt ?? 0;
       if (cloudTs > Date.now() + 3_600_000) {
-        loadFromCloud(user.uid, true).catch(() => {});
+        await loadFromCloud(user.uid, true).catch(() => {});
+        // If admin wiped lastDailyReset (streak reset), re-run the daily claim
+        // so counters reset and streak is recalculated without needing a refresh.
+        const heroNow = useGameStore.getState().hero;
+        if ((heroNow.lastDailyReset ?? 0) === 0) {
+          claimDailyRewardServer().then(async result => {
+            if (!result.claimed) { checkDailyReset(); return; }
+            try { await loadFromCloud(user.uid, true); } catch {}
+            saveGame();
+            setStreakData(result);
+          }).catch(() => {
+            const before = useGameStore.getState().hero;
+            checkDailyReset();
+            const after = useGameStore.getState().hero;
+            if (after.lastDailyReset !== before.lastDailyReset) {
+              setStreakData({ claimed: true, streakDays: after.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 5 });
+            }
+          });
+        }
       }
     }, () => {});
     return () => unsub();
