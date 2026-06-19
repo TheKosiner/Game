@@ -116,6 +116,10 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
   if (!war) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ position: 'relative', overflow: 'hidden' }}>
+          <img src="/guild_war.webp" alt="Guild War" style={{ width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center 30%', display: 'block', border: '1px solid rgba(200,50,50,0.35)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%)' }} />
+        </div>
         <div style={{ background: 'var(--bg-inset)', border: '1px solid var(--border-dark)', padding: 16, textAlign: 'center' }}>
           <p style={{ ...PX(7), color: 'var(--text-dim)', marginBottom: 8 }}>☮ {t.guild.warNone}</p>
           <p style={{ ...PX(4), color: 'var(--text-muted)', lineHeight: 1.7 }}>{t.guild.warNoneDesc}</p>
@@ -184,6 +188,12 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+      {/* War image */}
+      <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <img src="/guild_war.webp" alt="Guild War" style={{ width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center 30%', display: 'block', border: '1px solid rgba(200,50,50,0.35)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 55%)' }} />
+      </div>
 
       {/* War header */}
       <div style={{ background: 'rgba(40,10,10,0.8)', border: '1px solid rgba(200,50,50,0.5)', padding: '10px 12px', textAlign: 'center' }}>
