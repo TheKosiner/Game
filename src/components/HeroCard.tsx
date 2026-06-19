@@ -539,6 +539,16 @@ export default function HeroCard() {
             {hero.name}
           </p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.app.level(hero.level)}</p>
+          {(hero.streakDays ?? 0) > 0 && (
+            <div style={{
+              background: 'rgba(255,100,0,0.1)', border: '1px solid rgba(255,100,0,0.35)',
+              padding: '3px 7px', display: 'inline-flex', alignItems: 'center', gap: 4,
+              boxShadow: '0 0 8px rgba(255,100,0,0.15)',
+            }}>
+              <GameIcon name="fire" size={12} color="#ff6600" />
+              <span style={{ ...ORB, fontSize: 11, color: '#ff8833', textShadow: '0 0 8px rgba(255,100,0,0.7)' }}>{hero.streakDays}</span>
+            </div>
+          )}
           <div style={{
             background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)',
             padding: '3px 7px', display: 'inline-flex', alignItems: 'center', gap: 4,
