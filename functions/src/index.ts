@@ -199,6 +199,11 @@ function isSameDaySrv(ts: number, now: number): boolean {
          a.getDate()     === b.getDate();
 }
 
+// True when ts falls on the calendar day immediately before now (UTC)
+function isYesterdaySrv(ts: number, now: number): boolean {
+  return isSameDaySrv(ts, now - 86_400_000);
+}
+
 export const claimDailyReward = functions.https.onCall(async (_data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
   const uid = context.auth.uid;
@@ -220,11 +225,26 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
 
     if (isSameDaySrv(lastDailyReset, now)) return { claimed: false };
 
-    const DAILY_GEMS = 5;
-    const newGems = (hero.gems ?? 0) + DAILY_GEMS;
+    // ── Streak calculation ────────────────────────────────────────────────────
+    const prevStreak: number = hero.streakDays ?? 0;
+    // Streak continues only if last reset was yesterday; any longer gap resets it
+    const newStreak = isYesterdaySrv(lastDailyReset, now) ? prevStreak + 1 : 1;
+
+    // Milestones: 20 takes priority over 5
+    const isLegendary = newStreak % 20 === 0;
+    const isEpic      = !isLegendary && newStreak % 5 === 0;
+    const streakMilestone: 'epic' | 'legendary' | null =
+      isLegendary ? 'legendary' : isEpic ? 'epic' : null;
+
+    const DAILY_GEMS   = 5;
+    const STREAK_BONUS = 2;                           // bonus every day for having a streak
+    const CHEST_GEMS   = isLegendary ? 50 : isEpic ? 20 : 0;
+    const totalGems    = DAILY_GEMS + (newStreak > 1 ? STREAK_BONUS : 0) + CHEST_GEMS;
+    const newGems      = (hero.gems ?? 0) + totalGems;
 
     tx.update(saveRef, {
       'hero.lastDailyReset': now,
+      'hero.streakDays': newStreak,
       'hero.dungeonRunsToday': 0,
       'hero.questsCompletedToday': 0,
       'hero.goldEarnedToday': 0,
@@ -232,7 +252,15 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
       updatedAt: now,
     });
 
-    return { claimed: true, gemsAdded: DAILY_GEMS, gems: newGems, lastDailyReset: now };
+    return {
+      claimed: true,
+      gemsAdded: totalGems,
+      gems: newGems,
+      lastDailyReset: now,
+      streakDays: newStreak,
+      streakMilestone,
+      chestGems: CHEST_GEMS,
+    };
   });
 });
 

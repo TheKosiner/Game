@@ -896,6 +896,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     if (!isSameDay(hero.lastDailyReset)) {
       const DAILY_GEMS = 5;
+      const prevStreak = hero.streakDays ?? 0;
+      const yesterday = new Date(now - 86_400_000);
+      const lastDate  = new Date(hero.lastDailyReset ?? 0);
+      const wasYesterday =
+        lastDate.getFullYear() === yesterday.getFullYear() &&
+        lastDate.getMonth()    === yesterday.getMonth()    &&
+        lastDate.getDate()     === yesterday.getDate();
+      const newStreak = wasYesterday ? prevStreak + 1 : 1;
       set({
         hero: {
           ...hero,
@@ -905,6 +913,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           kryptaRunsToday: 0,
           lastDailyReset: now,
           gems: hero.gems + DAILY_GEMS,
+          streakDays: newStreak,
         },
       });
       const t = getT();

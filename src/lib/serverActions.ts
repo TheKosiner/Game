@@ -1,11 +1,14 @@
 import { httpsCallable } from 'firebase/functions';
 import { functions } from './firebase';
 
-interface DailyRewardResult {
+export interface DailyRewardResult {
   claimed: boolean;
   gemsAdded?: number;
   gems?: number;
   lastDailyReset?: number;
+  streakDays?: number;
+  streakMilestone?: 'epic' | 'legendary' | null;
+  chestGems?: number;
 }
 
 interface QuestCollectResult {

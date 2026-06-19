@@ -37,6 +37,8 @@ import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
 import EnchanterPanel from './components/EnchanterPanel';
+import StreakModal from './components/StreakModal';
+import type { DailyRewardResult } from './lib/serverActions';
 import LobbyPanel from './components/LobbyPanel';
 import CyberpunkBg from './components/CyberpunkBg';
 import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
@@ -72,6 +74,7 @@ export default function App() {
   const [mailUnread, setMailUnread] = useState(0);
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
+  const [streakData, setStreakData] = useState<DailyRewardResult | null>(null);
   const lastChatViewedAt = useRef(Date.now());
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
@@ -269,10 +272,12 @@ export default function App() {
           questsCompletedToday: 0,
           kryptaRunsToday: 0,
           lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
+          streakDays: result.streakDays ?? s.hero.streakDays,
         },
       }));
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       saveGame();
+      setStreakData(result);
     }).catch(() => {
       // CF not deployed (Spark plan) — fall back to local daily reset
       checkDailyReset();
@@ -424,6 +429,16 @@ export default function App() {
         </div>
       </div>
       <MysteryBoxModal />
+      <LevelUpModal />
+      {streakData && (
+        <StreakModal
+          streakDays={streakData.streakDays ?? 1}
+          streakMilestone={streakData.streakMilestone ?? null}
+          chestGems={streakData.chestGems ?? 0}
+          gemsAdded={streakData.gemsAdded ?? 0}
+          onClose={() => setStreakData(null)}
+        />
+      )}
       </>
     );
   }
@@ -587,6 +602,15 @@ export default function App() {
       <BottomNav active={tab} onChange={switchTab} badges={{ play: questBadge, social: chatHasNew || mailUnread > 0 }} />
       <MysteryBoxModal />
       <LevelUpModal />
+      {streakData && (
+        <StreakModal
+          streakDays={streakData.streakDays ?? 1}
+          streakMilestone={streakData.streakMilestone ?? null}
+          chestGems={streakData.chestGems ?? 0}
+          gemsAdded={streakData.gemsAdded ?? 0}
+          onClose={() => setStreakData(null)}
+        />
+      )}
     </div>
     </>
   );

@@ -72,6 +72,7 @@ export interface Hero {
   lastCasinoSpinAt: number;
   goldEarnedToday: number;
   kryptaRunsToday: number;
+  streakDays?: number;
 }
 
 export interface Enemy {
