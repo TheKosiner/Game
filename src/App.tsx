@@ -262,19 +262,13 @@ export default function App() {
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
   useEffect(() => {
     if (!gameLoaded || !user) return;
-    claimDailyRewardServer().then(result => {
+    claimDailyRewardServer().then(async result => {
       if (!result.claimed) return;
-      useGameStore.setState(s => ({
-        hero: {
-          ...s.hero,
-          gems: result.gems ?? s.hero.gems,
-          dungeonRunsToday: 0,
-          questsCompletedToday: 0,
-          kryptaRunsToday: 0,
-          lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
-          streakDays: result.streakDays ?? s.hero.streakDays,
-        },
-      }));
+      // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
+      // Without this, checkDailyReset() runs first with a client-side timestamp, syncs
+      // to Firestore, then the CF returns a different timestamp — causing the next
+      // syncToCloud to fail validDailyReset ("Missing or insufficient permissions").
+      try { await loadFromCloud(user.uid, true); } catch {}
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       saveGame();
       setStreakData(result);
