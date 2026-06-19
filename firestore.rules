@@ -127,7 +127,13 @@ service cloud.firestore {
     // Daily run counters must only go up during a session.
     // The CF resets them to 0 via admin SDK at the start of each day;
     // until then a client must not decrease them (bypass daily limit exploit).
+    // Exception: when lastDailyReset changes (daily reset just happened),
+    // counters may be zeroed — validated by validDailyReset separately.
     function validDailyCounters(old, nw) {
+      let oldReset = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
+      let newReset = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
+      // Daily reset happened — counters may go to zero (validDailyReset enforces the 23h gate)
+      if (newReset != oldReset) return true;
       let oldDng = old.hero.dungeonRunsToday     == null ? 0 : old.hero.dungeonRunsToday;
       let oldKry = old.hero.kryptaRunsToday      == null ? 0 : old.hero.kryptaRunsToday;
       let oldQst = old.hero.questsCompletedToday == null ? 0 : old.hero.questsCompletedToday;
