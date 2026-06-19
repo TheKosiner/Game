@@ -116,6 +116,26 @@ service cloud.firestore {
         && nw.hero.gems <= oldGems + 20;
     }
 
+    // streakDays is written exclusively by the claimDailyReward Cloud Function
+    // (admin SDK, bypasses rules). Clients must never increase it — doing so
+    // would let a player fake a 19-day streak and claim a legendary chest.
+    function validStreakDays(old, nw) {
+      let oldStreak = old.hero.streakDays == null ? 0 : old.hero.streakDays;
+      return nw.hero.streakDays == null || nw.hero.streakDays <= oldStreak;
+    }
+
+    // Daily run counters must only go up during a session.
+    // The CF resets them to 0 via admin SDK at the start of each day;
+    // until then a client must not decrease them (bypass daily limit exploit).
+    function validDailyCounters(old, nw) {
+      let oldDng = old.hero.dungeonRunsToday     == null ? 0 : old.hero.dungeonRunsToday;
+      let oldKry = old.hero.kryptaRunsToday      == null ? 0 : old.hero.kryptaRunsToday;
+      let oldQst = old.hero.questsCompletedToday == null ? 0 : old.hero.questsCompletedToday;
+      return nw.hero.dungeonRunsToday     >= oldDng
+          && nw.hero.kryptaRunsToday      >= oldKry
+          && nw.hero.questsCompletedToday >= oldQst;
+    }
+
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
@@ -136,6 +156,8 @@ service cloud.firestore {
         && validChallengeCooldown(old, nw)
         && validBeggingReward(nw)
         && validGems(old, nw)
+        && validStreakDays(old, nw)
+        && validDailyCounters(old, nw)
         && validTimestamp(nw);
     }
 

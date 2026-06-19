@@ -194,9 +194,9 @@ export const claimGemCredits = functions.https.onCall(async (_data, context) => 
 function isSameDaySrv(ts: number, now: number): boolean {
   const a = new Date(ts);
   const b = new Date(now);
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth()    === b.getMonth()    &&
-         a.getDate()     === b.getDate();
+  return a.getUTCFullYear() === b.getUTCFullYear() &&
+         a.getUTCMonth()    === b.getUTCMonth()    &&
+         a.getUTCDate()     === b.getUTCDate();
 }
 
 // True when ts falls on the calendar day immediately before now (UTC)
