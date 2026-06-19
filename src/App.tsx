@@ -149,9 +149,12 @@ export default function App() {
             initHero('Hero', 1, 2, true);
           } else if (!loaded) {
             loadGame();
-          } else {
-            useGameStore.getState().checkDailyReset();
           }
+          // When loaded===true (cloud data), do NOT call checkDailyReset() here.
+          // claimDailyRewardServer() runs next and reads Firestore to do the reset
+          // server-side. Calling checkDailyReset() first updates lastDailyReset=now
+          // locally, which syncToCloud then writes to Firestore before CF reads it —
+          // CF sees "already claimed today" and returns claimed:false, suppressing modal.
         } catch { loadGame(); }
       } else {
         loadedUidRef.current = null;
@@ -263,18 +266,32 @@ export default function App() {
   useEffect(() => {
     if (!gameLoaded || !user) return;
     claimDailyRewardServer().then(async result => {
-      if (!result.claimed) return;
+      if (!result.claimed) {
+        // Already claimed today (e.g. from another device). Run local reset to
+        // catch any counter resets that haven't been applied yet, but no modal.
+        checkDailyReset();
+        return;
+      }
       // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
-      // Without this, checkDailyReset() runs first with a client-side timestamp, syncs
-      // to Firestore, then the CF returns a different timestamp — causing the next
-      // syncToCloud to fail validDailyReset ("Missing or insufficient permissions").
       try { await loadFromCloud(user.uid, true); } catch {}
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       saveGame();
       setStreakData(result);
     }).catch(() => {
-      // CF not deployed (Spark plan) — fall back to local daily reset
+      // CF not deployed or network error — fall back to local daily reset.
+      const heroBefore = useGameStore.getState().hero;
       checkDailyReset();
+      const heroAfter = useGameStore.getState().hero;
+      // Show modal if a reset actually happened
+      if (heroAfter.lastDailyReset !== heroBefore.lastDailyReset) {
+        setStreakData({
+          claimed: true,
+          streakDays: heroAfter.streakDays ?? 1,
+          streakMilestone: null,
+          chestGems: 0,
+          gemsAdded: 5,
+        });
+      }
     });
   }, [gameLoaded, user?.uid]);
 
