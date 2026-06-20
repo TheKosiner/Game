@@ -11,6 +11,7 @@ on:
       - 'firebase.json'
       - '.firebaserc'
       - 'functions/**'
+      - '.github/workflows/firebase-deploy.yml'
 
 jobs:
   deploy:
