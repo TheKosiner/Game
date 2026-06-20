@@ -7,7 +7,7 @@
 // which lets isSameDay return predictable results in tests.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useGameStore, scaledQuestDuration } from './gameStore';
-import { makeHero, makeStats } from '../tests/fixtures';
+import { makeHero } from '../tests/fixtures';
 
 // Minimal translation mock — only the keys that checkDailyReset actually reads.
 vi.mock('../hooks/useT', () => ({
