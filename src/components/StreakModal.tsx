@@ -304,7 +304,7 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
           </div>
 
           {/* Gem reward */}
-          <div style={{
+          {gemsAdded > 0 && <div style={{
             background: 'rgba(0,229,255,0.04)',
             border: '1px solid rgba(0,229,255,0.18)',
             padding: '10px 14px',
@@ -332,7 +332,7 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
                 {isEn ? '+ streak bonus' : '+ bonus serii'}
               </span>
             )}
-          </div>
+          </div>}
 
           {/* Milestone chest */}
           {hasMilestone && showChest && !opened && (

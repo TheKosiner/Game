@@ -287,15 +287,29 @@ export default function App() {
   useEffect(() => {
     if (!gameLoaded || !user) return;
     claimDailyRewardServer().then(async result => {
+      const todayKey = 'streak_modal_' + new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
       if (!result.claimed) {
         // Already claimed today (e.g. from another device). Run local reset to
-        // catch any counter resets that haven't been applied yet, but no modal.
+        // catch any counter resets that haven't been applied yet.
         checkDailyReset();
+        // Show streak modal once per device per day regardless of which device claimed first.
+        if (!localStorage.getItem(todayKey)) {
+          localStorage.setItem(todayKey, '1');
+          const hero = useGameStore.getState().hero;
+          setStreakData({
+            claimed: false,
+            streakDays: hero.streakDays ?? 1,
+            streakMilestone: null,
+            chestGems: 0,
+            gemsAdded: 0,
+          });
+        }
         return;
       }
       // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
       try { await loadFromCloud(user.uid, true); } catch {}
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+      localStorage.setItem(todayKey, '1');
       saveGame();
       setStreakData(result);
     }).catch(() => {
@@ -305,6 +319,8 @@ export default function App() {
       const heroAfter = useGameStore.getState().hero;
       // Show modal if a reset actually happened
       if (heroAfter.lastDailyReset !== heroBefore.lastDailyReset) {
+        const todayKey = 'streak_modal_' + new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+        localStorage.setItem(todayKey, '1');
         setStreakData({
           claimed: true,
           streakDays: heroAfter.streakDays ?? 1,
