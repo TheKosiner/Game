@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import { calcStreakResult, dailyClaimBlockReason } from './dailyRewardLogic';
 
 admin.initializeApp();
 
@@ -190,20 +191,6 @@ export const claimGemCredits = functions.https.onCall(async (_data, context) => 
 });
 
 // ── claimDailyReward ──────────────────────────────────────────────────────────
-// Server validates the day using server time — immune to client clock manipulation
-function isSameDaySrv(ts: number, now: number): boolean {
-  const a = new Date(ts);
-  const b = new Date(now);
-  return a.getUTCFullYear() === b.getUTCFullYear() &&
-         a.getUTCMonth()    === b.getUTCMonth()    &&
-         a.getUTCDate()     === b.getUTCDate();
-}
-
-// True when ts falls on the calendar day immediately before now (UTC)
-function isYesterdaySrv(ts: number, now: number): boolean {
-  return isSameDaySrv(ts, now - 86_400_000);
-}
-
 export const claimDailyReward = functions.https.onCall(async (_data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
   const uid = context.auth.uid;
@@ -217,30 +204,15 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
     const lastDailyReset: number = hero.lastDailyReset ?? 0;
     const now = Date.now(); // server-side — client cannot influence this
 
-    // Future timestamp means clock was manipulated — fix it silently
-    if (lastDailyReset > now) {
+    const blocked = dailyClaimBlockReason(lastDailyReset, now);
+    if (blocked === 'future_clock') {
       tx.update(saveRef, { 'hero.lastDailyReset': now });
       return { claimed: false };
     }
+    if (blocked === 'already_claimed') return { claimed: false };
 
-    if (isSameDaySrv(lastDailyReset, now)) return { claimed: false };
-
-    // ── Streak calculation ────────────────────────────────────────────────────
-    const prevStreak: number = hero.streakDays ?? 0;
-    // Streak continues only if last reset was yesterday; any longer gap resets it
-    const newStreak = isYesterdaySrv(lastDailyReset, now) ? prevStreak + 1 : 1;
-
-    // Milestones: 20 takes priority over 5
-    const isLegendary = newStreak % 20 === 0;
-    const isEpic      = !isLegendary && newStreak % 5 === 0;
-    const streakMilestone: 'epic' | 'legendary' | null =
-      isLegendary ? 'legendary' : isEpic ? 'epic' : null;
-
-    const DAILY_GEMS   = 5;
-    const STREAK_BONUS = 2;                           // bonus every day for having a streak
-    const CHEST_GEMS   = isLegendary ? 50 : isEpic ? 20 : 0;
-    const totalGems    = DAILY_GEMS + (newStreak > 1 ? STREAK_BONUS : 0) + CHEST_GEMS;
-    const newGems      = (hero.gems ?? 0) + totalGems;
+    const { newStreak, streakMilestone, gemsAdded, newGems, chestGems } =
+      calcStreakResult(hero.streakDays ?? 0, hero.gems ?? 0, lastDailyReset, now);
 
     tx.update(saveRef, {
       'hero.lastDailyReset': now,
@@ -254,12 +226,12 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
 
     return {
       claimed: true,
-      gemsAdded: totalGems,
+      gemsAdded,
       gems: newGems,
       lastDailyReset: now,
       streakDays: newStreak,
       streakMilestone,
-      chestGems: CHEST_GEMS,
+      chestGems,
     };
   });
 });
