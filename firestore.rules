@@ -126,12 +126,14 @@ service cloud.firestore {
       let oldStreak = old.hero.streakDays == null ? 0 : old.hero.streakDays;
       let oldReset  = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
       let newReset  = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
-      if (nw.hero.streakDays == null) return true;
-      // Daily reset just happened — allow +1 increment (checkDailyReset fallback)
-      // The 23h gate in validDailyReset prevents abuse (max once per day).
-      if (newReset != oldReset) return nw.hero.streakDays <= oldStreak + 1;
-      // No daily reset — streak must not increase at all
-      return nw.hero.streakDays <= oldStreak;
+      // null streakDays is always valid (field not yet present)
+      // Daily reset just happened — allow +1 (gated by validDailyReset 23h window)
+      // No reset — streak must not increase at all
+      return nw.hero.streakDays == null
+        ? true
+        : (newReset != oldReset
+            ? nw.hero.streakDays <= oldStreak + 1
+            : nw.hero.streakDays <= oldStreak);
     }
 
     // Daily run counters must only go up during a session.
@@ -142,14 +144,15 @@ service cloud.firestore {
     function validDailyCounters(old, nw) {
       let oldReset = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
       let newReset = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
-      // Daily reset happened — counters may go to zero (validDailyReset enforces the 23h gate)
-      if (newReset != oldReset) return true;
-      let oldDng = old.hero.dungeonRunsToday     == null ? 0 : old.hero.dungeonRunsToday;
-      let oldKry = old.hero.kryptaRunsToday      == null ? 0 : old.hero.kryptaRunsToday;
-      let oldQst = old.hero.questsCompletedToday == null ? 0 : old.hero.questsCompletedToday;
-      return nw.hero.dungeonRunsToday     >= oldDng
-          && nw.hero.kryptaRunsToday      >= oldKry
-          && nw.hero.questsCompletedToday >= oldQst;
+      let oldDng   = old.hero.dungeonRunsToday     == null ? 0 : old.hero.dungeonRunsToday;
+      let oldKry   = old.hero.kryptaRunsToday      == null ? 0 : old.hero.kryptaRunsToday;
+      let oldQst   = old.hero.questsCompletedToday == null ? 0 : old.hero.questsCompletedToday;
+      // Daily reset happened — counters may go to zero (validDailyReset enforces 23h gate)
+      return newReset != oldReset
+        ? true
+        : (nw.hero.dungeonRunsToday     >= oldDng
+        && nw.hero.kryptaRunsToday      >= oldKry
+        && nw.hero.questsCompletedToday >= oldQst);
     }
 
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
