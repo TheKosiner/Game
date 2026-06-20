@@ -1,6 +1,9 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "predeploy": [
+      "npm run test:run"
+    ]
   },
   "functions": [
     {
@@ -13,6 +16,7 @@
         "firebase-debug.*.log"
       ],
       "predeploy": [
+        "npm run test:run",
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
