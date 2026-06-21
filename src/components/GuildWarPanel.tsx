@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLangStore } from '../store/langStore';
 import { useT } from '../hooks/useT';
 import { PX } from '../utils/styles';
@@ -10,6 +10,8 @@ import {
 } from '../lib/guildWar';
 import { listGuilds } from '../lib/cloudSync';
 import type { Guild } from '../lib/cloudSync';
+import { useGameStore } from '../store/gameStore';
+import { useAuthStore } from '../store/authStore';
 
 function formatCountdown(ms: number): string {
   if (ms <= 0) return '0:00:00';
@@ -37,6 +39,8 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
   const [joining, setJoining] = useState(false);
   const [resolving, setResolving] = useState(false);
   const [now, setNow] = useState(Date.now());
+  // Set immediately after declareWar returns so the UI doesn't wait for guild refresh
+  const [pendingWarId, setPendingWarId] = useState<string | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1_000);
@@ -44,13 +48,22 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
   }, []);
 
   const activeWarId = (guild as Guild & { activeWarId?: string }).activeWarId;
+  const effectiveWarId = pendingWarId ?? activeWarId ?? null;
 
+  // Clear pendingWarId once the parent guild reflects the war (avoids double subscription)
   useEffect(() => {
-    if (!activeWarId) { setWar(null); return; }
+    if (pendingWarId && activeWarId === pendingWarId) setPendingWarId(null);
+  }, [activeWarId, pendingWarId]);
+
+  const unsubWarRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (unsubWarRef.current) { unsubWarRef.current(); unsubWarRef.current = null; }
+    if (!effectiveWarId) { setWar(null); return; }
     setWar(undefined);
-    const unsub = subscribeToGuildWar(activeWarId, setWar);
-    return unsub;
-  }, [activeWarId]);
+    const unsub = subscribeToGuildWar(effectiveWarId, setWar);
+    unsubWarRef.current = unsub;
+    return () => { unsub(); unsubWarRef.current = null; };
+  }, [effectiveWarId]);
 
   // Auto-resolve when signup window closes
   useEffect(() => {
@@ -71,13 +84,24 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
     }
   }
 
+  const hero = useGameStore(s => s.hero);
+  const authUser = useAuthStore(s => s.user);
+
+  const myGuildId = guild.id;
+  const mySide = war
+    ? (myGuildId === war.attackerGuildId ? 'attackers' : myGuildId === war.defenderGuildId ? 'defenders' : null)
+    : null;
+  const hasJoined = !!(war && mySide && war[mySide]?.[myUid]);
+
   async function handleDeclare(targetId: string) {
     setDeclaring(targetId);
     setDeclareError('');
     try {
-      await declareWar(targetId);
+      const { warId } = await declareWar(targetId);
       setShowDeclareForm(false);
-      onRefresh();
+      // Subscribe immediately using the returned warId — don't wait for guild refresh
+      setPendingWarId(warId);
+      onRefresh(); // refresh guild in background to sync activeWarId
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.includes('already has an active war') || msg.includes('jest już')) {
@@ -91,17 +115,27 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
   }
 
   async function handleJoin() {
-    if (!war) return;
+    if (!war || !mySide) return;
+    // Optimistic update — show the player as joined immediately
+    const optimisticParticipant = {
+      username: authUser?.username ?? '',
+      level: hero.level,
+      portrait: hero.portrait,
+      joinedAt: Date.now(),
+    };
+    setWar(prev => prev ? {
+      ...prev,
+      [mySide]: { ...prev[mySide], [myUid]: optimisticParticipant },
+    } : prev);
     setJoining(true);
-    try { await joinWar(war.id); } catch {}
-    finally { setJoining(false); }
+    try { await joinWar(war.id); } catch {
+      // On error, revert optimistic update
+      setWar(prev => prev ? {
+        ...prev,
+        [mySide]: Object.fromEntries(Object.entries(prev[mySide]).filter(([k]) => k !== myUid)),
+      } : prev);
+    } finally { setJoining(false); }
   }
-
-  const myGuildId = guild.id;
-  const mySide = war
-    ? (myGuildId === war.attackerGuildId ? 'attackers' : myGuildId === war.defenderGuildId ? 'defenders' : null)
-    : null;
-  const hasJoined = !!(war && mySide && war[mySide]?.[myUid]);
 
   const filtered = guilds.filter(g =>
     !searchTerm ||
