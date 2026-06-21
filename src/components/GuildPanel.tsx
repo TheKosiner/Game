@@ -415,7 +415,7 @@ function GuildUpgrades({ guild, myUid, onRefresh }: { guild: Guild; myUid: strin
 
 const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
-function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub }) {
+function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToWar }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGoToWar: () => void }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const [showInvite, setShowInvite] = useState(false);
@@ -432,12 +432,20 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { gui
   const isLeader = guild.leaderUid === myUid;
   const isOfficer = guild.members[myUid]?.role === 'officer';
   const canManage = isLeader || isOfficer;
+  const activeWarId = (guild as Guild & { activeWarId?: string }).activeWarId;
   const members = Object.entries(guild.members).map(([uid, data]) => ({ uid, ...data }))
     .sort((a, b) => {
       const ro = (ROLE_ORDER[a.role] ?? 2) - (ROLE_ORDER[b.role] ?? 2);
       return ro !== 0 ? ro : b.level - a.level;
     });
   const memberCount = members.length;
+
+  // On first mount: if there's an unseen battle result, navigate to the war tab
+  useEffect(() => {
+    const unseenWarId = localStorage.getItem(`guildwar_unseen_${guild.id}`);
+    if (unseenWarId && guildTab === 'info') onGoToWar();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleLeave() {
     if (isLeader && memberCount > 1) { setLeaderWarn(true); return; }
@@ -533,11 +541,26 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { gui
 
       {/* WAR view */}
       {guildTab === 'war' && (
-        <GuildWarPanel guild={guild} myUid={myUid} onRefresh={onRefresh} />
+        <GuildWarPanel guild={guild} myUid={myUid} onRefresh={onRefresh} onWarSeen={() => localStorage.removeItem(`guildwar_unseen_${guild.id}`)} />
       )}
 
       {/* INFO view */}
       {guildTab === 'info' && <>
+
+      {/* Active war notice */}
+      {activeWarId && (
+        <button
+          onClick={onGoToWar}
+          style={{
+            width: '100%', textAlign: 'left', cursor: 'pointer',
+            background: 'rgba(80,10,10,0.85)', border: '1px solid rgba(220,50,50,0.6)',
+            padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}
+        >
+          <span style={{ ...PX(5), color: '#f87171' }}>⚔ {isEn ? 'Guild War in progress' : 'Trwa Wojna Gildii'}</span>
+          <span style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? 'View →' : 'Zobacz →'}</span>
+        </button>
+      )}
 
       {/* Guild base image with overlaid treasury + upgrades */}
       <GuildUpgrades guild={guild} myUid={myUid} onRefresh={onRefresh} />
@@ -639,7 +662,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab }: { gui
 
 // ── Main Panel ───────────────────────────────────────────────────────────────
 
-export default function GuildPanel({ guildTab }: { guildTab: import('./BottomNav').GuildTabSub }) {
+export default function GuildPanel({ guildTab, onGoToWar }: { guildTab: import('./BottomNav').GuildTabSub; onGoToWar: () => void }) {
   const user = useAuthStore(s => s.user);
   const t = useT();
   const setGuildBonuses = useGameStore(s => s.setGuildBonuses);
@@ -715,7 +738,7 @@ export default function GuildPanel({ guildTab }: { guildTab: import('./BottomNav
   return (
     <div className="card p-3">
       {guild ? (
-        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} guildTab={guildTab} />
+        <GuildView guild={guild} myUid={user.uid} onRefresh={load} playerPortraits={playerPortraits} guildTab={guildTab} onGoToWar={onGoToWar} />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {invites.length > 0 && <InvitesList invites={invites} onRefresh={load} />}

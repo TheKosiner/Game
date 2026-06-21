@@ -21,7 +21,20 @@ function formatCountdown(ms: number): string {
   return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guild; myUid: string; onRefresh: () => void }) {
+const WAR_VISIBLE_MS = 12 * 60 * 60 * 1000; // 12 hours
+
+function getRecentWarCache(guildId: string): { warId: string; resolvedAt: number } | null {
+  try {
+    const raw = localStorage.getItem(`guildwar_last_${guildId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { warId: string; resolvedAt: number };
+    if (Date.now() - parsed.resolvedAt < WAR_VISIBLE_MS) return parsed;
+    localStorage.removeItem(`guildwar_last_${guildId}`);
+    return null;
+  } catch { return null; }
+}
+
+export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { guild: Guild; myUid: string; onRefresh: () => void; onWarSeen?: () => void }) {
   const t = useT();
   const isEn = useLangStore(s => s.lang) === 'en';
   const isLeader = guild.leaderUid === myUid;
@@ -48,22 +61,46 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
   }, []);
 
   const activeWarId = (guild as Guild & { activeWarId?: string }).activeWarId;
-  const effectiveWarId = pendingWarId ?? activeWarId ?? null;
+  // Fallback to localStorage when the war is finished and guild no longer has activeWarId
+  const [cachedWarId, setCachedWarId] = useState<string | null>(() => getRecentWarCache(guild.id)?.warId ?? null);
+  const effectiveWarId = pendingWarId ?? activeWarId ?? cachedWarId ?? null;
 
   // Clear pendingWarId once the parent guild reflects the war (avoids double subscription)
   useEffect(() => {
     if (pendingWarId && activeWarId === pendingWarId) setPendingWarId(null);
   }, [activeWarId, pendingWarId]);
 
+  // When there's no active war, re-check cache in case it was stored during this session
+  useEffect(() => {
+    if (!activeWarId && !pendingWarId) {
+      const cached = getRecentWarCache(guild.id);
+      setCachedWarId(cached?.warId ?? null);
+    } else {
+      setCachedWarId(null);
+    }
+  }, [activeWarId, pendingWarId, guild.id]);
+
   const unsubWarRef = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (unsubWarRef.current) { unsubWarRef.current(); unsubWarRef.current = null; }
     if (!effectiveWarId) { setWar(null); return; }
     setWar(undefined);
-    const unsub = subscribeToGuildWar(effectiveWarId, setWar);
+    const unsub = subscribeToGuildWar(effectiveWarId, snap => {
+      setWar(snap);
+      // Persist finished wars so they stay viewable for 12h
+      if (snap?.status === 'finished' && snap.resolvedAt) {
+        const cacheKey = `guildwar_last_${guild.id}`;
+        const unseenKey = `guildwar_unseen_${guild.id}`;
+        localStorage.setItem(cacheKey, JSON.stringify({ warId: snap.id, resolvedAt: snap.resolvedAt }));
+        // Only mark unseen once (don't overwrite if the user already dismissed it)
+        if (!localStorage.getItem(unseenKey)) {
+          localStorage.setItem(unseenKey, snap.id);
+        }
+      }
+    });
     unsubWarRef.current = unsub;
     return () => { unsub(); unsubWarRef.current = null; };
-  }, [effectiveWarId]);
+  }, [effectiveWarId, guild.id]);
 
   // Auto-resolve when signup window closes
   useEffect(() => {
@@ -71,6 +108,14 @@ export default function GuildWarPanel({ guild, myUid, onRefresh }: { guild: Guil
     setResolving(true);
     resolveWar(war.id).catch(() => {}).finally(() => setResolving(false));
   }, [war, now, resolving]);
+
+  // Mark battle as seen when this panel is shown with a finished war
+  useEffect(() => {
+    if (war?.status === 'finished') {
+      localStorage.removeItem(`guildwar_unseen_${guild.id}`);
+      onWarSeen?.();
+    }
+  }, [war?.status, guild.id, onWarSeen]);
 
   async function handleLoadGuilds() {
     if (guilds.length > 0) { setShowDeclareForm(true); return; }
