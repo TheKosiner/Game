@@ -220,6 +220,7 @@ export const claimDailyReward = functions.https.onCall(async (_data, context) =>
       'hero.dungeonRunsToday': 0,
       'hero.questsCompletedToday': 0,
       'hero.goldEarnedToday': 0,
+      'hero.kryptaRunsToday': 0,
       'hero.gems': newGems,
       updatedAt: now,
     });
