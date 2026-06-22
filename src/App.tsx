@@ -446,7 +446,10 @@ export default function App() {
             overflowY: tab === 'lobby' ? 'hidden' : 'auto',
             overflowX: 'hidden',
           }}>
-            {tab === 'guild' && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
+            {tab === 'play'   && <PlaySubNav active={playSub} onChange={switchPlay} questBadge={questBadge} />}
+            {tab === 'social' && <SocialSubNav active={socialSub} onChange={switchSocial} mailBadge={mailUnread} chatBadge={chatHasNew} />}
+            {tab === 'shop'   && <ShopSubNav active={shopSub} onChange={switchShop} />}
+            {tab === 'guild'  && <GuildTabSubNav active={guildTab} onChange={setGuildTab} />}
             <main ref={desktopMainRef} style={{
               padding: tab === 'lobby' ? 0 : '20px 28px',
               display: tab === 'hero' ? 'grid' : 'flex',
