@@ -379,8 +379,29 @@ export const declareGuildWar = functions.https.onCall(async (data, context) => {
   if (memberData.role !== 'leader' && memberData.role !== 'officer') {
     throw new functions.https.HttpsError('permission-denied', 'Only officers and leaders can declare war');
   }
-  if (attackerGuild.activeWarId) throw new functions.https.HttpsError('failed-precondition', 'Your guild already has an active war');
-  if (defenderGuild.activeWarId) throw new functions.https.HttpsError('failed-precondition', 'Defender guild already has an active war');
+  if (attackerGuild.activeWarId) {
+    const existingWarSnap = await db.doc(`guildWars/${attackerGuild.activeWarId}`).get();
+    const existingWar = existingWarSnap.exists ? existingWarSnap.data()! : null;
+    const isStale = !existingWar || existingWar.status === 'finished' ||
+      (existingWar.status === 'signup' && Date.now() >= existingWar.signupEndsAt);
+    if (isStale) {
+      await db.doc(`guilds/${attackerGuildId}`).update({ activeWarId: admin.firestore.FieldValue.delete() });
+      attackerGuild.activeWarId = undefined;
+    } else {
+      throw new functions.https.HttpsError('failed-precondition', 'Your guild already has an active war');
+    }
+  }
+  if (defenderGuild.activeWarId) {
+    const existingWarSnap = await db.doc(`guildWars/${defenderGuild.activeWarId}`).get();
+    const existingWar = existingWarSnap.exists ? existingWarSnap.data()! : null;
+    const isStale = !existingWar || existingWar.status === 'finished' ||
+      (existingWar.status === 'signup' && Date.now() >= existingWar.signupEndsAt);
+    if (isStale) {
+      await db.doc(`guilds/${defenderGuildId}`).update({ activeWarId: admin.firestore.FieldValue.delete() });
+    } else {
+      throw new functions.https.HttpsError('failed-precondition', 'Defender guild already has an active war');
+    }
+  }
 
   const now = Date.now();
   const warRef = db.collection('guildWars').doc();
@@ -457,7 +478,14 @@ export const resolveGuildWar = functions.https.onCall(async (data, context) => {
   if (!warSnap.exists) throw new functions.https.HttpsError('not-found', 'War not found');
   const war = warSnap.data()!;
 
-  if (war.status === 'finished') return { id: warId, ...war };
+  if (war.status === 'finished') {
+    // Best-effort cleanup in case activeWarId was left behind
+    const b = db.batch();
+    b.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+    b.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+    await b.commit().catch(() => {});
+    return { id: warId, ...war };
+  }
   if (war.status === 'battle') return { id: warId, ...war };
   if (war.status !== 'signup') throw new functions.https.HttpsError('failed-precondition', 'War not in signup phase');
   if (Date.now() < war.signupEndsAt) throw new functions.https.HttpsError('failed-precondition', 'Signup period not ended yet');
