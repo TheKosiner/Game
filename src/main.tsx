@@ -3,11 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { initCrazyGames } from './lib/crazyGames'
 import { logClientError } from './lib/errorLogger'
-
-// Init CrazyGames SDK as early as possible; game boots regardless of outcome
-initCrazyGames().catch(() => {})
 
 window.addEventListener('error', (e) => {
   if (!e.error) return;
