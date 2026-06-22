@@ -319,6 +319,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
   const user = useAuthStore(s => s.user);
   const hero = useGameStore(s => s.hero);
   const t = useT();
+  const lang = useLangStore(s => s.lang);
 
   const [view, setView] = useState<'inbox' | 'compose'>('inbox');
   const [messages, setMessages] = useState<MailMessage[]>([]);
@@ -426,7 +427,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
       {/* Content */}
       {view === 'inbox' ? (
         loading ? (
-          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> Ładowanie...</p>
+          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {lang === 'en' ? 'Loading...' : 'Ładowanie...'}</p>
         ) : totalCount === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <GameIcon name="email" size={32} color="var(--text-dim)" style={{ display: 'block', margin: '0 auto 10px' }} />

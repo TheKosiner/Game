@@ -12,18 +12,24 @@ const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
-const STAT_NAMES: Record<string, string> = {
+const STAT_NAMES_PL: Record<string, string> = {
   strength: 'Siła', dexterity: 'Zręczność',
   intelligence: 'Celność', vitality: 'Żywotność',
   magic: 'Magia', magicResistance: 'Odp. mag.',
 };
+const STAT_NAMES_EN: Record<string, string> = {
+  strength: 'Strength', dexterity: 'Dexterity',
+  intelligence: 'Accuracy', vitality: 'Vitality',
+  magic: 'Magic', magicResistance: 'Mag. Res.',
+};
 
-function primaryStat(item: Item): string | null {
+function primaryStat(item: Item, lang: string): string | null {
   const entries = Object.entries(item.stats).filter(([, v]) => (v as number) > 0);
   if (!entries.length) return null;
   entries.sort((a, b) => (b[1] as number) - (a[1] as number));
   const [k, v] = entries[0];
-  return `${STAT_NAMES[k] ?? k} +${v}`;
+  const names = lang === 'en' ? STAT_NAMES_EN : STAT_NAMES_PL;
+  return `${names[k] ?? k} +${v}`;
 }
 
 function mainBonus(item: Item, lang?: string): { icon: GameIconName; label: string; value: string; color: string } | null {
@@ -32,7 +38,7 @@ function mainBonus(item: Item, lang?: string): { icon: GameIconName; label: stri
     return { icon: isMagic ? 'magic_orb' : 'sword', label: isMagic ? 'Mag' : 'Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
   }
   if (item.defenseBonus) return { icon: 'shield', label: lang === 'en' ? 'Defense' : 'Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
-  const ps = primaryStat(item);
+  const ps = primaryStat(item, lang ?? 'pl');
   if (ps) return { icon: 'up_arrow', label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
   return null;
 }
@@ -124,7 +130,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
   };
   const rc = item ? RARITY_COLORS[item.rarity] : '#333344';
   const bonus = item ? mainBonus(item, lang) : null;
-  const ps = item ? primaryStat(item) : null;
+  const ps = item ? primaryStat(item, lang) : null;
 
   return (
     <div

@@ -54,6 +54,7 @@ export const pl: Translations = {
     resetSent: '✓ Link wysłany! Sprawdź skrzynkę.',
     resetBack: '← Powrót do logowania',
     forgotPassword: 'Nie pamiętasz hasła?',
+    discordJoin: 'DISCORD — DOŁĄCZ DO SERWERA',
   },
   nav: {
     hero: 'BOHATER',

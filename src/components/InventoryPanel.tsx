@@ -135,7 +135,7 @@ function ItemCard({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
           {isBox
-            ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}><GameIcon name="bag" size={10} color="#fff" /> OTWÓRZ</button>
+            ? <button onClick={e => { e.stopPropagation(); onOpen?.(); }} className="btn btn-primary" style={{ padding: '5px 8px', fontSize: 10 }}><GameIcon name="bag" size={10} color="#fff" /> {lang === 'en' ? 'OPEN' : 'OTWÓRZ'}</button>
             : item.slot === 'consumable'
             ? <button onClick={e => { e.stopPropagation(); onUse?.(); }} disabled={inDungeon} className="btn btn-primary" style={{ padding: '5px 8px', opacity: inDungeon ? 0.4 : 1, cursor: inDungeon ? 'not-allowed' : 'pointer' }}>{t.inventory.use}</button>
             : <button onClick={e => { e.stopPropagation(); onEquip(); }} className="btn btn-primary" style={{ padding: '5px 8px' }}>{t.inventory.equip}</button>
@@ -222,7 +222,7 @@ export default function InventoryPanel() {
                 display: 'flex', flexDirection: 'column', gap: 16, alignItems: 'center',
               }}>
                 <p style={{ ...ORB, fontSize: 10, color: bc, textAlign: 'center', letterSpacing: 2 }}>
-                  OTWORZYĆ SKRZYNKĘ?
+                  {lang === 'en' ? 'OPEN BOX?' : 'OTWORZYĆ SKRZYNKĘ?'}
                 </p>
                 <img
                   src={getBoxImg(boxConfirm.item.rarity)}
@@ -233,7 +233,7 @@ export default function InventoryPanel() {
                   {getItemName(boxConfirm.item, lang)}
                 </p>
                 <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center' }}>
-                  Po otwarciu skrzynka zniknie z plecaka.
+                  {lang === 'en' ? 'Opening will remove the box from your backpack.' : 'Po otwarciu skrzynka zniknie z plecaka.'}
                 </p>
                 <div style={{ display: 'flex', gap: 8, width: '100%' }}>
                   <button
@@ -241,14 +241,14 @@ export default function InventoryPanel() {
                     className="btn btn-primary"
                     style={{ flex: 1, fontSize: 10 }}
                   >
-                    ✓ Otwórz
+                    {lang === 'en' ? '✓ Open' : '✓ Otwórz'}
                   </button>
                   <button
                     onClick={() => setBoxConfirm(null)}
                     className="btn btn-secondary"
                     style={{ flex: 1, fontSize: 10 }}
                   >
-                    ✕ Anuluj
+                    {lang === 'en' ? '✕ Cancel' : '✕ Anuluj'}
                   </button>
                 </div>
               </div>
@@ -276,7 +276,7 @@ export default function InventoryPanel() {
               display: 'flex', flexDirection: 'column', gap: 14,
             }}>
               <p style={{ ...ORB, fontSize: 10, color: rc, textAlign: 'center' }}>
-                SPRZEDAĆ PRZEDMIOT?
+                {lang === 'en' ? 'SELL ITEM?' : 'SPRZEDAĆ PRZEDMIOT?'}
               </p>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 12,
@@ -286,7 +286,7 @@ export default function InventoryPanel() {
                 <div>
                   <p style={{ ...MONO, fontSize: 11, color: rc }}>{getItemName(sellConfirm.item, lang)}</p>
                   <p style={{ ...MONO, fontSize: 10, color: '#ffd700', marginTop: 4 }}>
-                    🪙 {sellConfirm.item.goldValue} złota
+                    🪙 {sellConfirm.item.goldValue} {lang === 'en' ? 'gold' : 'złota'}
                   </p>
                 </div>
               </div>
@@ -296,14 +296,14 @@ export default function InventoryPanel() {
                   className="btn btn-primary"
                   style={{ flex: 1, fontSize: 10 }}
                 >
-                  ✓ Sprzedaj
+                  {lang === 'en' ? '✓ Sell' : '✓ Sprzedaj'}
                 </button>
                 <button
                   onClick={() => setSellConfirm(null)}
                   className="btn btn-secondary"
                   style={{ flex: 1, fontSize: 10 }}
                 >
-                  ✕ Anuluj
+                  {lang === 'en' ? '✕ Cancel' : '✕ Anuluj'}
                 </button>
               </div>
             </div>

@@ -52,6 +52,7 @@ export const en = {
     resetSent: '✓ Reset link sent! Check your inbox.',
     resetBack: '← Back to login',
     forgotPassword: 'Forgot password?',
+    discordJoin: 'DISCORD — JOIN THE SERVER',
   },
   nav: {
     hero: 'HERO',

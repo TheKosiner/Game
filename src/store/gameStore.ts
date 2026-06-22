@@ -64,7 +64,7 @@ function tryDungeonLoot(dungeonLevel: number, mode: 'xp' | 'balanced' | 'loot', 
   const { rarity, bumped } = tryBumpRarity(baseRarity, difficulty);
   const levelBonus = difficulty === 'hard' ? rollInt(0, 3) : difficulty === 'easy' ? rollInt(-2, 0) : rollInt(-1, 1);
   const itemLevel = Math.max(1, dungeonLevel + levelBonus);
-  const bumpTag = bumped ? ` ⬆️ AWANS ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
+  const bumpTag = bumped ? ` ⬆️ ${getLang() === 'en' ? 'UPGRADE' : 'AWANS'} ${RARITY_EMOJI[baseRarity]}→${RARITY_EMOJI[rarity]}` : '';
   const box = createMysteryBox(rarity, itemLevel);
   set({ hero: { ...hero, inventory: [...hero.inventory, box] } });
   get().addCombatLog(`${RARITY_EMOJI[rarity]} Drop: ${box.emoji} ${box.name}${RARITY_LABEL[rarity]}${bumpTag}`, 'loot');
@@ -1012,7 +1012,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (shieldHp > 0) {
           const abs = Math.min(shieldHp, heroDmg);
           shieldHp -= abs; heroDmg -= abs;
-          log.push(`${t.combat.shieldAbsorb(r, abs)}${shieldHp > 0 ? ` (pozostało: ${shieldHp})` : ` — ${t.combat.shieldDestroyed}`}`);
+          log.push(`${t.combat.shieldAbsorb(r, abs)}${shieldHp > 0 ? ` (${getLang() === 'en' ? 'remaining' : 'pozostało'}: ${shieldHp})` : ` — ${t.combat.shieldDestroyed}`}`);
         }
         if (heroDmg > 0) {
           bossHp -= heroDmg;
@@ -1090,7 +1090,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
       doBossAttack();
     } else {
-      log.push(`⚡ ${boss.name} atakuje pierwszy!`);
+      log.push(`⚡ ${boss.name} ${getLang() === 'en' ? 'attacks first!' : 'atakuje pierwszy!'}`);
       doBossAttack();
       if (heroHp <= 0) {
         log.push(t.combat.bossDefeat(r));
