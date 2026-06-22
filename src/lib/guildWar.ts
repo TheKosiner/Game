@@ -1,4 +1,4 @@
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, collection, query, where, onSnapshot } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db } from './firebase';
 import { functions } from './firebase';
@@ -39,6 +39,19 @@ export function subscribeToGuildWar(warId: string, cb: (war: GuildWar | null) =>
   if (!db) { cb(null); return () => {}; }
   return onSnapshot(doc(db, 'guildWars', warId), snap => {
     cb(snap.exists() ? ({ id: snap.id, ...snap.data() } as GuildWar) : null);
+  });
+}
+
+export function subscribeToActiveWars(cb: (wars: GuildWar[]) => void): () => void {
+  if (!db) { cb([]); return () => {}; }
+  const q = query(
+    collection(db, 'guildWars'),
+    where('status', 'in', ['signup', 'battle']),
+  );
+  return onSnapshot(q, snap => {
+    const wars = snap.docs.map(d => ({ id: d.id, ...d.data() } as GuildWar));
+    wars.sort((a, b) => b.declaredAt - a.declaredAt);
+    cb(wars);
   });
 }
 

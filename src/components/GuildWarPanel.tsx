@@ -5,7 +5,7 @@ import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import GameIcon from './GameIcon';
 import {
-  subscribeToGuildWar, declareWar, joinWar, resolveWar,
+  subscribeToGuildWar, subscribeToActiveWars, declareWar, joinWar, resolveWar,
   type GuildWar,
 } from '../lib/guildWar';
 import { listGuilds } from '../lib/cloudSync';
@@ -54,11 +54,14 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
   const [now, setNow] = useState(Date.now());
   // Set immediately after declareWar returns so the UI doesn't wait for guild refresh
   const [pendingWarId, setPendingWarId] = useState<string | null>(null);
+  const [activeWars, setActiveWars] = useState<GuildWar[]>([]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => subscribeToActiveWars(setActiveWars), []);
 
   const activeWarId = (guild as Guild & { activeWarId?: string }).activeWarId;
   // Fallback to localStorage when the war is finished and guild no longer has activeWarId
@@ -424,6 +427,54 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
               </p>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Active wars across all guilds ───────────────────────────────── */}
+      {activeWars.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p style={{ ...PX(5), color: 'var(--gold-main)' }}>
+            ⚔ {isEn ? 'Ongoing Wars' : 'Toczące się Wojny'} ({activeWars.length})
+          </p>
+          {activeWars.map(w => {
+            const isMyWar = w.attackerGuildId === myGuildId || w.defenderGuildId === myGuildId;
+            const timeLeft = w.signupEndsAt - now;
+            const atkCount = Object.keys(w.attackers ?? {}).length;
+            const defCount = Object.keys(w.defenders ?? {}).length;
+            return (
+              <div key={w.id} style={{
+                background: isMyWar ? 'rgba(60,10,10,0.8)' : 'var(--bg-inset)',
+                border: `1px solid ${isMyWar ? 'rgba(220,50,50,0.55)' : 'var(--border-dark)'}`,
+                padding: '8px 10px',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <p style={{ ...PX(5), color: 'var(--text-bright)', flex: 1, minWidth: 0 }}>
+                    <span style={{ color: '#f87171' }}>[{w.attackerGuildTag}]</span>
+                    {' '}{w.attackerGuildName}
+                    <span style={{ color: 'var(--text-muted)', margin: '0 5px' }}>vs</span>
+                    <span style={{ color: '#7dd3fc' }}>[{w.defenderGuildTag}]</span>
+                    {' '}{w.defenderGuildName}
+                  </p>
+                  {isMyWar && (
+                    <span style={{ ...PX(3), color: '#f87171', background: 'rgba(200,50,50,0.2)', border: '1px solid rgba(200,50,50,0.4)', padding: '1px 5px', flexShrink: 0 }}>
+                      {isEn ? 'YOUR WAR' : 'TWOJA'}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <p style={{ ...PX(3), color: '#f87171' }}>⚔ {atkCount}</p>
+                  <p style={{ ...PX(3), color: 'var(--text-muted)' }}>vs</p>
+                  <p style={{ ...PX(3), color: '#7dd3fc' }}>🛡 {defCount}</p>
+                  <p style={{ ...PX(3), color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                    {w.status === 'signup' && timeLeft > 0
+                      ? (isEn ? 'Signup: ' : 'Zapisy: ') + formatCountdown(timeLeft)
+                      : `⚔ ${isEn ? 'Battle' : 'Bitwa'}`}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
