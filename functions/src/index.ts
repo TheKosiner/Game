@@ -63,16 +63,17 @@ export const spinRoulette = functions.https.onCall(async (data, context) => {
   const back = won ? rouletteReturn(betType, stake) : 0;
   const newGold = Math.min(gold - stake + back, 1_000_000_000);
   const netProfit = back - stake;
+  const newGoldEarnedToday = (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit);
   const now = Date.now();
 
   await saveRef.update({
     'hero.gold': newGold,
-    'hero.goldEarnedToday': (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit),
+    'hero.goldEarnedToday': newGoldEarnedToday,
     'hero.lastCasinoSpinAt': now,
     updatedAt: now,
   });
 
-  return { result, won, net: netProfit, newGold };
+  return { result, won, net: netProfit, newGold, newGoldEarnedToday };
 });
 
 // ── Gem packages ─────────────────────────────────────────────────────────────
