@@ -10,7 +10,7 @@ import { useT } from '../hooks/useT';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import GameIcon from './GameIcon';
 
-interface SpinResult { result: number; won: boolean; net: number; newGold: number }
+interface SpinResult { result: number; won: boolean; net: number; newGold: number; newGoldEarnedToday: number }
 
 // ── Roulette helpers ──────────────────────────────────────────────────────────
 
@@ -304,11 +304,13 @@ export default function CasinoPanel() {
     // Apply gold + show result only once the reel stops
     onDoneRef.current = () => {
       clearTimeout(safetyTimerRef.current);
+      // Use exact values from CF to avoid double-counting goldEarnedToday
+      // when loadFromCloud ran mid-animation due to a background sync race.
       useGameStore.setState(s => ({
         hero: {
           ...s.hero,
           gold: res.newGold,
-          goldEarnedToday: s.hero.goldEarnedToday + Math.max(0, res.net),
+          goldEarnedToday: res.newGoldEarnedToday ?? (s.hero.goldEarnedToday + Math.max(0, res.net)),
           lastCasinoSpinAt: Date.now(),
         },
       }));
@@ -318,6 +320,11 @@ export default function CasinoPanel() {
       histRef.current = [res.result, ...histRef.current].slice(0, 20);
       spinLockRef.current = false;
       setSpinning(false);
+      // Reload authoritative state after sync to correct any race with background syncs
+      if (user) {
+        const uid = user.uid;
+        setTimeout(() => loadFromCloud(uid, true).catch(() => {}), 3000);
+      }
     };
   }, [betType, stake, hero.gold, saveGame, user]);
 
