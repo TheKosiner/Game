@@ -127,7 +127,7 @@ describe('calcStreakResult', () => {
     expect(r.streakMilestone).toBeNull();
   });
 
-  it('awards "epic" milestone and 20 chest gems on multiples of 5 (not 20)', () => {
+  it('awards "epic" milestone and 20 chest gems on multiples of 5 (not 10)', () => {
     const yesterday = utc(2026, 6, 19, 10);
     // prevStreak = 4 → newStreak = 5
     const r = calcStreakResult(4, 50, yesterday, NOW);
@@ -137,36 +137,36 @@ describe('calcStreakResult', () => {
     expect(r.gemsAdded).toBe(DAILY_GEMS + STREAK_BONUS + 20);
   });
 
-  it('awards "legendary" milestone and 50 chest gems on multiples of 20', () => {
+  it('awards "legendary" milestone and 50 chest gems on multiples of 10', () => {
     const yesterday = utc(2026, 6, 19, 10);
-    const r = calcStreakResult(19, 0, yesterday, NOW);
-    expect(r.newStreak).toBe(20);
+    const r = calcStreakResult(9, 0, yesterday, NOW);
+    expect(r.newStreak).toBe(10);
     expect(r.streakMilestone).toBe('legendary');
     expect(r.chestGems).toBe(50);
     expect(r.gemsAdded).toBe(DAILY_GEMS + STREAK_BONUS + 50);
   });
 
-  it('"legendary" takes priority over "epic" at streak=20 (20 is also divisible by 5)', () => {
+  it('"legendary" takes priority over "epic" at streak=10 (10 is also divisible by 5)', () => {
     const yesterday = utc(2026, 6, 19, 10);
-    const r = calcStreakResult(19, 0, yesterday, NOW);
+    const r = calcStreakResult(9, 0, yesterday, NOW);
     expect(r.streakMilestone).toBe('legendary');
   });
 
-  it('no milestone at streak=10 (epic milestone is at multiples of 5, but 10 is not 20)', () => {
+  it('legendary milestone at streak=20 (multiple of 10)', () => {
     const yesterday = utc(2026, 6, 19, 10);
-    const r = calcStreakResult(9, 0, yesterday, NOW);
-    expect(r.newStreak).toBe(10);
-    expect(r.streakMilestone).toBe('epic'); // 10 is a multiple of 5
+    const r = calcStreakResult(19, 0, yesterday, NOW);
+    expect(r.newStreak).toBe(20);
+    expect(r.streakMilestone).toBe('legendary');
   });
 
-  it('epic milestone at 25 (multiple of 5, not 20)', () => {
+  it('epic milestone at 15 (multiple of 5, not 10)', () => {
     const yesterday = utc(2026, 6, 19, 10);
-    const r = calcStreakResult(24, 0, yesterday, NOW);
-    expect(r.newStreak).toBe(25);
+    const r = calcStreakResult(14, 0, yesterday, NOW);
+    expect(r.newStreak).toBe(15);
     expect(r.streakMilestone).toBe('epic');
   });
 
-  it('legendary milestone at 40 (multiple of 20)', () => {
+  it('legendary milestone at 40 (multiple of 10)', () => {
     const yesterday = utc(2026, 6, 19, 10);
     const r = calcStreakResult(39, 0, yesterday, NOW);
     expect(r.newStreak).toBe(40);
@@ -204,4 +204,3 @@ describe('dailyClaimBlockReason', () => {
     expect(dailyClaimBlockReason(utc(2026, 6, 18), NOW)).toBeNull();
   });
 });
-

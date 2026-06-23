@@ -12,8 +12,8 @@ interface Props {
 }
 
 function cyclePos(streak: number): number {
-  const pos = streak % 5;
-  return pos === 0 ? 5 : pos;
+  const pos = streak % 10;
+  return pos === 0 ? 10 : pos;
 }
 
 const CSS = `
@@ -56,8 +56,9 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
   const isLegendary  = streakMilestone === 'legendary';
   const isEpic       = streakMilestone === 'epic';
   const hasMilestone = isEpic || isLegendary;
-  const pos          = cyclePos(streakDays);
-  const nextMile     = hasMilestone ? (isLegendary ? 20 : 5) : (pos < 5 ? 5 - pos : 0);
+  const pos              = cyclePos(streakDays);
+  const nextMileIsLeg    = !hasMilestone && pos >= 5;
+  const nextMile         = hasMilestone ? 0 : (pos < 5 ? 5 - pos : 10 - pos);
 
   const mainColor = isLegendary ? '#ffd700' : isEpic ? '#a855f7' : '#ff2d78';
   const palette: [number,number,number][] = isLegendary
@@ -239,29 +240,30 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
             </p>
           </div>
 
-          {/* 5-day cycle progress */}
+          {/* 10-day cycle progress */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-              {[1,2,3,4,5].map(i => {
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+              {[1,2,3,4,5,6,7,8,9,10].map(i => {
                 const filled = i <= pos;
-                const isMile = i === 5;
-                const dotColor = isMile ? '#ffd700' : mainColor;
+                const isEpicBox = i === 5;
+                const isLegBox  = i === 10;
+                const dotColor  = isLegBox ? '#ffd700' : isEpicBox ? '#a855f7' : mainColor;
                 return (
                   <div key={i} style={{
-                    width: 38, height: 38,
+                    width: 28, height: 28,
                     borderRadius: 4,
                     background: filled
                       ? `linear-gradient(135deg, ${dotColor}33, ${dotColor}66)`
                       : 'rgba(255,255,255,0.03)',
                     border: `1px solid ${filled ? dotColor : 'rgba(255,255,255,0.08)'}`,
-                    boxShadow: filled ? `0 0 12px ${dotColor}66, inset 0 0 8px ${dotColor}22` : 'none',
+                    boxShadow: filled ? `0 0 10px ${dotColor}66, inset 0 0 6px ${dotColor}22` : 'none',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: "'Share Tech Mono', monospace",
-                    fontSize: isMile ? 18 : 13,
+                    fontSize: (isEpicBox || isLegBox) ? 14 : 11,
                     color: filled ? dotColor : 'rgba(255,255,255,0.15)',
                     transition: 'all 0.3s',
                   }}>
-                    {isMile ? '🏆' : filled ? '✓' : i}
+                    {isLegBox ? '👑' : isEpicBox ? '🎁' : filled ? '✓' : i}
                   </div>
                 );
               })}
@@ -275,9 +277,11 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
             }}>
               <div style={{
                 height: '100%',
-                width: `${(pos / 5) * 100}%`,
-                background: pos === 5
+                width: `${(pos / 10) * 100}%`,
+                background: pos === 10
                   ? `linear-gradient(90deg, ${mainColor}, #ffd700)`
+                  : pos === 5
+                  ? `linear-gradient(90deg, ${mainColor}88, #a855f7)`
                   : `linear-gradient(90deg, ${mainColor}88, ${mainColor})`,
                 boxShadow: `0 0 8px ${mainColor}`,
                 animation: 'sm-bar 0.7s ease-out',
@@ -299,7 +303,13 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
             }}>
               {hasMilestone
                 ? (isEn ? '★ Milestone reached!' : '★ Kamień milowy!')
-                : (isEn ? `${nextMile} more day${nextMile===1?'':'s'} to epic chest` : `Jeszcze ${nextMile} ${nextMile===1?'dzień':'dni'} do skrzynki`)}
+                : nextMileIsLeg
+                ? (isEn
+                    ? `${nextMile} more day${nextMile===1?'':'s'} to legendary chest`
+                    : `Jeszcze ${nextMile} ${nextMile===1?'dzień':'dni'} do legendarnej skrzynki`)
+                : (isEn
+                    ? `${nextMile} more day${nextMile===1?'':'s'} to epic chest`
+                    : `Jeszcze ${nextMile} ${nextMile===1?'dzień':'dni'} do epickiej skrzynki`)}
             </p>
           </div>
 

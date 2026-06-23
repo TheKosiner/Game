@@ -35,7 +35,7 @@ export function calcStreakResult(
   now: number,
 ): StreakCalcResult {
   const newStreak = isYesterdaySrv(lastDailyReset, now) ? prevStreak + 1 : 1;
-  const isLegendary = newStreak % 20 === 0;
+  const isLegendary = newStreak % 10 === 0;
   const isEpic      = !isLegendary && newStreak % 5 === 0;
   const streakMilestone: 'epic' | 'legendary' | null =
     isLegendary ? 'legendary' : isEpic ? 'epic' : null;
