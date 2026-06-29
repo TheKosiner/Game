@@ -473,6 +473,8 @@ export const pl: Translations = {
     restSpeedupLog: (cost: number) => `💎 Odpoczynek pominięty! (-${cost} 💎)`,
     levelUpLog: (n: number) => `💎 Bonus za awans: +${n} gemów!`,
     dailyLog: (n: number) => `💎 Dzienny bonus: +${n} gemów!`,
+    streakBoxLog: (name: string) => `🎁 Skrzynka serii dodana do ekwipunku: ${name}!`,
+    streakBoxFull: '🎒 Ekwipunek pełny — skrzynka serii przepadła!',
     portraitShopTitle: '🎨 EKSKLUZYWNE PORTRETY',
     portraitOwned: '✓ POSIADASZ',
     portraitEquipped: '✓ AKTYWNY',

@@ -381,23 +381,41 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
           {/* Chest opened */}
           {hasMilestone && opened && (
             <div style={{ textAlign: 'center', animation: 'sm-gem-pop 0.5s ease-out' }}>
-              <div style={{ fontSize: 40, animation: 'sm-sparkle 0.7s ease-out 3', display: 'inline-block' }}>✨</div>
+              <div style={{
+                fontSize: 56,
+                animation: 'sm-sparkle 0.7s ease-out 3',
+                display: 'inline-block',
+                filter: `drop-shadow(0 0 16px ${mainColor}) drop-shadow(0 0 32px ${mainColor}88)`,
+              }}>
+                {isLegendary ? '🏆' : '🗃️'}
+              </div>
               <div style={{
                 fontFamily: "'Orbitron', monospace",
-                fontSize: 36, fontWeight: 900,
+                fontSize: 18, fontWeight: 900,
                 color: mainColor,
-                textShadow: `0 0 20px ${mainColor}, 0 0 40px ${mainColor}88`,
+                textShadow: `0 0 16px ${mainColor}, 0 0 32px ${mainColor}88`,
                 marginTop: 6,
               }}>
-                +{chestGems} 💎
+                {isLegendary
+                  ? (isEn ? 'Legendary Mystery Box' : 'Legendarna Skrzynka')
+                  : (isEn ? 'Epic Mystery Box' : 'Epicka Skrzynka')}
               </div>
               <p style={{
                 fontFamily: "'Share Tech Mono', monospace",
-                fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.15em',
+                fontSize: 9, color: mainColor, letterSpacing: '0.15em',
                 marginTop: 8,
               }}>
-                {isEn ? 'GEMS ADDED TO ACCOUNT' : 'KLEJNOTY DODANE DO KONTA'}
+                {isEn ? '✓ ADDED TO INVENTORY' : '✓ DODANO DO EKWIPUNKU'}
               </p>
+              {chestGems > 0 && (
+                <p style={{
+                  fontFamily: "'Share Tech Mono', monospace",
+                  fontSize: 9, color: 'rgba(0,229,255,0.6)', letterSpacing: '0.1em',
+                  marginTop: 4,
+                }}>
+                  {isEn ? `+ ${chestGems} 💎 gems` : `+ ${chestGems} 💎 gemów`}
+                </p>
+              )}
             </div>
           )}
 
