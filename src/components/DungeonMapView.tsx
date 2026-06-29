@@ -120,7 +120,10 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
   return (
     <div
       ref={wrapRef}
-      style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden',
+      style={{ position: 'relative', width: '100%', aspectRatio: '16/9',
+        // Let the location popup extend past the (short, 16:9) map without being
+        // clipped; raise z so the overflowing part draws above the sections below.
+        overflow: 'visible', zIndex: popup ? 5 : 'auto',
         background: 'rgba(6,3,13,0.97)', border: '1px solid rgba(74,31,122,0.5)' }}
       onClick={() => setPopup(null)}
     >
