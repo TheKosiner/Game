@@ -470,20 +470,26 @@ export const joinGuildWar = functions.https.onCall(async (data, context) => {
   });
 });
 
-type WarBattleResult = { winner: 'attacker' | 'defender'; attackerScore: number; defenderScore: number; log: string[] };
+type WarFighter = { uid: string; username: string; level: number; portrait: number };
+type WarDuel = { atk: WarFighter | null; def: WarFighter | null; winner: 'attacker' | 'defender' };
+type WarBattleResult = { winner: 'attacker' | 'defender'; attackerScore: number; defenderScore: number; log: string[]; duels: WarDuel[] };
 
 // Pure-ish battle simulation shared by the on-demand callable and the scheduled
 // backstop. Power = level² with ±20% randomness; defenders get a 10% home edge.
+// Fighters are paired lowest-level first so the replay plays out weakest → strongest.
+// Also emits a structured `duels` list (with portraits) for the battle-replay UI.
 function simulateWarBattle(war: FirebaseFirestore.DocumentData): WarBattleResult {
-  const attackers = Object.entries(war.attackers ?? {}) as [string, { username: string; level: number }][];
-  const defenders = Object.entries(war.defenders ?? {}) as [string, { username: string; level: number }][];
+  const toFighter = ([uid, p]: [string, { username: string; level: number; portrait?: number }]): WarFighter =>
+    ({ uid, username: p.username, level: p.level, portrait: p.portrait ?? 0 });
+  const attackers = (Object.entries(war.attackers ?? {}) as [string, { username: string; level: number; portrait?: number }][]).map(toFighter);
+  const defenders = (Object.entries(war.defenders ?? {}) as [string, { username: string; level: number; portrait?: number }][]).map(toFighter);
 
   function roll(level: number): number {
     return level * level * (0.8 + Math.random() * 0.4);
   }
 
-  const sortedAtk = [...attackers].sort((a, b) => b[1].level - a[1].level);
-  const sortedDef = [...defenders].sort((a, b) => b[1].level - a[1].level);
+  const sortedAtk = [...attackers].sort((a, b) => a.level - b.level);
+  const sortedDef = [...defenders].sort((a, b) => a.level - b.level);
   const atkTag = war.attackerGuildTag as string;
   const defTag = war.defenderGuildTag as string;
 
@@ -493,27 +499,32 @@ function simulateWarBattle(war: FirebaseFirestore.DocumentData): WarBattleResult
 
   let atkWins = 0;
   let defWins = 0;
+  const duels: WarDuel[] = [];
   const pairs = Math.max(sortedAtk.length, sortedDef.length);
 
   for (let i = 0; i < pairs; i++) {
-    const atk = sortedAtk[i];
-    const def = sortedDef[i];
+    const atk = sortedAtk[i] ?? null;
+    const def = sortedDef[i] ?? null;
     if (atk && def) {
-      const aP = roll(atk[1].level);
-      const dP = roll(def[1].level) * 1.1;
-      if (aP > dP) {
+      const aP = roll(atk.level);
+      const dP = roll(def.level) * 1.1;
+      const winner: 'attacker' | 'defender' = aP > dP ? 'attacker' : 'defender';
+      if (winner === 'attacker') {
         atkWins++;
-        log.push(`⚔ ${atk[1].username} [${atkTag}] pokonuje ${def[1].username} [${defTag}]`);
+        log.push(`⚔ ${atk.username} [${atkTag}] pokonuje ${def.username} [${defTag}]`);
       } else {
         defWins++;
-        log.push(`🛡 ${def[1].username} [${defTag}] odpiera atak ${atk[1].username} [${atkTag}]`);
+        log.push(`🛡 ${def.username} [${defTag}] odpiera atak ${atk.username} [${atkTag}]`);
       }
+      duels.push({ atk, def, winner });
     } else if (atk) {
       atkWins++;
-      log.push(`⚔ ${atk[1].username} [${atkTag}] wygrywa walkower`);
+      log.push(`⚔ ${atk.username} [${atkTag}] wygrywa walkower`);
+      duels.push({ atk, def: null, winner: 'attacker' });
     } else if (def) {
       defWins++;
-      log.push(`🛡 ${def[1].username} [${defTag}] wygrywa walkower`);
+      log.push(`🛡 ${def.username} [${defTag}] wygrywa walkower`);
+      duels.push({ atk: null, def, winner: 'defender' });
     }
   }
 
@@ -523,7 +534,7 @@ function simulateWarBattle(war: FirebaseFirestore.DocumentData): WarBattleResult
     ? `🏆 ZWYCIĘSTWO: [${atkTag}]!`
     : `🛡 OBRONA UDANA: [${defTag}]!`);
 
-  return { winner, attackerScore: atkWins, defenderScore: defWins, log };
+  return { winner, attackerScore: atkWins, defenderScore: defWins, log, duels };
 }
 
 // Commit a battle result: flip the war to 'finished' and clear both guilds'

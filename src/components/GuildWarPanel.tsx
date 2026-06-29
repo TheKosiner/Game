@@ -8,6 +8,7 @@ import {
   subscribeToGuildWar, subscribeToActiveWars, declareWar, joinWar, resolveWar,
   type GuildWar,
 } from '../lib/guildWar';
+import GuildWarBattleModal from './GuildWarBattleModal';
 import { listGuilds } from '../lib/cloudSync';
 import type { Guild } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
@@ -55,6 +56,7 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
   // Set immediately after declareWar returns so the UI doesn't wait for guild refresh
   const [pendingWarId, setPendingWarId] = useState<string | null>(null);
   const [activeWars, setActiveWars] = useState<GuildWar[]>([]);
+  const [showBattle, setShowBattle] = useState(false);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1_000);
@@ -271,6 +273,8 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
+      {showBattle && <GuildWarBattleModal war={war} onClose={() => setShowBattle(false)} />}
+
       {/* War image */}
       <div style={{ position: 'relative', overflow: 'hidden' }}>
         <img src="/guild_war.webp" alt="Guild War" style={{ width: '100%', height: 180, objectFit: 'cover', objectPosition: 'center 30%', display: 'block', border: '1px solid rgba(200,50,50,0.35)' }} />
@@ -409,6 +413,12 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
               {war.result.attackerScore} : {war.result.defenderScore}
             </p>
           </div>
+
+          {(war.result.duels?.length ?? 0) > 0 && (
+            <button onClick={() => setShowBattle(true)} className="btn btn-primary" style={{ fontSize: 10, padding: '8px' }}>
+              {t.guild.warWatchBattle}
+            </button>
+          )}
 
           <div style={{ background: 'var(--bg-deep)', border: '1px solid var(--border-dark)', padding: 10, maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
             {war.result.log.map((line, i) => (
