@@ -10,11 +10,25 @@ export interface WarParticipant {
   joinedAt: number;
 }
 
+export interface WarFighter {
+  uid: string;
+  username: string;
+  level: number;
+  portrait: number;
+}
+
+export interface WarDuel {
+  atk: WarFighter | null;
+  def: WarFighter | null;
+  winner: 'attacker' | 'defender';
+}
+
 export interface WarResult {
   winner: 'attacker' | 'defender';
   attackerScore: number;
   defenderScore: number;
   log: string[];
+  duels?: WarDuel[]; // present on wars resolved after the battle-replay feature shipped
 }
 
 export interface GuildWar {
