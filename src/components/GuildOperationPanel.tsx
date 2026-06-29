@@ -500,7 +500,7 @@ export default function GuildOperationPanel({
             ))}
           </div>
         )}
-        {isLeader && (
+        {isLeaderOrOfficer && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
             ▶ {isEn ? 'NEW OPERATION' : 'NOWA OPERACJA'}
           </button>
@@ -574,7 +574,7 @@ export default function GuildOperationPanel({
             </p>
           </div>
         )}
-        {!inCooldown && isLeader && (
+        {!inCooldown && isLeaderOrOfficer && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
             ▶ {isEn ? 'NEW OPERATION' : 'NOWA OPERACJA'}
           </button>

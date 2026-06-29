@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
+import { guildEnemyDamage, applyRaidDamage, guildOpReward } from './guildRaidLogic';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -878,14 +879,10 @@ export async function attackGuildEnemy(
     const cappedDamage = MAX_HERO_DAMAGE;
 
     // Enemy retaliation, scaled by floor — computed on the server so every member
-    // takes consistent, non-manipulable damage (mirrors the old client formula).
+    // takes consistent, non-manipulable damage.
     const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
-    const enemyBaseDmg = Math.max(3, Math.round(
-      loc.baseHpPerMember * (1 + ((op.floor ?? 1) - 1) * 0.18) * 0.38,
-    ));
-    const enemyDmg = Math.max(1, Math.round(enemyBaseDmg * (0.7 + Math.random() * 0.6)));
-    const newRaidHp = Math.max(0, currentRaidHp - enemyDmg);
-    const knockedOut = newRaidHp <= 0;
+    const enemyDmg = guildEnemyDamage(loc.baseHpPerMember, op.floor ?? 1, Math.random());
+    const { raidHp: newRaidHp, knockedOut } = applyRaidDamage(currentRaidHp, enemyDmg);
 
     const newHp = Math.max(0, op.enemyHp - cappedDamage);
     const updates: Record<string, unknown> = {
@@ -912,9 +909,7 @@ export async function attackGuildEnemy(
         txn.update(ref, updates);
         return { status: 'enemy_killed', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       } else if (op.floor >= op.maxFloors) {
-        const lvlMult = 1 + ((op.heroLevel ?? 1) - 1) * 0.04;
-        const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12) * lvlMult);
-        const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08) * lvlMult);
+        const { xp, gold } = guildOpReward(loc.baseXpPerFloor, loc.baseGoldPerFloor, op.maxFloors, op.memberCount, op.heroLevel ?? 1);
         updates['guildOperation.pendingReward'] = {
           xp, gold, rarity: loc.finalRarity, completedAt: now, claimedBy: {},
         };
