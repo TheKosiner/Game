@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
-  startGuildOperation, attackGuildEnemy, claimGuildOperationReward, setKnockedOut,
+  startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -63,10 +63,13 @@ export default function GuildOperationPanel({
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
 
-  // Local combat HP — arena-style: starts at maxHp, drains during raid, never touches hero.hp.
-  // Starts at 0 if the player was already knocked out in this operation (handles re-navigation).
+  // Raid combat HP — server-authoritative: starts at maxHp, drains as the player is
+  // hit, never touches hero.hp and never refills (the server owns it). On (re-)open we
+  // restore the persisted value so a refresh can't reset HP back to full.
   const [raidHp, setRaidHp] = useState(() => {
-    if (guild.guildOperation?.participants?.[myUid]?.knockedOut) return 0;
+    const p = guild.guildOperation?.participants?.[myUid];
+    if (p?.knockedOut) return 0;
+    if (typeof p?.raidHp === 'number') return p.raidHp;
     return useGameStore.getState().hero.maxHp;
   });
   const raidHpRef = useRef(raidHp);
@@ -147,15 +150,12 @@ export default function GuildOperationPanel({
     attackingRef.current = true;
     setAttacking(true);
 
-    const locData = GUILD_OP_LOCATIONS.find(l => l.id === currentOp.locationId);
     const heroDamage = Math.max(1, rollDamage(getHeroAttack(currentHero)));
-    const enemyBaseDmg = Math.max(3, Math.round(
-      (locData?.baseHpPerMember ?? 40) * (1 + (currentOp.floor - 1) * 0.18) * 0.38,
-    ));
-    const enemyDmg = Math.max(1, Math.round(enemyBaseDmg * (0.7 + Math.random() * 0.6)));
 
     try {
-      const { status, damage } = await attackGuildEnemy(
+      // The server now owns raid HP and the enemy's retaliation — it returns the
+      // damage dealt, the damage taken, and the player's remaining HP.
+      const { status, damage, enemyDmg, raidHp: serverRaidHp, knockedOut } = await attackGuildEnemy(
         guildId, myUid, heroDamage, currentHero.maxHp,
         { username: myUsername, heroName: currentHero.name },
       );
@@ -165,19 +165,22 @@ export default function GuildOperationPanel({
       } else if (status === 'no_op') {
         notify(isEn ? 'No active operation.' : 'Brak aktywnej operacji.', false);
         setAutoFight(false);
+      } else if (status === 'knocked_out') {
+        // Server says we're already out (e.g. depleted on another device).
+        raidHpRef.current = 0;
+        setRaidHp(0);
+        setAutoFight(false);
       } else {
-        const newRaidHp = Math.max(0, raidHpRef.current - enemyDmg);
-        raidHpRef.current = newRaidHp;
-        setRaidHp(newRaidHp);
+        raidHpRef.current = serverRaidHp;
+        setRaidHp(serverRaidHp);
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
           { text: `⚔ ${isEn ? 'You' : 'Ty'} → ${fmtNum(damage)} dmg ${isEn ? 'on' : 'na'} ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
         setLog(l => [...l, ...newLines]);
-        if (newRaidHp <= 0) {
+        if (knockedOut) {
           setLog(l => [...l, { text: isEn ? `💀 ${currentHero.name} defeated! You can no longer attack in this operation.` : `💀 ${currentHero.name} pokonany! Nie możesz już atakować w tej operacji.`, type: 'kill' }]);
           setAutoFight(false);
-          setKnockedOut(guildId, myUid).catch(() => {});
         }
         if (status === 'completed') setAutoFight(false);
       }
@@ -196,24 +199,38 @@ export default function GuildOperationPanel({
     return () => clearInterval(id);
   }, [autoFight, handleAttack]);
 
-  // Reset local combat HP when a new operation starts
+  // Reset raid HP to full only when a *genuinely new* operation starts (startedAt
+  // changes to a new value). It must NOT fire on mount/refresh — that would refill
+  // HP and reintroduce the very bug we're fixing.
+  const prevStartedAtRef = useRef(op?.startedAt);
   useEffect(() => {
-    if (!op?.startedAt) return;
-    const maxHp = useGameStore.getState().hero.maxHp;
-    raidHpRef.current = maxHp;
-    setRaidHp(maxHp);
-    setLog([]);
+    const startedAt = op?.startedAt;
+    if (startedAt && prevStartedAtRef.current && startedAt !== prevStartedAtRef.current) {
+      const maxHp = useGameStore.getState().hero.maxHp;
+      raidHpRef.current = maxHp;
+      setRaidHp(maxHp);
+      setLog([]);
+    }
+    prevStartedAtRef.current = startedAt;
   }, [op?.startedAt]);
 
-  // Sync knocked-out state arriving from Firestore (e.g. after a page re-open)
+  // Reconcile raid HP / knockout from Firestore (e.g. after a re-open or from another
+  // device). Only ever sync HP *down* — the server never refills, so a stale snapshot
+  // must not bump HP back up — and skip while an attack of ours is in flight.
+  const serverRaidHp = op?.participants?.[myUid]?.raidHp;
+  const serverKnockedOut = op?.participants?.[myUid]?.knockedOut;
   useEffect(() => {
-    if (op?.participants?.[myUid]?.knockedOut && raidHpRef.current > 0) {
+    if (serverKnockedOut && raidHpRef.current > 0) {
       raidHpRef.current = 0;
       setRaidHp(0);
       setAutoFight(false);
+      return;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [op?.participants?.[myUid]?.knockedOut]);
+    if (typeof serverRaidHp === 'number' && serverRaidHp < raidHpRef.current && !attackingRef.current) {
+      raidHpRef.current = serverRaidHp;
+      setRaidHp(serverRaidHp);
+    }
+  }, [serverRaidHp, serverKnockedOut]);
 
   async function handleClaim() {
     if (claiming) return;
