@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useIsDesktop } from '../hooks/useIsDesktop';
+import { subscribeToGuildWar, resolveWar, type GuildWar } from '../lib/guildWar';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
   acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership, setMemberRole,
@@ -440,6 +441,63 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
     });
   const memberCount = members.length;
 
+  // ── Guild war: watch + auto-resolve from anywhere in the guild view ──────────
+  // War resolution used to be triggered only from the war tab, so if the signup
+  // window closed while no one had that tab open, the war never progressed to a
+  // battle/result and nothing showed on the main guild page. We now subscribe to
+  // the active war from the always-mounted guild view and resolve it as soon as
+  // signup ends, regardless of which subtab is open.
+  const [warDoc, setWarDoc] = useState<GuildWar | null>(null);
+  const [warNow, setWarNow] = useState(() => Date.now());
+  const warResolvingRef = useRef(false);
+
+  useEffect(() => {
+    if (!activeWarId) { setWarDoc(null); return; }
+    return subscribeToGuildWar(activeWarId, setWarDoc);
+  }, [activeWarId]);
+
+  useEffect(() => {
+    if (!activeWarId) return;
+    const id = setInterval(() => setWarNow(Date.now()), 1_000);
+    return () => clearInterval(id);
+  }, [activeWarId]);
+
+  // Cache a finished war so its result stays viewable for 12h and is discoverable
+  // from the war tab (mirrors GuildWarPanel's persistence).
+  function cacheFinishedWar(warId: string, resolvedAt?: number) {
+    if (!resolvedAt) return;
+    localStorage.setItem(`guildwar_last_${guild.id}`, JSON.stringify({ warId, resolvedAt }));
+    if (!localStorage.getItem(`guildwar_unseen_${guild.id}`)) {
+      localStorage.setItem(`guildwar_unseen_${guild.id}`, warId);
+    }
+  }
+
+  useEffect(() => {
+    if (!warDoc || warDoc.status !== 'signup' || warNow < warDoc.signupEndsAt || warResolvingRef.current) return;
+    warResolvingRef.current = true;
+    resolveWar(warDoc.id)
+      .then(finished => {
+        // Persist straight from the resolve result so it can't be missed by a
+        // snapshot race, then refresh the guild so activeWarId clears.
+        if (finished?.status === 'finished') cacheFinishedWar(finished.id, finished.resolvedAt);
+        onRefresh();
+      })
+      .catch(() => {})
+      .finally(() => { warResolvingRef.current = false; });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warDoc, warNow]);
+
+  // Also cache when we merely observe a war finishing via snapshot (e.g. another
+  // member's client resolved it).
+  useEffect(() => {
+    if (warDoc?.status === 'finished') cacheFinishedWar(warDoc.id, warDoc.resolvedAt);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warDoc?.status, warDoc?.id, warDoc?.resolvedAt]);
+
+  // Banner state for the main guild page: signup (countdown) vs battle in progress.
+  const warSignupOpen = warDoc?.status === 'signup' && warNow < warDoc.signupEndsAt;
+  const warInBattle = !!activeWarId && !warSignupOpen; // signup ended (resolving) or battle phase
+
   // On first mount: if there's an unseen battle result, navigate to the war tab
   useEffect(() => {
     const unseenWarId = localStorage.getItem(`guildwar_unseen_${guild.id}`);
@@ -553,11 +611,16 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
           onClick={onGoToWar}
           style={{
             width: '100%', textAlign: 'left', cursor: 'pointer',
-            background: 'rgba(80,10,10,0.85)', border: '1px solid rgba(220,50,50,0.6)',
+            background: warInBattle ? 'rgba(110,10,10,0.9)' : 'rgba(80,10,10,0.85)',
+            border: `1px solid ${warInBattle ? 'rgba(255,70,70,0.75)' : 'rgba(220,50,50,0.6)'}`,
             padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}
         >
-          <span style={{ ...PX(5), color: '#f87171' }}>⚔ {isEn ? 'Guild War in progress' : 'Trwa Wojna Gildii'}</span>
+          <span style={{ ...PX(5), color: '#f87171' }}>
+            {warInBattle
+              ? `⚔ ${isEn ? 'Battle in progress' : 'Trwa Bitwa'}`
+              : `⚔ ${isEn ? 'Guild War — signup open' : 'Wojna Gildii — trwają zapisy'}`}
+          </span>
           <span style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? 'View →' : 'Zobacz →'}</span>
         </button>
       )}

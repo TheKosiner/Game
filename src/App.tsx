@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
-import { useGameStore } from './store/gameStore';
+import { useGameStore, MAX_INVENTORY } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
 import { useLangStore, getLang } from './store/langStore';
@@ -31,6 +31,7 @@ import MysteryBoxModal from './components/MysteryBoxModal';
 import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './components/SubNav';
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
+import { createMysteryBox } from './data/mysteryBoxes';
 import AdminPanel from './components/AdminPanel';
 import ErrorLogPanel from './components/ErrorLogPanel';
 import LevelUpModal from './components/LevelUpModal';
@@ -79,6 +80,22 @@ export default function App() {
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
+
+  // Grant the physical milestone chest (epic on day 5, legendary on day 10) into
+  // the inventory. The CF only credits gems; the box is owned by the client save,
+  // so it must be added here after the post-claim cloud reload. Call only on the
+  // device that actually claimed (result.claimed === true).
+  const grantStreakMilestoneBox = (milestone: 'epic' | 'legendary') => {
+    const freshHero = useGameStore.getState().hero;
+    if (freshHero.inventory.length >= MAX_INVENTORY) {
+      addCombatLog(tRef.current.gems.streakBoxFull, 'system');
+      return;
+    }
+    const box = createMysteryBox(milestone, freshHero.level);
+    useGameStore.getState().addToInventory(box);
+    addCombatLog(tRef.current.gems.streakBoxLog(getLang() === 'en' ? box.nameEn ?? box.name : box.name), 'loot');
+  };
+
   const desktopMainRef = useRef<HTMLElement>(null);
   const animKey = `${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`;
   const prevAnimKey = useRef(animKey);
@@ -267,7 +284,11 @@ export default function App() {
           claimDailyRewardServer().then(async result => {
             if (!result.claimed) { checkDailyReset(); return; }
             try { await loadFromCloud(user.uid, true); } catch {}
+            if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
+              grantStreakMilestoneBox(result.streakMilestone);
+            }
             saveGame();
+            syncToCloud(user.uid, user.username).catch(() => {});
             setStreakData(result);
           }).catch(() => {
             const before = useGameStore.getState().hero;
@@ -309,8 +330,16 @@ export default function App() {
       // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
       try { await loadFromCloud(user.uid, true); } catch {}
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+      // Milestone streak chest: grant an actual mystery box to the inventory
+      // (epic on day 5, legendary on day 10). The CF only credits gems.
+      if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
+        grantStreakMilestoneBox(result.streakMilestone);
+      }
       localStorage.setItem(todayKey, '1');
       saveGame();
+      // Persist the freshly granted box (and reset state) back to the cloud so it
+      // survives the next loadFromCloud on app start or another device.
+      syncToCloud(user.uid, user.username).catch(() => {});
       setStreakData(result);
     }).catch(() => {
       // CF not deployed or network error — fall back to local daily reset.

@@ -470,33 +470,14 @@ export const joinGuildWar = functions.https.onCall(async (data, context) => {
   });
 });
 
-export const resolveGuildWar = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+type WarBattleResult = { winner: 'attacker' | 'defender'; attackerScore: number; defenderScore: number; log: string[] };
 
-  const { warId } = data as { warId: string };
-  const warRef = db.doc(`guildWars/${warId}`);
-  const warSnap = await warRef.get();
-
-  if (!warSnap.exists) throw new functions.https.HttpsError('not-found', 'War not found');
-  const war = warSnap.data()!;
-
-  if (war.status === 'finished') {
-    // Best-effort cleanup in case activeWarId was left behind
-    const b = db.batch();
-    b.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
-    b.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
-    await b.commit().catch(() => {});
-    return { id: warId, ...war };
-  }
-  if (war.status === 'battle') return { id: warId, ...war };
-  if (war.status !== 'signup') throw new functions.https.HttpsError('failed-precondition', 'War not in signup phase');
-  if (Date.now() < war.signupEndsAt) throw new functions.https.HttpsError('failed-precondition', 'Signup period not ended yet');
-
-  // Run battle simulation
+// Pure-ish battle simulation shared by the on-demand callable and the scheduled
+// backstop. Power = level² with ±20% randomness; defenders get a 10% home edge.
+function simulateWarBattle(war: FirebaseFirestore.DocumentData): WarBattleResult {
   const attackers = Object.entries(war.attackers ?? {}) as [string, { username: string; level: number }][];
   const defenders = Object.entries(war.defenders ?? {}) as [string, { username: string; level: number }][];
 
-  // Power = level² with ±20% randomness; defenders get 10% home advantage
   function roll(level: number): number {
     return level * level * (0.8 + Math.random() * 0.4);
   }
@@ -536,15 +517,23 @@ export const resolveGuildWar = functions.https.onCall(async (data, context) => {
     }
   }
 
-  const winner = atkWins > defWins ? 'attacker' : 'defender';
+  const winner: 'attacker' | 'defender' = atkWins > defWins ? 'attacker' : 'defender';
   log.push(`Wynik: ${atkWins} : ${defWins}`);
   log.push(winner === 'attacker'
     ? `🏆 ZWYCIĘSTWO: [${atkTag}]!`
     : `🛡 OBRONA UDANA: [${defTag}]!`);
 
-  const result = { winner, attackerScore: atkWins, defenderScore: defWins, log };
-  const now = Date.now();
+  return { winner, attackerScore: atkWins, defenderScore: defWins, log };
+}
 
+// Commit a battle result: flip the war to 'finished' and clear both guilds'
+// activeWarId, guarding against a concurrent resolution (transaction re-check).
+async function finalizeWar(
+  warRef: FirebaseFirestore.DocumentReference,
+  war: FirebaseFirestore.DocumentData,
+  result: WarBattleResult,
+  now: number,
+): Promise<FirebaseFirestore.DocumentData> {
   try {
     await db.runTransaction(async tx => {
       const snap = await tx.get(warRef);
@@ -556,10 +545,64 @@ export const resolveGuildWar = functions.https.onCall(async (data, context) => {
   } catch (e: any) {
     if (e.message === 'ALREADY_RESOLVED') {
       const finalSnap = await warRef.get();
-      return { id: warId, ...finalSnap.data() };
+      return { id: warRef.id, ...finalSnap.data() };
     }
     throw e;
   }
+  return { id: warRef.id, ...war, status: 'finished', result, resolvedAt: now };
+}
 
-  return { id: warId, ...war, status: 'finished', result, resolvedAt: now };
+export const resolveGuildWar = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
+
+  const { warId } = data as { warId: string };
+  const warRef = db.doc(`guildWars/${warId}`);
+  const warSnap = await warRef.get();
+
+  if (!warSnap.exists) throw new functions.https.HttpsError('not-found', 'War not found');
+  const war = warSnap.data()!;
+
+  if (war.status === 'finished') {
+    // Best-effort cleanup in case activeWarId was left behind
+    const b = db.batch();
+    b.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+    b.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+    await b.commit().catch(() => {});
+    return { id: warId, ...war };
+  }
+  if (war.status === 'battle') return { id: warId, ...war };
+  if (war.status !== 'signup') throw new functions.https.HttpsError('failed-precondition', 'War not in signup phase');
+  if (Date.now() < war.signupEndsAt) throw new functions.https.HttpsError('failed-precondition', 'Signup period not ended yet');
+
+  // Run battle simulation and commit the result.
+  const result = simulateWarBattle(war);
+  return finalizeWar(warRef, war, result, Date.now());
 });
+
+// ── resolveExpiredGuildWars (scheduled backstop) ───────────────────────────────
+// Client auto-resolution only fires while someone has the guild open. This runs
+// server-side every 10 minutes to resolve any war whose signup window has closed,
+// so battles always progress even if no member is online.
+export const resolveExpiredGuildWars = functions.pubsub
+  .schedule('every 10 minutes')
+  .onRun(async () => {
+    const now = Date.now();
+    const snap = await db.collection('guildWars').where('status', '==', 'signup').get();
+    const expired = snap.docs.filter(d => (d.data().signupEndsAt ?? 0) <= now);
+
+    for (const docSnap of expired) {
+      const war = docSnap.data();
+      try {
+        const result = simulateWarBattle(war);
+        await finalizeWar(docSnap.ref, war, result, Date.now());
+      } catch (e) {
+        // One war failing (e.g. a disbanded guild) must not block the rest.
+        functions.logger.error(`Failed to resolve war ${docSnap.id}`, e);
+      }
+    }
+
+    if (expired.length > 0) {
+      functions.logger.info(`resolveExpiredGuildWars: resolved ${expired.length} war(s)`);
+    }
+    return null;
+  });

@@ -471,6 +471,8 @@ export const en = {
     restSpeedupLog: (cost: number) => `💎 Rest skipped! (-${cost} 💎)`,
     levelUpLog: (n: number) => `💎 Level up bonus: +${n} gems!`,
     dailyLog: (n: number) => `💎 Daily login bonus: +${n} gems!`,
+    streakBoxLog: (name: string) => `🎁 Streak chest added to inventory: ${name}!`,
+    streakBoxFull: '🎒 Inventory full — streak chest was lost!',
     portraitShopTitle: '🎨 EXCLUSIVE PORTRAITS',
     portraitOwned: '✓ OWNED',
     portraitEquipped: '✓ EQUIPPED',

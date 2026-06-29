@@ -3,6 +3,7 @@ import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
+import { guildEnemyDamage, applyRaidDamage, guildOpReward } from './guildRaidLogic';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -354,6 +355,7 @@ export interface GuildOpParticipant {
   damage: number;
   attackedAt: number;
   maxHp: number; // stored for ranking display only — not a hard cap
+  raidHp?: number; // server-authoritative current raid HP; drains as the player is hit, never refills
   knockedOut?: boolean; // set permanently when raid HP reaches 0; blocks further attacks
 }
 
@@ -829,40 +831,59 @@ export async function startGuildOperation(
 
 export type AttackGuildResult = 'attacked' | 'enemy_killed' | 'advanced' | 'completed' | 'no_op' | 'failed' | 'hp_depleted' | 'knocked_out';
 
+export interface AttackGuildOutcome {
+  status: AttackGuildResult;
+  damage: number;    // damage dealt to the enemy this attack
+  enemyDmg: number;  // damage the player took this attack
+  raidHp: number;    // player's remaining server-authoritative raid HP
+  knockedOut: boolean;
+}
+
 export async function attackGuildEnemy(
   guildId: string,
   uid: string,
   heroDamage: number,
   heroMaxHp: number,
   info: { username: string; heroName: string },
-): Promise<{ status: AttackGuildResult; damage: number }> {
-  if (!db) return { status: 'no_op', damage: 0 };
+): Promise<AttackGuildOutcome> {
+  const miss = (status: AttackGuildResult, raidHp = 0, knockedOut = false): AttackGuildOutcome =>
+    ({ status, damage: 0, enemyDmg: 0, raidHp, knockedOut });
+  if (!db) return miss('no_op');
   const _db = db;
 
   // Cap client-supplied damage to a sane maximum to limit cheating impact
   const MAX_HERO_DAMAGE = (heroDamage > 0 ? Math.min(heroDamage, 500_000) : 0);
 
-  const status = await runTransaction(_db, async (txn) => {
+  return runTransaction(_db, async (txn): Promise<AttackGuildOutcome> => {
     const ref = doc(_db, 'guilds', guildId);
     const snap = await txn.get(ref);
-    if (!snap.exists()) return 'no_op';
+    if (!snap.exists()) return miss('no_op');
     const op = snap.data().guildOperation as GuildOperationState | null | undefined;
-    if (!op || op.status !== 'active' || op.pendingReward !== null) return 'no_op';
-    if (op.enemyHp <= 0) return 'no_op';
+    if (!op || op.status !== 'active' || op.pendingReward !== null) return miss('no_op');
+    if (op.enemyHp <= 0) return miss('no_op');
 
     const now = Date.now();
     if ((op.deadline ?? 0) <= now) {
       txn.update(ref, { 'guildOperation.status': 'failed' });
-      return 'failed';
+      return miss('failed');
     }
 
     const existing = (op.participants ?? {})[uid] as GuildOpParticipant | undefined;
-    // Player was knocked out in this raid — block further attacks server-side.
-    if (existing?.knockedOut === true) return 'knocked_out';
     const playerMaxHp = existing?.maxHp ?? Math.max(1, Math.min(heroMaxHp, 500_000));
-    const alreadyDealt = existing?.damage ?? 0;
+    // Server-authoritative raid HP: full on first attack, then drained here on every
+    // hit. Never refills — so a page refresh or re-open cannot restore HP.
+    const currentRaidHp = typeof existing?.raidHp === 'number' ? existing.raidHp : playerMaxHp;
+    if (existing?.knockedOut === true || currentRaidHp <= 0) return miss('knocked_out', 0, true);
 
+    const alreadyDealt = existing?.damage ?? 0;
     const cappedDamage = MAX_HERO_DAMAGE;
+
+    // Enemy retaliation, scaled by floor — computed on the server so every member
+    // takes consistent, non-manipulable damage.
+    const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
+    const enemyDmg = guildEnemyDamage(loc.baseHpPerMember, op.floor ?? 1, Math.random());
+    const { raidHp: newRaidHp, knockedOut } = applyRaidDamage(currentRaidHp, enemyDmg);
+
     const newHp = Math.max(0, op.enemyHp - cappedDamage);
     const updates: Record<string, unknown> = {
       'guildOperation.enemyHp': newHp,
@@ -872,11 +893,12 @@ export async function attackGuildEnemy(
         damage: alreadyDealt + cappedDamage,
         attackedAt: now,
         maxHp: playerMaxHp,
+        raidHp: newRaidHp,
+        knockedOut,
       },
     };
 
     if (newHp <= 0) {
-      const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
       const enemyInFloor  = op.enemyInFloor  ?? 0;
       const enemiesOnFloor = op.enemiesOnFloor ?? 1;
 
@@ -885,11 +907,9 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
         updates['guildOperation.enemyHp']      = same.hp;
         txn.update(ref, updates);
-        return { status: 'enemy_killed' as AttackGuildResult, damage: cappedDamage };
+        return { status: 'enemy_killed', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       } else if (op.floor >= op.maxFloors) {
-        const lvlMult = 1 + ((op.heroLevel ?? 1) - 1) * 0.04;
-        const xp   = Math.floor(loc.baseXpPerFloor   * op.maxFloors * (1 + op.memberCount * 0.12) * lvlMult);
-        const gold = Math.floor(loc.baseGoldPerFloor  * op.maxFloors * (1 + op.memberCount * 0.08) * lvlMult);
+        const { xp, gold } = guildOpReward(loc.baseXpPerFloor, loc.baseGoldPerFloor, op.maxFloors, op.memberCount, op.heroLevel ?? 1);
         updates['guildOperation.pendingReward'] = {
           xp, gold, rarity: loc.finalRarity, completedAt: now, claimedBy: {},
         };
@@ -897,7 +917,7 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyHp']       = 0;
         updates['guildOperation.status']        = 'completed';
         txn.update(ref, updates);
-        return { status: 'completed' as AttackGuildResult, damage: cappedDamage };
+        return { status: 'completed', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       } else {
         const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
         updates['guildOperation.floor']          = op.floor + 1;
@@ -908,14 +928,12 @@ export async function attackGuildEnemy(
         updates['guildOperation.enemyInFloor']   = 0;
         updates['guildOperation.enemiesOnFloor'] = next.count;
         txn.update(ref, updates);
-        return { status: 'advanced' as AttackGuildResult, damage: cappedDamage };
+        return { status: 'advanced', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       }
     }
     txn.update(ref, updates);
-    return { status: 'attacked' as AttackGuildResult, damage: cappedDamage };
+    return { status: 'attacked', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
   });
-
-  return status as { status: AttackGuildResult; damage: number };
 }
 
 export async function claimGuildOperationReward(
@@ -938,14 +956,4 @@ export async function claimGuildOperationReward(
     });
     return { xp, gold, rarity };
   });
-}
-
-/** Permanently mark a participant as knocked out for the current raid. */
-export async function setKnockedOut(guildId: string, uid: string): Promise<void> {
-  if (!db) return;
-  try {
-    await updateDoc(doc(db, 'guilds', guildId), {
-      [`guildOperation.participants.${uid}.knockedOut`]: true,
-    });
-  } catch { /* non-critical — server-side transaction already blocks further attacks */ }
 }
