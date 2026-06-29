@@ -933,7 +933,9 @@ export async function attackGuildEnemy(
     }
     txn.update(ref, updates);
     return { status: 'attacked', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
-  });
+  // All attackers write the same guild doc, so concurrent hits contend. Allow more
+  // transaction retries than the default 5 so simultaneous attacks aren't aborted.
+  }, { maxAttempts: 12 });
 }
 
 export async function claimGuildOperationReward(

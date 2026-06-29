@@ -155,10 +155,26 @@ export default function GuildOperationPanel({
     try {
       // The server now owns raid HP and the enemy's retaliation — it returns the
       // damage dealt, the damage taken, and the player's remaining HP.
-      const { status, damage, enemyDmg, raidHp: serverRaidHp, knockedOut } = await attackGuildEnemy(
-        guildId, myUid, heroDamage, currentHero.maxHp,
-        { username: myUsername, heroName: currentHero.name },
-      );
+      // Several members hammer the same guild doc, so a transaction can still abort
+      // under contention even after its server-side retries. Retry a few times with
+      // a little jitter so simultaneous attacks aren't silently lost.
+      let outcome: Awaited<ReturnType<typeof attackGuildEnemy>> | null = null;
+      for (let attempt = 0; attempt < 4 && !outcome; attempt++) {
+        try {
+          outcome = await attackGuildEnemy(
+            guildId, myUid, heroDamage, currentHero.maxHp,
+            { username: myUsername, heroName: currentHero.name },
+          );
+        } catch {
+          // Contention/network — back off briefly, then let the loop retry.
+          await new Promise(r => setTimeout(r, 120 + Math.random() * 180));
+        }
+      }
+      if (!outcome) {
+        // Couldn't land the hit this round; auto-fight will try again next tick.
+        return;
+      }
+      const { status, damage, enemyDmg, raidHp: serverRaidHp, knockedOut } = outcome;
       if (status === 'failed') {
         notify(isEn ? 'Operation expired — time\'s up.' : 'Operacja wygasła — czas minął.', false);
         setAutoFight(false);
