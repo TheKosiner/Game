@@ -7,5 +7,7 @@ export default defineConfig({
   base: '/',
   define: {
     __BUILD_ID__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')),
+    // Monotonic build number injected by CI (github.run_number); 0 in local/dev.
+    __APP_BUILD__: JSON.stringify(Number(process.env.VITE_APP_BUILD ?? 0)),
   },
 })

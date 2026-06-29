@@ -32,6 +32,8 @@ import { PlaySubNav, SocialSubNav, ShopSubNav, GuildTabSubNav } from './componen
 import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import { createMysteryBox } from './data/mysteryBoxes';
+import ForceUpdateModal from './components/ForceUpdateModal';
+import { checkForForcedUpdate, type UpdateInfo } from './lib/appUpdate';
 import AdminPanel from './components/AdminPanel';
 import ErrorLogPanel from './components/ErrorLogPanel';
 import LevelUpModal from './components/LevelUpModal';
@@ -76,10 +78,17 @@ export default function App() {
   const [chatHasNew, setChatHasNew] = useState(false);
   const [nowTick, setNowTick] = useState(Date.now());
   const [streakData, setStreakData] = useState<DailyRewardResult | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const lastChatViewedAt = useRef(Date.now());
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
+
+  // On native: check once at launch whether a newer APK build exists and, if so,
+  // gate the whole app behind a forced-update screen.
+  useEffect(() => {
+    checkForForcedUpdate().then(info => { if (info) setUpdateInfo(info); }).catch(() => {});
+  }, []);
 
   // Grant the physical milestone chest (epic on day 5, legendary on day 10) into
   // the inventory. The CF only credits gems; the box is owned by the client save,
@@ -414,6 +423,9 @@ export default function App() {
       }
     }).catch(() => {});
   }, [user?.uid, gameLoaded]);
+
+  // Forced update gate — blocks everything (even loading/auth) when a newer build exists.
+  if (updateInfo) return <ForceUpdateModal info={updateInfo} />;
 
   if (authLoading || !gameLoaded || !minTimeReady) {
     return <LoadingScreen text={t.app.loading} />;
