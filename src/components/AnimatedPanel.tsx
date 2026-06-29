@@ -1,5 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { animatePanelIn } from '../lib/gsapAnimations';
+import { type ReactNode } from 'react';
 
 interface Props {
   children: ReactNode;
@@ -7,16 +6,9 @@ interface Props {
   style?: React.CSSProperties;
 }
 
-export default function AnimatedPanel({ children, animKey, style }: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    animatePanelIn(ref.current);
-  }, [animKey]);
-
-  return (
-    <div ref={ref} style={{ ...style, opacity: 0 }}>
-      {children}
-    </div>
-  );
+// Renders tab content immediately. Previously this faded the panel in from
+// opacity:0 via GSAP on every tab switch, which on slower phones made the whole
+// screen appear to "load in" gradually. Showing it instantly is snappier.
+export default function AnimatedPanel({ children, style }: Props) {
+  return <div style={style}>{children}</div>;
 }

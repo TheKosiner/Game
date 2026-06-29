@@ -46,7 +46,6 @@ import LobbyPanel from './components/LobbyPanel';
 import CyberpunkBg from './components/CyberpunkBg';
 import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
-import { animateTabIn } from './lib/gsapAnimations';
 import GameIcon from './components/GameIcon';
 
 export default function App() {
@@ -107,13 +106,6 @@ export default function App() {
 
   const desktopMainRef = useRef<HTMLElement>(null);
   const animKey = `${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`;
-  const prevAnimKey = useRef(animKey);
-  useEffect(() => {
-    if (prevAnimKey.current !== animKey) {
-      prevAnimKey.current = animKey;
-      animateTabIn(desktopMainRef.current);
-    }
-  }, [animKey]);
 
   // Minimum loading screen duration
   useEffect(() => {
@@ -546,7 +538,8 @@ export default function App() {
         borderBottom: '1px solid rgba(255,45,120,0.3)',
         flexShrink: 0,
         zIndex: 40,
-        padding: '4px 8px',
+        // Pad past the status bar on edge-to-edge Android (0 on web / older devices).
+        padding: 'calc(4px + env(safe-area-inset-top, 0px)) 8px 4px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         boxShadow: '0 0 20px rgba(255,45,120,0.12), 0 4px 24px rgba(0,0,0,0.7)',
         position: 'relative',
@@ -668,7 +661,7 @@ export default function App() {
           height: tab === 'lobby' ? '100%' : undefined,
         }}>
           <AnimatedPanel
-            animKey={`${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`}
+            animKey={animKey}
             style={tab === 'lobby' ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : undefined}
           >
             {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}

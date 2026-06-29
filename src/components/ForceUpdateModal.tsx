@@ -28,7 +28,12 @@ export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
         padding: '28px 22px', textAlign: 'center',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
-        <div style={{ fontSize: 48, lineHeight: 1 }}>🚀</div>
+        <img
+          src="/favicon.png"
+          alt="GlitchSoul"
+          style={{ width: 84, height: 84, objectFit: 'contain', margin: '0 auto', display: 'block',
+            filter: 'drop-shadow(0 0 16px rgba(0,229,255,0.45))' }}
+        />
         <div style={{
           ...ORB, fontSize: 16, letterSpacing: 1, color: '#00e5ff',
           textShadow: '0 0 14px #00e5ff',
