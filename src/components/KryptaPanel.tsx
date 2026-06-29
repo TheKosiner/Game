@@ -156,10 +156,14 @@ export default function KryptaPanel() {
 
   function enterCrypt() {
     const maxHp = getHeroMaxHp(hero.stats, hero.level, hero.equipment);
+    // Start from the hero's CURRENT HP (like guild operations) instead of a free
+    // full heal — the crypt writes HP back to the hero on flee/death/victory, so
+    // it's one continuous HP pool, not a reset to full on every entry.
+    const startHp = Math.max(1, Math.min(hero.hp, maxHp));
     incrementKryptaRuns();
     setPhase('direction');
     setDepth(0);
-    setRaidHp(maxHp);
+    setRaidHp(startHp);
     setRaidMaxHp(maxHp);
     setBuffs([]);
     setHasCompanion(false);
