@@ -17,7 +17,26 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Stable release signing key, supplied by CI via env vars (decoded from secrets).
+    // When absent (e.g. local dev), builds fall back to the default debug signing.
+    signingConfigs {
+        stable {
+            def ksPath = System.getenv("ANDROID_KEYSTORE_FILE")
+            if (ksPath != null && new File(ksPath).exists()) {
+                storeFile file(ksPath)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
+        debug {
+            def ksPath = System.getenv("ANDROID_KEYSTORE_FILE")
+            if (ksPath != null && new File(ksPath).exists()) {
+                signingConfig signingConfigs.stable
+            }
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

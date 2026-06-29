@@ -110,12 +110,30 @@ jobs:
           sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" android/app/build.gradle
           sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION_NAME\"/" android/app/build.gradle
 
+      - name: Decode signing keystore (if configured)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/glitchsoul.keystore"
+            echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/glitchsoul.keystore" >> "$GITHUB_ENV"
+            echo "✅ Using stable release signing key."
+          else
+            echo "ℹ️ No ANDROID_KEYSTORE_BASE64 secret — falling back to default debug signing."
+          fi
+
       - name: Build APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: cd android && ./gradlew assembleDebug --no-daemon
 
       - name: Locate and rename APK
         run: |
-          APK=$(find android -name "*.apk" | head -1)
+          # Prefer the final signed output; fall back to any apk under outputs/.
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$APK" ]; then APK=$(find android -path '*/outputs/apk/*.apk' | head -1); fi
           echo "Found APK: $APK"
           cp "$APK" GlitchSoul.apk
 
