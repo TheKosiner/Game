@@ -83,10 +83,20 @@ export default function App() {
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
 
-  // On native: check once at launch whether a newer APK build exists and, if so,
-  // gate the whole app behind a forced-update screen.
+  // On native: detect a newer APK build and gate the whole app behind a
+  // forced-update screen. Checked at launch, whenever the app returns to the
+  // foreground, and every few minutes while open — so a release shows up without
+  // needing to restart the game.
   useEffect(() => {
-    checkForForcedUpdate().then(info => { if (info) setUpdateInfo(info); }).catch(() => {});
+    let cancelled = false;
+    const run = () => {
+      checkForForcedUpdate().then(info => { if (info && !cancelled) setUpdateInfo(info); }).catch(() => {});
+    };
+    run();
+    const onVisible = () => { if (document.visibilityState === 'visible') run(); };
+    document.addEventListener('visibilitychange', onVisible);
+    const id = setInterval(run, 5 * 60 * 1000);
+    return () => { cancelled = true; document.removeEventListener('visibilitychange', onVisible); clearInterval(id); };
   }, []);
 
   // Grant the physical milestone chest (epic on day 5, legendary on day 10) into
