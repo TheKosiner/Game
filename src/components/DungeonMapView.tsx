@@ -7,7 +7,7 @@ type Dungeon = (typeof ALL_DUNGEONS)[0];
 interface Props {
   isDungeonUnlocked: (idx: number) => boolean;
   completed: string[];
-  selected: Dungeon;
+  selected: Dungeon | null;
   onSelect: (d: Dungeon) => void;
   isEn: boolean;
 }
@@ -66,7 +66,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
   // ── Node colour ──────────────────────────────────────────────────────────
   function nodeColor(idx: number): string {
     const d = ALL_DUNGEONS[idx];
-    if (selected.id === d.id) return '#ff2d78';
+    if (selected?.id === d.id) return '#ff2d78';
     if (!isDungeonUnlocked(idx)) return '#5a4a78';
     if (completedSet.has(d.id)) return '#2de5ff';
     return '#ffc83a';
@@ -114,7 +114,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
   const pd   = popup ? ALL_DUNGEONS[popup.idx] : null;
   const pUnl = popup ? isDungeonUnlocked(popup.idx) : false;
   const pCmp = pd ? completedSet.has(pd.id) : false;
-  const pSel = pd ? selected.id === pd.id : false;
+  const pSel = pd ? selected?.id === pd.id : false;
   const pAcc = pCmp ? '#2de5ff' : pUnl ? '#ffc83a' : '#5a4a78';
 
   return (
@@ -227,7 +227,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
           const [nx, ny] = POS[idx];
           const col      = nodeColor(idx);
           const unlocked = isDungeonUnlocked(idx);
-          const isSel    = selected.id === d.id;
+          const isSel    = selected?.id === d.id;
           const isComp   = completedSet.has(d.id);
           const r = NODE_R;
           const pts = `0,${-r} ${r},0 0,${r} ${-r},0`;

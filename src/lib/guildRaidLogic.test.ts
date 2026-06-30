@@ -112,7 +112,7 @@ describe('pickLocationForLevel', () => {
     }
   });
 
-  it('falls back to the first location below the minimum level', () => {
-    expect(pickLocationForLevel(1).id).toBe(GUILD_OP_LOCATIONS[0].id);
+  it('falls back to the first location when nothing is eligible', () => {
+    expect(pickLocationForLevel(0).id).toBe(GUILD_OP_LOCATIONS[0].id);
   });
 });

@@ -6,7 +6,8 @@ import {
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
-import GuildOpMapView from './GuildOpMapView';
+import { ALL_DUNGEONS } from '../data/dungeons';
+import DungeonMapView from './DungeonMapView';
 import type { GuildDifficulty } from '../lib/guildRaidLogic';
 import EnemyPortrait from './EnemyPortrait';
 import { createMysteryBox } from '../data/mysteryBoxes';
@@ -635,11 +636,12 @@ export default function GuildOperationPanel({
         </div>
       ) : canStart ? (
         <>
-          {/* Location map */}
-          <GuildOpMapView
-            heroLevel={hero.level}
-            selected={selectedLocation}
-            onSelect={(id) => setSelectedLocation(id)}
+          {/* Location map — the same 15 locations as the GRA operations map */}
+          <DungeonMapView
+            isDungeonUnlocked={(idx) => ALL_DUNGEONS[idx].minLevel <= hero.level}
+            completed={[]}
+            selected={ALL_DUNGEONS.find(d => d.id === selectedLocation) ?? null}
+            onSelect={(d) => setSelectedLocation(d.id)}
             isEn={isEn}
           />
 
@@ -680,7 +682,7 @@ export default function GuildOperationPanel({
             {starting
               ? <><GameIcon name="hourglass" size={10} color="#fff" /> {isEn ? 'Starting...' : 'Uruchamianie...'}</>
               : selLoc
-                ? <>{isEn ? 'START —' : 'ROZPOCZNIJ —'} {selLoc.emoji} {selLoc.name}</>
+                ? <>{isEn ? 'START —' : 'ROZPOCZNIJ —'} {selLoc.emoji} {isEn ? (selLoc.nameEn ?? selLoc.name) : selLoc.name}</>
                 : (isEn ? 'SELECT A LOCATION ON THE MAP' : 'WYBIERZ LOKACJĘ NA MAPIE')}
           </button>
         </>
