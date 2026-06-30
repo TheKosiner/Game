@@ -3,7 +3,7 @@ import { db } from './firebase';
 import { useGameStore } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense } from '../utils/combat';
 import { GUILD_OP_LOCATIONS, getFloorEnemy, pickLocationForLevel } from '../data/guildOperations';
-import { guildEnemyDamage, applyRaidDamage, guildOpReward } from './guildRaidLogic';
+import { guildEnemyDamage, applyRaidDamage, guildOpReward, guildDiffStatMult, guildDiffRewardMult, type GuildDifficulty } from './guildRaidLogic';
 
 export interface LeaderboardEntry {
   uid: string;
@@ -374,6 +374,7 @@ export interface GuildOperationState {
   deadline: number;
   memberCount: number;
   heroLevel: number;
+  difficulty?: GuildDifficulty; // scales enemy HP/damage + rewards (default 'normal')
   participants: Record<string, GuildOpParticipant>;
   cooldownUntil: number;
   status: 'active' | 'failed' | 'completed';
@@ -790,6 +791,7 @@ export async function startGuildOperation(
   heroLevel: number,
   memberCount: number,
   locationId?: string,
+  difficulty: GuildDifficulty = 'normal',
 ): Promise<boolean> {
   if (!db) return false;
   const _db = db;
@@ -813,13 +815,15 @@ export async function startGuildOperation(
     const location = locationId
       ? (GUILD_OP_LOCATIONS.find(l => l.id === locationId) ?? pickLocationForLevel(heroLevel))
       : pickLocationForLevel(heroLevel);
+    const statMult = guildDiffStatMult(difficulty);
     const first = getFloorEnemy(location, 1, memberCount);
+    const firstHp = Math.max(1, Math.round(first.hp * statMult));
     const op: GuildOperationState = {
       locationId: location.id,
       floor: 1,
       maxFloors: location.floors,
-      enemyHp: first.hp,
-      enemyMaxHp: first.maxHp,
+      enemyHp: firstHp,
+      enemyMaxHp: firstHp,
       enemyName: first.name,
       enemyEmoji: first.emoji,
       enemyInFloor: 0,
@@ -829,6 +833,7 @@ export async function startGuildOperation(
       deadline: nextMidnightUtc(),
       memberCount,
       heroLevel,
+      difficulty,
       participants: {},
       cooldownUntil: 0,
       status: 'active',
@@ -888,10 +893,11 @@ export async function attackGuildEnemy(
     const alreadyDealt = existing?.damage ?? 0;
     const cappedDamage = MAX_HERO_DAMAGE;
 
-    // Enemy retaliation, scaled by floor — computed on the server so every member
-    // takes consistent, non-manipulable damage.
+    // Enemy retaliation, scaled by floor and difficulty — computed on the server so
+    // every member takes consistent, non-manipulable damage.
     const loc = GUILD_OP_LOCATIONS.find(l => l.id === op.locationId)!;
-    const enemyDmg = guildEnemyDamage(loc.baseHpPerMember, op.floor ?? 1, Math.random());
+    const statMult = guildDiffStatMult(op.difficulty ?? 'normal');
+    const enemyDmg = guildEnemyDamage(loc.baseHpPerMember * statMult, op.floor ?? 1, Math.random());
     const { raidHp: newRaidHp, knockedOut } = applyRaidDamage(currentRaidHp, enemyDmg);
 
     const newHp = Math.max(0, op.enemyHp - cappedDamage);
@@ -915,11 +921,14 @@ export async function attackGuildEnemy(
       if (enemyInFloor < enemiesOnFloor - 1) {
         const same = getFloorEnemy(loc, op.floor, op.memberCount);
         updates['guildOperation.enemyInFloor'] = enemyInFloor + 1;
-        updates['guildOperation.enemyHp']      = same.hp;
+        updates['guildOperation.enemyHp']      = Math.max(1, Math.round(same.hp * statMult));
         txn.update(ref, updates);
         return { status: 'enemy_killed', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       } else if (op.floor >= op.maxFloors) {
-        const { xp, gold } = guildOpReward(loc.baseXpPerFloor, loc.baseGoldPerFloor, op.maxFloors, op.memberCount, op.heroLevel ?? 1);
+        const rewardMult = guildDiffRewardMult(op.difficulty ?? 'normal');
+        const base = guildOpReward(loc.baseXpPerFloor, loc.baseGoldPerFloor, op.maxFloors, op.memberCount, op.heroLevel ?? 1);
+        const xp = Math.round(base.xp * rewardMult);
+        const gold = Math.round(base.gold * rewardMult);
         updates['guildOperation.pendingReward'] = {
           xp, gold, rarity: loc.finalRarity, completedAt: now, claimedBy: {},
         };
@@ -930,9 +939,10 @@ export async function attackGuildEnemy(
         return { status: 'completed', damage: cappedDamage, enemyDmg, raidHp: newRaidHp, knockedOut };
       } else {
         const next = getFloorEnemy(loc, op.floor + 1, op.memberCount);
+        const nextHp = Math.max(1, Math.round(next.hp * statMult));
         updates['guildOperation.floor']          = op.floor + 1;
-        updates['guildOperation.enemyHp']        = next.hp;
-        updates['guildOperation.enemyMaxHp']     = next.maxHp;
+        updates['guildOperation.enemyHp']        = nextHp;
+        updates['guildOperation.enemyMaxHp']     = nextHp;
         updates['guildOperation.enemyName']      = next.name;
         updates['guildOperation.enemyEmoji']     = next.emoji;
         updates['guildOperation.enemyInFloor']   = 0;

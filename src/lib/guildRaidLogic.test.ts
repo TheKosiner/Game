@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { guildEnemyDamage, applyRaidDamage, guildOpReward } from './guildRaidLogic';
+import { guildEnemyDamage, applyRaidDamage, guildOpReward, guildDiffStatMult, guildDiffRewardMult } from './guildRaidLogic';
 import { getFloorEnemy, pickLocationForLevel, GUILD_OP_LOCATIONS } from '../data/guildOperations';
 
 describe('guildEnemyDamage', () => {
@@ -60,6 +60,19 @@ describe('guildOpReward', () => {
 
   it('treats level < 1 as level 1', () => {
     expect(guildOpReward(500, 400, 4, 1, 0)).toEqual(guildOpReward(500, 400, 4, 1, 1));
+  });
+});
+
+describe('guild difficulty multipliers', () => {
+  it('orders stat mult easy < normal < hard', () => {
+    expect(guildDiffStatMult('easy')).toBeLessThan(guildDiffStatMult('normal'));
+    expect(guildDiffStatMult('normal')).toBeLessThan(guildDiffStatMult('hard'));
+    expect(guildDiffStatMult('normal')).toBe(1);
+  });
+  it('orders reward mult easy < normal < hard', () => {
+    expect(guildDiffRewardMult('easy')).toBeLessThan(guildDiffRewardMult('normal'));
+    expect(guildDiffRewardMult('normal')).toBeLessThan(guildDiffRewardMult('hard'));
+    expect(guildDiffRewardMult('normal')).toBe(1);
   });
 });
 
