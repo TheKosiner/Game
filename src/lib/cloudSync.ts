@@ -777,6 +777,13 @@ function nextMidnightUtc(): number {
 }
 
 
+// A legitimate operation deadline (next UTC midnight) or cooldown (≤24h) can never
+// be more than ~26h ahead. Operation timing is written client-side, so a member
+// with a fast device clock could otherwise set these absurdly far in the future and
+// lock the whole guild out of new operations forever — treat anything past the
+// horizon as clock-skew garbage and ignore it.
+export const MAX_OP_HORIZON_MS = 26 * 60 * 60 * 1000;
+
 export async function startGuildOperation(
   guildId: string,
   uid: string,
@@ -795,9 +802,12 @@ export async function startGuildOperation(
     if (!isLeaderOrOfficer(data, uid)) return false;
 
     const now = Date.now();
+    const horizon = now + MAX_OP_HORIZON_MS;
     const existing = data.guildOperation as GuildOperationState | null | undefined;
-    const isActiveAndValid = existing?.status === 'active' && (existing.deadline ?? 0) > now;
-    const isInCooldown = existing?.status === 'completed' && (existing.cooldownUntil ?? 0) > now;
+    const deadline = existing?.deadline ?? 0;
+    const cooldown = existing?.cooldownUntil ?? 0;
+    const isActiveAndValid = existing?.status === 'active' && deadline > now && deadline <= horizon;
+    const isInCooldown = existing?.status === 'completed' && cooldown > now && cooldown <= horizon;
     if (isActiveAndValid || isInCooldown) return false;
 
     const location = locationId
