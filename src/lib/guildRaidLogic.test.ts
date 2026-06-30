@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { guildEnemyDamage, applyRaidDamage, guildOpReward } from './guildRaidLogic';
+import { guildEnemyDamage, applyRaidDamage, guildOpReward, guildDiffStatMult, guildDiffRewardMult } from './guildRaidLogic';
 import { getFloorEnemy, pickLocationForLevel, GUILD_OP_LOCATIONS } from '../data/guildOperations';
 
 describe('guildEnemyDamage', () => {
@@ -63,6 +63,19 @@ describe('guildOpReward', () => {
   });
 });
 
+describe('guild difficulty multipliers', () => {
+  it('orders stat mult easy < normal < hard', () => {
+    expect(guildDiffStatMult('easy')).toBeLessThan(guildDiffStatMult('normal'));
+    expect(guildDiffStatMult('normal')).toBeLessThan(guildDiffStatMult('hard'));
+    expect(guildDiffStatMult('normal')).toBe(1);
+  });
+  it('orders reward mult easy < normal < hard', () => {
+    expect(guildDiffRewardMult('easy')).toBeLessThan(guildDiffRewardMult('normal'));
+    expect(guildDiffRewardMult('normal')).toBeLessThan(guildDiffRewardMult('hard'));
+    expect(guildDiffRewardMult('normal')).toBe(1);
+  });
+});
+
 describe('getFloorEnemy', () => {
   const loc = GUILD_OP_LOCATIONS[0];
 
@@ -99,7 +112,7 @@ describe('pickLocationForLevel', () => {
     }
   });
 
-  it('falls back to the first location below the minimum level', () => {
-    expect(pickLocationForLevel(1).id).toBe(GUILD_OP_LOCATIONS[0].id);
+  it('falls back to the first location when nothing is eligible', () => {
+    expect(pickLocationForLevel(0).id).toBe(GUILD_OP_LOCATIONS[0].id);
   });
 });

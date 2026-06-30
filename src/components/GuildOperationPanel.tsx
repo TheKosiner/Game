@@ -6,6 +6,9 @@ import {
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
+import { ALL_DUNGEONS } from '../data/dungeons';
+import DungeonMapView from './DungeonMapView';
+import type { GuildDifficulty } from '../lib/guildRaidLogic';
 import EnemyPortrait from './EnemyPortrait';
 import { createMysteryBox } from '../data/mysteryBoxes';
 import { getHeroAttack, rollDamage } from '../utils/combat';
@@ -56,6 +59,7 @@ export default function GuildOperationPanel({
   const [starting, setStarting] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<GuildDifficulty>('normal');
   const [attacking, setAttacking] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [log, setLog] = useState<{ text: string; type: keyof typeof LOG_COLORS }[]>([]);
@@ -135,7 +139,7 @@ export default function GuildOperationPanel({
   async function handleStart() {
     setStarting(true);
     try {
-      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocation ?? undefined);
+      const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocation ?? undefined, selectedDifficulty);
       if (ok) setLog([]);
       else notify(isEn ? 'Cannot start operation.' : 'Nie można uruchomić operacji.', false);
     } finally { setStarting(false); }
@@ -603,8 +607,12 @@ export default function GuildOperationPanel({
   }
 
   // ── START SCREEN ─────────────────────────────────────────────────────────────
-  const availableLocations = GUILD_OP_LOCATIONS.filter(l => l.minLevel <= hero.level);
-  const RARITY_COL: Record<string, string> = { rare: '#60a5fa', epic: '#c084fc', legendary: '#f59e0b' };
+  const selLoc = selectedLocation ? GUILD_OP_LOCATIONS.find(l => l.id === selectedLocation) : null;
+  const DIFFS: { key: GuildDifficulty; label: string; desc: string; color: string }[] = [
+    { key: 'easy',   label: isEn ? 'EASY'   : 'ŁATWY',    desc: isEn ? 'Weaker enemies, fewer rewards.'  : 'Słabsi wrogowie, mniej nagród.',  color: '#4ade80' },
+    { key: 'normal', label: isEn ? 'NORMAL' : 'NORMALNY', desc: isEn ? 'Standard challenge balance.'      : 'Standardowy balans wyzwania.',    color: '#00e5ff' },
+    { key: 'hard',   label: isEn ? 'HARD'   : 'TRUDNY',   desc: isEn ? 'Stronger enemies, +60% rewards.' : 'Silniejsi wrogowie, +60% nagród.', color: '#f87171' },
+  ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -628,55 +636,54 @@ export default function GuildOperationPanel({
         </div>
       ) : canStart ? (
         <>
-          {/* Location picker */}
+          {/* Location map — the same 15 locations as the GRA operations map */}
+          <DungeonMapView
+            isDungeonUnlocked={(idx) => ALL_DUNGEONS[idx].minLevel <= hero.level}
+            completed={[]}
+            selected={ALL_DUNGEONS.find(d => d.id === selectedLocation) ?? null}
+            onSelect={(d) => setSelectedLocation(d.id)}
+            isEn={isEn}
+          />
+
+          {/* Difficulty */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {availableLocations.map(loc => {
-              const sel = selectedLocation === loc.id;
-              const rc = RARITY_COL[loc.finalRarity] ?? '#aaa';
-              return (
-                <button
-                  key={loc.id}
-                  onClick={() => setSelectedLocation(sel ? null : loc.id)}
-                  style={{
-                    background: sel ? `${rc}14` : 'rgba(5,8,20,0.8)',
-                    border: `1px solid ${sel ? rc + '88' : 'rgba(255,255,255,0.1)'}`,
-                    padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
-                    display: 'flex', flexDirection: 'column', gap: 3,
-                    transition: 'border-color 0.1s, background 0.1s',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ ...ORB, fontSize: 10, color: sel ? rc : 'var(--text-bright)' }}>
-                      {loc.name}
-                    </span>
-                    <span style={{ ...MONO, fontSize: 9, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '1px 5px' }}>
-                      {loc.finalRarity.toUpperCase()}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{isEn ? 'LVL.' : 'POZ.'} {loc.minLevel}+</span>
-                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{loc.floors} {isEn ? 'floors' : 'pięter'}</span>
-                    <span style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>{loc.enemiesPerFloor} {isEn ? 'enemies/floor' : 'wrogów/piętro'}</span>
-                  </div>
-                  <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginTop: 1 }}>
-                    {loc.description}
-                  </p>
-                </button>
-              );
-            })}
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>{isEn ? 'DIFFICULTY' : 'POZIOM TRUDNOŚCI'}</p>
+            <div style={{ display: 'flex', gap: 5 }}>
+              {DIFFS.map(d => {
+                const sel = selectedDifficulty === d.key;
+                return (
+                  <button
+                    key={d.key}
+                    onClick={() => setSelectedDifficulty(d.key)}
+                    style={{
+                      flex: 1, padding: '7px 4px', cursor: 'pointer', textAlign: 'center',
+                      background: sel ? `${d.color}1e` : 'rgba(5,8,20,0.8)',
+                      border: `1px solid ${sel ? d.color : 'rgba(255,255,255,0.1)'}`,
+                      color: sel ? d.color : 'var(--text-muted)', ...ORB, fontSize: 9,
+                      transition: 'all 0.1s',
+                    }}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)' }}>
+              {DIFFS.find(d => d.key === selectedDifficulty)?.desc}
+            </p>
           </div>
 
           <button
             onClick={handleStart}
-            disabled={starting}
+            disabled={starting || !selectedLocation}
             className="btn btn-primary"
-            style={{ fontSize: 10 }}
+            style={{ fontSize: 10, opacity: !selectedLocation ? 0.55 : 1 }}
           >
             {starting
               ? <><GameIcon name="hourglass" size={10} color="#fff" /> {isEn ? 'Starting...' : 'Uruchamianie...'}</>
-              : selectedLocation
-                ? <>{isEn ? 'START —' : 'ROZPOCZNIJ —'} {availableLocations.find(l => l.id === selectedLocation)?.emoji} {availableLocations.find(l => l.id === selectedLocation)?.name}</>
-                : (isEn ? 'START OPERATION (random)' : 'ROZPOCZNIJ OPERACJĘ (losowa)')}
+              : selLoc
+                ? <>{isEn ? 'START —' : 'ROZPOCZNIJ —'} {selLoc.emoji} {isEn ? (selLoc.nameEn ?? selLoc.name) : selLoc.name}</>
+                : (isEn ? 'SELECT A LOCATION ON THE MAP' : 'WYBIERZ LOKACJĘ NA MAPIE')}
           </button>
         </>
       ) : !isLeaderOrOfficer ? (

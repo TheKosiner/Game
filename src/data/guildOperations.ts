@@ -1,3 +1,6 @@
+import { ALL_DUNGEONS } from './dungeons';
+import { getEnemyById } from './enemies';
+
 export interface GuildOpEnemy {
   id: string;
   name: string;
@@ -8,6 +11,7 @@ export interface GuildOpEnemy {
 export interface GuildOpLocation {
   id: string;
   name: string;
+  nameEn?: string;
   emoji: string;
   description: string;
   minLevel: number;
@@ -19,6 +23,36 @@ export interface GuildOpLocation {
   baseGoldPerFloor: number;
   finalRarity: 'rare' | 'epic' | 'legendary';
   cooldownMs: number;
+}
+
+// Build a guild-raid location from a GRA dungeon: reuse its name/emoji/level/enemies
+// and derive group-scaled combat params (HP per member, rewards, rarity, cooldown).
+function dungeonToGuildOp(d: (typeof ALL_DUNGEONS)[number]): GuildOpLocation {
+  const lvl = d.minLevel;
+  const finalRarity: 'rare' | 'epic' | 'legendary' = lvl >= 50 ? 'legendary' : lvl >= 20 ? 'epic' : 'rare';
+  const cooldownMs = (lvl >= 70 ? 24 : lvl >= 40 ? 12 : lvl >= 20 ? 8 : lvl >= 10 ? 6 : 4) * 60 * 60 * 1000;
+  const ids = d.enemies;
+  const enemies: GuildOpEnemy[] = ids.map((id, i) => {
+    const e = getEnemyById(id);
+    const hpMult = Math.round((1 + (i / Math.max(1, ids.length - 1)) * 1.4) * 100) / 100; // 1.0 → 2.4
+    return { id, name: e?.name ?? id, emoji: e?.emoji ?? '👾', hpMult };
+  });
+  return {
+    id: d.id,
+    name: d.name,
+    nameEn: d.nameEn,
+    emoji: d.emoji,
+    description: d.description,
+    minLevel: lvl,
+    floors: d.floors,
+    enemies,
+    enemiesPerFloor: Math.min(15, 8 + Math.floor(lvl / 15)),
+    baseHpPerMember: Math.round(55 + lvl * 2.4),
+    baseXpPerFloor: Math.round(300 + lvl * 25),
+    baseGoldPerFloor: Math.round(250 + lvl * 18),
+    finalRarity,
+    cooldownMs,
+  };
 }
 
 export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
@@ -129,6 +163,8 @@ export const GUILD_OP_LOCATIONS: GuildOpLocation[] = [
     finalRarity: 'legendary',
     cooldownMs: 24 * 60 * 60 * 1000,
   },
+  // The 15 locations from the GRA "Operacje" map, scaled for group raids.
+  ...ALL_DUNGEONS.map(dungeonToGuildOp),
 ];
 
 /** Pick a random location appropriate for the given hero level.

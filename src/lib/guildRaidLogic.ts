@@ -17,6 +17,18 @@ export function applyRaidDamage(currentRaidHp: number, enemyDmg: number): { raid
   return { raidHp, knockedOut: raidHp <= 0 };
 }
 
+export type GuildDifficulty = 'easy' | 'normal' | 'hard';
+
+/** Enemy HP / damage multiplier for the chosen difficulty. */
+export function guildDiffStatMult(d: GuildDifficulty): number {
+  return d === 'easy' ? 0.7 : d === 'hard' ? 1.5 : 1;
+}
+
+/** XP / gold reward multiplier for the chosen difficulty. */
+export function guildDiffRewardMult(d: GuildDifficulty): number {
+  return d === 'easy' ? 0.7 : d === 'hard' ? 1.6 : 1;
+}
+
 /** XP/gold awarded for completing an operation, scaled by floors, members and level. */
 export function guildOpReward(
   baseXpPerFloor: number,
