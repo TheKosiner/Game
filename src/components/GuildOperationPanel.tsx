@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import {
-  startGuildOperation, attackGuildEnemy, claimGuildOperationReward,
+  startGuildOperation, attackGuildEnemy, claimGuildOperationReward, MAX_OP_HORIZON_MS,
   type Guild, type GuildOperationState,
 } from '../lib/cloudSync';
 import { GUILD_OP_LOCATIONS } from '../data/guildOperations';
@@ -267,13 +267,16 @@ export default function GuildOperationPanel({
   }
 
   const deadline   = op?.deadline ?? 0;
-  const isExpired  = deadline > 0 && deadline <= now;
+  // Treat a deadline/cooldown more than ~26h ahead as clock-skew garbage (a member's
+  // fast clock) so a stuck operation can't lock the guild out of new raids forever.
+  const isExpired  = deadline > 0 && (deadline <= now || deadline - now > MAX_OP_HORIZON_MS);
   const timeLeft   = Math.max(0, deadline - now);
 
   const isActive    = !!op && op.status === 'active' && !isExpired;
   const isFailed    = !!op && (op.status === 'failed' || (op.status === 'active' && isExpired));
   const isCompleted = !!op && op.status === 'completed';
-  const inCooldown  = isCompleted && (op.cooldownUntil ?? 0) > now;
+  const cooldownUntil = op?.cooldownUntil ?? 0;
+  const inCooldown  = isCompleted && cooldownUntil > now && cooldownUntil - now <= MAX_OP_HORIZON_MS;
   const canStart    = isLeaderOrOfficer && !isActive && !inCooldown;
 
   const participants = useMemo(
