@@ -340,6 +340,21 @@ export default function App() {
       }
       // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
       try { await loadFromCloud(user.uid, true); } catch {}
+      // Apply the server's daily reset locally too — if the cloud reload above failed,
+      // the stale local counters (e.g. kryptaRunsToday) would otherwise be synced back
+      // over the server's reset, making the daily limits look like they never reset.
+      useGameStore.setState(s => ({
+        hero: {
+          ...s.hero,
+          dungeonRunsToday: 0,
+          questsCompletedToday: 0,
+          goldEarnedToday: 0,
+          kryptaRunsToday: 0,
+          lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
+          streakDays: result.streakDays ?? s.hero.streakDays,
+          gems: result.gems ?? s.hero.gems,
+        },
+      }));
       addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
       // Milestone streak chest: grant an actual mystery box to the inventory
       // (epic on day 5, legendary on day 10). The CF only credits gems.
