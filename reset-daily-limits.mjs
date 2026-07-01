@@ -42,6 +42,8 @@ for (let i = 0; i < docs.length; i += BATCH_SIZE) {
     batch.update(d.ref, {
       'hero.dungeonRunsToday': 0,
       'hero.questsCompletedToday': 0,
+      'hero.kryptaRunsToday': 0,
+      'hero.goldEarnedToday': 0,
       'hero.lastDailyReset': now,
     });
   }
