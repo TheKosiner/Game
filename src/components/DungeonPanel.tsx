@@ -357,17 +357,28 @@ function EnemyBattleCard() {
   const [enemyShakeKey, setEnemyShakeKey] = useState(0);
   const [floatDmg, setFloatDmg] = useState<{ val: number; key: number } | null>(null);
   const [heroFlashKey, setHeroFlashKey] = useState(0);
+  // Ghost of the just-killed enemy, dissolving over the incoming one
+  const [dying, setDying] = useState<{ id: string; key: number } | null>(null);
   const prevEnemyHp  = useRef<number | null>(null);
   const prevEnemyKey = useRef('');
+  const prevEnemyId  = useRef('');
   const prevHeroHp   = useRef(hero.hp);
 
   useEffect(() => {
     if (!enemy) return;
-    // New enemy (next floor / new run) — reset the baseline without animating.
+    // New enemy (next floor / new run) — reset the baseline without animating a hit.
     const key = `${enemy.id}-${enemy.maxHp}-${currentFloor}`;
     if (prevEnemyKey.current !== key) {
+      // Mid-run swap = the previous enemy was killed → play its death ghost.
+      const killedId = prevEnemyKey.current !== '' ? prevEnemyId.current : '';
       prevEnemyKey.current = key;
+      prevEnemyId.current = enemy.id;
       prevEnemyHp.current = enemy.hp;
+      if (killedId) {
+        setDying({ id: killedId, key: Date.now() });
+        const t = setTimeout(() => setDying(null), 700);
+        return () => clearTimeout(t);
+      }
       return;
     }
     const prev = prevEnemyHp.current ?? enemy.hp;
@@ -417,6 +428,14 @@ function EnemyBattleCard() {
             <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
               <EnemyPortrait id={enemy.id} size={64} />
             </div>
+            {dying && (
+              <div key={dying.key} style={{
+                position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+                animation: 'enemyDeath 0.65s ease-in forwards',
+              }}>
+                <EnemyPortrait id={dying.id} size={64} />
+              </div>
+            )}
             {floatDmg && (
               <span
                 key={floatDmg.key}

@@ -71,6 +71,8 @@ export default function GuildOperationPanel({
   const [enemyShakeKey, setEnemyShakeKey] = useState(0);
   const [floatDmg, setFloatDmg] = useState<{ val: number; key: number } | null>(null);
   const [heroFlashKey, setHeroFlashKey] = useState(0);
+  // Ghost of the just-killed enemy, dissolving over the incoming one
+  const [dyingEnemy, setDyingEnemy] = useState<{ id: string; emoji: string; key: number } | null>(null);
 
   // Raid combat HP — server-authoritative: starts at maxHp, drains as the player is
   // hit, never touches hero.hp and never refills (the server owns it). On (re-)open we
@@ -201,6 +203,13 @@ export default function GuildOperationPanel({
         setEnemyShakeKey(k => k + 1);
         setFloatDmg({ val: damage, key: Date.now() });
         if (enemyDmg > 0) setHeroFlashKey(k => k + 1);
+        if (status === 'enemy_killed' || status === 'advanced' || status === 'completed') {
+          // Snapshot the enemy we just finished off, before the snapshot swaps it.
+          const locData = GUILD_OP_LOCATIONS.find(l => l.id === currentOp.locationId);
+          const tpl = locData?.enemies[Math.min(currentOp.floor - 1, (locData?.enemies.length ?? 1) - 1)];
+          setDyingEnemy({ id: tpl?.id ?? currentOp.locationId, emoji: currentOp.enemyEmoji, key: Date.now() });
+          setTimeout(() => setDyingEnemy(null), 700);
+        }
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
           { text: `⚔ ${isEn ? 'You' : 'Ty'} → ${fmtNum(damage)} dmg ${isEn ? 'on' : 'na'} ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
@@ -362,6 +371,14 @@ export default function GuildOperationPanel({
               <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
                 <EnemyPortrait id={enemyId} emoji={op.enemyEmoji} size={60} />
               </div>
+              {dyingEnemy && (
+                <div key={dyingEnemy.key} style={{
+                  position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+                  animation: 'enemyDeath 0.65s ease-in forwards',
+                }}>
+                  <EnemyPortrait id={dyingEnemy.id} emoji={dyingEnemy.emoji} size={60} />
+                </div>
+              )}
               {floatDmg && (
                 <span key={floatDmg.key} style={{
                   position: 'absolute', top: -4, right: -14,
