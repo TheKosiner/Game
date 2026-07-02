@@ -5,6 +5,7 @@ import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
 import { TabIcon, type MainTab, type PlaySub, type SocialSub, type ShopSub } from './BottomNav';
 import GameIcon, { type GameIconName } from './GameIcon';
+import AnimatedNumber from './AnimatedNumber';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
 const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" };
@@ -151,7 +152,7 @@ function StatChip({ value, color, icon }: { value: string | number; color: strin
       boxShadow: `0 0 8px ${color}10`,
       transition: 'box-shadow 0.2s',
     }}>
-      <GameIcon name={icon} size={11} color={color} /> {value}
+      <GameIcon name={icon} size={11} color={color} /> {typeof value === 'number' ? <AnimatedNumber value={value} gainColor={color} /> : value}
     </span>
   );
 }

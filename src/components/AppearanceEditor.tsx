@@ -36,7 +36,7 @@ export default function AppearanceEditor({ onClose }: Props) {
         padding: 16,
       }}
     >
-      <div style={{ width: '100%', maxWidth: 360 }}>
+      <div className="modal-pop" style={{ width: '100%', maxWidth: 360 }}>
 
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <p style={{ ...PX(9), color: 'var(--gold-main)', textShadow: '0 0 10px var(--gold-glow)', marginBottom: 6 }}>

@@ -15,12 +15,12 @@ export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
   }
 
   return (
-    <div style={{
+    <div className="overlay-fade" style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'radial-gradient(ellipse at 50% 40%, rgba(10,0,30,0.97), rgba(2,0,8,0.99))',
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }}>
-      <div style={{
+      <div className="modal-pop" style={{
         width: '100%', maxWidth: 360,
         background: 'linear-gradient(160deg, rgba(12,6,26,0.98), rgba(6,2,14,0.99))',
         border: '1px solid rgba(0,229,255,0.4)',
