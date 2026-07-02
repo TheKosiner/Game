@@ -119,6 +119,7 @@ export default function KryptaPanel() {
   const [buffs, setBuffs]           = useState<ActiveBuff[]>([]);
   const [hasCompanion, setHasCompanion] = useState(false);
   const [enemy, setEnemy]           = useState<KryptaEnemy | null>(null);
+  const [enemyDying, setEnemyDying] = useState(false);
   const [eventType, setEventType]   = useState<EventType | null>(null);
   const [log, setLog]               = useState<string[]>([]);
   const [totalXp, setTotalXp]       = useState(0);
@@ -222,7 +223,7 @@ export default function KryptaPanel() {
   }
 
   function doAttack(isBoss: boolean) {
-    if (!enemy) return;
+    if (!enemy || enemyDying) return;
     const msgs: string[] = [];
     let e = { ...enemy };
     let hp = raidHp;
@@ -276,8 +277,14 @@ export default function KryptaPanel() {
         pushLog([t.krypta.bossDefeated, t.krypta.lootAdded(box.name), t.krypta.totalRewards(newXp, newGold), ...msgs.slice().reverse()]);
         setTotalXp(newXp);
         setTotalGold(newGold);
-        setEnemy(null);
-        setPhase('victory');
+        // Let the death animation play before swapping to the victory screen.
+        setEnemy({ ...e });
+        setEnemyDying(true);
+        setTimeout(() => {
+          setEnemyDying(false);
+          setEnemy(null);
+          setPhase('victory');
+        }, 650);
         return;
       }
 
@@ -285,8 +292,14 @@ export default function KryptaPanel() {
       setTotalXp(newXp);
       setTotalGold(newGold);
       setRaidHp(hp);
-      setEnemy(null);
-      afterRoom(depth, hp, raidMaxHp);
+      // Let the death animation play before moving to the next room.
+      setEnemy({ ...e });
+      setEnemyDying(true);
+      setTimeout(() => {
+        setEnemyDying(false);
+        setEnemy(null);
+        afterRoom(depth, hp, raidMaxHp);
+      }, 650);
       return;
     }
 
@@ -516,7 +529,9 @@ export default function KryptaPanel() {
         background: 'rgba(255,45,120,0.12)', border: '1px solid rgba(255,45,120,0.3)',
         padding: '12px 16px', marginBottom: 12, textAlign: 'center',
       }}>
-        <EnemyPortrait id={enemy.id} emoji={enemy.emoji} size={72} style={{ margin: '0 auto 4px' }} />
+        <div style={{ display: 'inline-block', animation: enemyDying ? 'enemyDeath 0.65s ease-in forwards' : 'none' }}>
+          <EnemyPortrait id={enemy.id} emoji={enemy.emoji} size={72} style={{ margin: '0 auto 4px' }} />
+        </div>
         <div style={{ ...ORB, fontSize: 13, color: '#ff2d78', marginBottom: 8 }}>{enemy.name}</div>
         <HpBar hp={enemy.hp} max={enemy.maxHp} color="#ff2d78" />
         <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3 }}>
@@ -617,9 +632,9 @@ export default function KryptaPanel() {
           {renderHeader()}
           {renderEnemy()}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Btn onClick={() => doAttack(isBoss)} color="#ff2d78"><GameIcon name="sword" size={11} color="#fff" /> {isEn ? 'ATTACK' : 'ATAKUJ'}</Btn>
+            <Btn onClick={() => doAttack(isBoss)} color="#ff2d78" disabled={enemyDying}><GameIcon name="sword" size={11} color="#fff" /> {isEn ? 'ATTACK' : 'ATAKUJ'}</Btn>
             {!isBoss && depth < TOTAL_ROOMS && (
-              <Btn onClick={flee} color="#888888" small><GameIcon name="run" size={11} color="#fff" /> {isEn ? 'FLEE' : 'UCIEKAJ'}</Btn>
+              <Btn onClick={flee} color="#888888" small disabled={enemyDying}><GameIcon name="run" size={11} color="#fff" /> {isEn ? 'FLEE' : 'UCIEKAJ'}</Btn>
             )}
           </div>
           {renderLog()}
