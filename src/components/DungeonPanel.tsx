@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { MAX_DAILY_DUNGEONS } from '../store/gameStore';
 import { ALL_DUNGEONS } from '../data/dungeons';
@@ -353,6 +353,36 @@ function EnemyBattleCard() {
     if (battleUser) syncToCloud(battleUser.uid, battleUser.username).catch(() => {});
   };
 
+  // ── Hit feedback: watch HP drops to trigger shake / flash / floating damage ──
+  const [enemyShakeKey, setEnemyShakeKey] = useState(0);
+  const [floatDmg, setFloatDmg] = useState<{ val: number; key: number } | null>(null);
+  const [heroFlashKey, setHeroFlashKey] = useState(0);
+  const prevEnemyHp  = useRef<number | null>(null);
+  const prevEnemyKey = useRef('');
+  const prevHeroHp   = useRef(hero.hp);
+
+  useEffect(() => {
+    if (!enemy) return;
+    // New enemy (next floor / new run) — reset the baseline without animating.
+    const key = `${enemy.id}-${enemy.maxHp}-${currentFloor}`;
+    if (prevEnemyKey.current !== key) {
+      prevEnemyKey.current = key;
+      prevEnemyHp.current = enemy.hp;
+      return;
+    }
+    const prev = prevEnemyHp.current ?? enemy.hp;
+    if (enemy.hp < prev) {
+      setEnemyShakeKey(k => k + 1);
+      setFloatDmg({ val: prev - enemy.hp, key: Date.now() });
+    }
+    prevEnemyHp.current = enemy.hp;
+  }, [enemy, currentFloor]);
+
+  useEffect(() => {
+    if (hero.hp < prevHeroHp.current) setHeroFlashKey(k => k + 1);
+    prevHeroHp.current = hero.hp;
+  }, [hero.hp]);
+
   if (!enemy || !dungeon) return null;
 
   const enemyHpPct = (enemy.hp / enemy.maxHp) * 100;
@@ -379,7 +409,29 @@ function EnemyBattleCard() {
         boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-          <EnemyPortrait id={enemy.id} size={64} style={{ flexShrink: 0 }} />
+          <div
+            key={enemyShakeKey}
+            style={{ flexShrink: 0, position: 'relative',
+              animation: enemyShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}
+          >
+            <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
+              <EnemyPortrait id={enemy.id} size={64} />
+            </div>
+            {floatDmg && (
+              <span
+                key={floatDmg.key}
+                style={{
+                  position: 'absolute', top: -4, right: -14,
+                  ...ORB, fontSize: 12, color: '#ff4444',
+                  textShadow: '0 0 8px #ff4444',
+                  pointerEvents: 'none', whiteSpace: 'nowrap',
+                  animation: 'floatDmg 0.9s ease forwards',
+                }}
+              >
+                -{floatDmg.val}
+              </span>
+            )}
+          </div>
           <div style={{ flex: 1 }}>
             <p style={{ ...PX(10), color: '#c05050', marginBottom: 3 }}>{enemy.name}</p>
             <p style={{ ...PX(5), color: 'var(--text-dim)', marginBottom: 6 }}>{t.dungeon.level} {hero.level}</p>
@@ -394,8 +446,9 @@ function EnemyBattleCard() {
       {/* Hero HP */}
       <div style={{
         background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-        padding: 8,
+        padding: 8, position: 'relative', overflow: 'hidden',
       }}>
+        {heroFlashKey > 0 && <div key={heroFlashKey} className="hit-flash" style={{ background: 'rgba(255,50,50,0.28)' }} />}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
           <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.name}</span>
           <span style={{ ...PX(5), color: 'var(--text-dim)' }}>{hero.hp}/{hero.maxHp} HP</span>

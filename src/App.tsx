@@ -33,6 +33,7 @@ import DesktopSidebar from './components/DesktopSidebar';
 import { PORTRAIT_OVERRIDES, PORTRAIT_LIST } from './data/portraits';
 import { createMysteryBox } from './data/mysteryBoxes';
 import ForceUpdateModal from './components/ForceUpdateModal';
+import AnimatedNumber from './components/AnimatedNumber';
 import { checkForForcedUpdate, type UpdateInfo } from './lib/appUpdate';
 import AdminPanel from './components/AdminPanel';
 import ErrorLogPanel from './components/ErrorLogPanel';
@@ -583,7 +584,7 @@ export default function App() {
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(255,215,0,0.5)',
             display: 'inline-flex', alignItems: 'center', gap: 3,
-          }}><GameIcon name="coin" size={11} />{hero.gold}</span>
+          }}><GameIcon name="coin" size={11} /><AnimatedNumber value={hero.gold} gainColor="#ffd700" /></span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00e5ff', fontSize: 10, fontWeight: 700,
@@ -592,7 +593,7 @@ export default function App() {
             padding: '3px 7px', lineHeight: 1,
             textShadow: '0 0 8px rgba(0,229,255,0.5)',
             display: 'inline-flex', alignItems: 'center', gap: 3,
-          }}><GameIcon name="gem" size={11} color="#00e5ff" />{hero.gems}</span>
+          }}><GameIcon name="gem" size={11} color="#00e5ff" /><AnimatedNumber value={hero.gems} gainColor="#00e5ff" /></span>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#00f5ff', fontSize: 10,

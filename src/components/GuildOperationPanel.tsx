@@ -16,6 +16,7 @@ import { useGameStore } from '../store/gameStore';
 import { useLangStore } from '../store/langStore';
 import { ORB, MONO } from '../utils/styles';
 import GameIcon, { LogLine } from './GameIcon';
+import Toast from './Toast';
 
 
 const RARITY_COLOR: Record<string, string> = {
@@ -66,6 +67,10 @@ export default function GuildOperationPanel({
   const logRef = useRef<HTMLDivElement>(null);
   const [autoFight, setAutoFight] = useState(false);
   const attackingRef = useRef(false);
+  // Hit feedback: enemy shake + floating damage number, red flash when we get hit
+  const [enemyShakeKey, setEnemyShakeKey] = useState(0);
+  const [floatDmg, setFloatDmg] = useState<{ val: number; key: number } | null>(null);
+  const [heroFlashKey, setHeroFlashKey] = useState(0);
 
   // Raid combat HP — server-authoritative: starts at maxHp, drains as the player is
   // hit, never touches hero.hp and never refills (the server owns it). On (re-)open we
@@ -193,6 +198,9 @@ export default function GuildOperationPanel({
       } else {
         raidHpRef.current = serverRaidHp;
         setRaidHp(serverRaidHp);
+        setEnemyShakeKey(k => k + 1);
+        setFloatDmg({ val: damage, key: Date.now() });
+        if (enemyDmg > 0) setHeroFlashKey(k => k + 1);
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
           { text: `⚔ ${isEn ? 'You' : 'Ty'} → ${fmtNum(damage)} dmg ${isEn ? 'on' : 'na'} ${currentOp.enemyName}`, type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
@@ -301,16 +309,7 @@ export default function GuildOperationPanel({
   const hpPct   = op ? Math.max(0, (op.enemyHp / op.enemyMaxHp) * 100) : 0;
 
   // ── Notification
-  const notifBlock = notification && (
-    <div style={{
-      background: notification.ok ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
-      border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
-      padding: '8px 12px', textAlign: 'center',
-      color: notification.ok ? '#4ade80' : '#f87171', ...ORB, fontSize: 9,
-    }}>
-      {notification.text}
-    </div>
-  );
+  const notifBlock = notification && <Toast text={notification.text} ok={notification.ok} />;
 
   // ── ACTIVE FIGHT ─────────────────────────────────────────────────────────────
   if (isActive && op) {
@@ -355,7 +354,25 @@ export default function GuildOperationPanel({
           boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
         }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
-            <EnemyPortrait id={enemyId} emoji={op.enemyEmoji} size={60} style={{ flexShrink: 0 }} />
+            <div
+              key={enemyShakeKey}
+              style={{ flexShrink: 0, position: 'relative',
+                animation: enemyShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}
+            >
+              <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
+                <EnemyPortrait id={enemyId} emoji={op.enemyEmoji} size={60} />
+              </div>
+              {floatDmg && (
+                <span key={floatDmg.key} style={{
+                  position: 'absolute', top: -4, right: -14,
+                  ...ORB, fontSize: 12, color: '#ff4444', textShadow: '0 0 8px #ff4444',
+                  pointerEvents: 'none', whiteSpace: 'nowrap',
+                  animation: 'floatDmg 0.9s ease forwards',
+                }}>
+                  -{fmtNum(floatDmg.val)}
+                </span>
+              )}
+            </div>
             <div style={{ flex: 1 }}>
               <p style={{ ...MONO, fontSize: 11, color: '#c05050', marginBottom: 3 }}>{op.enemyName}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
@@ -380,7 +397,9 @@ export default function GuildOperationPanel({
           background: 'var(--bg-inset)',
           border: `1px solid ${isDead ? 'rgba(239,68,68,0.4)' : 'var(--border-dark)'}`,
           padding: 8, display: 'flex', flexDirection: 'column', gap: 6,
+          position: 'relative', overflow: 'hidden',
         }}>
+          {heroFlashKey > 0 && <div key={heroFlashKey} className="hit-flash" style={{ background: 'rgba(255,50,50,0.28)' }} />}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
             <span style={{ ...MONO, fontSize: 10, color: isDead ? '#f87171' : 'var(--text-dim)' }}>
               {isDead ? <GameIcon name="skull" size={10} color="#f87171" /> : <GameIcon name="heart" size={10} color="#f87171" />} {hero.name}

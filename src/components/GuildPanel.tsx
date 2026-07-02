@@ -156,10 +156,12 @@ function ConfirmDialog({ msg, okLabel = 'TAK', cancelLabel, onOk, onCancel }: {
 }) {
   return (
     <div
+      className="overlay-fade"
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
       onClick={cancelLabel ? onCancel : onOk}
     >
       <div
+        className="modal-pop"
         style={{ background: 'var(--bg-panel)', border: '1px solid var(--border-main)', padding: '16px 14px', maxWidth: 300, width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}
         onClick={e => e.stopPropagation()}
       >

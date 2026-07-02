@@ -207,13 +207,13 @@ export default function InventoryPanel() {
         boxConfirm ? (() => {
           const bc = RARITY_COLORS[boxConfirm.item.rarity] ?? '#aaa';
           return (
-            <div style={{
+            <div className="overlay-fade" style={{
               position: 'fixed', inset: 0, zIndex: 9999,
               background: 'rgba(0,0,0,0.88)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               padding: 24,
             }}>
-              <div style={{
+              <div className="modal-pop" style={{
                 background: '#08080f',
                 border: `2px solid ${bc}66`,
                 boxShadow: `0 0 40px ${bc}33`,
@@ -261,13 +261,13 @@ export default function InventoryPanel() {
       {/* Sell confirmation overlay — portal bypasses zoom stacking context */}
       {createPortal(
         sellConfirm ? (
-          <div style={{
+          <div className="overlay-fade" style={{
             position: 'fixed', inset: 0, zIndex: 9999,
             background: 'rgba(0,0,0,0.82)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             padding: 24,
           }}>
-            <div style={{
+            <div className="modal-pop" style={{
               background: '#08080f',
               border: `2px solid ${rc}66`,
               boxShadow: `0 0 30px ${rc}22`,

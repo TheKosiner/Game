@@ -107,13 +107,13 @@ function ResultModal({ result, onClose, onRetry }: {
       : (lang === 'en' ? 'Stayed at base' : 'Pozostał bazowy');
 
   return createPortal(
-    <div style={{
+    <div className="overlay-fade" style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.85)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24,
     }}>
-      <div style={{
+      <div className="modal-pop" style={{
         background: '#08080f',
         border: `2px solid ${borderColor}`,
         boxShadow: `0 0 40px ${success ? 'rgba(0,230,118,0.2)' : 'rgba(255,68,68,0.2)'}`,

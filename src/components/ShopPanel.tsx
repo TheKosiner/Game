@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
+import Toast from './Toast';
 import { SHOP_REFRESH_COOLDOWN } from '../store/gameStore';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { generateShopItems } from '../data/items';
@@ -97,7 +98,7 @@ export default function ShopPanel() {
     } else {
       setNotification({ text: t.shop.backpackFull, ok: false });
     }
-    setTimeout(() => setNotification(null), 2500);
+    setTimeout(() => setNotification(null), 3500);
   }
 
   const selectedEntry = selectedIdx !== null ? allItems[selectedIdx] : null;
@@ -211,16 +212,7 @@ export default function ShopPanel() {
           )}
 
           {/* Notification */}
-          {notification && (
-            <div style={{
-              background: notification.ok ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-              border: `1px solid ${notification.ok ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
-              padding: '7px 12px', textAlign: 'center',
-              color: notification.ok ? '#4ade80' : '#f87171', fontSize: 10,
-            }}>
-              {notification.text}
-            </div>
-          )}
+          {notification && <Toast text={notification.text} ok={notification.ok} />}
 
           {/* Items grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>

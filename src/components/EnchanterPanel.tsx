@@ -125,13 +125,13 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
   ])) as (keyof Stats)[];
 
   return createPortal(
-    <div style={{
+    <div className="overlay-fade" style={{
       position: 'fixed', inset: 0, zIndex: 9999,
       background: 'rgba(0,0,0,0.88)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: 24,
     }}>
-      <div style={{
+      <div className="modal-pop" style={{
         background: '#08080f',
         border: '2px solid rgba(168,0,255,0.5)',
         boxShadow: '0 0 40px rgba(168,0,255,0.2)',
