@@ -163,7 +163,9 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
       {/* Fullscreen overlay */}
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 300,
+          // Above every other overlay (LevelUpModal is 10000) — the daily streak
+          // fires at login and used to be buried under the level-up window.
+          position: 'fixed', inset: 0, zIndex: 10010,
           background: 'radial-gradient(ellipse at 50% 50%, rgba(10,0,30,0.96) 0%, rgba(2,0,10,0.98) 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: '16px',
