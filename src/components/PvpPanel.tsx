@@ -244,8 +244,8 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
                   <span key={floatOpp.key} style={{
                     position: 'absolute', top: -8, left: -10, zIndex: 3,
                     ...ORB, fontSize: floatOpp.crit ? 17 : 15,
-                    color: floatOpp.crit ? '#ffd700' : '#ff4444',
-                    textShadow: floatOpp.crit ? '0 0 12px #ffd700' : '0 0 10px #ff4444',
+                    color: floatOpp.crit ? '#ffe066' : '#ffd54a',   // gold = damage YOU deal
+                    textShadow: floatOpp.crit ? '0 0 14px #ffd700' : '0 0 10px #ffb300',
                     pointerEvents: 'none', whiteSpace: 'nowrap',
                     animation: 'floatDmgArena 1.5s ease forwards',
                   }}>
