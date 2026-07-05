@@ -111,9 +111,12 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
   const oppHpPct  = Math.max(0, (combat.oppHp  / combat.oppMaxHp)  * 100);
   const oppHpColor = oppHpPct > 60 ? '#44cc44' : oppHpPct > 30 ? '#ff9900' : '#ff4444';
 
-  const [oppAnimKey,  setOppAnimKey]  = useState(0);
-  const [oppHitKey,   setOppHitKey]   = useState(0);
-  const [heroAnimKey, setHeroAnimKey] = useState(0);
+  const [oppShakeKey,  setOppShakeKey]  = useState(0);
+  const [oppHitKey,    setOppHitKey]    = useState(0);
+  const [oppLungeKey,  setOppLungeKey]  = useState(0);
+  const [heroShakeKey, setHeroShakeKey] = useState(0);
+  const [heroFlashKey, setHeroFlashKey] = useState(0);
+  const [heroLungeKey, setHeroLungeKey] = useState(0);
   const [floatOpp,  setFloatOpp]  = useState<{ val: number; crit: boolean; key: number } | null>(null);
   const [floatHero, setFloatHero] = useState<{ val: number; key: number } | null>(null);
 
@@ -124,18 +127,26 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
   useEffect(() => {
     const oppDmg  = prevOppHp.current  - combat.oppHp;
     const heroDmg = prevHeroHp.current - combat.heroHp;
+    prevOppHp.current  = combat.oppHp;
+    prevHeroHp.current = combat.heroHp;
     if (oppDmg > 0) {
-      setOppAnimKey(k => k + 1);
+      // Our strike lands first: hero lunges in, opponent shakes/flashes.
+      setHeroLungeKey(k => k + 1);
+      setOppShakeKey(k => k + 1);
       setOppHitKey(k => k + 1);
       const isCrit = combat.log[0]?.message.includes('KRYT');
       setFloatOpp({ val: oppDmg, crit: !!isCrit, key: Date.now() });
     }
     if (heroDmg > 0) {
-      setHeroAnimKey(k => k + 1);
-      setFloatHero({ val: heroDmg, key: Date.now() + 1 });
+      // Enemy counter is offset a beat so the two hits don't overlap.
+      const t = setTimeout(() => {
+        setOppLungeKey(k => k + 1);
+        setHeroShakeKey(k => k + 1);
+        setHeroFlashKey(k => k + 1);
+        setFloatHero({ val: heroDmg, key: Date.now() + 1 });
+      }, oppDmg > 0 ? 480 : 0);
+      return () => clearTimeout(t);
     }
-    prevOppHp.current  = combat.oppHp;
-    prevHeroHp.current = combat.heroHp;
   }, [combat.oppHp, combat.heroHp]);
 
   useEffect(() => {
@@ -146,103 +157,120 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ ...PX(7), color: 'var(--gold-main)', textShadow: '0 0 8px var(--gold-glow)' }}>{t.pvp.title}</p>
 
-      {/* Opponent card — boss style */}
+      {/* ── Battle arena: hero (left) VS opponent (right) ─────────────────── */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(20,5,5,0.97), rgba(14,4,4,0.99))',
-        border: '1px solid rgba(120,30,30,0.6)',
-        padding: 12,
-        boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.5)',
+        position: 'relative',
+        background: 'linear-gradient(90deg, rgba(4,10,22,0.96) 0%, rgba(10,4,18,0.98) 50%, rgba(32,6,10,0.96) 100%)',
+        border: '1px solid rgba(120,30,50,0.45)',
+        boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.55)',
+        padding: '34px 8px 12px',   // extra headroom so floating damage stays visible
+        overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+        {/* Ground line under the fighters */}
+        <div style={{
+          position: 'absolute', left: '5%', right: '5%', bottom: 62, height: 1,
+          background: 'linear-gradient(90deg, rgba(0,245,255,0.35), rgba(255,255,255,0.06) 50%, rgba(255,68,68,0.35))',
+        }} />
 
-          {/* Portrait with shake + flash on hit */}
-          <div
-            key={oppAnimKey}
-            style={{
-              flexShrink: 0, width: 80, height: 80, overflow: 'hidden',
-              animation: oppAnimKey > 0 ? 'bossShake 0.4s ease' : 'none',
-              position: 'relative',
-            }}
-          >
-            <div
-              key={oppHitKey}
-              style={{ animation: oppHitKey > 0 ? 'bossHit 0.35s ease' : 'none', width: '100%', height: '100%' }}
-            >
-              <img
-                src={portraitSrc(combat.oppPortrait)}
-                alt={combat.opponent.heroName}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
+        <div style={{ display: 'flex', alignItems: 'stretch', gap: 4 }}>
+          {/* HERO — left side */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, position: 'relative' }}>
+            {heroFlashKey > 0 && <div key={`hf${heroFlashKey}`} className="hit-flash" style={{ background: 'rgba(255,50,50,0.22)' }} />}
+            <div key={`hl${heroLungeKey}`} style={{ animation: heroLungeKey > 0 ? 'lunge-right 0.45s ease' : 'none' }}>
+              <div key={`hs${heroShakeKey}`} style={{ position: 'relative', animation: heroShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
+                <img
+                  src={portraitSrc(hero.portrait)}
+                  alt={hero.name}
+                  style={{
+                    width: 68, height: 68, objectFit: 'cover', display: 'block',
+                    border: '2px solid rgba(0,245,255,0.5)',
+                    boxShadow: '0 0 12px rgba(0,245,255,0.25)',
+                  }}
+                />
+                {floatHero && (
+                  <span key={floatHero.key} style={{
+                    position: 'absolute', top: -8, right: -10, zIndex: 3,
+                    ...ORB, fontSize: 15, color: '#ff4444',
+                    textShadow: '0 0 10px #ff4444',
+                    pointerEvents: 'none', whiteSpace: 'nowrap',
+                    animation: 'floatDmgArena 1.5s ease forwards',
+                  }}>
+                    -{floatHero.val}
+                  </span>
+                )}
+              </div>
             </div>
-            {floatOpp && (
-              <span
-                key={floatOpp.key}
-                style={{
-                  position: 'absolute', top: -4, right: -8,
-                  ...ORB, fontSize: floatOpp.crit ? 13 : 10,
-                  color: floatOpp.crit ? '#ffd700' : '#ff4444',
-                  textShadow: floatOpp.crit ? '0 0 10px #ffd700' : '0 0 6px #ff4444',
-                  pointerEvents: 'none', whiteSpace: 'nowrap',
-                  animation: 'floatDmg 0.9s ease forwards',
-                }}
-              >
-                -{floatOpp.val}{floatOpp.crit ? <GameIcon name="explosion" size={12} color="#ffd700" /> : ''}
-              </span>
-            )}
-          </div>
-
-          <div style={{ flex: 1 }}>
-            <p style={{ ...ORB, fontSize: 10, color: '#c05050', marginBottom: 5 }}>
-              {combat.opponent.username} · POZ. {combat.opponent.level}
+            <p style={{ ...PX(6), color: '#00f5ff', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {hero.name}
             </p>
-            <p style={{ ...MONO, fontSize: 10, color: oppHpColor }}>
-              {Math.max(0, combat.oppHp)} / {combat.oppMaxHp} HP
+            <div style={{ width: '100%' }}>
+              <div className="pixel-bar" style={{ height: 8 }}>
+                <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%`, transition: 'width 0.3s ease' }} />
+              </div>
+              <p style={{ ...PX(5), color: 'var(--text-dim)', textAlign: 'center', marginTop: 3 }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp}</p>
+            </div>
+          </div>
+
+          {/* VS — center clash */}
+          <div style={{ width: 40, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            <span
+              key={`c${oppShakeKey}-${heroShakeKey}`}
+              style={{
+                fontSize: 20, lineHeight: 1,
+                filter: 'drop-shadow(0 0 8px #ffd700)',
+                animation: (oppShakeKey > 0 || heroShakeKey > 0) ? 'vs-clash 0.5s ease' : 'none',
+                opacity: 0.55,
+              }}
+            >⚔</span>
+            <span style={{ ...ORB, fontSize: 9, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>VS</span>
+          </div>
+
+          {/* OPPONENT — right side */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+            <div key={`ol${oppLungeKey}`} style={{ animation: oppLungeKey > 0 ? 'lunge-left 0.45s ease' : 'none' }}>
+              <div key={`os${oppShakeKey}`} style={{ position: 'relative', animation: oppShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
+                <div style={{ animation: oppHitKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
+                  <img
+                    src={portraitSrc(combat.oppPortrait)}
+                    alt={combat.opponent.heroName}
+                    style={{
+                      width: 68, height: 68, objectFit: 'cover', display: 'block',
+                      border: '2px solid rgba(200,60,60,0.5)',
+                      boxShadow: '0 0 12px rgba(200,40,40,0.25)',
+                    }}
+                  />
+                </div>
+                {floatOpp && (
+                  <span key={floatOpp.key} style={{
+                    position: 'absolute', top: -8, left: -10, zIndex: 3,
+                    ...ORB, fontSize: floatOpp.crit ? 17 : 15,
+                    color: floatOpp.crit ? '#ffd700' : '#ff4444',
+                    textShadow: floatOpp.crit ? '0 0 12px #ffd700' : '0 0 10px #ff4444',
+                    pointerEvents: 'none', whiteSpace: 'nowrap',
+                    animation: 'floatDmgArena 1.5s ease forwards',
+                  }}>
+                    -{floatOpp.val}{floatOpp.crit ? <GameIcon name="explosion" size={13} color="#ffd700" /> : ''}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p style={{ ...PX(6), color: '#f87171', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {combat.opponent.username}
             </p>
+            <div style={{ width: '100%' }}>
+              <div className="pixel-bar" style={{ height: 8 }}>
+                <div className="pixel-bar-fill" style={{ width: `${oppHpPct}%`, background: `linear-gradient(90deg, #5a0e0e, ${oppHpColor})`, transition: 'width 0.3s ease' }} />
+              </div>
+              <p style={{ ...PX(5), color: '#903040', textAlign: 'center', marginTop: 3 }}>{Math.max(0, combat.oppHp)}/{combat.oppMaxHp}</p>
+            </div>
           </div>
         </div>
 
-        <div className="pixel-bar">
-          <div className="pixel-bar-fill" style={{
-            width: `${oppHpPct}%`,
-            background: `linear-gradient(90deg, #5a0e0e, ${oppHpColor})`,
-            transition: 'width 0.3s ease',
-          }} />
+        {/* Levels row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, padding: '0 4px' }}>
+          <span style={{ ...PX(5), color: 'rgba(0,245,255,0.7)' }}>POZ. {hero.level}</span>
+          <span style={{ ...PX(5), color: 'rgba(248,113,113,0.8)' }}>POZ. {combat.opponent.level}</span>
         </div>
-      </div>
-
-      {/* Hero card — with hit flash animation */}
-      <div
-        key={heroAnimKey}
-        style={{
-          background: 'var(--bg-inset)', border: '1px solid var(--border-dark)',
-          padding: 8,
-          animation: heroAnimKey > 0 ? 'heroHit 0.5s ease' : 'none',
-          position: 'relative',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <div style={{ width: 32, height: 32, overflow: 'hidden', flexShrink: 0 }}>
-            <img src={portraitSrc(hero.portrait)} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          </div>
-          <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{Math.max(0, combat.heroHp)}/{combat.heroMaxHp} HP</span>
-        </div>
-        <div className="pixel-bar">
-          <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%`, transition: 'width 0.3s ease' }} />
-        </div>
-        {floatHero && (
-          <span
-            key={floatHero.key}
-            style={{
-              position: 'absolute', top: 2, right: 8,
-              ...ORB, fontSize: 11,
-              color: '#ff4444', textShadow: '0 0 8px #ff4444',
-              pointerEvents: 'none',
-              animation: 'floatDmg 0.9s ease forwards',
-            }}
-          >
-            -{floatHero.val}
-          </span>
-        )}
       </div>
 
       {/* Action buttons */}
