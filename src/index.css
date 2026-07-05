@@ -792,6 +792,25 @@ input[type="range"]:disabled { opacity: 0.3; cursor: not-allowed; }
 }
 
 /* ============================================================
+   BATTLE ARENA — attack lunges + center clash
+============================================================ */
+@keyframes lunge-left {
+  0%,100% { transform: translateX(0); }
+  30%      { transform: translateX(-12px) scale(1.06); }
+  55%      { transform: translateX(3px); }
+}
+@keyframes lunge-right {
+  0%,100% { transform: translateX(0); }
+  30%      { transform: translateX(12px) scale(1.06); }
+  55%      { transform: translateX(-3px); }
+}
+@keyframes vs-clash {
+  0%   { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  40%  { transform: scale(1.5) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0.55; }
+}
+
+/* ============================================================
    ENEMY DEATH — white-out, desaturate, collapse with spin
 ============================================================ */
 @keyframes enemyDeath {
