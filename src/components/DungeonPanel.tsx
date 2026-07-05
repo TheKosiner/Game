@@ -399,13 +399,13 @@ function EnemyBattleCard() {
     if (hero.hp < prevHeroHp.current) {
       const dmg = prevHeroHp.current - hero.hp;
       prevHeroHp.current = hero.hp;
-      // Slight delay so the exchange reads: our strike first, then the counter.
+      // Delay so the exchange reads as two beats: our strike first, then the counter.
       const t = setTimeout(() => {
         setEnemyLungeKey(k => k + 1);
         setHeroShakeKey(k => k + 1);
         setHeroFlashKey(k => k + 1);
         setHeroDmgFloat({ val: dmg, key: Date.now() });
-      }, 260);
+      }, 480);
       return () => clearTimeout(t);
     }
     prevHeroHp.current = hero.hp;
@@ -429,58 +429,57 @@ function EnemyBattleCard() {
         <p style={{ ...PX(5), color: 'var(--text-dim)' }}>{t.dungeon.floor(currentFloor, dungeon.floors)}</p>
       </div>
 
-      {/* ── Battle arena: enemy (left) VS hero (right) ─────────────────────── */}
+      {/* ── Battle arena: hero (left) VS enemy (right) ─────────────────────── */}
       <div style={{
         position: 'relative',
-        background: 'linear-gradient(90deg, rgba(32,6,10,0.96) 0%, rgba(10,4,18,0.98) 50%, rgba(4,10,22,0.96) 100%)',
+        background: 'linear-gradient(90deg, rgba(4,10,22,0.96) 0%, rgba(10,4,18,0.98) 50%, rgba(32,6,10,0.96) 100%)',
         border: '1px solid rgba(120,30,50,0.45)',
         boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.55)',
-        padding: '12px 8px 10px',
+        padding: '34px 8px 10px',   // extra headroom so floating damage stays visible
         overflow: 'hidden',
       }}>
         {/* Ground line under the fighters */}
         <div style={{
           position: 'absolute', left: '5%', right: '5%', bottom: 52, height: 1,
-          background: 'linear-gradient(90deg, rgba(255,68,68,0.35), rgba(255,255,255,0.06) 50%, rgba(0,245,255,0.35))',
+          background: 'linear-gradient(90deg, rgba(0,245,255,0.35), rgba(255,255,255,0.06) 50%, rgba(255,68,68,0.35))',
         }} />
 
         <div style={{ display: 'flex', alignItems: 'stretch', gap: 4 }}>
-          {/* ENEMY — left side */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-            <div key={`el${enemyLungeKey}`} style={{ animation: enemyLungeKey > 0 ? 'lunge-right 0.45s ease' : 'none' }}>
-              <div key={`es${enemyShakeKey}`} style={{ position: 'relative', animation: enemyShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
-                <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
-                  <EnemyPortrait id={enemy.id} size={68} />
-                </div>
-                {dying && (
-                  <div key={dying.key} style={{
-                    position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
-                    animation: 'enemyDeath 0.65s ease-in forwards',
-                  }}>
-                    <EnemyPortrait id={dying.id} size={68} />
-                  </div>
-                )}
-                {floatDmg && (
-                  <span key={floatDmg.key} style={{
-                    position: 'absolute', top: -6, right: -12,
-                    ...ORB, fontSize: 13, color: '#ff4444',
-                    textShadow: '0 0 8px #ff4444',
+          {/* HERO — left side */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, position: 'relative' }}>
+            {heroFlashKey > 0 && <div key={`hf${heroFlashKey}`} className="hit-flash" style={{ background: 'rgba(255,50,50,0.22)' }} />}
+            <div key={`hl${heroLungeKey}`} style={{ animation: heroLungeKey > 0 ? 'lunge-right 0.45s ease' : 'none' }}>
+              <div key={`hs${heroShakeKey}`} style={{ position: 'relative', animation: heroShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
+                <img
+                  src={portraitSrc(resolvePortrait(hero.portrait, battleUser?.username ?? hero.name))}
+                  alt={hero.name}
+                  style={{
+                    width: 64, height: 64, objectFit: 'cover', display: 'block',
+                    border: '2px solid rgba(0,245,255,0.5)',
+                    boxShadow: '0 0 12px rgba(0,245,255,0.25)',
+                  }}
+                />
+                {heroDmgFloat && (
+                  <span key={heroDmgFloat.key} style={{
+                    position: 'absolute', top: -8, right: -10, zIndex: 3,
+                    ...ORB, fontSize: 15, color: '#ff5544',
+                    textShadow: '0 0 10px #ff4444',
                     pointerEvents: 'none', whiteSpace: 'nowrap',
-                    animation: 'floatDmg 0.9s ease forwards',
+                    animation: 'floatDmgArena 1.5s ease forwards',
                   }}>
-                    -{floatDmg.val}
+                    -{heroDmgFloat.val}
                   </span>
                 )}
               </div>
             </div>
-            <p style={{ ...PX(6), color: '#f87171', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {enemy.name}
+            <p style={{ ...PX(6), color: '#00f5ff', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {hero.name}
             </p>
             <div style={{ width: '100%' }}>
               <div className="pixel-bar" style={{ height: 8 }}>
-                <div className="pixel-bar-fill" style={{ width: `${enemyHpPct}%`, background: 'linear-gradient(90deg, #5a0e0e, #b83030)' }} />
+                <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%` }} />
               </div>
-              <p style={{ ...PX(5), color: '#903040', textAlign: 'center', marginTop: 3 }}>{enemy.hp}/{enemy.maxHp}</p>
+              <p style={{ ...PX(5), color: 'var(--text-dim)', textAlign: 'center', marginTop: 3 }}>{hero.hp}/{hero.maxHp}</p>
             </div>
           </div>
 
@@ -498,41 +497,42 @@ function EnemyBattleCard() {
             <span style={{ ...ORB, fontSize: 9, fontWeight: 900, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em' }}>VS</span>
           </div>
 
-          {/* HERO — right side */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, position: 'relative' }}>
-            {heroFlashKey > 0 && <div key={`hf${heroFlashKey}`} className="hit-flash" style={{ background: 'rgba(255,50,50,0.22)' }} />}
-            <div key={`hl${heroLungeKey}`} style={{ animation: heroLungeKey > 0 ? 'lunge-left 0.45s ease' : 'none' }}>
-              <div key={`hs${heroShakeKey}`} style={{ position: 'relative', animation: heroShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
-                <img
-                  src={portraitSrc(resolvePortrait(hero.portrait, battleUser?.username ?? hero.name))}
-                  alt={hero.name}
-                  style={{
-                    width: 64, height: 64, objectFit: 'cover', display: 'block',
-                    border: '2px solid rgba(0,245,255,0.5)',
-                    boxShadow: '0 0 12px rgba(0,245,255,0.25)',
-                  }}
-                />
-                {heroDmgFloat && (
-                  <span key={heroDmgFloat.key} style={{
-                    position: 'absolute', top: -6, left: -12,
-                    ...ORB, fontSize: 13, color: '#ff8844',
-                    textShadow: '0 0 8px #ff8844',
-                    pointerEvents: 'none', whiteSpace: 'nowrap',
-                    animation: 'floatDmg 0.9s ease forwards',
+          {/* ENEMY — right side */}
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+            <div key={`el${enemyLungeKey}`} style={{ animation: enemyLungeKey > 0 ? 'lunge-left 0.45s ease' : 'none' }}>
+              <div key={`es${enemyShakeKey}`} style={{ position: 'relative', animation: enemyShakeKey > 0 ? 'bossShake 0.4s ease' : 'none' }}>
+                <div style={{ animation: enemyShakeKey > 0 ? 'bossHit 0.35s ease' : 'none' }}>
+                  <EnemyPortrait id={enemy.id} size={68} />
+                </div>
+                {dying && (
+                  <div key={dying.key} style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2,
+                    animation: 'enemyDeath 0.65s ease-in forwards',
                   }}>
-                    -{heroDmgFloat.val}
+                    <EnemyPortrait id={dying.id} size={68} />
+                  </div>
+                )}
+                {floatDmg && (
+                  <span key={floatDmg.key} style={{
+                    position: 'absolute', top: -8, left: -10, zIndex: 3,
+                    ...ORB, fontSize: 15, color: '#ff4444',
+                    textShadow: '0 0 10px #ff4444',
+                    pointerEvents: 'none', whiteSpace: 'nowrap',
+                    animation: 'floatDmgArena 1.5s ease forwards',
+                  }}>
+                    -{floatDmg.val}
                   </span>
                 )}
               </div>
             </div>
-            <p style={{ ...PX(6), color: '#00f5ff', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {hero.name}
+            <p style={{ ...PX(6), color: '#f87171', textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {enemy.name}
             </p>
             <div style={{ width: '100%' }}>
               <div className="pixel-bar" style={{ height: 8 }}>
-                <div className="pixel-bar-fill hp-fill" style={{ width: `${heroHpPct}%` }} />
+                <div className="pixel-bar-fill" style={{ width: `${enemyHpPct}%`, background: 'linear-gradient(90deg, #5a0e0e, #b83030)' }} />
               </div>
-              <p style={{ ...PX(5), color: 'var(--text-dim)', textAlign: 'center', marginTop: 3 }}>{hero.hp}/{hero.maxHp}</p>
+              <p style={{ ...PX(5), color: '#903040', textAlign: 'center', marginTop: 3 }}>{enemy.hp}/{enemy.maxHp}</p>
             </div>
           </div>
         </div>
