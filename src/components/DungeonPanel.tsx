@@ -515,8 +515,8 @@ function EnemyBattleCard() {
                 {floatDmg && (
                   <span key={floatDmg.key} style={{
                     position: 'absolute', top: -8, left: -10, zIndex: 3,
-                    ...ORB, fontSize: 15, color: '#ff4444',
-                    textShadow: '0 0 10px #ff4444',
+                    ...ORB, fontSize: 15, color: '#ffd54a',   // gold = damage YOU deal
+                    textShadow: '0 0 10px #ffb300',
                     pointerEvents: 'none', whiteSpace: 'nowrap',
                     animation: 'floatDmgArena 1.5s ease forwards',
                   }}>
