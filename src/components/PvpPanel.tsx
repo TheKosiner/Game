@@ -134,6 +134,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
       setHeroLungeKey(k => k + 1);
       setOppShakeKey(k => k + 1);
       setOppHitKey(k => k + 1);
+      setFloatHero(null); // only one damage number on screen at a time
       const isCrit = combat.log[0]?.message.includes('KRYT');
       setFloatOpp({ val: oppDmg, crit: !!isCrit, key: Date.now() });
     }
@@ -143,6 +144,7 @@ function PvpCombat({ combat, onAttack, autoFight, onToggleAuto, onExit }: {
         setOppLungeKey(k => k + 1);
         setHeroShakeKey(k => k + 1);
         setHeroFlashKey(k => k + 1);
+        setFloatOpp(null); // clear the "damage dealt" number so only the counter shows
         setFloatHero({ val: heroDmg, key: Date.now() + 1 });
       }, oppDmg > 0 ? 480 : 0);
       return () => clearTimeout(t);
