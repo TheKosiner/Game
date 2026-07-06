@@ -209,6 +209,7 @@ export interface GameState {
   dungeonDifficulty: 'easy' | 'normal' | 'hard';
   combatLog: CombatLog[];
   inCombat: boolean;
+  awaitingEnemyTurn: boolean;
   defeatedAtDungeon: string | null;
   lastSaved: number;
   shopSeed: number;
@@ -253,6 +254,7 @@ export interface GameState {
   exitDungeon: () => void;
   clearDefeat: () => void;
   attackEnemy: () => void;
+  enemyCounterAttack: () => void;
   autoFightEnemy: () => void;
   startQuest: (quest: Quest) => void;
   collectQuest: () => void;

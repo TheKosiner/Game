@@ -346,6 +346,8 @@ function EnemyBattleCard() {
   const dungeon = useGameStore(s => s.currentDungeon);
   const combatLog = useGameStore(s => s.combatLog);
   const attackEnemy = useGameStore(s => s.attackEnemy);
+  const enemyCounterAttack = useGameStore(s => s.enemyCounterAttack);
+  const awaitingEnemyTurn = useGameStore(s => s.awaitingEnemyTurn);
   const autoFightEnemy = useGameStore(s => s.autoFightEnemy);
   const exitDungeon = useGameStore(s => s.exitDungeon);
   const battleUser  = useAuthStore(s => s.user);
@@ -399,17 +401,21 @@ function EnemyBattleCard() {
     if (hero.hp < prevHeroHp.current) {
       const dmg = prevHeroHp.current - hero.hp;
       prevHeroHp.current = hero.hp;
-      // Delay so the exchange reads as two beats: our strike first, then the counter.
-      const t = setTimeout(() => {
-        setEnemyLungeKey(k => k + 1);
-        setHeroShakeKey(k => k + 1);
-        setHeroFlashKey(k => k + 1);
-        setHeroDmgFloat({ val: dmg, key: Date.now() });
-      }, 480);
-      return () => clearTimeout(t);
+      // The enemy's turn is already a separate delayed beat, so react promptly here.
+      setEnemyLungeKey(k => k + 1);
+      setHeroShakeKey(k => k + 1);
+      setHeroFlashKey(k => k + 1);
+      setHeroDmgFloat({ val: dmg, key: Date.now() });
     }
     prevHeroHp.current = hero.hp;
   }, [hero.hp]);
+
+  // Enemy's turn: after our strike lands, the enemy counter-attacks as its own beat.
+  useEffect(() => {
+    if (!awaitingEnemyTurn) return;
+    const id = setTimeout(() => enemyCounterAttack(), 550);
+    return () => clearTimeout(id);
+  }, [awaitingEnemyTurn, enemyCounterAttack]);
 
   if (!enemy || !dungeon) return null;
 
@@ -539,8 +545,8 @@ function EnemyBattleCard() {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={attackEnemy} className="btn btn-primary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.attack}</button>
-        <button onClick={autoFightEnemy} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.dungeon.quickFight}</button>
+        <button onClick={attackEnemy} disabled={awaitingEnemyTurn} className="btn btn-primary" style={{ flex: 1, fontSize: 10, opacity: awaitingEnemyTurn ? 0.55 : 1 }}>{t.dungeon.attack}</button>
+        <button onClick={autoFightEnemy} disabled={awaitingEnemyTurn} className="btn btn-secondary" style={{ flex: 1, fontSize: 10, opacity: awaitingEnemyTurn ? 0.55 : 1 }}>{t.dungeon.quickFight}</button>
         <button onClick={handleFleeExit} className="btn btn-danger" aria-label="Exit dungeon" style={{ padding: '8px 14px', fontSize: 10 }}><GameIcon name="run" size={11} color="#fff" /></button>
       </div>
 

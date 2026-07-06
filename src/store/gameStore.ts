@@ -194,6 +194,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   dungeonDifficulty: 'normal',
   combatLog: [],
   inCombat: false,
+  awaitingEnemyTurn: false,
   defeatedAtDungeon: null,
   lastSaved: 0,
   shopSeed: Date.now(),
@@ -453,6 +454,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentFloor: 1,
       currentEnemy: { ...enemy },
       inCombat: true,
+      awaitingEnemyTurn: false,
       combatLog: [],
       pendingDungeonXp: 0,
       pendingDungeonGold: 0,
@@ -465,7 +467,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   exitDungeon: () => {
     const t = getT();
-    set({ currentDungeon: null, currentFloor: 1, currentEnemy: null, inCombat: false, pendingDungeonXp: 0, pendingDungeonGold: 0 });
+    set({ currentDungeon: null, currentFloor: 1, currentEnemy: null, inCombat: false, awaitingEnemyTurn: false, pendingDungeonXp: 0, pendingDungeonGold: 0 });
     get().addCombatLog(t.combat.leaving, 'system');
   },
 
@@ -474,37 +476,19 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   attackEnemy: () => {
-    const { hero, currentEnemy, currentDungeon, currentFloor } = get();
+    const { hero, currentEnemy, currentDungeon, currentFloor, awaitingEnemyTurn } = get();
     if (!currentEnemy || !currentDungeon) return;
+    if (awaitingEnemyTurn) return; // enemy's counter is pending — wait for its turn
     const t = getT();
 
-    const heroGoesFirst = Math.random() < 0.5;
-    let heroHp  = hero.hp;
-    let enemyHp = currentEnemy.hp;
-
-    // ── Enemy strikes first ──
-    if (!heroGoesFirst) {
-      const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
-      heroHp = Math.max(0, heroHp - enemyDmg);
-      get().addCombatLog(`⚡ ${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
-      if (heroHp <= 0) {
-        get().addCombatLog(t.combat.playerDefeated, 'system');
-        set({ hero: { ...hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, defeatedAtDungeon: currentDungeon.name, pendingDungeonXp: 0, pendingDungeonGold: 0 });
-        get().saveGame();
-        return;
-      }
-    }
-
-    // ── Hero attacks ──
+    // ── Your turn: strike the enemy only. You never take damage on your own attack. ──
     const { damage: heroDmg, isCrit } = heroAttackEnemy(hero, currentEnemy);
-    enemyHp = Math.max(0, enemyHp - heroDmg);
+    const enemyHp = Math.max(0, currentEnemy.hp - heroDmg);
     const critText = isCrit ? ` ${t.combat.critical}` : '';
     get().addCombatLog(`${t.combat.dealDamage(heroDmg)}${critText} ${currentEnemy.emoji} ${currentEnemy.name}`, 'hero');
 
     if (enemyHp <= 0) {
-      // Persist any damage the enemy dealt this round (enemy-first strike) before
-      // rewards are applied — otherwise the opening hit is silently refunded.
-      set({ hero: { ...get().hero, hp: heroHp } });
+      // Enemy defeated on our strike — no counter-attack, so no damage taken.
       get().addCombatLog(t.combat.defeated(`${currentEnemy.emoji} ${currentEnemy.name}`), 'system');
       const mode = get().dungeonMode;
       const diff = get().dungeonDifficulty;
@@ -526,7 +510,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (diff !== 'easy' && !prevCompleted.includes(currentDungeon.id)) {
           set({ hero: { ...freshHero, completedDungeons: [...prevCompleted, currentDungeon.id] } });
         }
-        set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false });
+        set({ currentEnemy: null, currentFloor: nextFloor, inCombat: false, awaitingEnemyTurn: false });
         get().saveGame(); // save on dungeon complete (significant event)
       } else {
         const enemyId = currentDungeon.enemies[Math.floor(Math.random() * currentDungeon.enemies.length)];
@@ -534,37 +518,35 @@ export const useGameStore = create<GameState>((set, get) => ({
         if (baseEnemy) {
           const scaled = scaleEnemy(baseEnemy, nextFloor);
           const nextEnemy = { ...scaled, hp: Math.round(scaled.hp * diffStatMult), maxHp: Math.round(scaled.maxHp * diffStatMult), attack: Math.round(scaled.attack * diffStatMult), defense: Math.round(scaled.defense * diffStatMult) };
-          set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true });
+          set({ currentEnemy: { ...nextEnemy }, currentFloor: nextFloor, inCombat: true, awaitingEnemyTurn: false });
           get().addCombatLog(t.combat.floorEnemy(nextFloor, `${nextEnemy.emoji} ${nextEnemy.name}`), 'system');
         }
       }
-    } else if (heroGoesFirst) {
-      // ── Enemy counter-attacks (hero went first) ──
-      const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
-      heroHp = Math.max(0, heroHp - enemyDmg);
-      get().addCombatLog(`${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
-
-      if (heroHp <= 0) {
-        get().addCombatLog(t.combat.playerDefeated, 'system');
-        const updatedHero = get().hero;
-        set({
-          hero: { ...updatedHero, hp: 1 },
-          currentDungeon: null,
-          currentEnemy: null,
-          inCombat: false,
-          defeatedAtDungeon: currentDungeon.name,
-          pendingDungeonXp: 0,
-          pendingDungeonGold: 0,
-        });
-        get().saveGame(); // save on defeat
-      } else {
-        set({ hero: { ...hero, hp: heroHp }, currentEnemy: { ...currentEnemy, hp: enemyHp } });
-        // no save per-round — App.tsx 10s interval and pagehide handle it
-      }
-    } else {
-      // Enemy went first, enemy survived hero's attack — state already tracked in locals
-      set({ hero: { ...hero, hp: heroHp }, currentEnemy: { ...currentEnemy, hp: enemyHp } });
+      return;
     }
+
+    // Enemy survives — apply its HP loss and hand the turn over to the enemy.
+    set({ currentEnemy: { ...currentEnemy, hp: enemyHp }, awaitingEnemyTurn: true });
+  },
+
+  enemyCounterAttack: () => {
+    const { hero, currentEnemy, currentDungeon, awaitingEnemyTurn } = get();
+    if (!awaitingEnemyTurn || !currentEnemy || !currentDungeon) return;
+    const t = getT();
+
+    // ── Enemy's turn: it strikes back. This is the ONLY time you take damage. ──
+    const { damage: enemyDmg, isCrit: enemyCrit } = enemyAttackHero(currentEnemy, hero);
+    const heroHp = Math.max(0, hero.hp - enemyDmg);
+    get().addCombatLog(`${t.combat.enemyDamage(`${currentEnemy.emoji} ${currentEnemy.name}`, enemyDmg)}${enemyCrit ? ` ${t.combat.crit}` : ''}`, 'enemy');
+
+    if (heroHp <= 0) {
+      get().addCombatLog(t.combat.playerDefeated, 'system');
+      set({ hero: { ...hero, hp: 1 }, currentDungeon: null, currentEnemy: null, inCombat: false, awaitingEnemyTurn: false, defeatedAtDungeon: currentDungeon.name, pendingDungeonXp: 0, pendingDungeonGold: 0 });
+      get().saveGame(); // save on defeat
+      return;
+    }
+
+    set({ hero: { ...hero, hp: heroHp }, awaitingEnemyTurn: false });
   },
 
   autoFightEnemy: () => {
