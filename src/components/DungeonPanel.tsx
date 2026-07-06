@@ -392,6 +392,7 @@ function EnemyBattleCard() {
     if (enemy.hp < prev) {
       setHeroLungeKey(k => k + 1);
       setEnemyShakeKey(k => k + 1);
+      setHeroDmgFloat(null); // only one damage number on screen at a time
       setFloatDmg({ val: prev - enemy.hp, key: Date.now() });
     }
     prevEnemyHp.current = enemy.hp;
@@ -405,6 +406,7 @@ function EnemyBattleCard() {
       setEnemyLungeKey(k => k + 1);
       setHeroShakeKey(k => k + 1);
       setHeroFlashKey(k => k + 1);
+      setFloatDmg(null); // clear the "damage dealt" number so only the counter shows
       setHeroDmgFloat({ val: dmg, key: Date.now() });
     }
     prevHeroHp.current = hero.hp;
