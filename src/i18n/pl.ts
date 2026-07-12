@@ -672,7 +672,7 @@ export const pl: Translations = {
     steps: {
       topbar: { title: 'TWOJE ZASOBY', body: 'Górny pasek pokazuje złoto (zdobywane w lochach, zadaniach i walkach), gemy (waluta premium z codziennych logowań i wydarzeń — zero pay-to-win) oraz Twój poziom. PL/EN przełącza język.' },
       navbar: { title: 'NAWIGACJA', body: 'Główne menu ma 6 zakładek: BOHATER (postać i ekwipunek), GRA (lochy, bossowie, zadania, arena, krypta), GILDIA, SPOŁECZNOŚĆ (ranking, poczta, czat), RYNEK (sklepy i usługi) oraz LOBBY.' },
-      heroCard: { title: 'TWÓJ BOHATER', body: 'To Twoja postać: HP, XP i sześć atrybutów. Każdy awans daje punkty atrybutów — wydawaj je tutaj, żeby rosnąć w siłę. HP regeneruje się z czasem, możesz też odpocząć lub żebrać dla dodatkowego bonusu.' },
+      heroCard: { title: 'TWÓJ BOHATER', body: 'To Twoja postać: HP, XP i sześć atrybutów. Atrybuty ulepszasz tutaj za złoto — każde kolejne ulepszenie danego atrybutu kosztuje więcej. HP regeneruje się z czasem, możesz też odpocząć lub żebrać dla dodatkowego bonusu.' },
       inventory: { title: 'EKWIPUNEK I PLECAK', body: 'Poniżej karty bohatera jest Twój sprzęt. Kliknij przedmiot, aby porównać i założyć — kolory rzadkości idą od zwykłego po legendarny. Zbędne przedmioty sprzedasz za złoto. Założony sprzęt bezpośrednio zwiększa statystyki.' },
       dungeon: { title: 'OPERACJE (LOCHY)', body: 'Wybierz lokację na mapie, ustaw trudność i tryb nagród, a potem przebijaj się przez piętra wrogów. Walka jest turowa: Ty uderzasz, potem wróg kontratakuje. Masz limit wejść dziennie — porażka wysyła Cię na krótki odpoczynek.' },
       boss: { title: 'WYZWANIA BOSSÓW', body: 'Drabinka wyjątkowych bossów ze specjalnymi mocami (tarcza, szał, kradzież życia…). Pokonaj jednego, aby odblokować następnego. Im wyżej, tym większa szansa na epickie i legendarne łupy.' },
@@ -690,7 +690,7 @@ export const pl: Translations = {
       gems: { title: 'GEMY I SERIA DZIENNA', body: 'Gemy dostajesz za codzienne logowania — seria rośnie z każdym kolejnym dniem, a w dniu 5 i 10 czekają skrzynki. Wydawaj gemy na tajemnicze skrzynki i usługi. Wszystko da się zdobyć w grze.' },
       smith: { title: 'KOWAL', body: 'Ulepszaj założone przedmioty za złoto — każdy poziom ulepszenia podnosi statystyki przedmiotu. Wyższe poziomy kosztują więcej i mogą się nie udać, więc ulepszaj z głową.' },
       casino: { title: 'KASYNO', body: 'Czujesz szczęście? Minigry, w których stawiasz złoto z szansą na więcej. Graj odpowiedzialnie — kasyno zawsze ma przewagę!' },
-      enchanter: { title: 'ZAKLINACZ', body: 'Zaklinaj sprzęt specjalnymi bonusami. Zaklęcia dodają dodatkowe efekty do statystyk ponad ulepszenia kowala — sposób na wyciśnięcie mocy w późnej grze.' },
+      enchanter: { title: 'ZAKLINACZ', body: 'Przelosowuje bonusy statystyk przedmiotu za złoto — losuje nowe wartości, a ATK/DEF i rzadkość pozostają bez zmian. To hazard: nowy zestaw może być lepszy albo gorszy, więc losuj gdy chcesz spróbować szczęścia po lepsze statystyki.' },
       lobby: { title: 'LOBBY', body: 'Wspólna przestrzeń, w której widzisz innych graczy online chodzących jako ich awatary. Wpadnij zobaczyć, kto właśnie gra.' },
     },
   },

@@ -670,7 +670,7 @@ export const en = {
     steps: {
       topbar: { title: 'YOUR RESOURCES', body: 'The top bar shows your gold (earned in dungeons, quests and fights), gems (premium currency from daily logins and events — no pay-to-win) and your level. PL/EN switches the language.' },
       navbar: { title: 'NAVIGATION', body: 'The main menu has 6 tabs: HERO (your character and equipment), PLAY (dungeons, bosses, quests, arena, crypt), GUILD, SOCIAL (ranking, mail, chat), MARKET (shops and services) and LOBBY.' },
-      heroCard: { title: 'YOUR HERO', body: 'This is your character: HP, XP and six attributes. Each level up grants attribute points — spend them here to grow stronger. HP regenerates over time, or you can rest / beg for a boost.' },
+      heroCard: { title: 'YOUR HERO', body: 'This is your character: HP, XP and six attributes. You upgrade attributes here with gold — each further upgrade of an attribute costs more. HP regenerates over time, or you can rest / beg for a boost.' },
       inventory: { title: 'EQUIPMENT & INVENTORY', body: 'Below the hero card is your gear. Tap an item to compare and equip it — rarity colors go from common to legendary. Unwanted items can be sold for gold. Equipped items directly boost your stats.' },
       dungeon: { title: 'OPERATIONS (DUNGEONS)', body: 'Pick a location on the map, choose difficulty and reward mode, then clear floors of enemies. Combat is turn-based: you strike, then the enemy counter-attacks. You have a limited number of runs per day — losing sends you to a short rest.' },
       boss: { title: 'BOSS CHALLENGES', body: 'A ladder of unique bosses with special powers (shield, rage, lifesteal…). Beat one to unlock the next. The further you climb, the better the chance for epic and legendary loot.' },
@@ -688,7 +688,7 @@ export const en = {
       gems: { title: 'GEMS & DAILY STREAK', body: 'Gems come from daily logins — your streak grows each consecutive day, with chest milestones on day 5 and 10. Spend gems on mystery boxes and services. Everything is earnable in game.' },
       smith: { title: 'THE SMITH', body: 'Upgrade your equipped items with gold — each upgrade level raises the item\'s stats. Higher levels cost more and can fail, so upgrade wisely.' },
       casino: { title: 'CASINO', body: 'Feeling lucky? Minigames where you stake gold for a chance at more. Play responsibly — the house has an edge!' },
-      enchanter: { title: 'ENCHANTER', body: 'Enchant your gear with special bonuses. Enchantments add extra stat effects on top of upgrades — a late-game way to squeeze out more power.' },
+      enchanter: { title: 'ENCHANTER', body: "Rerolls an item's stat bonuses for gold — it rolls brand-new values while ATK/DEF and rarity stay the same. It's a gamble: the new roll can be better or worse, so reroll when you want to try your luck for better stats." },
       lobby: { title: 'LOBBY', body: 'A shared space where you can see other online players walking around as their avatars. Hang out and see who is playing right now.' },
     },
   },
