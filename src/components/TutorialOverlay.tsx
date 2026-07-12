@@ -154,8 +154,9 @@ export default function TutorialOverlay({ open, onClose, onNavigate }: Props) {
   if (phase === 'intro' || phase === 'outro') {
     const isIntro = phase === 'intro';
     return (
+      // 9998: above in-page panels (HeroCard sits at 9997) but below fixed modals (9999+)
       <div className="overlay-fade" style={{
-        position: 'fixed', inset: 0, zIndex: 9500,
+        position: 'fixed', inset: 0, zIndex: 9998,
         background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(3px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
       }}>
@@ -198,7 +199,7 @@ export default function TutorialOverlay({ open, onClose, onNavigate }: Props) {
   const info = t.tutorial.steps[step.key];
   return (
     <div style={{
-      position: 'fixed', zIndex: 9500, pointerEvents: 'none',
+      position: 'fixed', zIndex: 9998, pointerEvents: 'none',
       ...(isDesktop
         ? { right: 20, bottom: 20, width: 360 }
         : { left: 8, right: 8, bottom: 'calc(78px + env(safe-area-inset-bottom, 0px))' }),
