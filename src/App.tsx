@@ -48,6 +48,7 @@ import CyberpunkBg from './components/CyberpunkBg';
 import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import GameIcon from './components/GameIcon';
+import TutorialOverlay, { getTutorialCfg, type TutorialNav } from './components/TutorialOverlay';
 
 export default function App() {
   const t = useT();
@@ -79,6 +80,7 @@ export default function App() {
   const [nowTick, setNowTick] = useState(Date.now());
   const [streakData, setStreakData] = useState<DailyRewardResult | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
   const lastChatViewedAt = useRef(Date.now());
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
@@ -127,6 +129,24 @@ export default function App() {
   // Quest is ready when timer expired and user isn't already on quests sub-tab
   const questReady = activeQuest !== null && nowTick >= activeQuest.endsAt;
   const questBadge = questReady && !(tab === 'play' && playSub === 'quests');
+
+  // Auto-open the tutorial for players who haven't finished/dismissed it,
+  // once the game is loaded and the character exists (not mid-creation).
+  useEffect(() => {
+    if (!gameLoaded || !minTimeReady) return;
+    if (hero.name === 'Hero') return; // still on character creation
+    const cfg = getTutorialCfg();
+    if (!cfg.done && cfg.auto) setTutorialOpen(true);
+  }, [gameLoaded, minTimeReady, hero.name]);
+
+  // The tutorial drives the app to the screen each step describes
+  function tutorialNavigate(n: TutorialNav) {
+    setTab(n.tab);
+    if (n.playSub)   setPlaySub(n.playSub);
+    if (n.socialSub) setSocialSub(n.socialSub);
+    if (n.shopSub)   setShopSub(n.shopSub);
+    if (n.guildTab)  setGuildTab(n.guildTab);
+  }
 
   function switchTab(t: MainTab) { setTab(t); }
   function switchPlay(t: PlaySub) {
@@ -494,9 +514,22 @@ export default function App() {
             }}>
               {sectionLabel[tab]}
             </p>
-            <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.3)', letterSpacing: 1 }}>
-              {hero.name}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <button
+                onClick={() => setTutorialOpen(true)}
+                aria-label={t.tutorial.title}
+                title={t.tutorial.title}
+                style={{
+                  fontFamily: "'Orbitron', monospace", fontSize: 11, fontWeight: 900,
+                  width: 22, height: 22, lineHeight: 1, cursor: 'pointer',
+                  color: 'rgba(0,245,255,0.6)', background: 'rgba(0,245,255,0.06)',
+                  border: '1px solid rgba(0,245,255,0.3)',
+                }}
+              >?</button>
+              <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.3)', letterSpacing: 1 }}>
+                {hero.name}
+              </p>
+            </div>
           </header>
 
           {/* Scrollable content */}
@@ -549,6 +582,7 @@ export default function App() {
           onClose={() => setStreakData(null)}
         />
       )}
+      <TutorialOverlay open={tutorialOpen} onClose={() => setTutorialOpen(false)} onNavigate={tutorialNavigate} />
       </>
     );
   }
@@ -576,6 +610,16 @@ export default function App() {
         </span>
 
         <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          <button
+            onClick={() => setTutorialOpen(true)}
+            aria-label={t.tutorial.title}
+            style={{
+              fontFamily: "'Orbitron', monospace", fontSize: 10, fontWeight: 900,
+              width: 20, height: 20, lineHeight: 1, cursor: 'pointer', padding: 0,
+              color: 'rgba(0,245,255,0.6)', background: 'rgba(0,245,255,0.06)',
+              border: '1px solid rgba(0,245,255,0.3)', flexShrink: 0,
+            }}
+          >?</button>
           <span style={{
             fontFamily: "'Orbitron', monospace",
             color: '#ffd700', fontSize: 10, fontWeight: 700,
@@ -722,6 +766,7 @@ export default function App() {
           onClose={() => setStreakData(null)}
         />
       )}
+      <TutorialOverlay open={tutorialOpen} onClose={() => setTutorialOpen(false)} onNavigate={tutorialNavigate} />
     </div>
     </>
   );
