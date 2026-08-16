@@ -43,7 +43,7 @@ export function ComparePanel({ newItem, equipped }: { newItem: Item; equipped: I
 
   const newColor = newItem.color ?? RARITY_COLORS[newItem.rarity];
   const eqColor  = equipped ? (equipped.color ?? RARITY_COLORS[equipped.rarity]) : '#475569';
-  const lvl = lang !== 'pl' ? 'LVL.' : 'Poz.';
+  const lvl = t.common.lvlShort;
 
   const newAtk = newItem.attackBonus  ?? 0;
   const eqAtk  = equipped?.attackBonus  ?? 0;

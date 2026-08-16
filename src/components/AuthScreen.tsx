@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useT } from '../hooks/useT';
-import { useLangStore } from '../store/langStore';
 
 import logoImg from '../assets/logo.webp';
 import { PX, MONO, ORB } from '../utils/styles';
@@ -80,7 +79,7 @@ const labelStyle: React.CSSProperties = {
 
 // Shared page shell: aurora background + centered column + language toggle
 function AuthShell({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) {
-  const lang = useLangStore(s => s.lang);
+  const t = useT();
   return (
     <div style={{
       minHeight: '100dvh', position: 'relative',
@@ -97,7 +96,7 @@ function AuthShell({ children, onBack }: { children: React.ReactNode; onBack?: (
               ...MONO, fontSize: 11, color: 'var(--text-muted)',
               background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 12px',
             }}>
-              {lang !== 'pl' ? '← Home' : '← Strona główna'}
+              {t.auth.backHome}
             </button>
           )}
           <span style={{ flex: 1 }} />

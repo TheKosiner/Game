@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
-import { useLangStore } from '../store/langStore';
+import { useT } from '../hooks/useT';
 import { db } from '../lib/firebase';
 import { portraitSrc } from '../data/portraits';
 import {
@@ -117,7 +117,7 @@ interface Bubble       { text:string;expiresAt:number; }
 export default function LobbyPanel() {
   const hero = useGameStore(s => s.hero);
   const user = useAuthStore(s => s.user);
-  const { lang } = useLangStore();
+  const t = useT();
 
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -644,7 +644,7 @@ export default function LobbyPanel() {
         <div style={{flex:1,overflowY:'auto',padding:'6px 10px',display:'flex',flexDirection:'column',gap:2}}>
           {msgs.length===0&&!chatErr&&(
             <span style={{fontFamily:"'Share Tech Mono',monospace",fontSize:10,color:'rgba(255,255,255,.2)'}}>
-              {lang !== 'pl'?'No messages yet. Say hi!':'Brak wiadomości. Napisz coś!'}
+              {t.chat.empty}
             </span>
           )}
           {msgs.map((m,i)=>(
@@ -659,10 +659,10 @@ export default function LobbyPanel() {
           <input value={input} onChange={e=>setInput(e.target.value)}
             onFocus={()=>{chatFocus.current=true;}} onBlur={()=>{chatFocus.current=false;}}
             onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();sendMsg();}}}
-            placeholder={lang !== 'pl'?'Type a message...':'Napisz wiadomość...'} maxLength={200}
+            placeholder={t.chat.placeholder} maxLength={200}
             style={{flex:1,background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,45,120,.2)',outline:'none',color:'#fff',padding:'5px 10px',fontFamily:"'Share Tech Mono',monospace",fontSize:11}}/>
           <button onClick={sendMsg} style={{background:'rgba(255,45,120,.12)',color:'#ff2d78',border:'1px solid rgba(255,45,120,.35)',cursor:'pointer',padding:'5px 14px',fontFamily:"'Orbitron',monospace",fontSize:9,fontWeight:700}}>
-            {lang !== 'pl'?'SEND':'WYŚLIJ'}
+            {t.chat.send}
           </button>
         </div>
       </div>

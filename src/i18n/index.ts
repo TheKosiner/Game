@@ -31,3 +31,12 @@ export const LANG_CODES = LANGUAGES.map(l => l.code);
 export function isLang(v: string): v is Lang {
   return (LANG_CODES as string[]).includes(v);
 }
+
+/**
+ * Translations for a raw language code, for the call sites that thread `lang`
+ * around as a plain string instead of reading the store (helper functions,
+ * components that take `lang` as a prop). Falls back to English.
+ */
+export function tFor(lang: string): Translations {
+  return TRANSLATIONS[lang as Lang] ?? TRANSLATIONS.en;
+}

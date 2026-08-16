@@ -4,6 +4,8 @@ import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
 import { syncToCloud } from '../lib/cloudSync';
 import { useLangStore } from '../store/langStore';
+import { useT } from '../hooks/useT';
+import { tFor } from '../i18n';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
@@ -41,10 +43,13 @@ type Source = 'equipment' | 'inventory';
 interface Selection { source: Source; idxOrSlot: number | EquipSlot; item: Item }
 interface RerollResult { oldItem: Item; newItem: Item }
 
-const STAT_LABEL = (lang: string): Record<keyof Stats, string> =>
-  lang !== 'pl'
-    ? { strength: 'STR', dexterity: 'DEX', intelligence: 'ACC', vitality: 'VIT', magic: 'MAG', magicResistance: 'RES' }
-    : { strength: 'SIŁ', dexterity: 'ZRĘ', intelligence: 'CEL', vitality: 'ŻYW', magic: 'MAG', magicResistance: 'ODP' };
+const STAT_LABEL = (lang: string): Record<keyof Stats, string> => {
+  const c = tFor(lang).common;
+  return {
+    strength: c.statStr, dexterity: c.statDex, intelligence: c.statAcc,
+    vitality: c.statVit, magic: c.statMag, magicResistance: c.statRes,
+  };
+};
 
 function ItemStatLines({ item, lang }: { item: Item; lang: string }) {
   const labels = STAT_LABEL(lang);
@@ -143,7 +148,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
         <GameIcon name="magic_sparkle" size={44} color="#a800ff" />
 
         <p style={{ ...ORB, fontSize: 13, color: '#a800ff', textAlign: 'center', letterSpacing: 1, margin: 0 }}>
-          {lang !== 'pl' ? 'REROLL COMPLETE!' : 'PRZELOSOWANIE ZAKOŃCZONE!'}
+          {tFor(lang).enchanter.rerollComplete}
         </p>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
@@ -206,7 +211,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
             textShadow: canAfford ? '0 0 8px rgba(168,0,255,0.5)' : 'none',
           }}
         >
-          <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {lang !== 'pl' ? `TRY AGAIN — ${cost.toLocaleString()}` : `SPRÓBUJ PONOWNIE — ${cost.toLocaleString()}`}<GameIcon name="coin" size={10} color="#ffd700" />
+          <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {tFor(lang).enchanter.tryAgain(cost.toLocaleString())}<GameIcon name="coin" size={10} color="#ffd700" />
         </button>
         <button
           onClick={onClose}
@@ -216,7 +221,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
             cursor: 'pointer', ...ORB, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 1,
           }}
         >
-          {lang !== 'pl' ? 'CLOSE' : 'ZAMKNIJ'}
+          {tFor(lang).common.close}
         </button>
       </div>
     </div>,
@@ -227,6 +232,7 @@ function ResultModal({ result, onClose, onReroll, cost, canAfford, lang }: {
 export default function EnchanterPanel() {
   const hero = useGameStore(s => s.hero);
   const { lang } = useLangStore();
+  const t = useT();
   const user = useAuthStore(s => s.user);
   const isDesktop = useIsDesktop();
 
@@ -320,12 +326,10 @@ export default function EnchanterPanel() {
 
           <div style={{ padding: isDesktop ? '2px 4px' : '10px 4px 2px' }}>
             <h2 style={{ ...ORB, margin: 0, fontSize: 14, color: '#c87dff', letterSpacing: 2, textShadow: '0 0 14px rgba(168,0,255,0.8)' }}>
-              <GameIcon name="magic_orb" size={14} color="#c87dff" /> {lang !== 'pl' ? 'THE ENCHANTER' : 'ZAKLINACZ'}
+              <GameIcon name="magic_orb" size={14} color="#c87dff" /> {t.enchanter.title}
             </h2>
             <p style={{ ...MONO, margin: '3px 0 0', fontSize: 10, color: 'rgba(255,255,255,0.55)' }}>
-              {lang !== 'pl'
-                ? 'Reroll stat bonuses for gold. ATK/DEF and rarity stay unchanged.'
-                : 'Przelosuj bonusy statystyk za złoto. ATK/DEF i rzadkość bez zmian.'}
+              {t.enchanter.desc}
             </p>
           </div>
 
@@ -341,7 +345,7 @@ export default function EnchanterPanel() {
                 color: section === s ? '#a800ff' : 'rgba(255,255,255,0.45)',
                 borderRadius: 5, cursor: 'pointer',
               }}>
-                {s === 'equipped' ? (lang !== 'pl' ? 'EQUIPPED' : 'ZAŁOŻONE') : (lang !== 'pl' ? 'INVENTORY' : 'PLECAK')}
+                {s === 'equipped' ? t.enchanter.equipped : t.enchanter.inventory}
               </button>
             ))}
           </div>
@@ -349,7 +353,7 @@ export default function EnchanterPanel() {
           {section === 'equipped' && (
             equippedItems.length === 0
               ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-                  {lang !== 'pl' ? 'No equipped items.' : 'Brak założonych przedmiotów.'}
+                  {t.enchanter.noEquipped}
                 </p>
               : equippedItems.map(({ slot, item }) => (
                 <ItemCard key={slot} item={item} lang={lang}
@@ -361,7 +365,7 @@ export default function EnchanterPanel() {
           {section === 'inventory' && (
             inventoryItems.length === 0
               ? <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-                  {lang !== 'pl' ? 'No items in inventory.' : 'Brak przedmiotów w plecaku.'}
+                  {t.enchanter.noInventory}
                 </p>
               : inventoryItems.map(({ item, idx }) => (
                 <ItemCard key={idx} item={item} lang={lang}
@@ -380,7 +384,7 @@ export default function EnchanterPanel() {
               padding: 20, textAlign: 'center',
             }}>
               <p style={{ ...MONO, fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>
-                {lang !== 'pl' ? 'Select an item to enchant' : 'Wybierz przedmiot do zaczarowania'}
+                {t.enchanter.selectItem}
               </p>
             </div>
           ) : (
@@ -413,7 +417,7 @@ export default function EnchanterPanel() {
                 borderRadius: 6, padding: '8px 10px',
               }}>
                 <p style={{ ...MONO, fontSize: 8, color: 'rgba(255,255,255,0.3)', margin: '0 0 6px', letterSpacing: 1 }}>
-                  {lang !== 'pl' ? 'CURRENT STATS' : 'AKTUALNE STATY'}
+                  {t.enchanter.currentStats}
                 </p>
                 <ItemStatLines item={freshSel.item} lang={lang} />
               </div>
@@ -421,7 +425,7 @@ export default function EnchanterPanel() {
               {/* Cost row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                  {lang !== 'pl' ? 'Cost' : 'Koszt'}
+                  {t.common.cost}
                 </span>
                 <span style={{ ...ORB, fontSize: 10, color: canAfford ? '#ffd700' : '#ff4444', display: 'flex', alignItems: 'center', gap: 2 }}>
                   {cost.toLocaleString()}<GameIcon name="coin" size={10} color={canAfford ? '#ffd700' : '#ff4444'} />
@@ -431,7 +435,7 @@ export default function EnchanterPanel() {
               {/* Gold row */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                  {lang !== 'pl' ? 'Your gold' : 'Twoje złoto'}
+                  {t.enchanter.yourGold}
                 </span>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 2 }}>
                   {hero.gold.toLocaleString()}<GameIcon name="coin" size={10} color="#ffd700" />
@@ -440,7 +444,7 @@ export default function EnchanterPanel() {
 
               {!canAfford && (
                 <p style={{ ...MONO, fontSize: 10, color: '#ff4444', margin: 0 }}>
-                  {lang !== 'pl' ? 'Not enough gold!' : 'Za mało złota!'}
+                  {t.enchanter.notEnoughGold}
                 </p>
               )}
 
@@ -459,7 +463,7 @@ export default function EnchanterPanel() {
                   transition: 'all 0.15s',
                 }}
               >
-                <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {lang !== 'pl' ? 'REROLL STATS' : 'PRZELOSUJ STATY'}
+                <GameIcon name="dice" size={11} color={canAfford ? '#a800ff' : 'rgba(255,255,255,0.2)'} /> {t.enchanter.rerollStats}
               </button>
             </div>
           )}

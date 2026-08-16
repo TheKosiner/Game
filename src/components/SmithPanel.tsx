@@ -85,7 +85,7 @@ function ResultModal({ result, onClose, onRetry }: {
   onClose: () => void;
   onRetry: () => void;
 }) {
-  const lang = useLangStore(s => s.lang);
+  const t = useT();
   const modalRoot = document.getElementById('modal-root') ?? document.body;
 
   // Portal stays mounted even with no result — conditionally mounting the portal
@@ -97,14 +97,12 @@ function ResultModal({ result, onClose, onRetry }: {
   const bgColor = success ? 'rgba(0,230,118,0.07)' : 'rgba(255,68,68,0.07)';
   const borderColor = success ? 'rgba(0,230,118,0.35)' : 'rgba(255,68,68,0.35)';
   const icon = success ? 'check' : 'x_mark';
-  const title = success
-    ? (lang !== 'pl' ? 'ENHANCEMENT SUCCESS!' : 'ULEPSZENIE UDANE!')
-    : (lang !== 'pl' ? 'ENHANCEMENT FAILED!' : 'ULEPSZENIE NIEUDANE!');
+  const title = success ? t.smith.successTitle : t.smith.failTitle;
   const levelText = success
     ? `+${result.fromLevel} → +${result.toLevel}`
     : result.fromLevel > 0
       ? `+${result.fromLevel} → +${result.toLevel}`
-      : (lang !== 'pl' ? 'Stayed at base' : 'Pozostał bazowy');
+      : t.smith.stayedAtBase;
 
   return createPortal(
     <div className="overlay-fade" style={{
@@ -155,11 +153,11 @@ function ResultModal({ result, onClose, onRetry }: {
               width: '100%', display: 'flex', flexDirection: 'column', gap: 6,
             }}>
               <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1 }}>
-                {lang !== 'pl' ? 'NEXT ATTEMPT' : 'NASTĘPNA PRÓBA'}
+                {t.smith.nextAttempt}
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  {lang !== 'pl' ? 'Cost' : 'Koszt'}
+                  {t.common.cost}
                 </span>
                 <span style={{ ...ORB, fontSize: 11, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <GameIcon name="coin" size={11} /> {nextCost.toLocaleString()}
@@ -167,7 +165,7 @@ function ResultModal({ result, onClose, onRetry }: {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  {lang !== 'pl' ? 'Success chance' : 'Szansa sukcesu'}
+                  {t.smith.successChance}
                 </span>
                 <span style={{ ...ORB, fontSize: 11, color: chanceColor }}>
                   {nextChance}%
@@ -188,7 +186,7 @@ function ResultModal({ result, onClose, onRetry }: {
               textShadow: '0 0 8px rgba(255,150,50,0.4)',
             }}
           >
-            <GameIcon name="anvil" size={12} color="#ff9632" /> {lang !== 'pl' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
+            <GameIcon name="anvil" size={12} color="#ff9632" /> {t.smith.tryAgain}
           </button>
           <button
             onClick={onClose}
@@ -199,7 +197,7 @@ function ResultModal({ result, onClose, onRetry }: {
               color: 'rgba(255,255,255,0.5)', borderRadius: 6, cursor: 'pointer',
             }}
           >
-            {lang !== 'pl' ? 'CLOSE' : 'ZAMKNIJ'}
+            {t.common.close}
           </button>
         </div>
       </div>
@@ -302,12 +300,12 @@ export default function SmithPanel() {
   const isCore = freshSelected?.item.slot === 'ring' || freshSelected?.item.slot === 'amulet';
 
   const STAT_LABEL: Record<keyof Stats, string> = {
-    strength: lang !== 'pl' ? 'STR' : 'SIŁ',
-    dexterity: lang !== 'pl' ? 'DEX' : 'ZRĘ',
-    intelligence: lang !== 'pl' ? 'ACC' : 'CEL',
-    vitality: lang !== 'pl' ? 'VIT' : 'ŻYW',
-    magic: 'MAG',
-    magicResistance: lang !== 'pl' ? 'RES' : 'ODP',
+    strength: t.common.statStr,
+    dexterity: t.common.statDex,
+    intelligence: t.common.statAcc,
+    vitality: t.common.statVit,
+    magic: t.common.statMag,
+    magicResistance: t.common.statRes,
   };
 
   const coreBonus = (() => {
@@ -494,7 +492,7 @@ export default function SmithPanel() {
                     })()}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang !== 'pl' ? 'Success' : 'Szansa'}
+                        {t.smith.successShort}
                       </span>
                       <span style={{ ...ORB, fontSize: 10, color: freshChance! >= 50 ? '#4caf50' : freshChance! >= 30 ? '#ff9632' : '#ff4444' }}>
                         {freshChance}%
@@ -502,7 +500,7 @@ export default function SmithPanel() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang !== 'pl' ? 'Cost' : 'Koszt'}
+                        {t.common.cost}
                       </span>
                       <span style={{ ...ORB, fontSize: 10, color: hasGold ? '#ffd700' : '#ff4444', display: 'flex', alignItems: 'center', gap: 2 }}>
                         {freshCost}<GameIcon name="coin" size={10} color={hasGold ? '#ffd700' : '#ff4444'} />
@@ -510,7 +508,7 @@ export default function SmithPanel() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang !== 'pl' ? 'On fail' : 'Przy porażce'}
+                        {t.smith.onFail}
                       </span>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,100,100,0.7)' }}>
                         {freshEnh > 0 ? `+${freshEnh} → +${freshEnh - 1}` : '—'}

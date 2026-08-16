@@ -4,6 +4,7 @@ import ItemIcon from './ItemIcon';
 import type { Item, ItemSlot } from '../types';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
+import { tFor } from '../i18n';
 import { getItemName } from '../data/itemGenerator';
 import { MONO, ORB, WeaponBadges } from '../utils/styles';
 import GameIcon, { type GameIconName } from './GameIcon';
@@ -12,32 +13,31 @@ const RARITY_COLORS: Record<string, string> = {
   common: '#888899', uncommon: '#00cc66', rare: '#4488ff',
   epic: '#cc44ff', legendary: '#ffd700',
 };
-const STAT_NAMES_PL: Record<string, string> = {
-  strength: 'Siła', dexterity: 'Zręczność',
-  intelligence: 'Celność', vitality: 'Żywotność',
-  magic: 'Magia', magicResistance: 'Odp. mag.',
-};
-const STAT_NAMES_EN: Record<string, string> = {
-  strength: 'Strength', dexterity: 'Dexterity',
-  intelligence: 'Accuracy', vitality: 'Vitality',
-  magic: 'Magic', magicResistance: 'Mag. Res.',
-};
+function statNamesFor(lang: string): Record<string, string> {
+  const e = tFor(lang).equipment;
+  return {
+    strength: e.statStrength, dexterity: e.statDexterity,
+    intelligence: e.statIntelligence, vitality: e.statVitality,
+    magic: e.statMagic, magicResistance: e.statMagRes,
+  };
+}
 
 function primaryStat(item: Item, lang: string): string | null {
   const entries = Object.entries(item.stats).filter(([, v]) => (v as number) > 0);
   if (!entries.length) return null;
   entries.sort((a, b) => (b[1] as number) - (a[1] as number));
   const [k, v] = entries[0];
-  const names = lang !== 'pl' ? STAT_NAMES_EN : STAT_NAMES_PL;
+  const names = statNamesFor(lang);
   return `${names[k] ?? k} +${v}`;
 }
 
 function mainBonus(item: Item, lang?: string): { icon: GameIconName; label: string; value: string; color: string } | null {
   if (item.attackBonus) {
     const isMagic = (item as any).magicDamage;
-    return { icon: isMagic ? 'magic_orb' : 'sword', label: isMagic ? 'Mag' : 'Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
+    const c = tFor(lang ?? 'pl').common;
+    return { icon: isMagic ? 'magic_orb' : 'sword', label: isMagic ? c.magicShort : c.attackShort, value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
   }
-  if (item.defenseBonus) return { icon: 'shield', label: lang !== 'pl' ? 'Defense' : 'Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
+  if (item.defenseBonus) return { icon: 'shield', label: tFor(lang ?? 'pl').common.defense, value: `+${item.defenseBonus}`, color: '#00f5ff' };
   const ps = primaryStat(item, lang ?? 'pl');
   if (ps) return { icon: 'up_arrow', label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
   return null;
@@ -93,7 +93,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>
               <GameIcon name={(item as any).magicDamage ? 'magic_orb' : 'sword'} size={10} color={(item as any).magicDamage ? '#c078f0' : '#ff2d78'} />
-              {(item as any).magicDamage ? (lang !== 'pl' ? 'Magic Dmg.' : 'Obrażenia mag.') : t.equipment.atk}
+              {(item as any).magicDamage ? t.common.magicDmg : t.equipment.atk}
             </span>
             <span style={{ ...ORB, fontSize: 10, color: (item as any).magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
@@ -105,12 +105,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'No stat bonuses' : 'Brak bonusów statystyk'}</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{t.common.noStatBonuses}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{t.common.minLvl} {item.level}</p>
         <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)', display: 'flex', alignItems: 'center', gap: 2 }}>{item.goldValue}<GameIcon name="coin" size={10} /></p>
       </div>
 
@@ -178,7 +178,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 <span style={{ ...MONO, fontSize: 10, color: '#00ff88' }}>+{ps.split('+')[1]} {ps.split(' +')[0]}</span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{lang !== 'pl' ? 'Level:' : 'Poziom:'} {item.level}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{t.common.levelLabel} {item.level}</p>
           </div>
           <span style={{ color: 'var(--text-dim)', fontSize: 12, flexShrink: 0 }}>ℹ</span>
         </>
