@@ -6,6 +6,36 @@ import CyberpunkBg from './CyberpunkBg';
 
 export const APK_URL = 'https://github.com/thekosiner/game/releases/latest/download/GlitchSoul.apk';
 
+// Public routes. Each language has its own URL (matching the static HTML pages
+// and their hreflang tags), so the path — not a client-side toggle — decides
+// which language a visitor and a crawler get.
+export type PublicPage = 'landing' | 'download' | 'auth';
+
+export const PUBLIC_ROUTES: Record<string, { page: PublicPage; lang: 'pl' | 'en' }> = {
+  '/':            { page: 'landing',  lang: 'pl' },
+  '/pobierz':     { page: 'download', lang: 'pl' },
+  '/logowanie':   { page: 'auth',     lang: 'pl' },
+  '/en':          { page: 'landing',  lang: 'en' },
+  '/en/download': { page: 'download', lang: 'en' },
+  '/en/login':    { page: 'auth',     lang: 'en' },
+};
+
+/** The same page in the other language — used by the PL/EN switch. */
+export const ALT_ROUTE: Record<string, string> = {
+  '/':            '/en',
+  '/en':          '/',
+  '/pobierz':     '/en/download',
+  '/en/download': '/pobierz',
+  '/logowanie':   '/en/login',
+  '/en/login':    '/logowanie',
+};
+
+/** Route for a page in a given language. */
+export function routeFor(page: PublicPage, lang: 'pl' | 'en'): string {
+  const hit = Object.entries(PUBLIC_ROUTES).find(([, v]) => v.page === page && v.lang === lang);
+  return hit ? hit[0] : '/';
+}
+
 // Real content counts — keep in sync with src/data/*
 const STATS = { bosses: 41, dungeons: 20, enemies: 107, guildOps: 28, maxLevel: 500 };
 
@@ -166,13 +196,12 @@ const C = {
 };
 
 // ── Shared chrome ─────────────────────────────────────────────────────────────
-function LangToggle() {
+function LangToggle({ onSwitchLang }: { onSwitchLang: (l: 'pl' | 'en') => void }) {
   const lang = useLangStore(s => s.lang);
-  const setLang = useLangStore(s => s.setLang);
   return (
     <div style={{ display: 'flex', gap: 3 }}>
       {(['pl', 'en'] as const).map(l => (
-        <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l}
+        <button key={l} onClick={() => onSwitchLang(l)} aria-pressed={lang === l}
           aria-label={l === 'pl' ? 'Polski' : 'English'}
           style={{
             ...ORB, fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', cursor: 'pointer',
@@ -195,7 +224,7 @@ function Logo({ size = 15 }: { size?: number }) {
   );
 }
 
-function TopBar({ onPlay, onHome, showHome }: { onPlay: () => void; onHome?: () => void; showHome?: boolean }) {
+function TopBar({ onPlay, onHome, showHome, onSwitchLang }: { onPlay: () => void; onHome?: () => void; showHome?: boolean; onSwitchLang: (l: 'pl' | 'en') => void }) {
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 30,
@@ -208,7 +237,7 @@ function TopBar({ onPlay, onHome, showHome }: { onPlay: () => void; onHome?: () 
           ? <button onClick={onHome} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}><Logo /></button>
           : <Logo />}
         <span style={{ flex: 1 }} />
-        <LangToggle />
+        <LangToggle onSwitchLang={onSwitchLang} />
         <button onClick={onPlay} className="btn btn-primary" style={{ fontSize: 9, padding: '7px 12px' }}>
           <PlayLabel />
         </button>
@@ -249,10 +278,11 @@ interface Props {
   onPlay: () => void;
   onDownloadPage: () => void;
   onHome: () => void;
+  onSwitchLang: (l: 'pl' | 'en') => void;
   page: 'landing' | 'download';
 }
 
-export default function LandingPage({ onPlay, onDownloadPage, onHome, page }: Props) {
+export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLang, page }: Props) {
   const lang = useLangStore(s => s.lang);
   const t = C[lang];
   const [shot, setShot] = useState<string | null>(null);
@@ -262,7 +292,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, page }: Pr
       <>
         <CyberpunkBg />
         <div style={{ position: 'relative', zIndex: 1, minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-          <TopBar onPlay={onPlay} onHome={onHome} showHome />
+          <TopBar onPlay={onPlay} onHome={onHome} showHome onSwitchLang={onSwitchLang} />
           <main style={{ flex: 1 }}>
             <Section>
               <button onClick={onHome} style={{ ...MONO, fontSize: 11, color: '#00f5ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 16 }}>
@@ -303,7 +333,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, page }: Pr
     <>
       <CyberpunkBg />
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <TopBar onPlay={onPlay} />
+        <TopBar onPlay={onPlay} onSwitchLang={onSwitchLang} />
 
         <main>
           {/* ── HERO ── */}
