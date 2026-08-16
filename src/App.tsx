@@ -49,6 +49,12 @@ import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import GameIcon from './components/GameIcon';
 import TutorialOverlay, { getTutorialCfg, type TutorialNav } from './components/TutorialOverlay';
+import LandingPage from './components/LandingPage';
+
+// '/pobierz/' and '/pobierz' are the same public route.
+function normalizePath(p: string): string {
+  return p.length > 1 ? p.replace(/\/+$/, '') : p;
+}
 
 export default function App() {
   const t = useT();
@@ -81,6 +87,9 @@ export default function App() {
   const [streakData, setStreakData] = useState<DailyRewardResult | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  // Public marketing routes shown to logged-out visitors: '/' (landing),
+  // '/logowanie' (auth) and '/pobierz' (APK download).
+  const [publicRoute, setPublicRoute] = useState<string>(() => normalizePath(window.location.pathname));
   const lastChatViewedAt = useRef(Date.now());
   const loadedUidRef = useRef<string | null>(null);
   const tRef = useRef(t);
@@ -138,6 +147,32 @@ export default function App() {
     const cfg = getTutorialCfg();
     if (!cfg.done && cfg.auto) setTutorialOpen(true);
   }, [gameLoaded, minTimeReady, hero.name]);
+
+  // Once signed in, the game renders at whatever public path was open — put the
+  // address bar back to '/' so players don't sit on /logowanie/ while playing.
+  useEffect(() => {
+    if (user && normalizePath(window.location.pathname) !== '/') {
+      window.history.replaceState({}, '', '/');
+      setPublicRoute('/');
+    }
+  }, [user]);
+
+  // Keep the public marketing routes in sync with browser back/forward.
+  useEffect(() => {
+    const onPop = () => setPublicRoute(normalizePath(window.location.pathname));
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  function goPublic(path: string) {
+    // Static pages are emitted as /pobierz/index.html etc., so navigate with a
+    // trailing slash and keep the in-app route key without one. The query string
+    // is carried over so campaign/UTM params (and the dev ?landing flag) survive.
+    const href = (path === '/' ? '/' : path + '/') + window.location.search;
+    window.history.pushState({}, '', href);
+    setPublicRoute(path);
+    window.scrollTo(0, 0);
+  }
 
   // The tutorial drives the app to the screen each step describes
   function tutorialNavigate(n: TutorialNav) {
@@ -465,11 +500,31 @@ export default function App() {
   // Forced update gate — blocks everything (even loading/auth) when a newer build exists.
   if (updateInfo) return <ForceUpdateModal info={updateInfo} />;
 
+  // ── Logged-out visitors: SEO landing first, auth/download as sub-pages ──
+  // Gated on auth only (not the game save), so a visitor arriving from search
+  // sees the landing immediately instead of the game's loading screen.
+  // `?landing=1` forces the landing in local dev, where Firebase is unconfigured.
+  // Inside the installed Android app the marketing landing makes no sense
+  // (it advertises installing the app), so native goes straight to sign-in.
+  const forceLanding = new URLSearchParams(window.location.search).has('landing');
+  if (!authLoading && !isNative && ((isFirebaseConfigured && !user) || forceLanding)) {
+    if (publicRoute === '/logowanie') {
+      return <AuthScreen onBack={() => goPublic('/')} />;
+    }
+    return (
+      <LandingPage
+        page={publicRoute === '/pobierz' ? 'download' : 'landing'}
+        onPlay={() => goPublic('/logowanie')}
+        onDownloadPage={() => goPublic('/pobierz')}
+        onHome={() => goPublic('/')}
+      />
+    );
+  }
+
   if (authLoading || !gameLoaded || !minTimeReady) {
     return <LoadingScreen text={t.app.loading} />;
   }
 
-  if (isFirebaseConfigured && !user) return <AuthScreen />;
 
   const hasSave = (() => { try { return !!localStorage.getItem('glitchsoul_save'); } catch { return false; } })();
   const isNewGame = hero.name === 'Hero' && !hasSave;
