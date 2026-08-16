@@ -5,7 +5,12 @@
     <loc>https://glitchsoul.com/</loc>
     <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -14,7 +19,82 @@
     <loc>https://glitchsoul.com/en/</loc>
     <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/de/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/es/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/fr/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/it/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/pt/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
@@ -23,7 +103,12 @@
     <loc>https://glitchsoul.com/pobierz/</loc>
     <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -32,7 +117,82 @@
     <loc>https://glitchsoul.com/en/download/</loc>
     <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/de/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/es/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/fr/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/it/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/pt/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="de" href="https://glitchsoul.com/de/download/" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://glitchsoul.com/es/download/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://glitchsoul.com/fr/download/" />
+    <xhtml:link rel="alternate" hreflang="it" href="https://glitchsoul.com/it/download/" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://glitchsoul.com/pt/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/en/download/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

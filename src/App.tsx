@@ -49,8 +49,10 @@ import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import GameIcon from './components/GameIcon';
 import TutorialOverlay, { getTutorialCfg, type TutorialNav } from './components/TutorialOverlay';
-import LandingPage, { PUBLIC_ROUTES, ALT_ROUTE, routeFor } from './components/LandingPage';
+import LandingPage from './components/LandingPage';
+import { PUBLIC_ROUTES, routeFor } from './lib/publicRoutes';
 import LangPicker from './components/LangPicker';
+import type { Lang } from './i18n';
 
 // '/pobierz/' and '/pobierz' are the same public route.
 function normalizePath(p: string): string {
@@ -522,8 +524,9 @@ export default function App() {
   if (!authLoading && !isNative && ((isFirebaseConfigured && !user) || forceLanding)) {
     const route = PUBLIC_ROUTES[publicRoute] ?? PUBLIC_ROUTES['/'];
     const go = (p: 'landing' | 'download' | 'auth') => goPublic(routeFor(p, route.lang));
-    const switchLang = (l: 'pl' | 'en') => {
-      if (l !== route.lang) goPublic(ALT_ROUTE[publicRoute] ?? routeFor(route.page, l));
+    // Switching language keeps you on the same page, at that language's URL.
+    const switchLang = (l: Lang) => {
+      if (l !== route.lang) goPublic(routeFor(route.page, l));
     };
 
     if (route.page === 'auth') {
