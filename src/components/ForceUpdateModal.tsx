@@ -1,4 +1,4 @@
-import { useLangStore } from '../store/langStore';
+import { useT } from '../hooks/useT';
 import type { UpdateInfo } from '../lib/appUpdate';
 
 const ORB: React.CSSProperties = { fontFamily: "'Orbitron', monospace", fontWeight: 700 };
@@ -7,7 +7,7 @@ const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" }
 // Fully blocking update gate — no dismiss. Shown only on native when a newer
 // APK build exists. The button opens the APK download in the system browser.
 export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
-  const isEn = useLangStore(s => s.lang) !== 'pl';
+  const t = useT();
 
   function handleUpdate() {
     // _blank → Capacitor opens it in the external browser, where the APK downloads.
@@ -38,15 +38,13 @@ export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
           ...ORB, fontSize: 16, letterSpacing: 1, color: '#00e5ff',
           textShadow: '0 0 14px #00e5ff',
         }}>
-          {isEn ? 'UPDATE REQUIRED' : 'WYMAGANA AKTUALIZACJA'}
+          {t.update.title}
         </div>
         <p style={{ ...MONO, fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
-          {isEn
-            ? 'A new version of the game is available. Please update to keep playing.'
-            : 'Dostępna jest nowa wersja gry. Zaktualizuj, aby kontynuować grę.'}
+          {t.update.body}
         </p>
         <p style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>
-          {isEn ? 'Build' : 'Wersja'} {info.currentBuild} → {info.latestBuild}
+          {t.update.buildLabel} {info.currentBuild} → {info.latestBuild}
         </p>
         <button
           onClick={handleUpdate}
@@ -58,7 +56,7 @@ export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
             color: '#fff', textShadow: '0 0 8px #00e5ff',
           }}
         >
-          {isEn ? '⬇ DOWNLOAD UPDATE' : '⬇ POBIERZ AKTUALIZACJĘ'}
+          {t.update.downloadBtn}
         </button>
       </div>
     </div>

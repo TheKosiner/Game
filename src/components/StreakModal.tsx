@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { gsap } from 'gsap';
-import { useLangStore } from '../store/langStore';
+import { useT } from '../hooks/useT';
 
 interface Props {
   streakDays: number;
@@ -46,7 +46,7 @@ const CSS = `
 `;
 
 export default function StreakModal({ streakDays, streakMilestone, chestGems, gemsAdded, onClose }: Props) {
-  const isEn = useLangStore(s => s.lang) !== 'pl';
+  const t = useT();
   const [showChest, setShowChest] = useState(false);
   const [opened, setOpened] = useState(false);
 
@@ -236,9 +236,7 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
               marginTop: 4,
               textTransform: 'uppercase',
             }}>
-              {isEn
-                ? `day${streakDays === 1 ? '' : 's'} in a row`
-                : streakDays === 1 ? 'dzień z rzędu' : 'dni z rzędu'}
+              {t.streak.daysInRow(streakDays)}
             </p>
           </div>
 
@@ -304,14 +302,10 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
               textTransform: 'uppercase',
             }}>
               {hasMilestone
-                ? (isEn ? '★ Milestone reached!' : '★ Kamień milowy!')
+                ? t.streak.milestoneReached
                 : nextMileIsLeg
-                ? (isEn
-                    ? `${nextMile} more day${nextMile===1?'':'s'} to legendary chest`
-                    : `Jeszcze ${nextMile} ${nextMile===1?'dzień':'dni'} do legendarnej skrzynki`)
-                : (isEn
-                    ? `${nextMile} more day${nextMile===1?'':'s'} to epic chest`
-                    : `Jeszcze ${nextMile} ${nextMile===1?'dzień':'dni'} do epickiej skrzynki`)}
+                ? t.streak.toLegendary(nextMile)
+                : t.streak.toEpic(nextMile)}
             </p>
           </div>
 
@@ -334,14 +328,14 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
               fontFamily: "'Share Tech Mono', monospace",
               fontSize: 9, color: 'rgba(0,229,255,0.5)', letterSpacing: '0.1em',
             }}>
-              {isEn ? 'GEMS' : 'KLEJNOTÓW'}
+              {t.streak.gems}
             </span>
             {streakDays > 1 && (
               <span style={{
                 fontFamily: "'Share Tech Mono', monospace",
                 fontSize: 9, color: 'rgba(255,255,255,0.25)',
               }}>
-                {isEn ? '+ streak bonus' : '+ bonus serii'}
+                {t.streak.streakBonus}
               </span>
             )}
           </div>}
@@ -367,15 +361,13 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
                 textShadow: `0 0 12px ${mainColor}`,
                 letterSpacing: '0.1em',
               }}>
-                {isLegendary
-                  ? (isEn ? '⚡ LEGENDARY CHEST' : '⚡ LEGENDARNA SKRZYNKA')
-                  : (isEn ? '✦ EPIC CHEST' : '✦ EPICKA SKRZYNKA')}
+                {isLegendary ? t.streak.legendaryChest : t.streak.epicChest}
               </p>
               <p style={{
                 fontFamily: "'Share Tech Mono', monospace",
                 fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.15em',
               }}>
-                {isEn ? 'TAP TO OPEN' : 'KLIKNIJ ABY OTWORZYĆ'}
+                {t.streak.tapToOpen}
               </p>
             </div>
           )}
@@ -398,16 +390,14 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
                 textShadow: `0 0 16px ${mainColor}, 0 0 32px ${mainColor}88`,
                 marginTop: 6,
               }}>
-                {isLegendary
-                  ? (isEn ? 'Legendary Mystery Box' : 'Legendarna Skrzynka')
-                  : (isEn ? 'Epic Mystery Box' : 'Epicka Skrzynka')}
+                {isLegendary ? t.streak.legendaryBox : t.streak.epicBox}
               </div>
               <p style={{
                 fontFamily: "'Share Tech Mono', monospace",
                 fontSize: 9, color: mainColor, letterSpacing: '0.15em',
                 marginTop: 8,
               }}>
-                {isEn ? '✓ ADDED TO INVENTORY' : '✓ DODANO DO EKWIPUNKU'}
+                {t.streak.addedToInventory}
               </p>
               {chestGems > 0 && (
                 <p style={{
@@ -415,7 +405,7 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
                   fontSize: 9, color: 'rgba(0,229,255,0.6)', letterSpacing: '0.1em',
                   marginTop: 4,
                 }}>
-                  {isEn ? `+ ${chestGems} 💎 gems` : `+ ${chestGems} 💎 gemów`}
+                  {t.streak.plusGems(chestGems)}
                 </p>
               )}
             </div>
@@ -447,7 +437,7 @@ export default function StreakModal({ streakDays, streakMilestone, chestGems, ge
                 (e.currentTarget as HTMLElement).style.boxShadow = 'none';
               }}
             >
-              {isEn ? '▶ Continue' : '▶ Kontynuuj'}
+              {t.streak.continue_}
             </button>
           )}
         </div>

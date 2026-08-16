@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLangStore } from '../store/langStore';
 import { useT } from '../hooks/useT';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
@@ -37,7 +36,6 @@ function getRecentWarCache(guildId: string): { warId: string; resolvedAt: number
 
 export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { guild: Guild; myUid: string; onRefresh: () => void; onWarSeen?: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) !== 'pl';
   const isLeader = guild.leaderUid === myUid;
   const isOfficer = guild.members[myUid]?.role === 'officer';
   const canDeclare = isLeader || isOfficer;
@@ -155,9 +153,9 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.includes('already has an active war') || msg.includes('jest już')) {
-        setDeclareError(isEn ? t.guild.warAlreadyAtWar : t.guild.warAlreadyAtWar);
+        setDeclareError(t.guild.warAlreadyAtWar);
       } else {
-        setDeclareError(isEn ? t.guild.warDeclareError : t.guild.warDeclareError);
+        setDeclareError(t.guild.warDeclareError);
       }
     } finally {
       setDeclaring(null);
@@ -304,8 +302,8 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
           }}>
             <p style={{ ...PX(5), color: myGuildId === war.attackerGuildId ? '#f87171' : '#7dd3fc' }}>
               {myGuildId === war.attackerGuildId
-                ? (isEn ? `⚔ You declared war on [${war.defenderGuildTag}] ${war.defenderGuildName}` : `⚔ Wypowiedziałeś wojnę gildii [${war.defenderGuildTag}] ${war.defenderGuildName}`)
-                : (isEn ? `🛡 Guild [${war.attackerGuildTag}] ${war.attackerGuildName} declared war on you!` : `🛡 Gildia [${war.attackerGuildTag}] ${war.attackerGuildName} wypowiedziała Ci wojnę!`)}
+                ? t.guild.warDeclaredByYou(war.defenderGuildTag, war.defenderGuildName)
+                : t.guild.warDeclaredOnYou(war.attackerGuildTag, war.attackerGuildName)}
             </p>
           </div>
 
@@ -325,7 +323,7 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
             )}
             {!mySide && (
               <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                {isEn ? 'You are a spectator of this war.' : 'Jesteś obserwatorem tej wojny.'}
+                {t.guild.warSpectator}
               </p>
             )}
           </div>
@@ -444,7 +442,7 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
       {activeWars.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <p style={{ ...PX(5), color: 'var(--gold-main)' }}>
-            ⚔ {isEn ? 'Ongoing Wars' : 'Toczące się Wojny'} ({activeWars.length})
+            ⚔ {t.guild.ongoingWars} ({activeWars.length})
           </p>
           {activeWars.map(w => {
             const isMyWar = w.attackerGuildId === myGuildId || w.defenderGuildId === myGuildId;
@@ -468,7 +466,7 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
                   </p>
                   {isMyWar && (
                     <span style={{ ...PX(3), color: '#f87171', background: 'rgba(200,50,50,0.2)', border: '1px solid rgba(200,50,50,0.4)', padding: '1px 5px', flexShrink: 0 }}>
-                      {isEn ? 'YOUR WAR' : 'TWOJA'}
+                      {t.guild.yourWar}
                     </span>
                   )}
                 </div>
@@ -478,8 +476,8 @@ export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { 
                   <p style={{ ...PX(3), color: '#7dd3fc' }}>🛡 {defCount}</p>
                   <p style={{ ...PX(3), color: 'var(--text-muted)', marginLeft: 'auto' }}>
                     {w.status === 'signup' && timeLeft > 0
-                      ? (isEn ? 'Signup: ' : 'Zapisy: ') + formatCountdown(timeLeft)
-                      : `⚔ ${isEn ? 'Battle' : 'Bitwa'}`}
+                      ? t.guild.signupPrefix + formatCountdown(timeLeft)
+                      : `⚔ ${t.guild.battleWord}`}
                   </p>
                 </div>
               </div>
