@@ -51,7 +51,7 @@ export default function GuildBossPanel({ guildId, username }: { guildId: string;
   const hero = useGameStore(s => s.hero);
   const user = useAuthStore(s => s.user);
   const lang = useLangStore(s => s.lang);
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   const isEnRef = useRef(isEn);
   const [boss, setBoss] = useState<GuildBossState | null | 'loading'>('loading');
   const [now, setNow] = useState(Date.now());

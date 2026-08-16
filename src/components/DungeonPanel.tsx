@@ -566,7 +566,7 @@ type FullDungeon = (typeof ALL_DUNGEONS)[0];
 function DungeonList() {
   const t = useT();
   const lang = useLangStore(s => s.lang);
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   const hero         = useGameStore(s => s.hero);
   const enterDungeon = useGameStore(s => s.enterDungeon);
   const isResting    = (hero.restingUntil !== null && Date.now() < hero.restingUntil) ||

@@ -102,7 +102,7 @@ function SvgDoor({ label, onClick, imgSrc }: { label: string; onClick: () => voi
 
 export default function KryptaPanel() {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
   const isDesktop = useIsDesktop();
   const hero = useGameStore(s => s.hero);
   const addXp = useGameStore(s => s.addXp);

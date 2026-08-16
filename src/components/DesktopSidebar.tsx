@@ -2,7 +2,7 @@ import { useState } from 'react';
 import logoImg from '../assets/logo.webp';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
-import { useLangStore } from '../store/langStore';
+import LangPicker from './LangPicker';
 import { TabIcon, type MainTab, type PlaySub, type SocialSub, type ShopSub } from './BottomNav';
 import GameIcon, { type GameIconName } from './GameIcon';
 import AnimatedNumber from './AnimatedNumber';
@@ -164,7 +164,6 @@ export default function DesktopSidebar({
   onLogout,
 }: Props) {
   const hero = useGameStore(s => s.hero);
-  const { lang, setLang } = useLangStore();
   const t = useT();
 
   const [open, setOpen] = useState<Record<string, boolean>>(() => ({ [tab]: true }));
@@ -308,16 +307,7 @@ export default function DesktopSidebar({
         </div>
 
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          {(['pl', 'en'] as const).map(l => (
-            <button key={l} onClick={() => setLang(l)} aria-label={l === 'pl' ? 'Język Polski' : 'English'} aria-pressed={lang === l} style={{
-              ...ORB, fontSize: 8,
-              color: lang === l ? '#00f5ff' : 'rgba(0,245,255,0.25)',
-              background: lang === l ? 'rgba(0,245,255,0.08)' : 'transparent',
-              border: `1px solid ${lang === l ? 'rgba(0,245,255,0.3)' : 'transparent'}`,
-              cursor: 'pointer', padding: '2px 6px',
-              transition: 'all 0.15s',
-            }}>{l.toUpperCase()}</button>
-          ))}
+          <LangPicker compact />
           <span style={{ flex: 1 }} />
           <button onClick={onLogout} style={{
             ...MONO, fontSize: 8, color: 'rgba(255,45,120,0.55)',

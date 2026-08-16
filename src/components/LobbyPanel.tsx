@@ -644,7 +644,7 @@ export default function LobbyPanel() {
         <div style={{flex:1,overflowY:'auto',padding:'6px 10px',display:'flex',flexDirection:'column',gap:2}}>
           {msgs.length===0&&!chatErr&&(
             <span style={{fontFamily:"'Share Tech Mono',monospace",fontSize:10,color:'rgba(255,255,255,.2)'}}>
-              {lang==='en'?'No messages yet. Say hi!':'Brak wiadomości. Napisz coś!'}
+              {lang !== 'pl'?'No messages yet. Say hi!':'Brak wiadomości. Napisz coś!'}
             </span>
           )}
           {msgs.map((m,i)=>(
@@ -659,10 +659,10 @@ export default function LobbyPanel() {
           <input value={input} onChange={e=>setInput(e.target.value)}
             onFocus={()=>{chatFocus.current=true;}} onBlur={()=>{chatFocus.current=false;}}
             onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();sendMsg();}}}
-            placeholder={lang==='en'?'Type a message...':'Napisz wiadomość...'} maxLength={200}
+            placeholder={lang !== 'pl'?'Type a message...':'Napisz wiadomość...'} maxLength={200}
             style={{flex:1,background:'rgba(255,255,255,.04)',border:'1px solid rgba(255,45,120,.2)',outline:'none',color:'#fff',padding:'5px 10px',fontFamily:"'Share Tech Mono',monospace",fontSize:11}}/>
           <button onClick={sendMsg} style={{background:'rgba(255,45,120,.12)',color:'#ff2d78',border:'1px solid rgba(255,45,120,.35)',cursor:'pointer',padding:'5px 14px',fontFamily:"'Orbitron',monospace",fontSize:9,fontWeight:700}}>
-            {lang==='en'?'SEND':'WYŚLIJ'}
+            {lang !== 'pl'?'SEND':'WYŚLIJ'}
           </button>
         </div>
       </div>

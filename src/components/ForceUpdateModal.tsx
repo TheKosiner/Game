@@ -7,7 +7,7 @@ const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" }
 // Fully blocking update gate — no dismiss. Shown only on native when a newer
 // APK build exists. The button opens the APK download in the system browser.
 export default function ForceUpdateModal({ info }: { info: UpdateInfo }) {
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
 
   function handleUpdate() {
     // _blank → Capacitor opens it in the external browser, where the APK downloads.

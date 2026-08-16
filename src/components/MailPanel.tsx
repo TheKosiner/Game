@@ -230,7 +230,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
           }}>
             <div>
               <p style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)', marginBottom: 2 }}>{recipient.username}</p>
-              {recipient.level > 0 && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang === 'en' ? 'LVL.' : 'Poz.'}{recipient.level}</p>}
+              {recipient.level > 0 && <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang !== 'pl' ? 'LVL.' : 'Poz.'}{recipient.level}</p>}
             </div>
             <button onClick={() => { setRecipient(null); setSearch(''); }} aria-label="Clear recipient" style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer' }}>✕</button>
           </div>
@@ -270,7 +270,7 @@ function ComposePanel({ myUid, onSent, initialRecipient }: { myUid: string; onSe
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span style={{ ...MONO, fontSize: 11, color: 'var(--text-bright)' }}>{p.username}</span>
-                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang === 'en' ? 'LVL.' : 'Poz.'}{p.level}</span>
+                    <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{lang !== 'pl' ? 'LVL.' : 'Poz.'}{p.level}</span>
                   </div>
                 ))}
               </div>
@@ -427,7 +427,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
       {/* Content */}
       {view === 'inbox' ? (
         loading ? (
-          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {lang === 'en' ? 'Loading...' : 'Ładowanie...'}</p>
+          <p style={{ ...PX(5), color: 'var(--text-muted)', textAlign: 'center', padding: 20 }}><GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {lang !== 'pl' ? 'Loading...' : 'Ładowanie...'}</p>
         ) : totalCount === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <GameIcon name="email" size={32} color="var(--text-dim)" style={{ display: 'block', margin: '0 auto 10px' }} />

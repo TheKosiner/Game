@@ -57,15 +57,15 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4">
           <div className="max-w-md w-full bg-slate-900 border-2 border-red-500 rounded-lg p-6 text-center">
-            <p className="text-red-400 text-xl mb-4"><GameIcon name="warning" size={16} color="#f87171" /> {getLang() === 'en' ? 'Something went wrong' : 'Coś poszło nie tak'}</p>
+            <p className="text-red-400 text-xl mb-4"><GameIcon name="warning" size={16} color="#f87171" /> {getLang() !== 'pl' ? 'Something went wrong' : 'Coś poszło nie tak'}</p>
             <p className="text-slate-400 text-sm mb-4">
-              {this.state.error?.message || (getLang() === 'en' ? 'Unknown error' : 'Nieznany błąd')}
+              {this.state.error?.message || (getLang() !== 'pl' ? 'Unknown error' : 'Nieznany błąd')}
             </p>
             <button
               onClick={() => window.location.reload()}
               className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
             >
-              {getLang() === 'en' ? 'Refresh page' : 'Odśwież stronę'}
+              {getLang() !== 'pl' ? 'Refresh page' : 'Odśwież stronę'}
             </button>
           </div>
         </div>

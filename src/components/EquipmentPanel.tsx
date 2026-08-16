@@ -28,7 +28,7 @@ function primaryStat(item: Item, lang: string): string | null {
   if (!entries.length) return null;
   entries.sort((a, b) => (b[1] as number) - (a[1] as number));
   const [k, v] = entries[0];
-  const names = lang === 'en' ? STAT_NAMES_EN : STAT_NAMES_PL;
+  const names = lang !== 'pl' ? STAT_NAMES_EN : STAT_NAMES_PL;
   return `${names[k] ?? k} +${v}`;
 }
 
@@ -37,7 +37,7 @@ function mainBonus(item: Item, lang?: string): { icon: GameIconName; label: stri
     const isMagic = (item as any).magicDamage;
     return { icon: isMagic ? 'magic_orb' : 'sword', label: isMagic ? 'Mag' : 'Atak', value: `+${item.attackBonus}`, color: isMagic ? '#c078f0' : '#ff2d78' };
   }
-  if (item.defenseBonus) return { icon: 'shield', label: lang === 'en' ? 'Defense' : 'Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
+  if (item.defenseBonus) return { icon: 'shield', label: lang !== 'pl' ? 'Defense' : 'Obrona', value: `+${item.defenseBonus}`, color: '#00f5ff' };
   const ps = primaryStat(item, lang ?? 'pl');
   if (ps) return { icon: 'up_arrow', label: ps.split(' ')[0], value: ps.split(' ').slice(1).join(' '), color: '#00ff88' };
   return null;
@@ -93,7 +93,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>
               <GameIcon name={(item as any).magicDamage ? 'magic_orb' : 'sword'} size={10} color={(item as any).magicDamage ? '#c078f0' : '#ff2d78'} />
-              {(item as any).magicDamage ? (lang === 'en' ? 'Magic Dmg.' : 'Obrażenia mag.') : t.equipment.atk}
+              {(item as any).magicDamage ? (lang !== 'pl' ? 'Magic Dmg.' : 'Obrażenia mag.') : t.equipment.atk}
             </span>
             <span style={{ ...ORB, fontSize: 10, color: (item as any).magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
@@ -105,12 +105,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           </div>
         ) : null}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && (
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No stat bonuses' : 'Brak bonusów statystyk'}</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'No stat bonuses' : 'Brak bonusów statystyk'}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
+        <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
         <p style={{ ...ORB, fontSize: 10, color: '#ffd700', textShadow: '0 0 8px rgba(255,215,0,0.5)', display: 'flex', alignItems: 'center', gap: 2 }}>{item.goldValue}<GameIcon name="coin" size={10} /></p>
       </div>
 
@@ -178,7 +178,7 @@ function WeaponSlot({ item, onSelect }: { item: Item | undefined; onSelect: () =
                 <span style={{ ...MONO, fontSize: 10, color: '#00ff88' }}>+{ps.split('+')[1]} {ps.split(' +')[0]}</span>
               )}
             </div>
-            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{lang === 'en' ? 'Level:' : 'Poziom:'} {item.level}</p>
+            <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>{lang !== 'pl' ? 'Level:' : 'Poziom:'} {item.level}</p>
           </div>
           <span style={{ color: 'var(--text-dim)', fontSize: 12, flexShrink: 0 }}>ℹ</span>
         </>

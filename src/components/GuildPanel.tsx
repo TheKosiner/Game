@@ -420,7 +420,7 @@ const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
 function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToWar }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGoToWar: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const [leaderWarn, setLeaderWarn] = useState(false);
