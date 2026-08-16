@@ -124,6 +124,36 @@ export const ALL_ENEMIES: Enemy[] = [
   { id: 'zero_absolute',       name: 'Zero Absolutne',            emoji: '❄️',  level: 96, hp: 30500, maxHp: 30500, attack: 2080, defense: 436,xpReward: 23000, goldReward: 18500,lootTable: [] },
   { id: 'void_prime',          name: 'Próżnia Prymaryczna',       emoji: '🌑',  level: 98, hp: 34500, maxHp: 34500, attack: 2300, defense: 466,xpReward: 26000, goldReward: 21000,lootTable: [] },
   { id: 'end_entity',          name: 'Finalny Protokół',          emoji: '☠️',  level: 100,hp: 39000, maxHp: 39000, attack: 2550, defense: 498,xpReward: 29500, goldReward: 23800,lootTable: [] },
+
+  // ── Iglica Neurogenezy (lvl 104–115) ──────────────────────────────────────
+  { id: 'neuro_sentinel',      name: 'Neuro-Strażnik',            emoji: '🧠',  level: 104, hp: 46000, maxHp: 46000, attack: 2850, defense: 540, xpReward: 34000, goldReward: 27000, lootTable: [] },
+  { id: 'synapse_reaper',      name: 'Żniwiarz Synaps',           emoji: '⚡',  level: 108, hp: 54000, maxHp: 54000, attack: 3150, defense: 590, xpReward: 39000, goldReward: 31000, lootTable: [] },
+  { id: 'cortex_titan',        name: 'Tytan Kory',                emoji: '🌩️', level: 112, hp: 63000, maxHp: 63000, attack: 3480, defense: 645, xpReward: 45000, goldReward: 36000, lootTable: [] },
+  { id: 'neurogod',            name: 'Neurobóstwo',               emoji: '👁️', level: 115, hp: 74000, maxHp: 74000, attack: 3850, defense: 705, xpReward: 52000, goldReward: 41000, lootTable: [] },
+
+  // ── Kuźnia Antymaterii (lvl 120–130) ──────────────────────────────────────
+  { id: 'antimatter_drone',    name: 'Dron Antymaterii',          emoji: '⚛️',  level: 120, hp: 88000, maxHp: 88000, attack: 4300, defense: 780, xpReward: 61000, goldReward: 48000, lootTable: [] },
+  { id: 'fusion_reaper',       name: 'Żniwiarz Fuzji',            emoji: '🔆',  level: 124, hp: 103000, maxHp: 103000, attack: 4750, defense: 850, xpReward: 71000, goldReward: 56000, lootTable: [] },
+  { id: 'annihilation_mech',   name: 'Mech Anihilacji',           emoji: '🤖',  level: 127, hp: 120000, maxHp: 120000, attack: 5250, defense: 930, xpReward: 82000, goldReward: 65000, lootTable: [] },
+  { id: 'antimatter_lord',     name: 'Władca Antymaterii',        emoji: '💥',  level: 130, hp: 140000, maxHp: 140000, attack: 5800, defense: 1015, xpReward: 95000, goldReward: 75000, lootTable: [] },
+
+  // ── Szczelina Zmierzchu (lvl 136–150) ─────────────────────────────────────
+  { id: 'rift_stalker',        name: 'Prześladowca Szczeliny',    emoji: '🌀',  level: 136, hp: 168000, maxHp: 168000, attack: 6500, defense: 1120, xpReward: 112000, goldReward: 88000, lootTable: [] },
+  { id: 'eventide_wraith',     name: 'Widmo Zmierzchu',           emoji: '🌘',  level: 140, hp: 198000, maxHp: 198000, attack: 7200, defense: 1230, xpReward: 131000, goldReward: 103000, lootTable: [] },
+  { id: 'rift_devourer',       name: 'Pożeracz Szczeliny',        emoji: '🕳️', level: 145, hp: 234000, maxHp: 234000, attack: 8000, defense: 1350, xpReward: 153000, goldReward: 120000, lootTable: [] },
+  { id: 'eventide_sovereign',  name: 'Władca Zmierzchu',          emoji: '🌑',  level: 150, hp: 276000, maxHp: 276000, attack: 8900, defense: 1490, xpReward: 179000, goldReward: 140000, lootTable: [] },
+
+  // ── Skarbiec Zapomnienia (lvl 156–170) ────────────────────────────────────
+  { id: 'oblivion_hunter',     name: 'Łowca Zapomnienia',         emoji: '🗡️', level: 156, hp: 330000, maxHp: 330000, attack: 9900, defense: 1640, xpReward: 210000, goldReward: 165000, lootTable: [] },
+  { id: 'datavault_reaper',    name: 'Żniwiarz Skarbca',          emoji: '💾',  level: 160, hp: 390000, maxHp: 390000, attack: 11000, defense: 1810, xpReward: 246000, goldReward: 193000, lootTable: [] },
+  { id: 'null_archon',         name: 'Archont Nicości',           emoji: '⬛',  level: 165, hp: 460000, maxHp: 460000, attack: 12200, defense: 1995, xpReward: 288000, goldReward: 226000, lootTable: [] },
+  { id: 'oblivion_tyrant',     name: 'Tyran Zapomnienia',         emoji: '☠️',  level: 170, hp: 545000, maxHp: 545000, attack: 13600, defense: 2200, xpReward: 337000, goldReward: 264000, lootTable: [] },
+
+  // ── Singularność Genezy (lvl 180–200) ─────────────────────────────────────
+  { id: 'genesis_warden',      name: 'Strażnik Genezy',           emoji: '🌌',  level: 180, hp: 660000, maxHp: 660000, attack: 15500, defense: 2450, xpReward: 400000, goldReward: 314000, lootTable: [] },
+  { id: 'singularity_beast',   name: 'Bestia Singularności',      emoji: '🐙',  level: 187, hp: 800000, maxHp: 800000, attack: 17500, defense: 2720, xpReward: 475000, goldReward: 373000, lootTable: [] },
+  { id: 'cosmic_annihilator',  name: 'Kosmiczny Anihilator',      emoji: '☄️',  level: 194, hp: 970000, maxHp: 970000, attack: 19800, defense: 3020, xpReward: 564000, goldReward: 442000, lootTable: [] },
+  { id: 'the_absolute',        name: 'Absolut',                   emoji: '🔚',  level: 200, hp: 1180000, maxHp: 1180000, attack: 22400, defense: 3350, xpReward: 670000, goldReward: 525000, lootTable: [] },
 ];
 
 export function getEnemyById(id: string): Enemy | undefined {
@@ -224,6 +254,26 @@ export const ENEMY_NAMES_EN: Record<string, string> = {
   zero_absolute:        'Zero Absolute',
   void_prime:           'Void Prime',
   end_entity:           'The Final Protocol',
+  neuro_sentinel:       'Neuro Sentinel',
+  synapse_reaper:       'Synapse Reaper',
+  cortex_titan:         'Cortex Titan',
+  neurogod:             'Neurogod',
+  antimatter_drone:     'Antimatter Drone',
+  fusion_reaper:        'Fusion Reaper',
+  annihilation_mech:    'Annihilation Mech',
+  antimatter_lord:      'Antimatter Lord',
+  rift_stalker:         'Rift Stalker',
+  eventide_wraith:      'Eventide Wraith',
+  rift_devourer:        'Rift Devourer',
+  eventide_sovereign:   'Eventide Sovereign',
+  oblivion_hunter:      'Oblivion Hunter',
+  datavault_reaper:     'Datavault Reaper',
+  null_archon:          'Null Archon',
+  oblivion_tyrant:      'Oblivion Tyrant',
+  genesis_warden:       'Genesis Warden',
+  singularity_beast:    'Singularity Beast',
+  cosmic_annihilator:   'Cosmic Annihilator',
+  the_absolute:         'The Absolute',
 };
 
 const HP_MULT = 6;

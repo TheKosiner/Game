@@ -18,7 +18,7 @@ const SAVE_KEY = 'glitchsoul_save';
 const OLD_SAVE_KEY = 'cybermagic_save';
 export const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
-const MAX_LEVEL = 300;
+const MAX_LEVEL = 500;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_KRYPTA = 5;
 export const MAX_DAILY_QUESTS = 5;
@@ -1284,7 +1284,9 @@ export const useGameStore = create<GameState>((set, get) => ({
           name: save.hero.name,
           level: save.hero.level ?? 1,
           xp: save.hero.xp ?? 0,
-          xpToNext: save.hero.xpToNext || calcXpToNext(save.hero.level ?? 1),
+          // Always recompute from the current curve so live balance changes to
+          // calcXpToNext apply to existing saves immediately (not just on next level-up).
+          xpToNext: calcXpToNext(save.hero.level ?? 1),
           maxHp: save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment)),
           hp: Math.max(1, save.hero.hp ?? save.hero.maxHp ?? getHeroMaxHp(migrateStats(save.hero.stats ?? {}), save.hero.level ?? 1, migrateEquipment(save.hero.equipment))),
           restingUntil: isLegacySave ? null : (save.hero.restingUntil ?? null),

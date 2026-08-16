@@ -12,7 +12,7 @@ interface Props {
   isEn: boolean;
 }
 
-// SVG viewBox 160 × 90 — positions match ALL_DUNGEONS index order
+// SVG viewBox 214 × 90 — positions match ALL_DUNGEONS index order
 const POS: [number, number][] = [
   [10,  76], // 0  forest        — Slumsy
   [22,  62], // 1  cave          — Tech Podziemia
@@ -29,13 +29,19 @@ const POS: [number, number][] = [
   [134, 62], // 12 apocalypse_zone— Str. Apokalipsy
   [148, 46], // 13 void_nexus    — Nexus Próżni
   [152, 24], // 14 network_end   — Koniec Sieci
+  [168, 42], // 15 neurogenesis_spire  — Iglica Neurogenezy
+  [179, 64], // 16 antimatter_foundry  — Kuźnia Antymaterii
+  [191, 46], // 17 eventide_rift        — Szczelina Zmierzchu
+  [201, 66], // 18 oblivion_datavault   — Skarbiec Zapomnienia
+  [205, 26], // 19 genesis_singularity  — Singularność Genezy
 ];
 
 // Sequential path + a few aesthetic cross-connections
 const EDGES: [number, number][] = [
   [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7],
   [7, 8], [8, 9], [9, 10], [10, 11], [11, 12], [12, 13], [13, 14],
-  [2, 4], [5, 8], [9, 11], // aesthetic branches
+  [14, 15], [15, 16], [16, 17], [17, 18], [18, 19],
+  [2, 4], [5, 8], [9, 11], [15, 17], // aesthetic branches
 ];
 
 // Deterministic pseudo-noise for city background (seeded, stable)
@@ -44,8 +50,8 @@ function rng(i: number): number {
 }
 
 // Pre-computed city blocks — stable across renders
-const BLOCKS = Array.from({ length: 230 }, (_, i) => ({
-  x: rng(i) * 160,
+const BLOCKS = Array.from({ length: 300 }, (_, i) => ({
+  x: rng(i) * 214,
   y: rng(i + 100) * 90,
   w: 0.4 + rng(i + 200) * 1.8,
   h: 0.3 + rng(i + 300) * 1.4,
@@ -53,7 +59,7 @@ const BLOCKS = Array.from({ length: 230 }, (_, i) => ({
   op: 0.1 + rng(i + 500) * 0.32,
 }));
 
-const W = 160, H = 90;
+const W = 214, H = 90;
 const NODE_R = 2.9;
 
 export default function DungeonMapView({ isDungeonUnlocked, completed, selected, onSelect, isEn }: Props) {
@@ -173,13 +179,13 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
         {/* Grid roads */}
         <g stroke="rgba(45,229,255,0.09)" strokeWidth="0.11" fill="none">
           {[12, 26, 40, 54, 68, 80].map(y => <line key={y} x1={0} y1={y} x2={W} y2={y} />)}
-          {[16, 32, 48, 64, 80, 96, 112, 128, 144].map(x => <line key={x} x1={x} y1={0} x2={x} y2={H} />)}
+          {[16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208].map(x => <line key={x} x1={x} y1={0} x2={x} y2={H} />)}
         </g>
 
         {/* River */}
-        <path d="M -2 74 Q 14 68 28 60 Q 44 52 60 48 Q 78 44 96 42 Q 114 38 132 30 Q 146 24 162 20"
+        <path d="M -2 74 Q 14 68 28 60 Q 44 52 60 48 Q 78 44 96 42 Q 114 38 132 30 Q 146 24 162 20 Q 180 16 196 24 Q 206 28 214 22"
           stroke="rgba(45,229,255,0.14)" strokeWidth="2.1" fill="none" />
-        <path d="M -2 74 Q 14 68 28 60 Q 44 52 60 48 Q 78 44 96 42 Q 114 38 132 30 Q 146 24 162 20"
+        <path d="M -2 74 Q 14 68 28 60 Q 44 52 60 48 Q 78 44 96 42 Q 114 38 132 30 Q 146 24 162 20 Q 180 16 196 24 Q 206 28 214 22"
           stroke="rgba(45,229,255,0.38)" strokeWidth="0.17" fill="none" strokeDasharray="0.3 0.6" />
 
         {/* District subtle boundary lines */}
