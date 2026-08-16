@@ -1,5 +1,6 @@
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { tFor } from '../i18n';
 
 const NOTIF_QUEST   = 10;
 const NOTIF_REST    = 11;
@@ -130,61 +131,37 @@ export async function rescheduleActiveNotifications(
   if (isNative()) return;
   if (!webSupported() || Notification.permission !== 'granted') return;
   await getSwReg();
-  const isEn = lang !== 'pl';
+  const t = tFor(lang);
   if (activeQuest && activeQuest.endsAt > Date.now()) {
-    const name = isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name;
-    webSchedule(NOTIF_QUEST,
-      isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
-      isEn ? `"${name}" is done — collect your reward!` : `"${name}" zakończona — odbierz nagrodę!`,
-      activeQuest.endsAt,
-    );
+    const name = lang !== 'pl' ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name;
+    webSchedule(NOTIF_QUEST, t.notif.questTitle, t.notif.questBody(name), activeQuest.endsAt);
   }
   if (restUntil && restUntil > Date.now() && restHp) {
-    webSchedule(NOTIF_REST,
-      isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
-      isEn ? `Your hero recovered ${restHp} HP — ready for battle!` : `Bohater odzyskał ${restHp} HP — gotowy do walki!`,
-      restUntil,
-    );
+    webSchedule(NOTIF_REST, t.notif.restTitle, t.notif.restBody(restHp), restUntil);
   }
   if (beggingUntil && beggingUntil > Date.now() && beggingReward) {
-    webSchedule(NOTIF_BEGGING,
-      isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
-      isEn ? `Collected ~${beggingReward}🪙 — come pick it up!` : `Zebrałeś ~${beggingReward}🪙 — odbierz złom!`,
-      beggingUntil,
-    );
+    webSchedule(NOTIF_BEGGING, t.notif.beggingTitle, t.notif.beggingBody(beggingReward), beggingUntil);
   }
 }
 
 export async function scheduleQuestNotification(namePl: string, nameEn: string | undefined, endsAt: number, lang: string) {
-  const isEn = lang !== 'pl';
-  const name = isEn ? (nameEn ?? namePl) : namePl;
-  await schedule(NOTIF_QUEST,
-    isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
-    isEn ? `"${name}" is done — collect your reward!` : `"${name}" zakończona — odbierz nagrodę!`,
-    endsAt,
-  );
+  const t = tFor(lang);
+  const name = lang !== 'pl' ? (nameEn ?? namePl) : namePl;
+  await schedule(NOTIF_QUEST, t.notif.questTitle, t.notif.questBody(name), endsAt);
 }
 
 export function cancelQuestNotification() { cancelSync(NOTIF_QUEST); }
 
 export async function scheduleRestNotification(endsAt: number, hp: number, lang: string) {
-  const isEn = lang !== 'pl';
-  await schedule(NOTIF_REST,
-    isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
-    isEn ? `Your hero recovered ${hp} HP — ready for battle!` : `Bohater odzyskał ${hp} HP — gotowy do walki!`,
-    endsAt,
-  );
+  const t = tFor(lang);
+  await schedule(NOTIF_REST, t.notif.restTitle, t.notif.restBody(hp), endsAt);
 }
 
 export function cancelRestNotification() { cancelSync(NOTIF_REST); }
 
 export async function scheduleBeggingNotification(endsAt: number, gold: number, lang: string) {
-  const isEn = lang !== 'pl';
-  await schedule(NOTIF_BEGGING,
-    isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
-    isEn ? `Collected ~${gold}🪙 — come pick it up!` : `Zebrałeś ~${gold}🪙 — odbierz złom!`,
-    endsAt,
-  );
+  const t = tFor(lang);
+  await schedule(NOTIF_BEGGING, t.notif.beggingTitle, t.notif.beggingBody(gold), endsAt);
 }
 
 export function cancelBeggingNotification() { cancelSync(NOTIF_BEGGING); }

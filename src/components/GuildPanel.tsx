@@ -16,7 +16,6 @@ import { isFirebaseConfigured } from '../lib/firebase';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
-import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import GameIcon from './GameIcon';
@@ -420,14 +419,13 @@ const ROLE_ORDER: Record<string, number> = { leader: 0, officer: 1, member: 2 };
 
 function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToWar }: { guild: Guild; myUid: string; onRefresh: () => void; playerPortraits: Record<string, number>; guildTab: import('./BottomNav').GuildTabSub; onGoToWar: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) !== 'pl';
   const [showInvite, setShowInvite] = useState(false);
   const [acting, setActing] = useState(false);
   const [leaderWarn, setLeaderWarn] = useState(false);
   type DlgState = { msg: string; okLabel?: string; cancelLabel?: string; onOk: () => void } | null;
   const [dlg, setDlg] = useState<DlgState>(null);
   function showConfirm(msg: string, onOk: () => void) {
-    setDlg({ msg, cancelLabel: isEn ? 'Cancel' : 'Anuluj', onOk });
+    setDlg({ msg, cancelLabel: t.guild.confirmCancel, onOk });
   }
   function showAlert(msg: string) {
     setDlg({ msg, okLabel: 'OK', onOk: () => setDlg(null) });
@@ -537,7 +535,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
         await transferLeadership(guild.id, myUid, uid);
         onRefresh();
       } catch (e: any) {
-        showAlert(isEn ? `Transfer failed: ${e?.message ?? 'unknown error'}` : `Błąd przekazania: ${e?.message ?? 'nieznany błąd'}`);
+        showAlert(t.guild.transferFailed(e?.message ?? t.guild.unknownError));
       } finally {
         setActing(false);
       }
@@ -547,8 +545,8 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
   function handleSetOfficer(uid: string, currentRole: string) {
     const newRole = currentRole === 'officer' ? 'member' : 'officer';
     const label = newRole === 'officer'
-      ? (isEn ? 'Promote to Officer?' : 'Mianować oficerem?')
-      : (isEn ? 'Demote from Officer?' : 'Odebrać stopień oficera?');
+      ? t.guild.promoteConfirm
+      : t.guild.demoteConfirm;
     showConfirm(label, async () => {
       setDlg(null);
       setActing(true);
@@ -556,7 +554,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
         await setMemberRole(guild.id, myUid, uid, newRole);
         onRefresh();
       } catch (e: any) {
-        showAlert(isEn ? `Failed: ${e?.message ?? 'unknown error'}` : `Błąd: ${e?.message ?? 'nieznany błąd'}`);
+        showAlert(t.guild.actionFailed(e?.message ?? t.guild.unknownError));
       } finally {
         setActing(false);
       }
@@ -620,10 +618,10 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
         >
           <span style={{ ...PX(5), color: '#f87171' }}>
             {warInBattle
-              ? `⚔ ${isEn ? 'Battle in progress' : 'Trwa Bitwa'}`
-              : `⚔ ${isEn ? 'Guild War — signup open' : 'Wojna Gildii — trwają zapisy'}`}
+              ? `⚔ ${t.guild.battleInProgress}`
+              : `⚔ ${t.guild.warSignupOpen}`}
           </span>
-          <span style={{ ...PX(4), color: 'var(--text-muted)' }}>{isEn ? 'View →' : 'Zobacz →'}</span>
+          <span style={{ ...PX(4), color: 'var(--text-muted)' }}>{t.guild.viewArrow}</span>
         </button>
       )}
 
@@ -683,7 +681,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
                       disabled={acting}
                       className="btn btn-secondary"
                       style={{ fontSize: 10, padding: '3px 5px', color: m.role === 'officer' ? '#fbbf24' : '#7dd3fc' }}
-                      title={m.role === 'officer' ? (isEn ? 'Demote from Officer' : 'Odbierz stopień oficera') : (isEn ? 'Promote to Officer' : 'Mianuj oficerem')}
+                      title={m.role === 'officer' ? t.guild.demoteTitle : t.guild.promoteTitle}
                     >
                       <GameIcon name="star" size={11} color={m.role === 'officer' ? '#fbbf24' : '#7dd3fc'} />
                     </button>
@@ -692,7 +690,7 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
                       disabled={acting}
                       className="btn btn-secondary"
                       style={{ fontSize: 10, padding: '3px 5px' }}
-                      title={isEn ? 'Transfer leadership' : 'Przekaż przywództwo'}
+                      title={t.guild.transferTitle}
                     ><GameIcon name="crown" size={11} color="#ffd700" /></button>
                   </>
                 )}

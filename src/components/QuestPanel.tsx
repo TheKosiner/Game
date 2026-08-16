@@ -158,7 +158,7 @@ export default function QuestPanel() {
             width: '100%',
           }}
         >
-          <GameIcon name="bell" size={11} color="#fbbf24" /> {lang !== 'pl' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
+          <GameIcon name="bell" size={11} color="#fbbf24" /> {t.quests.notifHint}
         </button>
       )}
 

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useT } from '../hooks/useT';
-import { useLangStore } from '../store/langStore';
 import { PX } from '../utils/styles';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import type { GuildWar, WarDuel, WarFighter } from '../lib/guildWar';
@@ -54,7 +53,6 @@ function Fighter({ f, side, state }: { f: WarFighter | null; side: 'atk' | 'def'
 
 export default function GuildWarBattleModal({ war, onClose }: { war: GuildWar; onClose: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) !== 'pl';
   const duels: WarDuel[] = war.result?.duels ?? [];
   const [step, setStep] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -124,7 +122,7 @@ export default function GuildWarBattleModal({ war, onClose }: { war: GuildWar; o
                   const winF = cur.winner === 'attacker' ? cur.atk : cur.def;
                   const loseF = cur.winner === 'attacker' ? cur.def : cur.atk;
                   if (!loseF) return `${winF?.username} — ${t.guild.warWalkover}`;
-                  return isEn ? `${winF?.username} defeats ${loseF?.username}` : `${winF?.username} pokonuje ${loseF?.username}`;
+                  return t.guild.warDefeats(winF?.username ?? '', loseF?.username ?? '');
                 })()
               )}
             </p>

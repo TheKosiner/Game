@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { ALL_DUNGEONS } from '../data/dungeons';
 import { MONO } from '../utils/styles';
+import { useT } from '../hooks/useT';
 
 type Dungeon = (typeof ALL_DUNGEONS)[0];
 
@@ -63,6 +64,7 @@ const W = 160, H = 90;
 const NODE_R = 2.9;
 
 export default function DungeonMapView({ isDungeonUnlocked, completed, selected, onSelect, isEn }: Props) {
+  const t = useT();
   const wrapRef = useRef<HTMLDivElement>(null);
   const completedSet = new Set(completed);
 
@@ -201,10 +203,10 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
         <g fontFamily="'Press Start 2P', monospace" fontSize="1.05" letterSpacing="0.2"
           fill="rgba(90,74,120,0.7)" textAnchor="middle"
           paintOrder="stroke" stroke="rgba(6,3,13,0.9)" strokeWidth="0.3">
-          <text x="18" y="89">{isEn ? 'STARTER ZONE' : 'STREFA STARTOWA'}</text>
-          <text x="50" y="12">{isEn ? 'MID SECTORS' : 'SEKTORY ŚRODKOWE'}</text>
-          <text x="128" y="10">{isEn ? 'DEEP NET' : 'GŁĘBOKA SIEĆ'}</text>
-          <text x="136" y="84">{isEn ? 'END ZONE' : 'STREFA KOŃCA'}</text>
+          <text x="18" y="89">{t.dungeonMap.zoneStarter}</text>
+          <text x="50" y="12">{t.dungeonMap.zoneMid}</text>
+          <text x="128" y="10">{t.dungeonMap.zoneDeep}</text>
+          <text x="136" y="84">{t.dungeonMap.zoneEnd}</text>
         </g>
 
         {/* Edges */}
@@ -325,7 +327,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
         <g transform="translate(4 5)">
           <rect x="0" y="-3.5" width="36" height="5" fill="rgba(10,4,22,0.75)" stroke="rgba(255,45,143,0.3)" strokeWidth="0.12" />
           <text x="2" y="0.2" fontFamily="'Press Start 2P', monospace" fontSize="1.6" fill="rgba(255,45,143,0.9)" letterSpacing="0.3">
-            {isEn ? '// DUNGEON MAP' : '// MAPA LOCHÓW'}
+            {t.dungeonMap.title}
           </text>
         </g>
       </svg>
@@ -372,7 +374,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
                 {pCmp && <span style={{ color: '#4ade80', marginLeft: 4 }}>✓</span>}
               </p>
               <p style={{ fontSize: 9, fontFamily: 'monospace', color: '#5a4a78', letterSpacing: '0.08em' }}>
-                {isEn ? 'REC' : 'POL'}.LVL {pd.minLevel} · {pd.floors} {isEn ? 'fl.' : 'pięter'}
+                {t.dungeonMap.rec}.{t.common.lvlShortCaps} {pd.minLevel} · {pd.floors} {t.dungeonMap.floorsShort}
               </p>
             </div>
           </div>
@@ -381,9 +383,9 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
           <div style={{ marginBottom: 8 }}>
             <span style={{ fontSize: 9, fontFamily: 'monospace', letterSpacing: '0.1em',
               color: pAcc, border: `1px solid ${pAcc}`, padding: '2px 6px' }}>
-              {pCmp ? (isEn ? 'COMPLETED' : 'UKOŃCZONO') :
-               pUnl ? (pSel ? (isEn ? 'SELECTED' : 'WYBRANA') : (isEn ? 'AVAILABLE' : 'DOSTĘPNA')) :
-                      (isEn ? 'LOCKED' : 'ZABLOKOWANA')}
+              {pCmp ? t.dungeonMap.completed :
+               pUnl ? (pSel ? t.dungeonMap.selected : t.dungeonMap.available) :
+                      t.dungeonMap.locked}
             </span>
           </div>
 
@@ -413,7 +415,7 @@ export default function DungeonMapView({ isDungeonUnlocked, completed, selected,
               border: '1px solid #5a4a78',
               fontSize: 8, fontFamily: "'Press Start 2P', monospace",
               color: '#5a4a78', letterSpacing: '0.1em' }}>
-              ⌧ {isEn ? 'COMPLETE PREV.' : 'UKOŃCZ POPRZEDNI'}
+              ⌧ {t.dungeonMap.completePrev}
             </div>
           )}
         </div>

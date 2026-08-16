@@ -14,6 +14,7 @@ import { createMysteryBox } from '../data/mysteryBoxes';
 import { getHeroAttack, rollDamage } from '../utils/combat';
 import { useGameStore } from '../store/gameStore';
 import { useLangStore } from '../store/langStore';
+import { useT } from '../hooks/useT';
 import { ORB, MONO } from '../utils/styles';
 import GameIcon, { LogLine } from './GameIcon';
 import Toast from './Toast';
@@ -89,7 +90,8 @@ export default function GuildOperationPanel({
   const addXp          = useGameStore(s => s.addXp);
   const addGold        = useGameStore(s => s.addGold);
   const addToInventory = useGameStore(s => s.addToInventory);
-  const isEn           = useLangStore(s => s.lang) !== 'pl';
+  const t              = useT();
+  const lang           = useLangStore(s => s.lang);
   const isLeader         = guild.leaderUid === myUid;
   const isLeaderOrOfficer = isLeader || guild.members[myUid]?.role === 'officer';
   const memberCount = Object.keys(guild.members).length;
@@ -118,13 +120,13 @@ export default function GuildOperationPanel({
             }
           }
           if (newOp.enemyInFloor > (prev.enemyInFloor ?? 0) && newOp.floor === prev.floor) {
-            lines.push({ text: `💀 ${prev.enemyName} ${isEn ? 'defeated!' : 'pokonany!'}`, type: 'kill' });
+            lines.push({ text: t.guildOp.enemyDefeated(prev.enemyName), type: 'kill' });
           }
           if (newOp.floor > prev.floor) {
-            lines.push({ text: `⬆ ${isEn ? 'Floor' : 'Piętro'} ${newOp.floor} — ${newOp.enemyName} ${newOp.enemyEmoji}`, type: 'floor' });
+            lines.push({ text: t.guildOp.floorLine(newOp.floor, newOp.enemyName, newOp.enemyEmoji), type: 'floor' });
           }
           if (newOp.status === 'completed' && prev.status !== 'completed') {
-            lines.push({ text: isEn ? '🏆 OPERATION COMPLETED!' : '🏆 OPERACJA UKOŃCZONA!', type: 'done' });
+            lines.push({ text: t.guildOp.completedLog, type: 'done' });
           }
           if (lines.length) setLog(l => [...l, ...lines]);
         }
@@ -148,7 +150,7 @@ export default function GuildOperationPanel({
     try {
       const ok = await startGuildOperation(guildId, myUid, hero.level, memberCount, selectedLocation ?? undefined, selectedDifficulty);
       if (ok) setLog([]);
-      else notify(isEn ? 'Cannot start operation.' : 'Nie można uruchomić operacji.', false);
+      else notify(t.guildOp.cannotStart, false);
     } finally { setStarting(false); }
   }
 
@@ -187,10 +189,10 @@ export default function GuildOperationPanel({
       }
       const { status, damage, enemyDmg, raidHp: serverRaidHp, knockedOut } = outcome;
       if (status === 'failed') {
-        notify(isEn ? 'Operation expired — time\'s up.' : 'Operacja wygasła — czas minął.', false);
+        notify(t.guildOp.expired, false);
         setAutoFight(false);
       } else if (status === 'no_op') {
-        notify(isEn ? 'No active operation.' : 'Brak aktywnej operacji.', false);
+        notify(t.guildOp.noActive, false);
         setAutoFight(false);
       } else if (status === 'knocked_out') {
         // Server says we're already out (e.g. depleted on another device).
@@ -211,12 +213,12 @@ export default function GuildOperationPanel({
           setTimeout(() => setDyingEnemy(null), 700);
         }
         const newLines: { text: string; type: keyof typeof LOG_COLORS }[] = [
-          { text: `⚔ ${isEn ? 'You' : 'Ty'} → ${fmtNum(damage)} dmg ${isEn ? 'on' : 'na'} ${currentOp.enemyName}`, type: 'me' },
+          { text: t.guildOp.youDealt(fmtNum(damage), currentOp.enemyName), type: 'me' },
           { text: `💥 ${currentOp.enemyName} → −${fmtNum(enemyDmg)} HP`, type: 'enemy' },
         ];
         setLog(l => [...l, ...newLines]);
         if (knockedOut) {
-          setLog(l => [...l, { text: isEn ? `💀 ${currentHero.name} defeated! You can no longer attack in this operation.` : `💀 ${currentHero.name} pokonany! Nie możesz już atakować w tej operacji.`, type: 'kill' }]);
+          setLog(l => [...l, { text: t.guildOp.heroDown(currentHero.name), type: 'kill' }]);
           setAutoFight(false);
         }
         if (status === 'completed') setAutoFight(false);
@@ -274,7 +276,7 @@ export default function GuildOperationPanel({
     setClaiming(true);
     try {
       const reward = await claimGuildOperationReward(guildId, myUid);
-      if (!reward) { notify(isEn ? 'No reward to claim.' : 'Brak nagrody do odebrania.', false); return; }
+      if (!reward) { notify(t.guildOp.noReward, false); return; }
       addXp(reward.xp);
       addGold(reward.gold);
       const opLoc = GUILD_OP_LOCATIONS.find(l => l.id === op?.locationId);
@@ -393,7 +395,7 @@ export default function GuildOperationPanel({
             <div style={{ flex: 1 }}>
               <p style={{ ...MONO, fontSize: 11, color: '#c05050', marginBottom: 3 }}>{op.enemyName}</p>
               <p style={{ ...MONO, fontSize: 9, color: 'var(--text-dim)', marginBottom: 6 }}>
-                {isEn ? 'Floor' : 'Piętro'} {op.floor}/{op.maxFloors} · {isEn ? 'Enemy' : 'Wróg'} {enemyIdx + 1}/{enemyTotal}
+                {t.guildOp.floorLabel} {op.floor}/{op.maxFloors} · {t.guildOp.enemyLabel} {enemyIdx + 1}/{enemyTotal}
                 {loc?.minLevel ? ` · POZ. ${loc.minLevel}+` : ''}
               </p>
               <p style={{ ...MONO, fontSize: 10, color: '#903040' }}>
@@ -444,10 +446,10 @@ export default function GuildOperationPanel({
             padding: '10px 12px', textAlign: 'center',
           }}>
             <p style={{ ...MONO, fontSize: 10, color: '#f87171', marginBottom: 2 }}>
-              <GameIcon name="skull" size={10} color="#f87171" /> {isEn ? 'Defeated!' : 'Pokonany!'}
+              <GameIcon name="skull" size={10} color="#f87171" /> {t.guildOp.defeatedBadge}
             </p>
             <p style={{ ...MONO, fontSize: 9, color: 'rgba(248,113,113,0.6)' }}>
-              {isEn ? 'You can no longer attack in this operation.' : 'Nie możesz już atakować w tej operacji.'}
+              {t.guildOp.cannotAttack}
             </p>
           </div>
         ) : (
@@ -458,7 +460,7 @@ export default function GuildOperationPanel({
               className="btn btn-primary"
               style={{ flex: 1, fontSize: 10 }}
             >
-              {attacking ? <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? 'Attacking...' : 'Atakuję...'}</> : <><GameIcon name="sword" size={10} color="#fff" /> {isEn ? 'Attack!' : 'Atakuj!'}</>}
+              {attacking ? <><GameIcon name="sword" size={10} color="#fff" /> {t.guildOp.attacking}</> : <><GameIcon name="sword" size={10} color="#fff" /> {t.guildOp.attackBtn}</>}
             </button>
             <button
               onClick={() => setAutoFight(f => !f)}
@@ -477,7 +479,7 @@ export default function GuildOperationPanel({
         >
           {log.length === 0 ? (
             <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-              {isEn ? 'No one has attacked yet.' : 'Nikt jeszcze nie zaatakował.'}
+              {t.guildOp.noAttacks}
             </p>
           ) : (
             log.map((entry, i) => (
@@ -492,7 +494,7 @@ export default function GuildOperationPanel({
         {participants.length > 0 && (
           <div>
             <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>
-              {isEn ? 'CONTRIBUTION' : 'WKŁAD'} ({participants.length}) · {isEn ? 'total' : 'łącznie'}: {fmtNum(totalDmg)} dmg
+              {t.guildOp.contribution} ({participants.length}) · {t.guildOp.total}: {fmtNum(totalDmg)} dmg
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {participants.map(([uid, p], idx) => {
@@ -510,7 +512,7 @@ export default function GuildOperationPanel({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                         <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {p.username}{isMe ? (isEn ? ' (you)' : ' (ty)') : ''}
+                          {p.username}{isMe ? ` ${t.common.you}` : ''}
                         </span>
                         <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', flexShrink: 0, marginLeft: 8 }}>
                           {fmtNum(p.damage)}
@@ -541,14 +543,14 @@ export default function GuildOperationPanel({
           padding: '14px 12px', textAlign: 'center',
         }}>
           <GameIcon name="skull" size={28} color="#f87171" style={{ display: 'block', margin: '0 auto 6px' }} />
-          <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>{isEn ? 'OPERATION FAILED' : 'OPERACJA NIEUKOŃCZONA'}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#f87171', marginBottom: 4 }}>{t.guildOp.failed}</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-            {loc?.name} — {isEn ? 'time\'s up' : 'czas minął'}
+            {loc?.name} — {t.guildOp.timesUp}
           </p>
         </div>
         {participants.length > 0 && (
           <div style={{ background: 'rgba(5,10,25,0.6)', border: '1px solid rgba(51,65,85,0.4)', padding: '8px 10px' }}>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>{isEn ? 'CONTRIBUTION' : 'WKŁAD'}</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)', marginBottom: 6 }}>{t.guildOp.contribution}</p>
             {participants.map(([uid, p]) => (
               <div key={uid} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
                 <span style={{ ...MONO, fontSize: 11, color: uid === myUid ? '#ffd700' : 'var(--text-dim)' }}>
@@ -561,7 +563,7 @@ export default function GuildOperationPanel({
         )}
         {isLeaderOrOfficer && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
-            ▶ {isEn ? 'NEW OPERATION' : 'NOWA OPERACJA'}
+            ▶ {t.guildOp.newOperation}
           </button>
         )}
       </div>
@@ -580,7 +582,7 @@ export default function GuildOperationPanel({
           boxShadow: '0 0 20px rgba(68,200,68,0.1)',
         }}>
           <GameIcon name="trophy" size={28} color="#44cc44" style={{ display: 'block', margin: '0 auto 6px' }} />
-          <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>{isEn ? 'OPERATION COMPLETED!' : 'OPERACJA UKOŃCZONA!'}</p>
+          <p style={{ ...ORB, fontSize: 10, color: '#44cc44', marginBottom: 4 }}>{t.guildOp.completed}</p>
           <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', marginBottom: 10 }}>
             {loc?.name}
           </p>
@@ -595,17 +597,17 @@ export default function GuildOperationPanel({
             </div>
           )}
           {alreadyClaimed ? (
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)' }}><GameIcon name="check" size={9} color="var(--text-muted)" /> {isEn ? 'Reward claimed' : 'Nagrodę odebrano'}</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-muted)' }}><GameIcon name="check" size={9} color="var(--text-muted)" /> {t.guildOp.rewardClaimed}</p>
           ) : (
             <button onClick={handleClaim} disabled={claiming} className="btn btn-primary" style={{ fontSize: 10, padding: '8px 16px' }}>
-              {claiming ? <GameIcon name="hourglass" size={10} color="#fff" /> : <GameIcon name="bag" size={10} color="#fff" />} {isEn ? 'CLAIM REWARD' : 'ODBIERZ NAGRODĘ'}
+              {claiming ? <GameIcon name="hourglass" size={10} color="#fff" /> : <GameIcon name="bag" size={10} color="#fff" />} {t.guildOp.claimReward}
             </button>
           )}
         </div>
 
         {participants.length > 0 && (
           <div>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{isEn ? 'RANKING' : 'RANKING'}</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)', marginBottom: 5 }}>{t.guildOp.ranking}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {participants.map(([uid, p], idx) => {
                 const isMe = uid === myUid;
@@ -616,7 +618,7 @@ export default function GuildOperationPanel({
                     padding: '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   }}>
                     <span style={{ ...MONO, fontSize: 10, color: isMe ? '#ff2d78' : 'var(--text-bright)' }}>
-                      {idx + 1}. {p.username}{isMe ? (isEn ? ' (you)' : ' (ty)') : ''}
+                      {idx + 1}. {p.username}{isMe ? ` ${t.common.you}` : ''}
                     </span>
                     <span style={{ ...MONO, fontSize: 10, color: '#f87171' }}>{fmtNum(p.damage)} dmg</span>
                   </div>
@@ -629,13 +631,13 @@ export default function GuildOperationPanel({
         {inCooldown && (
           <div style={{ background: 'rgba(10,20,40,0.7)', border: '1px solid rgba(51,65,85,0.5)', padding: '8px 10px', textAlign: 'center' }}>
             <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
-              <GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {isEn ? 'Next operation in:' : 'Następna operacja za:'} {fmtTime(Math.max(0, op.cooldownUntil - now))}
+              <GameIcon name="hourglass" size={10} color="var(--text-muted)" /> {t.guildOp.nextIn} {fmtTime(Math.max(0, op.cooldownUntil - now))}
             </p>
           </div>
         )}
         {!inCooldown && isLeaderOrOfficer && (
           <button onClick={() => setOp(null)} className="btn btn-secondary" style={{ fontSize: 10 }}>
-            ▶ {isEn ? 'NEW OPERATION' : 'NOWA OPERACJA'}
+            ▶ {t.guildOp.newOperation}
           </button>
         )}
       </div>
@@ -645,23 +647,23 @@ export default function GuildOperationPanel({
   // ── START SCREEN ─────────────────────────────────────────────────────────────
   const selLoc = selectedLocation ? GUILD_OP_LOCATIONS.find(l => l.id === selectedLocation) : null;
   const DIFFS: { key: GuildDifficulty; label: string; desc: string; color: string }[] = [
-    { key: 'easy',   label: isEn ? 'EASY'   : 'ŁATWY',    desc: isEn ? 'Weaker enemies, fewer rewards.'  : 'Słabsi wrogowie, mniej nagród.',  color: '#4ade80' },
-    { key: 'normal', label: isEn ? 'NORMAL' : 'NORMALNY', desc: isEn ? 'Standard challenge balance.'      : 'Standardowy balans wyzwania.',    color: '#00e5ff' },
-    { key: 'hard',   label: isEn ? 'HARD'   : 'TRUDNY',   desc: isEn ? 'Stronger enemies, +60% rewards.' : 'Silniejsi wrogowie, +60% nagród.', color: '#f87171' },
+    { key: 'easy',   label: t.guildOp.diffEasy,   desc: t.guildOp.diffEasyDesc,   color: '#4ade80' },
+    { key: 'normal', label: t.guildOp.diffNormal, desc: t.guildOp.diffNormalDesc, color: '#00e5ff' },
+    { key: 'hard',   label: t.guildOp.diffHard,   desc: t.guildOp.diffHardDesc,   color: '#f87171' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {notifBlock}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)' }}>{isEn ? 'GUILD OPERATION' : 'OPERACJA GILDYJNA'}</p>
+        <p style={{ ...ORB, fontSize: 9, color: 'var(--gold-main)' }}>{t.guildOp.title}</p>
         <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)' }}>
-          <GameIcon name="users" size={9} color="var(--text-muted)" /> {memberCount} {isEn ? 'members' : 'członków'} · {isEn ? 'LVL.' : 'POZ.'} {hero.level}
+          <GameIcon name="users" size={9} color="var(--text-muted)" /> {memberCount} {t.guildOp.members} · {t.common.lvlShortCaps} {hero.level}
         </p>
       </div>
 
       <p style={{ ...MONO, fontSize: 9, color: '#f59e0b' }}>
-        <GameIcon name="lightning" size={9} color="#f59e0b" /> {isEn ? 'Operation ends at midnight UTC. Each member fights with their own HP.' : 'Operacja kończy się o północy UTC. Każdy walczy swoim HP.'}
+        <GameIcon name="lightning" size={9} color="#f59e0b" /> {t.guildOp.hint}
       </p>
 
       {inCooldown && op ? (
@@ -678,12 +680,12 @@ export default function GuildOperationPanel({
             completed={[]}
             selected={ALL_DUNGEONS.find(d => d.id === selectedLocation) ?? null}
             onSelect={(d) => setSelectedLocation(d.id)}
-            isEn={isEn}
+            isEn={lang !== 'pl'}
           />
 
           {/* Difficulty */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>{isEn ? 'DIFFICULTY' : 'POZIOM TRUDNOŚCI'}</p>
+            <p style={{ ...ORB, fontSize: 9, color: 'var(--text-dim)' }}>{t.guildOp.difficulty}</p>
             <div style={{ display: 'flex', gap: 5 }}>
               {DIFFS.map(d => {
                 const sel = selectedDifficulty === d.key;
@@ -716,15 +718,15 @@ export default function GuildOperationPanel({
             style={{ fontSize: 10, opacity: !selectedLocation ? 0.55 : 1 }}
           >
             {starting
-              ? <><GameIcon name="hourglass" size={10} color="#fff" /> {isEn ? 'Starting...' : 'Uruchamianie...'}</>
+              ? <><GameIcon name="hourglass" size={10} color="#fff" /> {t.guildOp.starting}</>
               : selLoc
-                ? <>{isEn ? 'START —' : 'ROZPOCZNIJ —'} {selLoc.emoji} {isEn ? (selLoc.nameEn ?? selLoc.name) : selLoc.name}</>
-                : (isEn ? 'SELECT A LOCATION ON THE MAP' : 'WYBIERZ LOKACJĘ NA MAPIE')}
+                ? <>{t.guildOp.startPrefix} {selLoc.emoji} {lang !== 'pl' ? (selLoc.nameEn ?? selLoc.name) : selLoc.name}</>
+                : t.guildOp.selectLocation}
           </button>
         </>
       ) : !isLeaderOrOfficer ? (
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', padding: '8px 0' }}>
-          {isEn ? 'Only the leader or officer can start an operation.' : 'Tylko władca lub oficer może uruchomić operację.'}
+          {t.guildOp.leaderOnly}
         </p>
       ) : null}
     </div>

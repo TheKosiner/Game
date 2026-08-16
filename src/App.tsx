@@ -61,7 +61,7 @@ function normalizePath(p: string): string {
 
 export default function App() {
   const t = useT();
-  const { lang, setLang } = useLangStore();
+  const { setLang } = useLangStore();
   const hero = useGameStore(s => s.hero);
   const loadGame = useGameStore(s => s.loadGame);
   const saveGame = useGameStore(s => s.saveGame);
@@ -758,7 +758,7 @@ export default function App() {
         >
           <GameIcon name="user" size={14} color="#00f5ff" />
           <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00f5ff' }}>
-            {lang !== 'pl' ? 'Download Android app' : 'Pobierz aplikację Android'}
+            {t.app.downloadAndroid}
           </span>
           <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.4)' }}>↓ APK</span>
         </a>

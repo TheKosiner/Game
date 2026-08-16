@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import { portraitSrc, resolvePortrait } from '../data/portraits';
 import { useT } from '../hooks/useT';
 import { useLangStore } from '../store/langStore';
+import { tFor } from '../i18n';
 import { getItemName } from '../data/itemGenerator';
 import ItemIcon from './ItemIcon';
 import GameIcon from './GameIcon';
@@ -30,14 +31,13 @@ const RARITY_COLOR: Record<string, string> = {
   common: '#8FA4B8', uncommon: '#4A9B5C', rare: '#3A78D4', epic: '#9040C8', legendary: '#D48020',
 };
 const SLOT_ORDER = ['weapon', 'armor', 'helmet', 'boots', 'ring', 'amulet'] as const;
-const STAT_NAMES_PL: Record<string, string> = {
-  strength: 'Siła', dexterity: 'Zręczność', intelligence: 'Celność',
-  vitality: 'Żywotność', magic: 'Magia', magicResistance: 'Odp. mag.',
-};
-const STAT_NAMES_EN: Record<string, string> = {
-  strength: 'Strength', dexterity: 'Dexterity', intelligence: 'Accuracy',
-  vitality: 'Vitality', magic: 'Magic', magicResistance: 'Mag. Res.',
-};
+function statNamesFor(lang: string): Record<string, string> {
+  const e = tFor(lang).equipment;
+  return {
+    strength: e.statStrength, dexterity: e.statDexterity, intelligence: e.statIntelligence,
+    vitality: e.statVitality, magic: e.statMagic, magicResistance: e.statMagRes,
+  };
+}
 
 function ItemDetailPopup({ item, onClose, lang }: { item: EquipItem; onClose: () => void; lang: string }) {
   const col = RARITY_COLOR[item.rarity] ?? '#8FA4B8';
@@ -69,18 +69,18 @@ function ItemDetailPopup({ item, onClose, lang }: { item: EquipItem; onClose: ()
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="sword" size={10} color="#ff2d78" /> {lang !== 'pl' ? 'Attack' : 'Atak'}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="sword" size={10} color="#ff2d78" /> {tFor(lang).common.attack}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
         {item.defenseBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="shield" size={10} color="#00f5ff" /> {lang !== 'pl' ? 'Defense' : 'Obrona'}</span>
+            <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="shield" size={10} color="#00f5ff" /> {tFor(lang).common.defense}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#00f5ff' }}>+{item.defenseBonus}</span>
           </div>
         ) : null}
         {stats.map(([k, v]) => {
-          const statNames = lang !== 'pl' ? STAT_NAMES_EN : STAT_NAMES_PL;
+          const statNames = statNamesFor(lang);
           return (
             <div key={k} style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)' }}>{statNames[k] ?? k}</span>
@@ -89,10 +89,10 @@ function ItemDetailPopup({ item, onClose, lang }: { item: EquipItem; onClose: ()
           );
         })}
         {!item.attackBonus && !item.defenseBonus && stats.length === 0 && (
-          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'No bonuses' : 'Brak bonusów'}</p>
+          <p style={{ ...MONO, fontSize: 11, color: 'var(--text-dim)' }}>{tFor(lang).common.noBonuses}</p>
         )}
       </div>
-      <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 8 }}>{lang !== 'pl' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</p>
+      <p style={{ ...MONO, fontSize: 9, color: 'var(--text-muted)', marginTop: 8 }}>{tFor(lang).common.minLvl} {item.level}</p>
     </div>
   );
 }
@@ -105,7 +105,7 @@ function EquipmentSection({ equipment }: { equipment: NonNullable<LeaderboardEnt
   if (items.length === 0) return null;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'Equipment' : 'Ekwipunek'}</p>
+      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{tFor(lang).common.equipmentLabel}</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {items.map(({ slot, item }) => {
           const col = RARITY_COLOR[item!.rarity] ?? '#8FA4B8';
@@ -240,7 +240,7 @@ function PlayerProfile({ entry, rank, onClose }: { entry: LeaderboardEntry; rank
 
 function GuildLeaderboard() {
   const lang = useLangStore(s => s.lang);
-  const isEn = lang !== 'pl';
+  const t = tFor(lang);
   const [guilds, setGuilds] = useState<GuildLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -248,7 +248,7 @@ function GuildLeaderboard() {
   async function fetch() {
     setLoading(true); setError('');
     try { setGuilds(await getGuildLeaderboard()); }
-    catch { setError(isEn ? 'Connection error' : 'Błąd połączenia'); }
+    catch { setError(t.leaderboard.error); }
     finally { setLoading(false); }
   }
 
@@ -257,13 +257,13 @@ function GuildLeaderboard() {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button onClick={fetch} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>⟳ {isEn ? 'Refresh' : 'Odśwież'}</button>
+        <button onClick={fetch} className="btn btn-secondary" style={{ fontSize: 10, padding: '4px 8px' }}>⟳ {t.leaderboard.refreshShort}</button>
       </div>
 
-      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{isEn ? 'Loading…' : 'Ładowanie…'}</p>}
+      {loading && <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.common.loading}</p>}
       {!loading && error && <p style={{ ...PX(6), color: 'var(--hp-bright)', textAlign: 'center', padding: 12 }}>{error}</p>}
       {!loading && !error && guilds.length === 0 && (
-        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{isEn ? 'No guilds' : 'Brak gildii'}</p>
+        <p style={{ ...PX(6), color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>{t.leaderboard.noGuilds}</p>
       )}
 
       {!loading && guilds.length > 0 && (
@@ -295,7 +295,7 @@ function GuildLeaderboard() {
                     </p>
                   </div>
                   <p style={{ ...PX(4), color: 'var(--text-muted)' }}>
-                    {isEn ? 'Leader' : 'Lider'}: {guild.leaderUsername}
+                    {t.leaderboard.leader}: {guild.leaderUsername}
                   </p>
                 </div>
 
@@ -304,7 +304,7 @@ function GuildLeaderboard() {
                     <GameIcon name="users" size={10} color="#00f5ff" /> {guild.memberCount}
                   </span>
                   <span style={{ ...ORB, fontSize: 10, color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)', padding: '1px 6px' }}>
-                    {isEn ? 'LVL.Ø' : 'POZ.Ø'} {guild.averageLevel}
+                    {t.leaderboard.avgLvl} {guild.averageLevel}
                   </span>
                 </div>
               </div>
@@ -313,7 +313,7 @@ function GuildLeaderboard() {
         </div>
       )}
 
-      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{isEn ? 'Top 30 guilds by member count' : 'Top 30 gildii wg liczby członków'}</p>
+      <p style={{ ...PX(4), color: 'var(--text-muted)', textAlign: 'center' }}>{t.leaderboard.top30}</p>
     </>
   );
 }

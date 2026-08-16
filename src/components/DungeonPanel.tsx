@@ -674,7 +674,7 @@ function DungeonList() {
           <div style={{ display: 'flex', gap: 8 }}>
             <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)' }}>{selected.floors} {t.dungeon.floors}</span>
             <span style={{ ...MONO, fontSize: 10, color: '#ffc83a' }}>
-              {isEn ? 'Rec.' : 'Pol.'} POZ. {selected.minLevel}
+              {t.dungeon.recommended} {t.common.lvlShortCaps} {selected.minLevel}
             </span>
           </div>
         </div>
