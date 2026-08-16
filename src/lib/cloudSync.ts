@@ -38,6 +38,9 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   if (!db) return;
   const savedAt = Date.now(); // used only for non-validated fields (players collection)
   useGameStore.getState().saveGame();
+  // Snapshot the save marker we are about to push. Anything saved after this
+  // point stays unsynced, so `lastCloudSyncedAt` must not jump past it.
+  const pushedMarker = useGameStore.getState().lastSaved;
   const { hero, activeQuest, pvpWins, pvpLosses, pvpRating } = useGameStore.getState();
   const { pvpLog, lastPvpFight, challengeUnlocked, lastChallengeAt } = useGameStore.getState();
   const { shopSeed, lastShopRefresh, shopPurchased, lastPassiveRegenAt } = useGameStore.getState();
@@ -78,6 +81,12 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
     }
     return;
   }
+
+  // The private save landed — the cloud now holds everything saved up to this
+  // marker, so a later cloud snapshot may safely replace local state.
+  useGameStore.setState(s => ({
+    lastCloudSyncedAt: Math.max(s.lastCloudSyncedAt, pushedMarker),
+  }));
 
   const existingGuildId = playerSnap.exists() ? (playerSnap.data().guildId as string | undefined) : undefined;
 
@@ -187,6 +196,14 @@ function migrateHeroFromRaw(raw: any) {
 export async function loadFromCloud(uid: string, force = false): Promise<boolean | null> {
   if (!db) return null;
 
+  // An operation in progress lives only in memory: the floor, the current enemy
+  // and the run's pending XP/gold are not part of the save. Replacing state from
+  // the cloud would clear `currentDungeon`, drop the player back on the map and
+  // revert rewards that have not been pushed yet — while the daily run counter
+  // has already been spent. Keep the local session authoritative until the run
+  // is closed out. `force` still wins: it reverts a server-rejected save.
+  if (!force && useGameStore.getState().currentDungeon !== null) return false;
+
   // Parallel reads — saves and players docs are independent
   const [saveSnap, playerSnap] = await Promise.all([
     getDoc(doc(db, 'saves', uid)),
@@ -213,36 +230,40 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
   // always load from cloud regardless of local state.
   const adminOverride = typeof cloudTs === 'number' && cloudTs > Date.now() + 3_600_000;
 
-  // Prefer local state when it's newer than the cloud snapshot.
+  // Prefer local state when it holds progress the cloud has not seen yet.
+  //
+  // This deliberately compares two device-clock values (`lastSaved` against the
+  // marker we last pushed) rather than the device clock against `cloudTs`.
+  // `updatedAt` is a Firestore serverTimestamp, so the old device-vs-server
+  // comparison was skewed by both network latency and any offset in the phone's
+  // clock — a device running a few seconds slow failed the check on every
+  // foreground return and reloaded stale cloud state over fresh local progress.
+  //
   // Skip this check when force=true (called after a rejected save to revert a cheat).
-  // Use a 5s buffer to account for clock drift (intentionally small to favour cross-device sync).
   if (!force && !adminOverride) {
-    try {
-      // First check in-memory store (always up-to-date, even if localStorage fails)
-      const inMemoryLastSaved = (await import('../store/gameStore')).useGameStore.getState().lastSaved ?? 0;
-      if (inMemoryLastSaved + 5_000 > cloudTs) return false;
-    } catch { /* fall through to localStorage check */ }
-
-    try {
-      const localRaw = localStorage.getItem('glitchsoul_save');
-      if (localRaw) {
-        const localSave = JSON.parse(localRaw);
-        if (localSave.uid === uid && (localSave.lastSaved ?? 0) + 5_000 > cloudTs) return false;
-      }
-    } catch { /* ignore */ }
+    const { lastSaved, lastCloudSyncedAt } = useGameStore.getState();
+    if ((lastSaved ?? 0) > (lastCloudSyncedAt ?? 0)) return false;
   }
 
   const hero = migrateHeroFromRaw(raw.hero);
 
   // Use already-fetched playerSnap for pvp stats — prefer saves doc, fall back to players doc for older saves
   const playerData = playerSnap.exists() ? playerSnap.data() : {};
+  const loadedAt = Date.now();
 
   useGameStore.setState({
     hero,
     activeQuest: raw.activeQuest ?? null,
+    // Only reached with no run in progress, or on a forced revert. Clear the
+    // whole transient run rather than just part of it, so a forced revert can
+    // never strand the player on a half-finished floor.
     currentDungeon: null,
     currentEnemy: null,
+    currentFloor: 1,
     inCombat: false,
+    awaitingEnemyTurn: false,
+    pendingDungeonXp: 0,
+    pendingDungeonGold: 0,
     pvpWins:   raw.pvpWins   ?? playerData.pvpWins   ?? 0,
     pvpLosses: raw.pvpLosses ?? playerData.pvpLosses ?? 0,
     pvpRating: raw.pvpRating ?? playerData.pvpRating ?? 1000,
@@ -254,9 +275,11 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     lastShopRefresh:     raw.lastShopRefresh     ?? 0,
     shopPurchased:       raw.shopPurchased       ?? [],
     lastPassiveRegenAt:  raw.lastPassiveRegenAt  ?? Date.now(),
-    // Stamp local lastSaved with the cloud timestamp so subsequent loadFromCloud
-    // calls on the same device don't see stale local data as "newer".
-    lastSaved: cloudTs,
+    // Local state now mirrors the cloud, so nothing is unsynced. Both markers
+    // are device-clock values and must stay on the same clock — stamping the
+    // server's `cloudTs` here would corrupt the comparison above.
+    lastSaved: loadedAt,
+    lastCloudSyncedAt: loadedAt,
   });
   return true;
 }

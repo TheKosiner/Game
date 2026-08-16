@@ -197,6 +197,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   awaitingEnemyTurn: false,
   defeatedAtDungeon: null,
   lastSaved: 0,
+  lastCloudSyncedAt: 0,
   shopSeed: Date.now(),
   lastShopRefresh: 0,
   shopPurchased: [],
@@ -1238,7 +1239,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch {
       // storage full or unavailable
     }
-    set({ lastSaved: Date.now() });
+    set({ lastSaved: save.lastSaved });
   },
 
   loadGame: () => {
@@ -1325,6 +1326,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? 0,
+          lastCloudSyncedAt: save.lastSaved ?? 0,
           shopSeed: save.shopSeed ?? Date.now(),
           lastShopRefresh: save.lastShopRefresh ?? 0,
           shopPurchased: save.shopPurchased ?? [],

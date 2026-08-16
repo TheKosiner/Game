@@ -230,9 +230,9 @@ export default function App() {
     async function load() {
       if (user) {
         // Force-reload from cloud on every fresh session start (uid first seen) and on
-        // account switches. The initial store state has lastSaved=Date.now() which always
-        // looks "newer" than any cloud timestamp, so without force the in-memory guard
-        // would skip the cloud load and fall back to potentially stale localStorage data.
+        // account switches. localStorage may hold another account's save, or a save this
+        // device never managed to push; without force the unsynced-progress guard in
+        // loadFromCloud would keep that stale local data instead of the cloud's.
         const force = loadedUidRef.current !== user.uid;
         loadedUidRef.current = user.uid;
         try {

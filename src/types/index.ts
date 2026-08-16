@@ -212,6 +212,12 @@ export interface GameState {
   awaitingEnemyTurn: boolean;
   defeatedAtDungeon: string | null;
   lastSaved: number;
+  /**
+   * The `lastSaved` value that was last successfully pushed to Firestore.
+   * When it lags behind `lastSaved` the device holds local progress the cloud
+   * has not seen yet, so a cloud snapshot must not overwrite it.
+   */
+  lastCloudSyncedAt: number;
   shopSeed: number;
   lastShopRefresh: number;
   shopPurchased: number[];
