@@ -130,7 +130,7 @@ export async function rescheduleActiveNotifications(
   if (isNative()) return;
   if (!webSupported() || Notification.permission !== 'granted') return;
   await getSwReg();
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   if (activeQuest && activeQuest.endsAt > Date.now()) {
     const name = isEn ? (activeQuest.quest.nameEn ?? activeQuest.quest.name) : activeQuest.quest.name;
     webSchedule(NOTIF_QUEST,
@@ -156,7 +156,7 @@ export async function rescheduleActiveNotifications(
 }
 
 export async function scheduleQuestNotification(namePl: string, nameEn: string | undefined, endsAt: number, lang: string) {
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   const name = isEn ? (nameEn ?? namePl) : namePl;
   await schedule(NOTIF_QUEST,
     isEn ? '⚔ Quest complete!' : '⚔ Misja zakończona!',
@@ -168,7 +168,7 @@ export async function scheduleQuestNotification(namePl: string, nameEn: string |
 export function cancelQuestNotification() { cancelSync(NOTIF_QUEST); }
 
 export async function scheduleRestNotification(endsAt: number, hp: number, lang: string) {
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   await schedule(NOTIF_REST,
     isEn ? '💤 Rest complete!' : '💤 Odpoczynek zakończony!',
     isEn ? `Your hero recovered ${hp} HP — ready for battle!` : `Bohater odzyskał ${hp} HP — gotowy do walki!`,
@@ -179,7 +179,7 @@ export async function scheduleRestNotification(endsAt: number, hp: number, lang:
 export function cancelRestNotification() { cancelSync(NOTIF_REST); }
 
 export async function scheduleBeggingNotification(endsAt: number, gold: number, lang: string) {
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   await schedule(NOTIF_BEGGING,
     isEn ? '🔩 Scrapping done!' : '🔩 Zbieranie zakończone!',
     isEn ? `Collected ~${gold}🪙 — come pick it up!` : `Zebrałeś ~${gold}🪙 — odbierz złom!`,

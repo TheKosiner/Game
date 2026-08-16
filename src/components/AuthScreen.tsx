@@ -7,6 +7,7 @@ import logoImg from '../assets/logo.webp';
 import { PX, MONO, ORB } from '../utils/styles';
 import GameIcon from './GameIcon';
 import CyberpunkBg from './CyberpunkBg';
+import LangPicker from './LangPicker';
 
 type Mode = 'login' | 'register' | 'reset';
 
@@ -96,7 +97,7 @@ function AuthShell({ children, onBack }: { children: React.ReactNode; onBack?: (
               ...MONO, fontSize: 11, color: 'var(--text-muted)',
               background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 12px',
             }}>
-              {lang === 'en' ? '← Home' : '← Strona główna'}
+              {lang !== 'pl' ? '← Home' : '← Strona główna'}
             </button>
           )}
           <span style={{ flex: 1 }} />
@@ -245,31 +246,9 @@ function VerificationScreen() {
 }
 
 function LangToggle() {
-  const lang    = useLangStore(s => s.lang);
-  const setLang = useLangStore(s => s.setLang);
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, gap: 4 }}>
-      {(['pl', 'en'] as const).map(l => (
-        <button
-          key={l}
-          onClick={() => setLang(l)}
-          aria-pressed={lang === l}
-          style={{
-            ...ORB,
-            background: lang === l ? 'rgba(0,245,255,0.08)' : 'transparent',
-            border: `1px solid ${lang === l ? 'rgba(0,245,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
-            color: lang === l ? '#00f5ff' : 'var(--text-muted)',
-            textShadow: lang === l ? '0 0 8px rgba(0,245,255,0.6)' : 'none',
-            fontSize: 9, fontWeight: 700,
-            padding: '4px 10px',
-            cursor: 'pointer',
-            letterSpacing: '0.1em',
-            transition: 'all 0.15s',
-          }}
-        >
-          {l.toUpperCase()}
-        </button>
-      ))}
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
+      <LangPicker />
     </div>
   );
 }

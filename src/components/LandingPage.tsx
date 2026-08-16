@@ -48,6 +48,10 @@ const SHOTS = [
   { src: '/screens/shop.webp',    pl: 'Sklep z ekwipunkiem dobieranym do poziomu',           en: 'Item shop stocked to your level' },
 ];
 
+// Marketing copy. Languages without their own copy fall back to English.
+type LandingLang = 'pl' | 'en';
+const landingLang = (l: string): LandingLang => (l === 'pl' ? 'pl' : 'en');
+
 const C = {
   pl: {
     navPlay: 'GRAJ TERAZ',
@@ -248,7 +252,7 @@ function TopBar({ onPlay, onHome, showHome, onSwitchLang }: { onPlay: () => void
 
 function PlayLabel() {
   const lang = useLangStore(s => s.lang);
-  return <>{C[lang].navPlay}</>;
+  return <>{C[landingLang(lang)].navPlay}</>;
 }
 
 function Section({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
@@ -284,7 +288,7 @@ interface Props {
 
 export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLang, page }: Props) {
   const lang = useLangStore(s => s.lang);
-  const t = C[lang];
+  const t = C[landingLang(lang)];
   const [shot, setShot] = useState<string | null>(null);
 
   if (page === 'download') {
@@ -369,7 +373,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLa
               </div>
 
               <div style={{ flex: '0 1 280px', display: 'flex', justifyContent: 'center', minWidth: 0 }}>
-                <img src="/screens/hero.webp" alt={SHOTS[0][lang]} width={260} height={532} loading="eager"
+                <img src="/screens/hero.webp" alt={SHOTS[0][landingLang(lang)]} width={260} height={532} loading="eager"
                   style={{
                     width: '100%', maxWidth: 260, height: 'auto',
                     border: '1px solid rgba(255,45,120,0.35)',
@@ -432,7 +436,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLa
               {SHOTS.map(s => (
                 <figure key={s.src} style={{ margin: 0 }}>
                   <button onClick={() => setShot(s.src)} style={{ display: 'block', width: '100%', padding: 0, background: 'none', border: 'none', cursor: 'zoom-in' }}>
-                    <img src={s.src} alt={s[lang]} loading="lazy" width={200} height={409}
+                    <img src={s.src} alt={s[landingLang(lang)]} loading="lazy" width={200} height={409}
                       style={{
                         width: '100%', height: 'auto', display: 'block',
                         border: '1px solid rgba(0,245,255,0.25)',
@@ -440,7 +444,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLa
                       }} />
                   </button>
                   <figcaption style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.45 }}>
-                    {s[lang]}
+                    {s[landingLang(lang)]}
                   </figcaption>
                 </figure>
               ))}
@@ -523,7 +527,7 @@ export default function LandingPage({ onPlay, onDownloadPage, onHome, onSwitchLa
 
 function Footer({ onDownloadPage, onPlay }: { onDownloadPage: () => void; onPlay: () => void }) {
   const lang = useLangStore(s => s.lang);
-  const t = C[lang];
+  const t = C[landingLang(lang)];
   return (
     <footer style={{ borderTop: '1px solid rgba(255,45,120,0.2)', padding: '26px 14px calc(26px + env(safe-area-inset-bottom, 0px))', background: 'rgba(4,4,12,0.7)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>

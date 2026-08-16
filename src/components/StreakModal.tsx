@@ -46,7 +46,7 @@ const CSS = `
 `;
 
 export default function StreakModal({ streakDays, streakMilestone, chestGems, gemsAdded, onClose }: Props) {
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
   const [showChest, setShowChest] = useState(false);
   const [opened, setOpened] = useState(false);
 

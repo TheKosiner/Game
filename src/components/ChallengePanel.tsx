@@ -419,7 +419,7 @@ function ResultView({ onDismiss }: { onDismiss: () => void }) {
                       {getItemName(item, lang)}
                     </p>
                     <p style={{ ...MONO, fontSize: 10, color: `${rc}99` }}>
-                      {rarityLabel[item.rarity]} · {lang === 'en' ? 'LVL.' : 'Poz.'} {item.level}
+                      {rarityLabel[item.rarity]} · {lang !== 'pl' ? 'LVL.' : 'Poz.'} {item.level}
                     </p>
                   </div>
                   <span style={{ ...MONO, fontSize: 10, color: rc, background: `${rc}18`, border: `1px solid ${rc}44`, padding: '2px 6px' }}>
@@ -1304,7 +1304,7 @@ function SelectView() {
             background: 'rgba(0,0,0,0.8)', border: `1px solid ${accentColor}55`,
             padding: '2px 6px',
           }}>
-            {lang === 'en' ? 'LVL.' : 'POZ.'} {boss!.level}
+            {lang !== 'pl' ? 'LVL.' : 'POZ.'} {boss!.level}
           </div>
         </div>
 
@@ -1319,7 +1319,7 @@ function SelectView() {
 
         {/* Description */}
         <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)', textAlign: 'center', lineHeight: 1.6 }}>
-          {lang === 'en' ? (boss!.descriptionEn ?? boss!.description) : boss!.description}
+          {lang !== 'pl' ? (boss!.descriptionEn ?? boss!.description) : boss!.description}
         </p>
 
         {/* Stats grid */}
@@ -1343,7 +1343,7 @@ function SelectView() {
 
         {/* Powers */}
         <div style={{ width: '100%' }}>
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>{lang === 'en' ? 'BOSS POWERS' : 'MOCE BOSSA'}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginBottom: 6 }}>{lang !== 'pl' ? 'BOSS POWERS' : 'MOCE BOSSA'}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {boss!.powers.map(p => (
               <div key={p} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -1393,7 +1393,7 @@ function SelectView() {
             boxShadow: `0 0 20px ${accentColor}30` }}
           onClick={() => startChallengeFight(bossIdx)}
         >
-          <GameIcon name="lightning" size={11} color="#fff" /> {lang === 'en' ? 'FIGHT' : 'WALCZ Z'} {boss!.name.toUpperCase()}
+          <GameIcon name="lightning" size={11} color="#fff" /> {lang !== 'pl' ? 'FIGHT' : 'WALCZ Z'} {boss!.name.toUpperCase()}
         </button>
       )}
     </div>

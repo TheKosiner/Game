@@ -54,7 +54,7 @@ function Fighter({ f, side, state }: { f: WarFighter | null; side: 'atk' | 'def'
 
 export default function GuildWarBattleModal({ war, onClose }: { war: GuildWar; onClose: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
   const duels: WarDuel[] = war.result?.duels ?? [];
   const [step, setStep] = useState(0);
   const [revealed, setRevealed] = useState(false);

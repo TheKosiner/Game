@@ -89,7 +89,7 @@ export default function GuildOperationPanel({
   const addXp          = useGameStore(s => s.addXp);
   const addGold        = useGameStore(s => s.addGold);
   const addToInventory = useGameStore(s => s.addToInventory);
-  const isEn           = useLangStore(s => s.lang) === 'en';
+  const isEn           = useLangStore(s => s.lang) !== 'pl';
   const isLeader         = guild.leaderUid === myUid;
   const isLeaderOrOfficer = isLeader || guild.members[myUid]?.role === 'officer';
   const memberCount = Object.keys(guild.members).length;

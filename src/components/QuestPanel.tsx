@@ -63,7 +63,7 @@ function formatTime(ms: number): string {
 export default function QuestPanel() {
   const t = useT();
   const lang = useLangStore(s => s.lang);
-  const isEn = lang === 'en';
+  const isEn = lang !== 'pl';
   const hero        = useGameStore(s => s.hero);
   const activeQuest  = useGameStore(s => s.activeQuest);
   const startQuest      = useGameStore(s => s.startQuest);
@@ -158,7 +158,7 @@ export default function QuestPanel() {
             width: '100%',
           }}
         >
-          <GameIcon name="bell" size={11} color="#fbbf24" /> {lang === 'en' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
+          <GameIcon name="bell" size={11} color="#fbbf24" /> {lang !== 'pl' ? 'Enable notifications to get alerted when quests finish' : 'Włącz powiadomienia gdy misja się skończy'}
         </button>
       )}
 

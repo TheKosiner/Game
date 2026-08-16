@@ -162,7 +162,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ))}
         {item.attackBonus ? (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>{item.magicDamage ? <><GameIcon name="magic_orb" size={10} color="#c078f0" />{lang === 'en' ? 'Magic Dmg.' : 'Obrażenia mag.'}</> : <><GameIcon name="sword" size={10} color="#ff2d78" />{lang === 'en' ? 'Attack' : 'Atak'}</>}</span>
+            <span style={{ ...MONO, fontSize: 10, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 3 }}>{item.magicDamage ? <><GameIcon name="magic_orb" size={10} color="#c078f0" />{lang !== 'pl' ? 'Magic Dmg.' : 'Obrażenia mag.'}</> : <><GameIcon name="sword" size={10} color="#ff2d78" />{lang !== 'pl' ? 'Attack' : 'Atak'}</>}</span>
             <span style={{ ...ORB, fontSize: 10, color: item.magicDamage ? '#c078f0' : '#ff2d78' }}>+{item.attackBonus}</span>
           </div>
         ) : null}
@@ -174,13 +174,13 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
         ) : null}
         {getEnhanceAttackBonus(item) > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang === 'en' ? 'Enhance ATK' : 'Bonus kowal ATK'}</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang !== 'pl' ? 'Enhance ATK' : 'Bonus kowal ATK'}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceAttackBonus(item)}</span>
           </div>
         )}
         {getEnhanceDefenseBonus(item) > 0 && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang === 'en' ? 'Enhance DEF' : 'Bonus kowal DEF'}</span>
+            <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{lang !== 'pl' ? 'Enhance DEF' : 'Bonus kowal DEF'}</span>
             <span style={{ ...ORB, fontSize: 10, color: '#ffd700' }}>+{getEnhanceDefenseBonus(item)}</span>
           </div>
         )}
@@ -188,7 +188,7 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           const sb = getEnhanceStatBonus(item);
           const enhStatEntries = (Object.entries(sb) as [string, number][]).filter(([, v]) => v > 0);
           if (!enhStatEntries.length) return null;
-          const STAT_NAMES: Record<string, string> = { strength: lang === 'en' ? 'Strength' : 'Siła', dexterity: lang === 'en' ? 'Dexterity' : 'Zręczność', intelligence: lang === 'en' ? 'Accuracy' : 'Celność', vitality: lang === 'en' ? 'Vitality' : 'Żywotność', magic: 'Magic', magicResistance: lang === 'en' ? 'Mag. Res.' : 'Odp. Mag.' };
+          const STAT_NAMES: Record<string, string> = { strength: lang !== 'pl' ? 'Strength' : 'Siła', dexterity: lang !== 'pl' ? 'Dexterity' : 'Zręczność', intelligence: lang !== 'pl' ? 'Accuracy' : 'Celność', vitality: lang !== 'pl' ? 'Vitality' : 'Żywotność', magic: 'Magic', magicResistance: lang !== 'pl' ? 'Mag. Res.' : 'Odp. Mag.' };
           return enhStatEntries.map(([stat, val]) => (
             <div key={stat} style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ ...MONO, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}><GameIcon name="anvil" size={10} color="#ffd700" />{STAT_NAMES[stat] ?? stat}</span>
@@ -197,12 +197,12 @@ function ItemDetailPanel({ item, onClose, onUnequip }: { item: Item; onClose: ()
           ));
         })()}
         {statEntries.length === 0 && !item.attackBonus && !item.defenseBonus && getEnhanceAttackBonus(item) === 0 && getEnhanceDefenseBonus(item) === 0 && Object.values(getEnhanceStatBonus(item)).every(v => !v) && (
-          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'No bonuses' : 'Brak bonusów'}</p>
+          <p style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'No bonuses' : 'Brak bonusów'}</p>
         )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang === 'en' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</span>
+        <span style={{ ...MONO, fontSize: 10, color: 'var(--text-dim)' }}>{lang !== 'pl' ? 'Min. lvl.' : 'Min. poz.'} {item.level}</span>
         <span style={{ ...ORB, fontSize: 10, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 2 }}>{item.goldValue}<GameIcon name="coin" size={10} color="#ffd700" /></span>
       </div>
 
@@ -488,8 +488,8 @@ export default function HeroCard() {
   const hasQuest    = activeQuest !== null;
   const inDungeon   = currentDungeon !== null || inCombat;
 
-  const restBlockReason    = isBegging ? (lang === 'en' ? 'character is scavenging' : 'postać zbiera złom') : inDungeon ? (lang === 'en' ? 'character is in an operation' : 'postać wykonuje operację') : undefined;
-  const beggingBlockReason = isResting ? (lang === 'en' ? 'character is resting' : 'postać odpoczywa') : hasQuest ? (lang === 'en' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang === 'en' ? 'character is in an operation' : 'postać wykonuje operację') : undefined;
+  const restBlockReason    = isBegging ? (lang !== 'pl' ? 'character is scavenging' : 'postać zbiera złom') : inDungeon ? (lang !== 'pl' ? 'character is in an operation' : 'postać wykonuje operację') : undefined;
+  const beggingBlockReason = isResting ? (lang !== 'pl' ? 'character is resting' : 'postać odpoczywa') : hasQuest ? (lang !== 'pl' ? 'character is on a quest' : 'postać wykonuje zadanie') : inDungeon ? (lang !== 'pl' ? 'character is in an operation' : 'postać wykonuje operację') : undefined;
 
   const displayHp  = hero.hp + earnedRestHp;
   const hpPct      = (displayHp / hero.maxHp) * 100;
@@ -627,7 +627,7 @@ export default function HeroCard() {
           gap: 6,
         }}>
           <span style={{ ...MONO, fontSize: 10, color: '#475569' }}>
-            {lang === 'en' ? 'DMG RANGE' : 'ZAKRES DMG'}
+            {lang !== 'pl' ? 'DMG RANGE' : 'ZAKRES DMG'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ ...ORB, fontSize: 11, color: '#ff2d78' }}>
@@ -635,7 +635,7 @@ export default function HeroCard() {
             </span>
             <span style={{ ...MONO, fontSize: 10, color: '#475569' }}>·</span>
             <span style={{ ...MONO, fontSize: 10, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: 2 }}>
-              <GameIcon name="explosion" size={10} color="#f59e0b" /> {lang === 'en' ? 'CRIT' : 'KRYT'} {critPct}%
+              <GameIcon name="explosion" size={10} color="#f59e0b" /> {lang !== 'pl' ? 'CRIT' : 'KRYT'} {critPct}%
             </span>
             <span style={{ ...ORB, fontSize: 11, color: '#f59e0b' }}>
               {dmgRange.critMin}–{dmgRange.critMax}

@@ -98,13 +98,13 @@ function ResultModal({ result, onClose, onRetry }: {
   const borderColor = success ? 'rgba(0,230,118,0.35)' : 'rgba(255,68,68,0.35)';
   const icon = success ? 'check' : 'x_mark';
   const title = success
-    ? (lang === 'en' ? 'ENHANCEMENT SUCCESS!' : 'ULEPSZENIE UDANE!')
-    : (lang === 'en' ? 'ENHANCEMENT FAILED!' : 'ULEPSZENIE NIEUDANE!');
+    ? (lang !== 'pl' ? 'ENHANCEMENT SUCCESS!' : 'ULEPSZENIE UDANE!')
+    : (lang !== 'pl' ? 'ENHANCEMENT FAILED!' : 'ULEPSZENIE NIEUDANE!');
   const levelText = success
     ? `+${result.fromLevel} → +${result.toLevel}`
     : result.fromLevel > 0
       ? `+${result.fromLevel} → +${result.toLevel}`
-      : (lang === 'en' ? 'Stayed at base' : 'Pozostał bazowy');
+      : (lang !== 'pl' ? 'Stayed at base' : 'Pozostał bazowy');
 
   return createPortal(
     <div className="overlay-fade" style={{
@@ -155,11 +155,11 @@ function ResultModal({ result, onClose, onRetry }: {
               width: '100%', display: 'flex', flexDirection: 'column', gap: 6,
             }}>
               <p style={{ ...MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', margin: 0, letterSpacing: 1 }}>
-                {lang === 'en' ? 'NEXT ATTEMPT' : 'NASTĘPNA PRÓBA'}
+                {lang !== 'pl' ? 'NEXT ATTEMPT' : 'NASTĘPNA PRÓBA'}
               </p>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  {lang === 'en' ? 'Cost' : 'Koszt'}
+                  {lang !== 'pl' ? 'Cost' : 'Koszt'}
                 </span>
                 <span style={{ ...ORB, fontSize: 11, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 3 }}>
                   <GameIcon name="coin" size={11} /> {nextCost.toLocaleString()}
@@ -167,7 +167,7 @@ function ResultModal({ result, onClose, onRetry }: {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>
-                  {lang === 'en' ? 'Success chance' : 'Szansa sukcesu'}
+                  {lang !== 'pl' ? 'Success chance' : 'Szansa sukcesu'}
                 </span>
                 <span style={{ ...ORB, fontSize: 11, color: chanceColor }}>
                   {nextChance}%
@@ -188,7 +188,7 @@ function ResultModal({ result, onClose, onRetry }: {
               textShadow: '0 0 8px rgba(255,150,50,0.4)',
             }}
           >
-            <GameIcon name="anvil" size={12} color="#ff9632" /> {lang === 'en' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
+            <GameIcon name="anvil" size={12} color="#ff9632" /> {lang !== 'pl' ? 'TRY AGAIN' : 'PRÓBUJ DALEJ'}
           </button>
           <button
             onClick={onClose}
@@ -199,7 +199,7 @@ function ResultModal({ result, onClose, onRetry }: {
               color: 'rgba(255,255,255,0.5)', borderRadius: 6, cursor: 'pointer',
             }}
           >
-            {lang === 'en' ? 'CLOSE' : 'ZAMKNIJ'}
+            {lang !== 'pl' ? 'CLOSE' : 'ZAMKNIJ'}
           </button>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function SmithPanel() {
     if (enh >= MAX_ENHANCE) return;
     if (hero.gold < (selected.item.level ?? 1) * ENHANCE_COST_PER_LV[enh]) return;
 
-    const itemName = lang === 'en' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
+    const itemName = lang !== 'pl' ? (selected.item.nameEn ?? selected.item.name) : selected.item.name;
     const originalItem = selected.item;
 
     enhanceItem(selected.source, selected.idxOrSlot);
@@ -302,12 +302,12 @@ export default function SmithPanel() {
   const isCore = freshSelected?.item.slot === 'ring' || freshSelected?.item.slot === 'amulet';
 
   const STAT_LABEL: Record<keyof Stats, string> = {
-    strength: lang === 'en' ? 'STR' : 'SIŁ',
-    dexterity: lang === 'en' ? 'DEX' : 'ZRĘ',
-    intelligence: lang === 'en' ? 'ACC' : 'CEL',
-    vitality: lang === 'en' ? 'VIT' : 'ŻYW',
+    strength: lang !== 'pl' ? 'STR' : 'SIŁ',
+    dexterity: lang !== 'pl' ? 'DEX' : 'ZRĘ',
+    intelligence: lang !== 'pl' ? 'ACC' : 'CEL',
+    vitality: lang !== 'pl' ? 'VIT' : 'ŻYW',
     magic: 'MAG',
-    magicResistance: lang === 'en' ? 'RES' : 'ODP',
+    magicResistance: lang !== 'pl' ? 'RES' : 'ODP',
   };
 
   const coreBonus = (() => {
@@ -418,7 +418,7 @@ export default function SmithPanel() {
                 <ItemIcon item={freshSelected.item} size={44} />
                 <div>
                   <div style={{ ...ORB, fontSize: 11, color: RARITY_COLOR[freshSelected.item.rarity] ?? 'white' }}>
-                    {lang === 'en' ? (freshSelected.item.nameEn ?? freshSelected.item.name) : freshSelected.item.name}
+                    {lang !== 'pl' ? (freshSelected.item.nameEn ?? freshSelected.item.name) : freshSelected.item.name}
                   </div>
                   <div style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
                     Lv.{freshSelected.item.level}
@@ -494,7 +494,7 @@ export default function SmithPanel() {
                     })()}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang === 'en' ? 'Success' : 'Szansa'}
+                        {lang !== 'pl' ? 'Success' : 'Szansa'}
                       </span>
                       <span style={{ ...ORB, fontSize: 10, color: freshChance! >= 50 ? '#4caf50' : freshChance! >= 30 ? '#ff9632' : '#ff4444' }}>
                         {freshChance}%
@@ -502,7 +502,7 @@ export default function SmithPanel() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang === 'en' ? 'Cost' : 'Koszt'}
+                        {lang !== 'pl' ? 'Cost' : 'Koszt'}
                       </span>
                       <span style={{ ...ORB, fontSize: 10, color: hasGold ? '#ffd700' : '#ff4444', display: 'flex', alignItems: 'center', gap: 2 }}>
                         {freshCost}<GameIcon name="coin" size={10} color={hasGold ? '#ffd700' : '#ff4444'} />
@@ -510,7 +510,7 @@ export default function SmithPanel() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,255,255,0.45)' }}>
-                        {lang === 'en' ? 'On fail' : 'Przy porażce'}
+                        {lang !== 'pl' ? 'On fail' : 'Przy porażce'}
                       </span>
                       <span style={{ ...MONO, fontSize: 10, color: 'rgba(255,100,100,0.7)' }}>
                         {freshEnh > 0 ? `+${freshEnh} → +${freshEnh - 1}` : '—'}

@@ -1,16 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { isLang, type Lang } from '../i18n';
 
-export type Lang = 'pl' | 'en';
+export type { Lang };
+
+/** Pick the closest supported language from the browser's preferences. */
+function detectLang(): Lang {
+  const prefs = navigator.languages?.length ? navigator.languages : [navigator.language ?? ''];
+  for (const p of prefs) {
+    const base = p.toLowerCase().split('-')[0];
+    if (isLang(base)) return base;
+  }
+  return 'en';
+}
 
 interface LangState {
   lang: Lang;
   setLang: (lang: Lang) => void;
-}
-
-function detectLang(): Lang {
-  const nav = navigator.language?.toLowerCase() ?? '';
-  return nav.startsWith('pl') ? 'pl' : 'en';
 }
 
 export const useLangStore = create<LangState>()(

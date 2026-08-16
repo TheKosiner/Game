@@ -37,7 +37,7 @@ function getRecentWarCache(guildId: string): { warId: string; resolvedAt: number
 
 export default function GuildWarPanel({ guild, myUid, onRefresh, onWarSeen }: { guild: Guild; myUid: string; onRefresh: () => void; onWarSeen?: () => void }) {
   const t = useT();
-  const isEn = useLangStore(s => s.lang) === 'en';
+  const isEn = useLangStore(s => s.lang) !== 'pl';
   const isLeader = guild.leaderUid === myUid;
   const isOfficer = guild.members[myUid]?.role === 'officer';
   const canDeclare = isLeader || isOfficer;

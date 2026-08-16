@@ -50,6 +50,7 @@ import AnimatedPanel from './components/AnimatedPanel';
 import GameIcon from './components/GameIcon';
 import TutorialOverlay, { getTutorialCfg, type TutorialNav } from './components/TutorialOverlay';
 import LandingPage, { PUBLIC_ROUTES, ALT_ROUTE, routeFor } from './components/LandingPage';
+import LangPicker from './components/LangPicker';
 
 // '/pobierz/' and '/pobierz' are the same public route.
 function normalizePath(p: string): string {
@@ -123,7 +124,7 @@ export default function App() {
     }
     const box = createMysteryBox(milestone, freshHero.level);
     useGameStore.getState().addToInventory(box);
-    addCombatLog(tRef.current.gems.streakBoxLog(getLang() === 'en' ? box.nameEn ?? box.name : box.name), 'loot');
+    addCombatLog(tRef.current.gems.streakBoxLog(getLang() !== 'pl' ? box.nameEn ?? box.name : box.name), 'loot');
   };
 
   const desktopMainRef = useRef<HTMLElement>(null);
@@ -157,12 +158,16 @@ export default function App() {
     }
   }, [user]);
 
-  // On the public pages the URL decides the language (each language has its own
-  // indexable URL), so adopt it whenever the visitor lands on or navigates to one.
+  // On the public marketing pages the URL decides the language (each language has
+  // its own indexable URL). This must NOT apply once someone is playing: the game
+  // lives at '/' too, and forcing that route's language there would overwrite the
+  // player's own choice on every reload.
   useEffect(() => {
+    if (authLoading || user || Capacitor.isNativePlatform()) return;
+    if (isFirebaseConfigured === false && !new URLSearchParams(window.location.search).has('landing')) return;
     const route = PUBLIC_ROUTES[publicRoute];
     if (route) setLang(route.lang);
-  }, [publicRoute]);
+  }, [publicRoute, authLoading, user]);
 
   // Keep the public marketing routes in sync with browser back/forward.
   useEffect(() => {
@@ -718,26 +723,7 @@ export default function App() {
           }}>{t.app.level(hero.level)}</span>
           {user && (
             <>
-              <button
-                onClick={() => setLang('pl')}
-                aria-label="Język Polski"
-                aria-pressed={lang === 'pl'}
-                style={{
-                  fontFamily: "'Orbitron', monospace",
-                  color: lang === 'pl' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 10,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                }}
-              >PL</button>
-              <button
-                onClick={() => setLang('en')}
-                aria-label="English language"
-                aria-pressed={lang === 'en'}
-                style={{
-                  fontFamily: "'Orbitron', monospace",
-                  color: lang === 'en' ? '#00f5ff' : 'rgba(0,245,255,0.3)', fontSize: 10,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                }}
-              >EN</button>
+              <LangPicker compact />
               <button
                 onClick={() => logout()}
                 aria-label={t.app.logout}
@@ -769,7 +755,7 @@ export default function App() {
         >
           <GameIcon name="user" size={14} color="#00f5ff" />
           <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: '#00f5ff' }}>
-            {lang === 'en' ? 'Download Android app' : 'Pobierz aplikację Android'}
+            {lang !== 'pl' ? 'Download Android app' : 'Pobierz aplikację Android'}
           </span>
           <span style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 10, color: 'rgba(0,245,255,0.4)' }}>↓ APK</span>
         </a>
