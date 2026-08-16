@@ -78,7 +78,8 @@ const labelStyle: React.CSSProperties = {
 };
 
 // Shared page shell: aurora background + centered column + language toggle
-function AuthShell({ children }: { children: React.ReactNode }) {
+function AuthShell({ children, onBack }: { children: React.ReactNode; onBack?: () => void }) {
+  const lang = useLangStore(s => s.lang);
   return (
     <div style={{
       minHeight: '100dvh', position: 'relative',
@@ -89,7 +90,18 @@ function AuthShell({ children }: { children: React.ReactNode }) {
       <style>{AUTH_CSS}</style>
       <CyberpunkBg />
       <div style={{ width: '100%', maxWidth: 380, position: 'relative', zIndex: 1 }}>
-        <LangToggle />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {onBack && (
+            <button onClick={onBack} style={{
+              ...MONO, fontSize: 11, color: 'var(--text-muted)',
+              background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 12px',
+            }}>
+              {lang === 'en' ? '← Home' : '← Strona główna'}
+            </button>
+          )}
+          <span style={{ flex: 1 }} />
+          <LangToggle />
+        </div>
         {children}
       </div>
     </div>
@@ -262,7 +274,7 @@ function LangToggle() {
   );
 }
 
-export default function AuthScreen() {
+export default function AuthScreen({ onBack }: { onBack?: () => void } = {}) {
   const t = useT();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -315,7 +327,7 @@ export default function AuthScreen() {
   }
 
   return (
-    <AuthShell>
+    <AuthShell onBack={onBack}>
       <BrandHeader />
 
       <div style={{ animation: 'auth-in 0.5s ease 0.15s both' }}>
