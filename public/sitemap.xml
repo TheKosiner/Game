@@ -1,21 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://glitchsoul.com/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://glitchsoul.com/pobierz</loc>
+    <loc>https://glitchsoul.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/" />
+    <lastmod>2026-08-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://glitchsoul.com/pobierz/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/pobierz/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://glitchsoul.com/logowanie</loc>
+    <loc>https://glitchsoul.com/en/download/</loc>
+    <xhtml:link rel="alternate" hreflang="pl" href="https://glitchsoul.com/pobierz/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://glitchsoul.com/en/download/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://glitchsoul.com/pobierz/" />
     <lastmod>2026-08-16</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
 </urlset>

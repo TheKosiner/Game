@@ -49,7 +49,7 @@ import LoadingScreen, { LOADING_MIN_MS } from './components/LoadingScreen';
 import AnimatedPanel from './components/AnimatedPanel';
 import GameIcon from './components/GameIcon';
 import TutorialOverlay, { getTutorialCfg, type TutorialNav } from './components/TutorialOverlay';
-import LandingPage from './components/LandingPage';
+import LandingPage, { PUBLIC_ROUTES, ALT_ROUTE, routeFor } from './components/LandingPage';
 
 // '/pobierz/' and '/pobierz' are the same public route.
 function normalizePath(p: string): string {
@@ -156,6 +156,13 @@ export default function App() {
       setPublicRoute('/');
     }
   }, [user]);
+
+  // On the public pages the URL decides the language (each language has its own
+  // indexable URL), so adopt it whenever the visitor lands on or navigates to one.
+  useEffect(() => {
+    const route = PUBLIC_ROUTES[publicRoute];
+    if (route) setLang(route.lang);
+  }, [publicRoute]);
 
   // Keep the public marketing routes in sync with browser back/forward.
   useEffect(() => {
@@ -508,15 +515,22 @@ export default function App() {
   // (it advertises installing the app), so native goes straight to sign-in.
   const forceLanding = new URLSearchParams(window.location.search).has('landing');
   if (!authLoading && !isNative && ((isFirebaseConfigured && !user) || forceLanding)) {
-    if (publicRoute === '/logowanie') {
-      return <AuthScreen onBack={() => goPublic('/')} />;
+    const route = PUBLIC_ROUTES[publicRoute] ?? PUBLIC_ROUTES['/'];
+    const go = (p: 'landing' | 'download' | 'auth') => goPublic(routeFor(p, route.lang));
+    const switchLang = (l: 'pl' | 'en') => {
+      if (l !== route.lang) goPublic(ALT_ROUTE[publicRoute] ?? routeFor(route.page, l));
+    };
+
+    if (route.page === 'auth') {
+      return <AuthScreen onBack={() => go('landing')} />;
     }
     return (
       <LandingPage
-        page={publicRoute === '/pobierz' ? 'download' : 'landing'}
-        onPlay={() => goPublic('/logowanie')}
-        onDownloadPage={() => goPublic('/pobierz')}
-        onHome={() => goPublic('/')}
+        page={route.page}
+        onPlay={() => go('auth')}
+        onDownloadPage={() => go('download')}
+        onHome={() => go('landing')}
+        onSwitchLang={switchLang}
       />
     );
   }
