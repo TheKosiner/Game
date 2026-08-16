@@ -113,7 +113,9 @@ export function getHeroMaxHp(stats: Stats, level: number, equipment?: Hero['equi
 }
 
 export function calcXpToNext(level: number): number {
-  return Math.floor(100 * Math.pow(level, 2.3));
+  // Exponent 2.2 (was 2.3): keeps early levels almost identical while making
+  // the steep high-level grind noticeably more achievable.
+  return Math.floor(100 * Math.pow(level, 2.2));
 }
 
 export function calcStatBonus(stats: Partial<Stats>): number {

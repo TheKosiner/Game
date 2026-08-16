@@ -44,10 +44,10 @@ describe('calcCritChance', () => {
 });
 
 describe('calcXpToNext', () => {
-  it('matches the 100 * level^2.3 curve', () => {
+  it('matches the 100 * level^2.2 curve', () => {
     expect(calcXpToNext(1)).toBe(100);
-    expect(calcXpToNext(2)).toBe(Math.floor(100 * Math.pow(2, 2.3)));
-    expect(calcXpToNext(10)).toBe(Math.floor(100 * Math.pow(10, 2.3)));
+    expect(calcXpToNext(2)).toBe(Math.floor(100 * Math.pow(2, 2.2)));
+    expect(calcXpToNext(10)).toBe(Math.floor(100 * Math.pow(10, 2.2)));
   });
 
   it('is strictly increasing', () => {
