@@ -494,7 +494,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 8 – Shadow Protocol: sleek ninja dissolving into shadows with blades
     8: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="sp"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="sp" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* shadow wisps at bottom */}
         <ellipse cx="60" cy="150" rx="36" ry="10" fill="#220044" opacity="0.5"/>
         <ellipse cx="40" cy="145" rx="12" ry="8" fill="#440088" opacity="0.3"/>
@@ -550,7 +550,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 10 – Void Predator: serpentine dragon from the void
     10: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="vp"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="vp" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* void energy bg */}
         <ellipse cx="60" cy="100" rx="55" ry="55" fill="#00220020"/>
         {/* tail */}
@@ -610,7 +610,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 12 – The Architect: floating brain with mechanical tentacle arms
     12: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="ta"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="ta" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* hover glow below */}
         <ellipse cx="60" cy="154" rx="32" ry="6" fill="#00FFFF20"/>
         {/* tentacle arms */}
@@ -666,7 +666,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 15 – Omega Unit ZERO: colossal mech — all systems online
     15: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="ou"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="ou" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* power aura */}
         <ellipse cx="60" cy="100" rx="58" ry="60" fill="#FFCC0008"/>
         {/* legs — massive */}
@@ -749,7 +749,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 3 – Plague Bot: corroded robot dripping acid/virus
     3: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="pb"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="pb" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         <ellipse cx="60" cy="153" rx="38" ry="6" fill="#22AA0018"/>
         {/* dripping acid */}
         <ellipse cx="44" cy="155" rx="4" ry="7" fill="#44FF00" opacity="0.3"/>
@@ -820,7 +820,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 5 – Storm Mech: mech with electric arcs between arms
     5: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="sm"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="sm" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         <ellipse cx="60" cy="152" rx="40" ry="7" fill="#FFEE0018"/>
         {/* lightning arcs between hands */}
         <path d="M12 72 Q30 55 46 72 Q60 88 74 72 Q90 55 108 72" fill="none" stroke="#FFEE00" strokeWidth="2.5" opacity="0.9"/>
@@ -883,7 +883,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 7 – Virus Entity: glitching digital form with corruption
     7: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="ve"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="ve" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* glitch bg rectangles */}
         <rect x="20" y="60" width="80" height="4" rx="0" fill="#FF0044" opacity="0.15"/>
         <rect x="10" y="90" width="100" height="3" rx="0" fill="#FF0044" opacity="0.1"/>
@@ -954,7 +954,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 9 – Chrome Predator: sleek chrome panther/cat in pounce
     9: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="cp"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="cp" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         <ellipse cx="60" cy="154" rx="42" ry="6" fill="#88AACC18"/>
         {/* tail — arching high */}
         <path d="M85 120 Q110 90 105 60 Q102 45 110 30" fill="none" stroke="#667788" strokeWidth="10" strokeLinecap="round"/>
@@ -1020,7 +1020,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 11 – Neural Titan: giant with exposed neural network all over body
     11: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="nt"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="nt" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         <ellipse cx="60" cy="153" rx="44" ry="7" fill="#00CCFF18"/>
         {/* legs — massive */}
         <rect x="30" y="108" width="24" height="40" rx="6" fill="#112233"/>
@@ -1099,7 +1099,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 13 – Nexus Core: floating crystal with energy rings
     13: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="nc"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="nc" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* outer energy rings */}
         <ellipse cx="60" cy="80" rx="55" ry="18" fill="none" stroke="#FF8800" strokeWidth="2" opacity="0.5"/>
         <ellipse cx="60" cy="80" rx="45" ry="14" fill="none" stroke="#FFAA00" strokeWidth="1.5" opacity="0.4" transform="rotate(30 60 80)"/>
@@ -1148,7 +1148,7 @@ function BossSvg({ id, size = 220 }: { id: number; size?: number }) {
     // 14 – Void Colossus: massive dark entity with void tendrils
     14: (
       <svg viewBox="0 0 120 160" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="vc"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
+        <defs><filter id="vc" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter></defs>
         {/* void aura */}
         <ellipse cx="60" cy="100" rx="56" ry="58" fill="#110022" opacity="0.5"/>
         <ellipse cx="60" cy="155" rx="40" ry="8" fill="#330055" opacity="0.4"/>

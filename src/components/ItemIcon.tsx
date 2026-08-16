@@ -1021,7 +1021,7 @@ export default function ItemIcon({ item, size, scale, style }: Props) {
           <stop offset="0%" stopColor={colors.primary} stopOpacity="0.13" />
           <stop offset="100%" stopColor="#020208" stopOpacity="0.88" />
         </radialGradient>
-        <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%">
+        <filter id={filterId} x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />

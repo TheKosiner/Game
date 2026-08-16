@@ -1638,8 +1638,8 @@ export default function EnemyIcon({ id, size = 64, style }: Props): React.ReactE
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
+        <filter id={filterId} x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+          <feGaussianBlur stdDeviation="0.6" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
       </defs>
