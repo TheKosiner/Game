@@ -123,12 +123,34 @@ const DUNGEON_LEVELS: [string, number][] = [
   ['forest', 1], ['cave', 5], ['castle', 12], ['westland', 20],
   ['dragon_lair', 28], ['neon_undercity', 35], ['zero_zone', 40], ['ghost_network', 55],
 ];
-function calcDungeonReward(enemy: { xpReward: number; goldReward: number }, heroLevel: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
+/**
+ * Ceiling on the hero-level reward multiplier.
+ *
+ * The multiplier is exponential (1.02^level) while the XP curve is polynomial
+ * (100·level^2.2), so past roughly level 150 the multiplier outruns the curve
+ * completely — at level 301 it reaches 380x, at level 500 over 19000x. Enemy
+ * rewards already scale with the enemy's own level (8 XP at level 1 up to
+ * 670000 at level 200), so this multiplied a value that was scaling anyway.
+ *
+ * Unbounded, a single endgame operation was worth tens of levels and hundreds
+ * of millions of gold. That breaks the server-side save rules (level may rise
+ * by a bounded amount per write, goldEarnedToday is capped at 250M), so every
+ * save was rejected and the client reverted the run — the player saw the level
+ * up, then lost the rewards, the gold and the daily run.
+ *
+ * 2.5 is the largest ceiling that keeps a maxed-out player's full daily
+ * allotment inside those server caps: 10 runs x 10 floors x 525000 gold x 2.5,
+ * with the 1.6x 'hard' bonus on top, comes to ~210M against the 250M limit.
+ * It is reached around level 47, so early and mid game are unaffected.
+ */
+const MAX_LEVEL_REWARD_MULT = 2.5;
+
+export function calcDungeonReward(enemy: { xpReward: number; goldReward: number }, heroLevel: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
   const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
   const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
   const xpMult   = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
   const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-  const lvlMult  = Math.pow(1.02, heroLevel - 1);
+  const lvlMult  = Math.min(Math.pow(1.02, heroLevel - 1), MAX_LEVEL_REWARD_MULT);
   return {
     xp:           Math.round(enemy.xpReward   * xpMult   * lvlMult),
     gold:         Math.round(enemy.goldReward  * goldMult * lvlMult),

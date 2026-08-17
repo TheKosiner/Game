@@ -768,6 +768,7 @@ export const en = {
     rewardsGranted: 'Rewards granted',
     defeated: 'YOU FELL',
     fled: 'ESCAPED',
+    needRest: (hp: number) => `Too wounded — rest to at least ${hp} HP before entering.`,
     critPrefix: '💥 CRIT! ',
     attacksFirst: (dmg: number) => `attacks first for ${dmg}`,
     attacksFor: (dmg: number) => `attacks for ${dmg}`,

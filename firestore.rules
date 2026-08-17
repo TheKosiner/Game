@@ -158,7 +158,12 @@ service cloud.firestore {
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
       return
-        nw.hero.level <= old.hero.level + 5
+        // Headroom for a legitimate endgame run. A maxed-out operation on the
+        // hardest difficulty in XP mode is worth just over 4 levels, so the
+        // previous +5 left no margin and rejected honest saves — which made the
+        // client revert the whole run. +10 still blocks jumping to an arbitrary
+        // level while leaving real play room to breathe.
+        nw.hero.level <= old.hero.level + 10
         && nw.pvpWins   >= old.pvpWins
         && nw.pvpWins   <= old.pvpWins + 1
         && nw.pvpLosses >= old.pvpLosses

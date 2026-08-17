@@ -26,6 +26,9 @@ const MONO: React.CSSProperties = { fontFamily: "'Share Tech Mono', monospace" }
 type Phase = 'idle' | 'direction' | 'combat' | 'event' | 'pre_boss' | 'boss_combat' | 'victory' | 'dead' | 'fled';
 type EventType = 'chest' | 'lake' | 'companion' | 'shrine' | 'trap' | 'altar' | 'inscription';
 
+/** Minimum share of max HP required to enter the crypt. */
+const MIN_ENTRY_HP_FRACTION = 0.25;
+
 function quadDmg(atk: number, def: number): number {
   const base = (atk * atk) / (atk + Math.max(1, def));
   return Math.max(1, Math.round(base * (0.7 + Math.random() * 0.6)));
@@ -567,7 +570,14 @@ export default function KryptaPanel() {
     if (phase === 'idle') {
       const todayRuns = Number.isFinite(hero.kryptaRunsToday) ? hero.kryptaRunsToday : 0;
       const runsLeft = MAX_DAILY_KRYPTA - todayRuns;
-      const blocked = runsLeft <= 0;
+      const outOfRuns = runsLeft <= 0;
+      // The crypt runs on the hero's current HP rather than a free heal, and
+      // entering spends a daily run immediately. Below a quarter health the
+      // first enemy simply kills you, so the run would be burned for nothing —
+      // send the player to rest instead of letting them waste it.
+      const heroMaxHp = getHeroMaxHp(hero.stats, hero.level, hero.equipment);
+      const tooHurt = hero.hp < heroMaxHp * MIN_ENTRY_HP_FRACTION;
+      const blocked = outOfRuns || tooHurt;
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 16px', textAlign: 'center' }}>
           <div style={{ filter: blocked ? 'grayscale(0.7) opacity(0.5)' : 'none' }}><GameIcon name="boss_skull" size={56} color={blocked ? 'rgba(153,68,204,0.4)' : '#9944cc'} style={{ display: 'block', margin: '0 auto' }} /></div>
@@ -590,12 +600,12 @@ export default function KryptaPanel() {
               <span key={i} style={{ opacity: i < todayRuns ? 0.2 : 1 }}><GameIcon name="boss_skull" size={14} color="#9944cc" /></span>
             ))}
             <span style={{ ...MONO, fontSize: 10, color: blocked ? '#ff2d78' : 'rgba(255,255,255,0.5)', marginLeft: 6 }}>
-              {blocked ? t.krypta.dailyLimitReached : t.krypta.runsLeft(runsLeft, MAX_DAILY_KRYPTA)}
+              {outOfRuns ? t.krypta.dailyLimitReached : t.krypta.runsLeft(runsLeft, MAX_DAILY_KRYPTA)}
             </span>
           </div>
           {blocked ? (
             <div style={{ ...MONO, fontSize: 11, color: 'rgba(255,45,120,0.7)', letterSpacing: 0.5 }}>
-              {t.krypta.comeBackTomorrow}
+              {outOfRuns ? t.krypta.comeBackTomorrow : t.krypta.needRest(Math.ceil(heroMaxHp * MIN_ENTRY_HP_FRACTION))}
             </div>
           ) : (
             <Btn onClick={enterCrypt} color="#9944cc"><GameIcon name="boss_skull" size={11} color="#fff" /> {t.krypta.enterBtn}</Btn>

@@ -771,6 +771,7 @@ export const pt: Translations = {
     rewardsGranted: 'Recompensas concedidas',
     defeated: 'VOCÊ CAIU',
     fled: 'FUGA',
+    needRest: (hp: number) => `Muito ferido — descanse até pelo menos ${hp} HP antes de entrar.`,
     critPrefix: '💥 CRÍT! ',
     attacksFirst: (dmg: number) => `ataca primeiro causando ${dmg}`,
     attacksFor: (dmg: number) => `ataca causando ${dmg}`,
