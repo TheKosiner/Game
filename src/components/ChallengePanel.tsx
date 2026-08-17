@@ -1233,6 +1233,9 @@ function SelectView() {
   const challengeUnlocked  = useGameStore(s => s.challengeUnlocked);
   const lastChallengeAt    = useGameStore(s => s.lastChallengeAt);
   const startChallengeFight = useGameStore(s => s.startChallengeFight);
+  // An operation in progress owns the combat screen, so the boss fight cannot
+  // start. Say so on the button instead of ignoring the click.
+  const inOperation         = useGameStore(s => s.inCombat);
 
   const cooldownLeft = useCooldown(lastChallengeAt);
 
@@ -1384,6 +1387,12 @@ function SelectView() {
           <p style={{ ...MONO, fontSize: 10, color: '#ff4444', marginBottom: 4 }}><GameIcon name="hourglass" size={10} color="#ff4444" /> COOLDOWN</p>
           <p style={{ ...ORB, fontSize: 16, color: '#ff4444', textShadow: '0 0 10px rgba(255,68,68,0.5)' }}>
             {fmtMs(cooldownLeft)}
+          </p>
+        </div>
+      ) : inOperation ? (
+        <div style={{ textAlign: 'center', padding: '14px', background: 'rgba(255,153,0,0.06)', border: '1px solid rgba(255,153,0,0.25)' }}>
+          <p style={{ ...MONO, fontSize: 10, color: '#ff9900' }}>
+            <GameIcon name="sword" size={10} color="#ff9900" /> {t.challenge.blockedInOperation}
           </p>
         </div>
       ) : (

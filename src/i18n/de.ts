@@ -352,6 +352,7 @@ export const de: Translations = {
     drop: (pct: number) => `${pct}% ✨`,
     dropLabel: 'LEGENDÄR-Chance',
     victoryControlled: 'Deine Gilde kontrolliert die Zone!',
+    blockedInOperation: 'Beende oder verlasse zuerst deinen Einsatz.',
     bossPowers: 'BOSS-KRÄFTE',
     fightBoss: 'KÄMPFEN GEGEN',
   },

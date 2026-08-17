@@ -954,7 +954,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   startChallengeFight: (bossIdx: number) => {
     const { inCombat, challengeUnlocked } = get();
     let { lastChallengeAt } = get();
-    if (inCombat) return;
+    // Refusing silently here made the boss button look broken: a player who had
+    // walked away from an unfinished operation kept inCombat set for the whole
+    // session, so clicking Fight simply did nothing with no explanation.
+    if (inCombat) { get().addCombatLog(getT().challenge.blockedInOperation, 'system'); return; }
     const now = Date.now();
     if (lastChallengeAt > now) { lastChallengeAt = now; set({ lastChallengeAt: now }); }
     if (now - lastChallengeAt < CHALLENGE_COOLDOWN) return;

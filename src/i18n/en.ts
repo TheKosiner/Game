@@ -350,6 +350,7 @@ export const en = {
     drop: (pct: number) => `${pct}% ✨`,
     dropLabel: 'LEGENDARY chance',
     victoryControlled: 'Your guild controls the zone!',
+    blockedInOperation: 'Finish or leave your operation first.',
     bossPowers: 'BOSS POWERS',
     fightBoss: 'FIGHT',
   },

@@ -352,6 +352,7 @@ export const es: Translations = {
     drop: (pct: number) => `${pct}% ✨`,
     dropLabel: 'prob. LEGENDARIO',
     victoryControlled: '¡Tu clan controla la zona!',
+    blockedInOperation: 'Primero termina o abandona tu operación.',
     bossPowers: 'PODERES DEL JEFE',
     fightBoss: 'LUCHAR CONTRA',
   },

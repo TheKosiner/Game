@@ -352,6 +352,7 @@ export const it: Translations = {
     drop: (pct: number) => `${pct}% ✨`,
     dropLabel: 'prob. LEGGENDARIO',
     victoryControlled: 'La tua gilda controlla la zona!',
+    blockedInOperation: "Prima completa o abbandona l'operazione.",
     bossPowers: 'POTERI DEL BOSS',
     fightBoss: 'COMBATTI CONTRO',
   },
