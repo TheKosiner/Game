@@ -123,39 +123,30 @@ const DUNGEON_LEVELS: [string, number][] = [
   ['forest', 1], ['cave', 5], ['castle', 12], ['westland', 20],
   ['dragon_lair', 28], ['neon_undercity', 35], ['zero_zone', 40], ['ghost_network', 55],
 ];
-/**
- * Ceiling on the hero-level reward multiplier.
- *
- * The multiplier is exponential (1.02^level) while the XP curve is polynomial
- * (100·level^2.2), so past roughly level 150 the multiplier outruns the curve
- * completely — at level 301 it reaches 380x, at level 500 over 19000x. Enemy
- * rewards already scale with the enemy's own level (8 XP at level 1 up to
- * 670000 at level 200), so this multiplied a value that was scaling anyway.
- *
- * Unbounded, a single endgame operation was worth tens of levels and hundreds
- * of millions of gold. That breaks the server-side save rules (level may rise
- * by a bounded amount per write, goldEarnedToday is capped at 250M), so every
- * save was rejected and the client reverted the run — the player saw the level
- * up, then lost the rewards, the gold and the daily run.
- *
- * 2.5 is the largest ceiling that keeps a maxed-out player's full daily
- * allotment inside those server caps: 10 runs x 10 floors x 525000 gold x 2.5,
- * with the 1.6x 'hard' bonus on top, comes to ~210M against the 250M limit.
- * It is reached around level 47, so early and mid game are unaffected.
- */
-const MAX_LEVEL_REWARD_MULT = 2.5;
-
 export function calcDungeonReward(enemy: { xpReward: number; goldReward: number }, heroLevel: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
   const diffRewardMult = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.6 : 1;
   const diffStatMult   = diff === 'easy' ? 0.7 : diff === 'hard' ? 1.5 : 1;
   const xpMult   = (mode === 'xp' ? 1.8 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
   const goldMult = (mode === 'xp' ? 0.4 : mode === 'loot' ? 0.3 : 1) * diffRewardMult;
-  const lvlMult  = Math.min(Math.pow(1.02, heroLevel - 1), MAX_LEVEL_REWARD_MULT);
+  // Uncapped by request: rewards scale exponentially with hero level again.
+  // NOTE: past ~level 150 this outruns the XP curve and breaches the save rules
+  // in firestore.rules (level jump per write, 250M goldEarnedToday), which makes
+  // Firestore reject the save and the client revert the run. See the reward
+  // budget notes in gameStore.rewards.test.ts.
+  const lvlMult  = Math.pow(1.02, heroLevel - 1);
   return {
     xp:           Math.round(enemy.xpReward   * xpMult   * lvlMult),
     gold:         Math.round(enemy.goldReward  * goldMult * lvlMult),
     diffStatMult,
   };
+}
+
+/** The lowest-level enemies in a pool — used when the hero is under-levelled. */
+function weakestEnemies(ids: string[]): string[] {
+  const known = ids.filter(id => getEnemyById(id));
+  if (known.length === 0) return ids;
+  const lowest = Math.min(...known.map(id => getEnemyById(id)!.level));
+  return known.filter(id => getEnemyById(id)!.level === lowest);
 }
 
 function inferCompletedDungeons(level: number): string[] {
@@ -458,7 +449,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       const e = getEnemyById(id);
       return e && e.level <= hero.level;
     });
-    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : dungeon.enemies;
+    // Nothing at or below the hero's level means the dungeon unlocks before its
+    // weakest enemy — Megacorp Fortress opens at 20 but starts at level 22. The
+    // old fallback handed back the *entire* pool, so a freshly-unlocked player
+    // could be matched against its level 30, 110-attack machines. Fall back to
+    // the weakest tier the dungeon has instead, so being under-levelled can only
+    // ever cost you the easiest fight rather than the hardest.
+    const enemyPool = safeEnemyPool.length > 0 ? safeEnemyPool : weakestEnemies(dungeon.enemies);
     const enemyId = enemyPool[Math.floor(Math.random() * enemyPool.length)];
     const baseEnemy = getEnemyById(enemyId);
     if (!baseEnemy) return;

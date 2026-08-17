@@ -1,21 +1,37 @@
-// Regression tests for the endgame reward explosion.
+// Reward scaling for operations.
 //
-// A level 301 player reported gaining 11 levels in one operation while the
-// character stayed at 301, gained no gold and kept its daily run. The reward
-// multiplier `1.02^level` is exponential while the XP curve `100·level^2.2` is
-// polynomial, so past ~level 150 the multiplier ran away: 380x at level 301,
-// over 19000x at 500. Enemy rewards already scale with the enemy's own level,
-// so this was multiplying a value that was scaling anyway.
+// `calcDungeonReward` multiplies enemy rewards by `1.02^heroLevel`. This is
+// exponential while the XP curve `100·level^2.2` is polynomial, so the
+// multiplier outruns the curve past roughly level 150: 380x at level 301, over
+// 19000x at level 500. Enemy rewards already scale with the enemy's own level
+// (8 XP at level 1 up to 670000 at level 200), so this multiplies a value that
+// is scaling anyway.
 //
-// One run then breached the server-side save rules — the level may only rise by
-// a bounded amount per write and `goldEarnedToday` is capped — Firestore
-// rejected the save, and the client's rejection handler reverted the run. The
-// player saw the level-up, then lost everything it earned.
-//
-// These tests pin the reward budget to the limits in firestore.rules.
+// A cap of 2.5x was added to keep endgame runs inside the server-side save
+// rules, then removed again at the owner's request to restore the original
+// reward rate. The tests below therefore pin the *uncapped* formula, and the
+// last block records — without asserting a pass — exactly where that formula
+// breaches firestore.rules, so the consequence stays visible in the suite
+// rather than only in a chat message.
 import { describe, it, expect } from 'vitest';
 import { calcDungeonReward, MAX_DAILY_DUNGEONS } from './gameStore';
 import { calcXpToNext } from '../utils/combat';
+import { ALL_DUNGEONS } from '../data/dungeons';
+import { getEnemyById } from '../data/enemies';
+
+/**
+ * Richest enemy actually reachable at a given level. A player can only farm
+ * dungeons they have unlocked, so pairing every level with the level 200 enemy
+ * overstates what mid-game players earn.
+ */
+function bestEnemyAt(level: number) {
+  const unlocked = ALL_DUNGEONS.filter(d => d.minLevel <= level);
+  const enemies = unlocked.flatMap(d => d.enemies.map(getEnemyById)).filter(e => e !== undefined);
+  return {
+    xpReward: Math.max(...enemies.map(e => e!.xpReward)),
+    goldReward: Math.max(...enemies.map(e => e!.goldReward)),
+  };
+}
 
 /** Caps enforced by validSaveUpdate/validGoldEarned in firestore.rules. */
 const GOLD_PER_DAY_CAP = 250_000_000;
@@ -25,75 +41,71 @@ const LEVELS_PER_SAVE_CAP = 10;
 const TOP_ENEMY = { xpReward: 670_000, goldReward: 525_000 };
 const FLOORS_PER_RUN = 10;
 
-/** Highest-yield settings a player can choose. */
-const BEST_XP = { mode: 'xp', diff: 'hard' } as const;
-const BEST_GOLD = { mode: 'balanced', diff: 'hard' } as const;
-
-function runXp(level: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
-  return calcDungeonReward(TOP_ENEMY, level, mode, diff).xp * FLOORS_PER_RUN;
+function runXp(level: number) {
+  return calcDungeonReward(TOP_ENEMY, level, 'xp', 'hard').xp * FLOORS_PER_RUN;
 }
-function runGold(level: number, mode: 'xp' | 'balanced' | 'loot', diff: 'easy' | 'normal' | 'hard') {
-  return calcDungeonReward(TOP_ENEMY, level, mode, diff).gold * FLOORS_PER_RUN;
+function runGold(level: number) {
+  return calcDungeonReward(TOP_ENEMY, level, 'balanced', 'hard').gold * FLOORS_PER_RUN;
 }
 
 /** Levels gained by a run, walking the curve the way addXp does. */
 function levelsGained(level: number, xp: number): number {
   let lvl = level, pool = xp, gained = 0;
-  while (pool >= calcXpToNext(lvl) && gained < 1000) {
+  while (pool >= calcXpToNext(lvl) && gained < 5000) {
     pool -= calcXpToNext(lvl);
     lvl++; gained++;
   }
   return gained;
 }
 
-const ENDGAME = [150, 200, 301, 400, 500];
-
-describe('reward budget stays inside the server save rules', () => {
-  it.each(ENDGAME)('a full day of operations at level %i stays under the gold cap', level => {
-    const perDay = runGold(level, BEST_GOLD.mode, BEST_GOLD.diff) * MAX_DAILY_DUNGEONS;
-    expect(perDay).toBeLessThan(GOLD_PER_DAY_CAP);
-  });
-
-  it.each(ENDGAME)('one operation at level %i stays under the level-jump cap', level => {
-    expect(levelsGained(level, runXp(level, BEST_XP.mode, BEST_XP.diff)))
-      .toBeLessThan(LEVELS_PER_SAVE_CAP);
-  });
-});
-
-describe('the hero-level multiplier is bounded', () => {
-  it('stops growing instead of running away with level', () => {
-    const at300 = calcDungeonReward(TOP_ENEMY, 300, 'balanced', 'normal').xp;
-    const at500 = calcDungeonReward(TOP_ENEMY, 500, 'balanced', 'normal').xp;
-    expect(at500).toBe(at300);
-  });
-
-  it('never exceeds 2.5x the base reward', () => {
-    for (const level of [1, 50, 100, 200, 301, 500]) {
-      const r = calcDungeonReward(TOP_ENEMY, level, 'balanced', 'normal');
-      expect(r.xp / TOP_ENEMY.xpReward).toBeLessThanOrEqual(2.5);
-      expect(r.gold / TOP_ENEMY.goldReward).toBeLessThanOrEqual(2.5);
-    }
-  });
-
-  it('leaves early and mid game untouched', () => {
-    // The ceiling is only reached around level 47, so below that the original
-    // 1.02^(level-1) curve still applies exactly.
-    for (const level of [1, 10, 25, 40]) {
+describe('reward multiplier', () => {
+  it('scales exponentially with hero level, uncapped', () => {
+    for (const level of [1, 10, 25, 40, 100, 200, 301, 500]) {
       const expected = Math.round(TOP_ENEMY.xpReward * Math.pow(1.02, level - 1));
       expect(calcDungeonReward(TOP_ENEMY, level, 'balanced', 'normal').xp).toBe(expected);
     }
   });
 
-  it('still rewards higher levels more than level 1', () => {
-    const low = calcDungeonReward(TOP_ENEMY, 1, 'balanced', 'normal').xp;
-    const high = calcDungeonReward(TOP_ENEMY, 301, 'balanced', 'normal').xp;
-    expect(high).toBeGreaterThan(low);
+  it('keeps growing past the endgame instead of levelling off', () => {
+    const at300 = calcDungeonReward(TOP_ENEMY, 300, 'balanced', 'normal').xp;
+    const at500 = calcDungeonReward(TOP_ENEMY, 500, 'balanced', 'normal').xp;
+    expect(at500).toBeGreaterThan(at300);
+  });
+
+  it('leaves enemy difficulty untouched — only XP and gold are scaled', () => {
+    // diffStatMult drives enemy stats and depends solely on the chosen
+    // difficulty, never on hero level or the reward multiplier.
+    for (const level of [1, 100, 301, 500]) {
+      expect(calcDungeonReward(TOP_ENEMY, level, 'balanced', 'easy').diffStatMult).toBe(0.7);
+      expect(calcDungeonReward(TOP_ENEMY, level, 'balanced', 'normal').diffStatMult).toBe(1);
+      expect(calcDungeonReward(TOP_ENEMY, level, 'balanced', 'hard').diffStatMult).toBe(1.5);
+    }
   });
 });
 
-describe('endgame levelling still progresses', () => {
-  it.each(ENDGAME)('level %i gains something from a run', level => {
-    // Bounded rewards must not swing the other way and stall the endgame.
-    expect(runXp(level, BEST_XP.mode, BEST_XP.diff)).toBeGreaterThan(calcXpToNext(level) * 0.25);
+describe('known breach of the server save rules (uncapped by request)', () => {
+  // These assert the breach rather than the absence of one. If the multiplier
+  // is ever bounded again, or the caps in firestore.rules are raised to match,
+  // these tests will fail and should be rewritten to assert compliance.
+  it('a full day of endgame operations exceeds the daily gold cap', () => {
+    expect(runGold(301) * MAX_DAILY_DUNGEONS).toBeGreaterThan(GOLD_PER_DAY_CAP);
+  });
+
+  it('a single endgame operation exceeds the per-save level jump cap', () => {
+    expect(levelsGained(301, runXp(301))).toBeGreaterThan(LEVELS_PER_SAVE_CAP);
+  });
+
+  it('stays within both caps in the early and mid game', () => {
+    // Below the point where the exponential overtakes the curve, a player
+    // farming the best content they can actually reach stays legal — which is
+    // why only high-level players hit the rejection.
+    for (const level of [20, 50, 100]) {
+      const enemy = bestEnemyAt(level);
+      const goldPerDay =
+        calcDungeonReward(enemy, level, 'balanced', 'hard').gold * FLOORS_PER_RUN * MAX_DAILY_DUNGEONS;
+      const xpPerRun = calcDungeonReward(enemy, level, 'xp', 'hard').xp * FLOORS_PER_RUN;
+      expect(goldPerDay).toBeLessThan(GOLD_PER_DAY_CAP);
+      expect(levelsGained(level, xpPerRun)).toBeLessThan(LEVELS_PER_SAVE_CAP);
+    }
   });
 });
