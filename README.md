@@ -487,19 +487,24 @@ nagroda = floor(godziny × 97 × mnożnik_lvl × losowość)
 ## 📈 Krzywa XP
 
 ```
-xpDoNastępnegoPoziom = floor(100 × poziom ^ 2,3)
+xpDoNastępnegoPoziomu = floor(100 × poziom ^ 2,2)
 ```
 
 | Poziom | XP do awansu |
 |:------:|:------------:|
 | 1 | 100 |
-| 5 | 860 |
-| 10 | 2 817 |
-| 20 | 9 461 |
-| 30 | 19 004 |
-| 50 | 47 321 |
+| 5 | 3 449 |
+| 10 | 15 848 |
+| 20 | 72 822 |
+| 30 | 177 691 |
+| 50 | 546 681 |
+| 100 | 2 511 886 |
 
 Za każdy awans: **+1 punkt atrybutu**, **+3 💎**
+
+Jeden zapis w chmurze może podnieść poziom o maksymalnie **10** (reguły Firestore).
+Większa nagroda (np. operacja gildii odebrana przez nowego członka) jest naliczana
+porcjami: nadwyżka XP czeka w „banku” i dochodzi po każdym kolejnym zapisie.
 
 ---
 
@@ -511,5 +516,22 @@ Za każdy awans: **+1 punkt atrybutu**, **+3 💎**
 | Zadania | 5/dzień |
 | Krypta | 5/dzień |
 
-Reset o północy (strefa czasowa serwera).  
+Reset o **00:00 UTC** (01:00 czasu polskiego zimą, 02:00 latem) — ten sam kalendarz
+stosują Cloud Function nagrody dziennej, reguły Firestore i klient.  
 Przy resecie zerowane: przebiegi operacji, zadania, przebiegi krypty, złoto zarobione dziś.
+Dzienny limit zarobionego złota: **250 000 000**.
+
+---
+
+## 🛠️ Dla deweloperów
+
+| Polecenie | Co robi |
+|-----------|---------|
+| `npm run dev` | serwer deweloperski Vite |
+| `npm run test:run` | testy jednostkowe (Vitest) |
+| `npm run test:rules` | testy reguł bezpieczeństwa Firestore na emulatorze (wymaga Javy 11+ i `firebase-tools`) |
+| `npm run build` | build produkcyjny |
+
+Testy reguł (`tests/rules/`) sprawdzają też, czy najcięższe zapisy mieszczą się
+z zapasem w limicie 1000 wyrażeń na żądanie — po jego przekroczeniu Firestore
+odrzuca zapis. Workflow `Deploy Firebase` uruchamia je przed wdrożeniem reguł.
