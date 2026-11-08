@@ -10,7 +10,12 @@ const PATHS: Record<'pl' | 'en', Record<LegalPage, string>> = {
   en: { privacy: '/en/privacy/', rules: '/en/rules/', deleteAccount: '/en/delete-account/' },
 };
 
+/** Site path of a legal page in the closest available language. */
+export function legalPath(page: LegalPage, lang: string): string {
+  return PATHS[lang === 'pl' ? 'pl' : 'en'][page];
+}
+
 /** Absolute URL (it also has to open from the Android app, in the system browser). */
 export function legalUrl(page: LegalPage, lang: string): string {
-  return SITE + PATHS[lang === 'pl' ? 'pl' : 'en'][page];
+  return SITE + legalPath(page, lang);
 }

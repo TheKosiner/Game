@@ -6,6 +6,8 @@ import CyberpunkBg from './CyberpunkBg';
 import { LANDING } from '../i18n/landing';
 import { LANGUAGES, type Lang } from '../i18n';
 import { APK_URL } from '../lib/publicRoutes';
+import { legalPath } from '../lib/legalLinks';
+import { TRANSLATIONS } from '../i18n';
 
 // Screenshot files; alt text/captions live in LANDING[lang].shots, same order.
 const SHOT_SRCS = [
@@ -360,7 +362,14 @@ function Footer({ onDownloadPage, onPlay }: { onDownloadPage: () => void; onPlay
           <button onClick={onDownloadPage} style={{ ...MONO, fontSize: 11, color: '#00f5ff', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>{t.navDownload}</button>
         </nav>
       </div>
-      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 16, textAlign: 'center' }}>
+      <nav aria-label="legal" style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '6px 16px', marginTop: 16 }}>
+        {(['privacy', 'rules', 'deleteAccount'] as const).map(page => (
+          <a key={page} href={legalPath(page, lang)} style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)' }}>
+            {TRANSLATIONS[lang].legal[page]}
+          </a>
+        ))}
+      </nav>
+      <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
         © {new Date().getFullYear()} GlitchSoul. {t.footerRights}
       </p>
     </footer>
