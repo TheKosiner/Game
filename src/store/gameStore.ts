@@ -691,16 +691,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (Date.now() < activeQuest.endsAt) return;
     cancelQuestNotification();
     const goldReward = activeQuest.quest.goldReward;
-    // Quest started before today's daily reset → reward is "from yesterday",
-    // don't deduct from today's goldEarnedToday cap.
-    const fromYesterday = activeQuest.startedAt < get().hero.lastDailyReset;
     get().addXp(activeQuest.quest.xpReward);
-    if (fromYesterday) {
-      const h = get().hero;
-      set({ hero: { ...h, gold: Math.min(MAX_GOLD, h.gold + goldReward) } });
-    } else {
-      get().addGold(goldReward);
-    }
+    // Always counted as today's earnings. A reward from a quest started before the
+    // daily reset used to be added "outside" goldEarnedToday, but the save rules
+    // only excuse that inside the very write that performs the reset — collected
+    // later, the gold looked unearned, the save was rejected and the reward lost.
+    get().addGold(goldReward);
     // Read hero AFTER addXp/addGold so level-up results are not overwritten
     const freshHero = get().hero;
     set({ activeQuest: null, hero: { ...freshHero, questsCompletedToday: freshHero.questsCompletedToday + 1 } });
@@ -907,17 +903,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     const reward = hero.beggingReward ?? 0;
     const t = getT();
     cancelBeggingNotification();
-    // Begging started before today's daily reset → reward is "from yesterday",
-    // don't deduct from today's goldEarnedToday cap.
-    const fromYesterday = hero.beggingStartAt != null && hero.beggingStartAt < hero.lastDailyReset;
-    if (fromYesterday) {
-      const freshHero = get().hero;
-      set({ hero: { ...freshHero, gold: Math.min(MAX_GOLD, freshHero.gold + reward), beggingUntil: null, beggingReward: null, beggingStartAt: null } });
-    } else {
-      get().addGold(reward);
-      const freshHero = get().hero;
-      set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
-    }
+    // Always counted as today's earnings — an overnight session (started before
+    // the daily reset) used to bypass goldEarnedToday, which the save rules
+    // reject once the reset is in an earlier write, so the night's reward was lost.
+    get().addGold(reward);
+    const freshHero = get().hero;
+    set({ hero: { ...freshHero, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     get().addCombatLog(t.combat.beggingDone(reward), 'loot');
     get().saveGame();
   },

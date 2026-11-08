@@ -121,6 +121,17 @@ describe('saves', () => {
     await assertSucceeds(setDoc(doc(as('u'), 'saves', 'u'), save({ lastDailyReset: reset, gold: 1500, goldEarnedToday: 1000 })));
   });
 
+  it('an overnight begging reward is accepted when counted as earned today', async () => {
+    const now = Date.now();
+    const reset = now - 3_600_000; // the server reset ran an hour ago, in an earlier write
+    const begging = { beggingStartAt: now - 8 * 3_600_000, beggingUntil: now - 60_000, beggingReward: 500 };
+    await seed(db => setDoc(doc(db, 'saves', 'u'), save({ lastDailyReset: reset, gold: 1000, goldEarnedToday: 0, ...begging })));
+    const collected = { lastDailyReset: reset, beggingStartAt: null, beggingUntil: null, beggingReward: null };
+    // The old client added the gold without counting it — rejected, so the reward was lost.
+    await assertFails(setDoc(doc(as('u'), 'saves', 'u'), save({ ...collected, gold: 1500, goldEarnedToday: 0 })));
+    await assertSucceeds(setDoc(doc(as('u'), 'saves', 'u'), save({ ...collected, gold: 1500, goldEarnedToday: 500 })));
+  });
+
   it('only the owner can write their save', async () => {
     await assertFails(setDoc(doc(as('mallory'), 'saves', 'victim'), save()));
   });

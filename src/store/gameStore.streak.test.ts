@@ -20,6 +20,8 @@ vi.mock('../hooks/useT', () => ({
     },
     combat: {
       rested:     (n: number) => `rested ${n}`,
+      beggingDone: (n: number) => `begging +${n}`,
+      goldCapReached: 'gold cap',
       levelUp:    (lvl: number) => `level ${lvl}`,
       statsReset: 'stats reset',
       bossStart:  () => '',
@@ -278,6 +280,24 @@ describe('addGold', () => {
     useGameStore.getState().addGold(500);
     expect(getHero().gold).toBe(1_000_000_000);
     expect(getHero().goldEarnedToday).toBe(10);
+  });
+});
+
+// ── Collecting rewards that started before the daily reset ───────────────────
+describe('overnight rewards', () => {
+  beforeEach(() => { useGameStore.setState({ guildGoldBonus: 0, guildExpBonus: 0 }); });
+
+  it('an overnight begging reward counts as earned today, so the save stays valid', () => {
+    const now = Date.now();
+    resetStore({
+      gold: 100, goldEarnedToday: 0, lastDailyReset: now - 3_600_000,
+      beggingStartAt: now - 8 * 3_600_000, beggingUntil: now - 1000, beggingReward: 500,
+    });
+    useGameStore.getState().collectBegging();
+    const h = getHero();
+    expect(h.gold).toBe(600);
+    expect(h.goldEarnedToday).toBe(500); // gold gain matched by earned gain
+    expect(h.beggingReward).toBeNull();
   });
 });
 
