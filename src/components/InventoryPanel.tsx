@@ -157,7 +157,7 @@ export default function InventoryPanel() {
   const inventory  = useGameStore(s => s.hero.inventory);
   const equipItem  = useGameStore(s => s.equipItem);
   const sellItem        = useGameStore(s => s.sellItem);
-  const useItem         = useGameStore(s => s.useItem);
+  const consumeItem     = useGameStore(s => s.useItem);
   const openBoxModal    = useGameStore(s => s.openMysteryBoxModal);
   const inDungeon       = useGameStore(s => s.currentDungeon !== null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
@@ -195,7 +195,7 @@ export default function InventoryPanel() {
               onEquip={() => { equipItem(item, idx); setSelectedIdx(null); const u = useAuthStore.getState().user; if (u) syncToCloud(u.uid, u.username).catch(() => {}); }}
               onSell={() => { setSellConfirm({ item, idx }); setSelectedIdx(null); }}
               inDungeon={inDungeon}
-              onUse={() => { useItem(item, idx); setSelectedIdx(null); }}
+              onUse={() => { consumeItem(item, idx); setSelectedIdx(null); }}
               onOpen={() => { setBoxConfirm({ item, idx }); setSelectedIdx(null); }}
             />
           ))}

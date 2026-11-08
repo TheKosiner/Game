@@ -19,6 +19,11 @@ const SPEED    = 180;
 const AVATAR_R = 18;
 const WRITE_MS = 400;
 const STALE_MS = 30_000;
+// Presence docs of players whose app was killed are never deleted; hide them
+// once they have been silent this long instead of drawing ghosts forever.
+const GONE_MS  = 5 * 60_000;
+// Idle players re-announce themselves so standing still doesn't look "stale".
+const HEARTBEAT_MS = 20_000;
 const BUBBLE_MS = 5_000;
 
 // ── Isometric projection constants ───────────────────────────────────────────
@@ -181,7 +186,11 @@ export default function LobbyPanel() {
         else remotesRef.current.set(uid, ch.doc.data() as RemotePlayer);
       });
     }, ()=>{});
-    return () => { unsub(); deleteDoc(selfRef).catch(()=>{}); };
+    const heartbeat = setInterval(() => {
+      if (document.hidden) return;
+      setDoc(selfRef,{x:posRef.current.x,y:posRef.current.y,portrait:heroRef.current.portrait??0,username:user.username,updatedAt:Date.now()} satisfies RemotePlayer,{merge:true}).catch(()=>{});
+    }, HEARTBEAT_MS);
+    return () => { clearInterval(heartbeat); unsub(); deleteDoc(selfRef).catch(()=>{}); };
   }, [user?.uid]);
 
   // ── Firebase: chat ────────────────────────────────────────────────────────
@@ -520,6 +529,7 @@ export default function LobbyPanel() {
 
       remotesRef.current.forEach((p, uid) => {
         if (uid === userRef.current?.uid) return;
+        if (now - p.updatedAt > GONE_MS) return;
         addChar(p.x, p.y, p.portrait, false, p.username, now-p.updatedAt>STALE_MS?.3:1, uid);
       });
       const localUid = userRef.current?.uid ?? '';

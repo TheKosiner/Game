@@ -40,10 +40,12 @@ export default function ChatPanel() {
 
   useEffect(() => {
     if (!db) return;
-    const q = query(collection(db, 'globalChat'), orderBy('createdAt', 'asc'), limit(60));
+    // Newest 60, shown oldest-first. Ordering ascending with a limit would return
+    // the 60 *oldest* messages ever, so the feed froze once the chat passed 60.
+    const q = query(collection(db, 'globalChat'), orderBy('createdAt', 'desc'), limit(60));
     const unsub = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)));
-    });
+      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)).reverse());
+    }, () => {});
     return () => unsub();
   }, []);
 
@@ -70,6 +72,9 @@ export default function ChatPanel() {
       });
       lastSentAt.current = Date.now();
       setText('');
+    } catch {
+      setRateLimitMsg(t.chat.sendError);
+      setTimeout(() => setRateLimitMsg(''), 3000);
     } finally {
       setSending(false);
     }

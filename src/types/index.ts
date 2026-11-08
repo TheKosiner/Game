@@ -199,6 +199,10 @@ export interface PvpOpponent {
 }
 
 export interface GameState {
+  /** `hero` is a real character (loaded or created), not the start-up placeholder — only then is it saved. */
+  heroReady: boolean;
+  /** No save exists for this player: show character creation. */
+  needsCharacterCreation: boolean;
   hero: Hero;
   mysteryBoxPending: { box: Item; invIdx: number } | null;
   activeQuest: ActiveQuest | null;
@@ -271,6 +275,13 @@ export interface GameState {
   performPvp: (opponent: PvpOpponent) => PvpResult | null;
   recordPvpResult: (won: boolean, opponent: PvpOpponent) => PvpResult;
   checkDailyReset: () => void;
+  /** Finish a voluntary rest whose timer has run out (heal + clear the timer). */
+  settleVoluntaryRest: () => void;
+  /** Apply a daily reset the claimDailyReward Cloud Function already wrote to the cloud save. */
+  applyServerDailyReset: (
+    result: { lastDailyReset?: number; streakDays?: number; gemsAdded?: number; gems?: number },
+    gemsMode?: 'delta' | 'absolute',
+  ) => void;
   restHero: (minutes: number) => void;
   cancelRest: () => void;
   abandonQuest: () => void;

@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { httpsCallable } from 'firebase/functions';
-import { collection, query, orderBy, limit, onSnapshot, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { functions, db } from '../lib/firebase';
 import { syncToCloud, loadFromCloud } from '../lib/cloudSync';
 import { useGameStore } from '../store/gameStore';
@@ -277,18 +277,8 @@ export default function CasinoPanel() {
       return;
     }
 
-    // Write history immediately so it survives navigation before animation ends
-    if (db && user) {
-      addDoc(collection(db, 'casinoSpins'), {
-        uid: user.uid,
-        username: user.username,
-        result: res.result,
-        won: res.won,
-        net: res.net,
-        stake,
-        ts: Date.now(),
-      }).catch(() => {});
-    }
+    // The spin feed entry is written by the spinRoulette Cloud Function itself,
+    // so the public history only ever shows real, server-side spins.
 
     // Plant result 5 cells ahead and switch to timed deceleration
     const r = reelRef.current;

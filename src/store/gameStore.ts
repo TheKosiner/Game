@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, Hero, ItemSlot, Quest, Dungeon, Stats, CombatLog, Item, PvpResult, PvpOpponent, ChallengeHitEvent } from '../types';
 import { useAuthStore } from './authStore';
+import { isFirebaseConfigured } from '../lib/firebase';
 import { getEnemyById, scaleEnemy } from '../data/enemies';
 import { generateItem, getItemName } from '../data/itemGenerator';
 import { createMysteryBox } from '../data/mysteryBoxes';
@@ -100,9 +101,27 @@ function simulatePvp(heroAtk: number, heroDef: number, heroHp: number, oppAtk: n
   return hHp >= oHp;
 }
 
-function isSameDay(ts: number): boolean {
-  const fmt = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Warsaw', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
-  return fmt(new Date(ts)) === fmt(new Date());
+const DAY_MS = 86_400_000;
+export const DAILY_GOLD_CAP = 250_000_000;
+export const MAX_GOLD = 1_000_000_000;
+
+/** Day number on the UTC calendar — the one the daily-reward Cloud Function and
+ *  the Firestore rules use, so a reset done on the client never disagrees with them. */
+export function utcDayIndex(ts: number): number {
+  return Math.floor(ts / DAY_MS);
+}
+
+export function isSameUtcDay(ts: number, now = Date.now()): boolean {
+  return utcDayIndex(ts) === utcDayIndex(now);
+}
+
+/** How much more gold may still be earned today without breaching the daily cap
+ *  the save rules enforce (earning past it makes Firestore reject the save and the
+ *  client roll back to the last cloud copy). */
+function goldAllowance(hero: Hero, amount: number): number {
+  if (!isFinite(amount) || amount <= 0) return 0;
+  const earned = hero.goldEarnedToday ?? 0;
+  return Math.max(0, Math.min(amount, DAILY_GOLD_CAP - earned, MAX_GOLD - hero.gold));
 }
 
 function challengeLoot(bossIdx: number, heroLevel: number, inventory: Item[]): Item[] {
@@ -194,6 +213,7 @@ function createHero(name: string, skinTone = 1, hairColor = 2, clothingColor = 0
     lastCasinoSpinAt: 0,
     goldEarnedToday: 0,
     kryptaRunsToday: 0,
+    streakDays: 0,
   };
 }
 
@@ -232,11 +252,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   pendingDungeonXp: 0,
   pendingDungeonGold: 0,
   mysteryBoxPending: null,
+  heroReady: false,
+  needsCharacterCreation: false,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
     set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpRating: 1000, pvpLog: [], lastPassiveRegenAt: Date.now() });
-    if (!skipSave) get().saveGame();
+    // skipSave = a placeholder while the player hasn't created their character yet:
+    // it must never be persisted (see heroReady). A named hero is the real thing.
+    if (skipSave) {
+      set({ heroReady: false });
+    } else {
+      set({ heroReady: true, needsCharacterCreation: false });
+      get().saveGame();
+    }
   },
 
   changeAppearance: (skinTone, hairColor, clothingColor) => {
@@ -267,7 +296,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const bonus = get().guildExpBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
-    let { xp, xpToNext, level, stats, maxHp, hp, attributePoints } = hero;
+    let { xp, xpToNext, level } = hero;
+    const { stats, maxHp, hp, attributePoints } = hero;
     xp += amount;
     let levelsGained = 0;
     while (xp >= xpToNext && level < MAX_LEVEL) {
@@ -295,11 +325,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     const bonus = get().guildGoldBonus;
     if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
     const { hero } = get();
-    // Clamp to the same ceilings the Firestore rules enforce (gold 1e9, daily 250M)
-    // so late-game players never hit a hard save rejection / desync.
-    const gold = Math.min(hero.gold + amount, 1_000_000_000);
-    const goldEarnedToday = Math.min(hero.goldEarnedToday + amount, 250_000_000);
-    set({ hero: { ...hero, gold, goldEarnedToday } });
+    // Credit only what fits under the ceilings the Firestore rules enforce (gold
+    // 1e9, 250M earned per day). Clamping goldEarnedToday alone while gold kept
+    // growing made every save past the cap invalid, so Firestore rejected it and
+    // the client rolled the whole session back.
+    const gain = goldAllowance(hero, amount);
+    if (gain < amount) get().addCombatLog(getT().combat.goldCapReached, 'system');
+    if (gain <= 0) return;
+    set({ hero: { ...hero, gold: hero.gold + gain, goldEarnedToday: (hero.goldEarnedToday ?? 0) + gain } });
   },
 
   addGems: (amount) => {
@@ -403,8 +436,9 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
     if (idx === -1) return;
     newInventory.splice(idx, 1);
-    const value = item.goldValue ?? 0;
+    const value = goldAllowance(hero, item.goldValue ?? 0);
     set({ hero: { ...hero, gold: hero.gold + value, goldEarnedToday: (hero.goldEarnedToday ?? 0) + value, inventory: newInventory } });
+    if (value < (item.goldValue ?? 0)) get().addCombatLog(getT().combat.goldCapReached, 'system');
     get().saveGame();
   },
 
@@ -663,7 +697,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     get().addXp(activeQuest.quest.xpReward);
     if (fromYesterday) {
       const h = get().hero;
-      set({ hero: { ...h, gold: h.gold + goldReward } });
+      set({ hero: { ...h, gold: Math.min(MAX_GOLD, h.gold + goldReward) } });
     } else {
       get().addGold(goldReward);
     }
@@ -836,7 +870,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const clampedHours = Math.max(1, Math.min(10, Math.round(hours)));
     const goldReward = Math.min(
       Math.floor(clampedHours * 97 * Math.pow(1.09, hero.level - 1) * (0.8 + Math.random() * 0.4)),
-      250_000_000,
+      DAILY_GOLD_CAP,
     );
     const endsAt = Date.now() + clampedHours * 60 * 60 * 1000;
     const t = getT();
@@ -878,7 +912,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const fromYesterday = hero.beggingStartAt != null && hero.beggingStartAt < hero.lastDailyReset;
     if (fromYesterday) {
       const freshHero = get().hero;
-      set({ hero: { ...freshHero, gold: freshHero.gold + reward, beggingUntil: null, beggingReward: null, beggingStartAt: null } });
+      set({ hero: { ...freshHero, gold: Math.min(MAX_GOLD, freshHero.gold + reward), beggingUntil: null, beggingReward: null, beggingStartAt: null } });
     } else {
       get().addGold(reward);
       const freshHero = get().hero;
@@ -896,15 +930,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       set({ hero: { ...hero, lastDailyReset: now } });
       return;
     }
-    if (!isSameDay(hero.lastDailyReset)) {
+    // Local fallback for when the daily-reward Cloud Function can't be reached.
+    // It follows the server's UTC calendar: resetting on any other boundary (it
+    // used to be Warsaw midnight) produced resets the save rules rejected, and
+    // each rejection rolled the player back to their last cloud save.
+    if (!isSameUtcDay(hero.lastDailyReset, now)) {
       const DAILY_GEMS = 5;
       const prevStreak = hero.streakDays ?? 0;
-      const yesterday = new Date(now - 86_400_000);
-      const lastDate  = new Date(hero.lastDailyReset ?? 0);
-      const wasYesterday =
-        lastDate.getFullYear() === yesterday.getFullYear() &&
-        lastDate.getMonth()    === yesterday.getMonth()    &&
-        lastDate.getDate()     === yesterday.getDate();
+      const wasYesterday = utcDayIndex(hero.lastDailyReset ?? 0) === utcDayIndex(now) - 1;
       const newStreak = wasYesterday ? prevStreak + 1 : 1;
       set({
         hero: {
@@ -921,13 +954,39 @@ export const useGameStore = create<GameState>((set, get) => ({
       const t = getT();
       get().addCombatLog(t.gems.dailyLog(DAILY_GEMS), 'system');
     }
+    get().settleVoluntaryRest();
+  },
+
+  settleVoluntaryRest: () => {
     // Apply voluntary rest recovery if time is up
+    const hero = get().hero;
     if (hero.voluntaryRestUntil !== null && Date.now() >= hero.voluntaryRestUntil) {
-      const updated = get().hero;
-      const healAmount = Math.min(updated.voluntaryRestHp ?? 0, updated.maxHp - updated.hp);
-      set({ hero: { ...updated, hp: updated.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
+      const healAmount = Math.min(hero.voluntaryRestHp ?? 0, hero.maxHp - hero.hp);
+      set({ hero: { ...hero, hp: hero.hp + healAmount, voluntaryRestUntil: null, voluntaryRestHp: null, voluntaryRestStartAt: null } });
       if (healAmount > 0) { const t = getT(); get().addCombatLog(t.combat.rested(healAmount), 'system'); }
     }
+  },
+
+  applyServerDailyReset: (result, gemsMode = 'delta') => {
+    // Mirror what claimDailyReward just wrote to the cloud save, so the next sync
+    // carries the same reset instead of overwriting it with yesterday's counters.
+    // 'delta' (mid-session): the server credited gems on top of the balance we
+    // pushed right before the claim, and anything spent meanwhile still counts.
+    // 'absolute' (after a cloud reload): take the server's balance as is.
+    set(s => ({
+      hero: {
+        ...s.hero,
+        dungeonRunsToday: 0,
+        questsCompletedToday: 0,
+        goldEarnedToday: 0,
+        kryptaRunsToday: 0,
+        lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
+        streakDays: result.streakDays ?? s.hero.streakDays,
+        gems: gemsMode === 'absolute'
+          ? (result.gems ?? s.hero.gems)
+          : s.hero.gems + Math.max(0, result.gemsAdded ?? 0),
+      },
+    }));
   },
 
   tickPassiveRegen: () => {
@@ -989,7 +1048,8 @@ export const useGameStore = create<GameState>((set, get) => ({
     const heroDef = getHeroDefense(hero);
     const effectiveHeroDef = pw.includes('armor_break') ? Math.floor(heroDef * 0.4) : heroDef;
 
-    let { bossHp, shieldHp, rageActive, round } = challengeFight;
+    let { bossHp, shieldHp, rageActive } = challengeFight;
+    const { round } = challengeFight;
     let heroHp = hero.hp;
     const heroMaxHp = hero.maxHp;
     const r = round + 1;
@@ -1239,6 +1299,13 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   saveGame: () => {
     const state = get();
+    // Never persist the placeholder hero shown before a character exists (or
+    // while the real one is still loading): written to localStorage it hid the
+    // character-creation screen, and synced it could overwrite a real cloud save.
+    if (!state.heroReady) return;
+    // When the game requires an account, a save made while signed out would carry
+    // no owner and could later be loaded into a different account.
+    if (isFirebaseConfigured && !useAuthStore.getState().user) return;
     const save = {
       uid: useAuthStore.getState().user?.uid ?? null,
       hero: state.hero,
@@ -1274,6 +1341,11 @@ export const useGameStore = create<GameState>((set, get) => ({
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return;
       const save = JSON.parse(raw);
+      // The device keeps one local save. If it belongs to a different account than
+      // the one signed in, loading it would hand that account's hero — and its
+      // items and gold — to this one on the next cloud sync.
+      const currentUid = useAuthStore.getState().user?.uid ?? null;
+      if (currentUid && save.uid && save.uid !== currentUid) return;
       if (save.hero) {
         // migrate old stat names
         const migrateStats = (s: any): Stats => ({
@@ -1342,9 +1414,13 @@ export const useGameStore = create<GameState>((set, get) => ({
           completedDungeons: save.hero.completedDungeons ?? inferCompletedDungeons(save.hero.level ?? 1),
           lastCasinoSpinAt: save.hero.lastCasinoSpinAt ?? 0,
           goldEarnedToday: save.hero.goldEarnedToday ?? 0,
+          // Dropping this reset the login streak to day 1 on every local load.
+          streakDays: save.hero.streakDays ?? 0,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({
+          heroReady: true,
+          needsCharacterCreation: false,
           hero: loadedHero,
           activeQuest: save.activeQuest ?? null,
           lastSaved: save.lastSaved ?? 0,
@@ -1361,7 +1437,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           challengeUnlocked: save.challengeUnlocked ?? 0,
           lastChallengeAt: save.lastChallengeAt ?? 0,
         });
-        get().checkDailyReset();
+        // Signed-in players get their daily reset from the claimDailyReward Cloud
+        // Function (streak bonus, milestone chests); a local reset here would
+        // pre-empt it. The local reset is only for offline play.
+        if (currentUid) get().settleVoluntaryRest();
+        else get().checkDailyReset();
       }
     } catch {
       // corrupt save

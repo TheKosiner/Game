@@ -3,7 +3,8 @@ import { useIsDesktop } from '../hooks/useIsDesktop';
 import { subscribeToGuildWar, resolveWar, type GuildWar } from '../lib/guildWar';
 import {
   getMyGuildId, getGuild, getMyInvites, createGuild, inviteToGuild, getGuildSentInvites,
-  acceptInvite, declineInvite, leaveGuild, disbandGuild, transferLeadership, setMemberRole,
+  acceptInvite, declineInvite, leaveGuild, kickMember, disbandGuild, transferLeadership, setMemberRole,
+  InviteInvalidError,
   getLeaderboard, depositToTreasury, upgradeGuildStat, guildUpgradeCost, updateGuildDescription,
   getGuildMemberLevels,
   type Guild, type GuildInvite, type LeaderboardEntry,
@@ -103,13 +104,18 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
   const hero = useGameStore(s => s.hero);
   const t = useT();
   const [acting, setActing] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleAccept(inv: GuildInvite) {
     if (!user) return;
     setActing(inv.id);
+    setError(null);
     try {
       await acceptInvite(inv.id, inv.guildId, user.uid, user.username, hero.name, hero.level, hero.portrait);
       onRefresh();
+    } catch (e) {
+      setError(e instanceof InviteInvalidError ? t.guild.inviteExpired : t.guild.actionFailed(t.guild.unknownError));
+      if (e instanceof InviteInvalidError) onRefresh();
     } finally { setActing(null); }
   }
 
@@ -122,6 +128,7 @@ function InvitesList({ invites, onRefresh }: { invites: GuildInvite[]; onRefresh
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ ...PX(6), color: 'var(--gold-main)', marginBottom: 2 }}>{t.guild.invitesTitle}</p>
+      {error && <p role="alert" style={{ ...PX(5), color: '#ff4444' }}>{error}</p>}
       {invites.map(inv => (
         <div key={inv.id} style={{ background: 'var(--bg-inset)', border: '1px solid var(--gold-darker)', padding: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
@@ -514,6 +521,8 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
         if (isLeader) await disbandGuild(guild.id, myUid);
         else await leaveGuild(guild.id, myUid);
         onRefresh();
+      } catch (e: any) {
+        showAlert(t.guild.actionFailed(e?.message ?? t.guild.unknownError));
       } finally { setActing(false); }
     });
   }
@@ -522,7 +531,8 @@ function GuildView({ guild, myUid, onRefresh, playerPortraits, guildTab, onGoToW
     showConfirm(t.guild.kickConfirm(username), async () => {
       setDlg(null);
       setActing(true);
-      try { await leaveGuild(guild.id, uid); onRefresh(); }
+      try { await kickMember(guild.id, uid); onRefresh(); }
+      catch (e: any) { showAlert(t.guild.actionFailed(e?.message ?? t.guild.unknownError)); }
       finally { setActing(false); }
     });
   }

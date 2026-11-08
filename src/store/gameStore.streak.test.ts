@@ -1,12 +1,13 @@
 // Tests for the client-side daily reset + streak logic inside gameStore.
-// The store's isSameDay helper uses Europe/Warsaw timezone (Intl.DateTimeFormat),
-// while the CF uses UTC — this file tests the *client* path.
+// The client fallback follows the same UTC calendar as the claimDailyReward
+// Cloud Function and the Firestore rules — this file tests the *client* path.
 //
 // jsdom runs with the UTC timezone, so `new Date().getDate()` is UTC date.
 // vi.setSystemTime() correctly patches both Date.now() and new Date(),
 // which lets isSameDay return predictable results in tests.
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useGameStore, scaledQuestDuration } from './gameStore';
+import { useAuthStore } from './authStore';
 import { makeHero } from '../tests/fixtures';
 
 // Minimal translation mock — only the keys that checkDailyReset actually reads.
@@ -198,22 +199,121 @@ describe('checkDailyReset', () => {
     expect(getHero().hp).toBe(200); // 190 + 50 would be 240, capped at 200
   });
 
-  // ── Warsaw midnight edge-case (client vs server diverge) ──────────────────
-  it('triggers on Warsaw midnight even when it is still the same UTC day', () => {
-    // Warsaw summer (CEST) = UTC+2.
-    // June 21 00:30 Warsaw = June 20 22:30 UTC — still June 20 in UTC.
-    // But isSameDay uses Warsaw timezone, so it correctly sees June 21 Warsaw
-    // vs June 20 Warsaw (the stored reset) and fires the reset.
-    const lastResetWarsaw = day(2026, 6, 20, 20, 0); // 22:00 Warsaw June 20 = 20:00 UTC
-    const nowWarsaw       = day(2026, 6, 20, 22, 30); // 00:30 Warsaw June 21 = 22:30 UTC
+  // ── Day boundary: UTC, like the server ────────────────────────────────────
+  // The client used to reset at Warsaw midnight. The server and the save rules
+  // use the UTC day, so that local reset was rejected on sync and every rejection
+  // rolled the player back to their last cloud save.
+  it('does not reset at Warsaw midnight while it is still the same UTC day', () => {
+    const lastReset = day(2026, 6, 20, 8, 0);   // 10:00 Warsaw June 20
+    const now       = day(2026, 6, 20, 22, 30); // 00:30 Warsaw June 21 = 22:30 UTC June 20
 
-    vi.setSystemTime(nowWarsaw);
-    resetStore({ lastDailyReset: lastResetWarsaw, gems: 0 });
+    vi.setSystemTime(now);
+    resetStore({ lastDailyReset: lastReset, gems: 0, dungeonRunsToday: 7 });
     callReset();
 
-    // Warsaw date of lastReset = June 20; Warsaw date of now = June 21 → new day
-    // The claim should have fired.
+    expect(getHero().gems).toBe(0);
+    expect(getHero().dungeonRunsToday).toBe(7);
+    expect(getHero().lastDailyReset).toBe(lastReset);
+  });
+
+  it('resets once the UTC day rolls over', () => {
+    const lastReset = day(2026, 6, 20, 22, 30);
+    const now       = day(2026, 6, 21, 0, 5);  // 5 minutes past UTC midnight
+
+    vi.setSystemTime(now);
+    resetStore({ lastDailyReset: lastReset, gems: 0, streakDays: 3 });
+    callReset();
+
     expect(getHero().gems).toBe(5);
+    expect(getHero().streakDays).toBe(4);
+    expect(getHero().lastDailyReset).toBe(now);
+  });
+});
+
+// ── applyServerDailyReset ─────────────────────────────────────────────────────
+describe('applyServerDailyReset', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('mirrors the server reset and adds the credited gems on top (delta)', () => {
+    resetStore({ gems: 12, dungeonRunsToday: 9, kryptaRunsToday: 4, questsCompletedToday: 5, goldEarnedToday: 999, streakDays: 2 });
+    useGameStore.getState().applyServerDailyReset({ lastDailyReset: 1234, streakDays: 3, gemsAdded: 7, gems: 999 }, 'delta');
+    const h = getHero();
+    expect(h.gems).toBe(19);
+    expect([h.dungeonRunsToday, h.kryptaRunsToday, h.questsCompletedToday, h.goldEarnedToday]).toEqual([0, 0, 0, 0]);
+    expect(h.lastDailyReset).toBe(1234);
+    expect(h.streakDays).toBe(3);
+  });
+
+  it('takes the server balance as is after a cloud reload (absolute)', () => {
+    resetStore({ gems: 12 });
+    useGameStore.getState().applyServerDailyReset({ lastDailyReset: 1, streakDays: 1, gemsAdded: 7, gems: 19 }, 'absolute');
+    expect(getHero().gems).toBe(19);
+  });
+});
+
+// ── addGold daily cap ─────────────────────────────────────────────────────────
+describe('addGold', () => {
+  beforeEach(() => { useGameStore.setState({ guildGoldBonus: 0 }); });
+
+  it('credits normally under the cap', () => {
+    resetStore({ gold: 100, goldEarnedToday: 0 });
+    useGameStore.getState().addGold(50);
+    expect(getHero().gold).toBe(150);
+    expect(getHero().goldEarnedToday).toBe(50);
+  });
+
+  it('stops crediting gold at the daily cap instead of letting gold outrun it', () => {
+    // Past the cap the save rules reject any gold gain; crediting it anyway made
+    // the next save fail and the client roll the session back.
+    resetStore({ gold: 1000, goldEarnedToday: 250_000_000 - 30 });
+    useGameStore.getState().addGold(100);
+    expect(getHero().gold).toBe(1030);
+    expect(getHero().goldEarnedToday).toBe(250_000_000);
+    useGameStore.getState().addGold(100);
+    expect(getHero().gold).toBe(1030);
+  });
+
+  it('never goes past the 1e9 gold ceiling', () => {
+    resetStore({ gold: 1_000_000_000 - 10, goldEarnedToday: 0 });
+    useGameStore.getState().addGold(500);
+    expect(getHero().gold).toBe(1_000_000_000);
+    expect(getHero().goldEarnedToday).toBe(10);
+  });
+});
+
+// ── loadGame (local save) ─────────────────────────────────────────────────────
+describe('loadGame', () => {
+  const SAVE_KEY = 'glitchsoul_save';
+  afterEach(() => {
+    localStorage.removeItem(SAVE_KEY);
+    useAuthStore.setState({ user: null });
+  });
+
+  function writeSave(uid: string | null, heroPartial: Parameters<typeof makeHero>[0]) {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ uid, hero: makeHero(heroPartial), lastSaved: 1 }));
+  }
+
+  it('keeps the login streak', () => {
+    writeSave(null, { name: 'Neo', streakDays: 7, lastDailyReset: Date.now() });
+    useGameStore.getState().loadGame();
+    expect(getHero().streakDays).toBe(7);
+  });
+
+  it("ignores a local save that belongs to a different account", () => {
+    resetStore({ name: 'Mine', gold: 5 });
+    writeSave('someone-else', { name: 'Theirs', gold: 999_999 });
+    useAuthStore.setState({ user: { uid: 'me', email: 'me@x.y', username: 'me' } });
+    useGameStore.getState().loadGame();
+    expect(getHero().name).toBe('Mine');
+    expect(getHero().gold).toBe(5);
+  });
+
+  it("loads the signed-in account's own local save", () => {
+    writeSave('me', { name: 'Mine', gold: 42, lastDailyReset: Date.now() });
+    useAuthStore.setState({ user: { uid: 'me', email: 'me@x.y', username: 'me' } });
+    useGameStore.getState().loadGame();
+    expect(getHero().name).toBe('Mine');
+    expect(getHero().gold).toBe(42);
   });
 });
 

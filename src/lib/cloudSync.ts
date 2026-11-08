@@ -36,6 +36,9 @@ const _lastGuildSync = new Map<string, number>();
 
 export async function syncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
+  // Only a real, loaded hero may be uploaded — never the start-up placeholder or a
+  // previous account's hero still in memory while this one loads.
+  if (!useGameStore.getState().heroReady) return;
   const savedAt = Date.now(); // used only for non-validated fields (players collection)
   useGameStore.getState().saveGame();
   // Snapshot the save marker we are about to push. Anything saved after this
@@ -252,6 +255,8 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
   const loadedAt = Date.now();
 
   useGameStore.setState({
+    heroReady: true,
+    needsCharacterCreation: false,
     hero,
     activeQuest: raw.activeQuest ?? null,
     // Only reached with no run in progress, or on a forced revert. Clear the
@@ -282,14 +287,6 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
     lastCloudSyncedAt: loadedAt,
   });
   return true;
-}
-
-export async function deleteCloudSave(uid: string): Promise<void> {
-  if (!db) return;
-  await Promise.all([
-    deleteDoc(doc(db, 'players', uid)),
-    deleteDoc(doc(db, 'saves', uid)),
-  ]);
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
@@ -559,27 +556,26 @@ export async function createGuild(
 export async function getGuild(guildId: string): Promise<Guild | null> {
   if (!db) return null;
   const snap = await getDoc(doc(db, 'guilds', guildId));
-  if (!snap.exists()) {
-    // Guild deleted — clean up all orphaned references in the background
-    cleanupDeletedGuild(guildId).catch(() => {});
-    return null;
-  }
+  if (!snap.exists()) return null;
   return { id: snap.id, ...snap.data() } as Guild;
 }
 
-/** Remove all traces of a guild that no longer exists in Firestore. */
-async function cleanupDeletedGuild(guildId: string): Promise<void> {
+// Each player may only edit their own `players` doc, so references to a guild
+// that was disbanded (or that kicked them) are cleaned up by that player's own
+// client — see getMyGuildId — rather than by whoever removed them.
+async function clearMyGuildRef(uid: string): Promise<void> {
   if (!db) return;
-  const [orphanPlayers, orphanInvites] = await Promise.all([
-    getDocs(query(collection(db, 'players'), where('guildId', '==', guildId))),
-    getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId))),
-  ]);
-  await Promise.all([
-    ...orphanPlayers.docs.map(d =>
-      updateDoc(d.ref, { guildId: deleteField(), guildTag: deleteField() })
-    ),
-    ...orphanInvites.docs.map(d => deleteDoc(d.ref)),
-  ]);
+  await updateDoc(doc(db, 'players', uid), { guildId: deleteField(), guildTag: deleteField() });
+}
+
+/** Invites live under a fixed id, which lets the security rules check them on join. */
+export function guildInviteId(guildId: string, toUid: string): string {
+  return `${guildId}_${toUid}`;
+}
+
+/** Thrown by acceptInvite when the invite can no longer be used. */
+export class InviteInvalidError extends Error {
+  constructor() { super('INVITE_INVALID'); }
 }
 
 export async function getGuildMemberLevels(uids: string[]): Promise<Record<string, { level: number; heroName: string; portrait: number }>> {
@@ -602,11 +598,11 @@ export async function getMyGuildId(uid: string): Promise<string | null> {
   if (!snap.exists()) return null;
   const guildId = (snap.data().guildId as string) ?? null;
   if (!guildId) return null;
-  // Verify the guild still exists; if not, clean up immediately
+  // Verify the guild still exists and still lists us — it may have been
+  // disbanded, or we may have been kicked. Either way, drop the stale reference.
   const guildSnap = await getDoc(doc(db, 'guilds', guildId));
-  if (!guildSnap.exists()) {
-    await updateDoc(snap.ref, { guildId: deleteField(), guildTag: deleteField() });
-    cleanupDeletedGuild(guildId).catch(() => {});
+  if (!guildSnap.exists() || !(guildSnap.data().members ?? {})[uid]) {
+    await clearMyGuildRef(uid).catch(() => {});
     return null;
   }
   return guildId;
@@ -632,20 +628,23 @@ export async function inviteToGuild(
   toUsername: string,
 ): Promise<void> {
   if (!db) return;
-  // Avoid duplicate invites — filter by fromUid so the query is allowed by security rules
-  const existing = await getDocs(query(
-    collection(db, 'guildInvites'),
-    where('guildId', '==', guildId),
-    where('fromUid', '==', fromUid),
-    where('toUid', '==', toUid),
-  ));
-  if (!existing.empty) return;
-  await addDoc(collection(db, 'guildInvites'), {
-    guildId, guildName, guildTag,
-    fromUid, fromUsername,
-    toUid, toUsername,
-    createdAt: Date.now(),
-  });
+  const ref = doc(db, 'guildInvites', guildInviteId(guildId, toUid));
+  // Already invited? An invite sent by another officer can't be read by us, so a
+  // denied read also means "already there".
+  const existing = await getDoc(ref).catch(() => null);
+  if (existing === null || existing.exists()) return;
+  try {
+    await setDoc(ref, {
+      guildId, guildName, guildTag,
+      fromUid, fromUsername,
+      toUid, toUsername,
+      createdAt: Date.now(),
+    });
+  } catch (e: any) {
+    // Lost a race with another officer inviting the same player.
+    if (e?.code === 'permission-denied') return;
+    throw e;
+  }
   // Send a mail notification so the recipient sees the unread badge
   await addDoc(collection(db, 'mail'), {
     fromUid,
@@ -676,14 +675,13 @@ export async function getMyInvites(uid: string): Promise<GuildInvite[]> {
   const deadGuilds = new Set(guildChecks.filter(c => !c.exists).map(c => c.gId));
   if (deadGuilds.size > 0) {
     const stale = snap.docs.filter(d => deadGuilds.has((d.data() as GuildInvite).guildId));
-    await Promise.all(stale.map(d => deleteDoc(d.ref)));
-    await Promise.all([...deadGuilds].map(gId => cleanupDeletedGuild(gId).catch(() => {})));
+    await Promise.all(stale.map(d => deleteDoc(d.ref).catch(() => {})));
   }
   return invites.filter(i => !deadGuilds.has(i.guildId));
 }
 
 export async function acceptInvite(
-  _inviteId: string,
+  inviteId: string,
   guildId: string,
   uid: string,
   username: string,
@@ -694,17 +692,31 @@ export async function acceptInvite(
   if (!db) return;
   const now = Date.now();
   const guildSnap = await getDoc(doc(db, 'guilds', guildId));
-  if (!guildSnap.exists()) return;
-  await updateDoc(doc(db, 'guilds', guildId), {
-    [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now, portrait: portrait ?? 0 },
-  });
+  if (!guildSnap.exists()) {
+    await deleteDoc(doc(db, 'guildInvites', inviteId)).catch(() => {});
+    throw new InviteInvalidError();
+  }
+  try {
+    await updateDoc(doc(db, 'guilds', guildId), {
+      [`members.${uid}`]: { username, heroName, level, role: 'member', joinedAt: now, portrait: portrait ?? 0 },
+    });
+  } catch (e: any) {
+    // The rules only admit a player holding an invite under the fixed id. Invites
+    // sent by an older build used random ids and can't be honoured — drop them so
+    // they stop showing up, and let the UI ask for a fresh one.
+    if (e?.code === 'permission-denied') {
+      await deleteDoc(doc(db, 'guildInvites', inviteId)).catch(() => {});
+      throw new InviteInvalidError();
+    }
+    throw e;
+  }
   await setDoc(doc(db, 'players', uid), {
     guildId,
     guildTag: guildSnap.data().tag,
   }, { merge: true });
   // Remove all invites for this user
   const allInvites = await getDocs(query(collection(db, 'guildInvites'), where('toUid', '==', uid)));
-  for (const d of allInvites.docs) await deleteDoc(d.ref);
+  await Promise.all(allInvites.docs.map(d => deleteDoc(d.ref).catch(() => {})));
 }
 
 export async function declineInvite(inviteId: string): Promise<void> {
@@ -712,10 +724,21 @@ export async function declineInvite(inviteId: string): Promise<void> {
   await deleteDoc(doc(db, 'guildInvites', inviteId));
 }
 
+/** Leave a guild yourself (not for the leader — they transfer or disband). */
 export async function leaveGuild(guildId: string, uid: string): Promise<void> {
   if (!db) return;
   await updateDoc(doc(db, 'guilds', guildId), { [`members.${uid}`]: deleteField() });
-  await updateDoc(doc(db, 'players', uid), { guildId: deleteField(), guildTag: deleteField() });
+  await clearMyGuildRef(uid);
+}
+
+/**
+ * Remove another member (leader, or officer for regular members). Only the guild
+ * doc changes: the kicked player's own client clears their profile's guild
+ * reference the next time it loads the guild (getMyGuildId).
+ */
+export async function kickMember(guildId: string, targetUid: string): Promise<void> {
+  if (!db) return;
+  await updateDoc(doc(db, 'guilds', guildId), { [`members.${targetUid}`]: deleteField() });
 }
 
 export async function transferLeadership(guildId: string, currentLeaderUid: string, newLeaderUid: string): Promise<void> {
@@ -734,13 +757,18 @@ export async function disbandGuild(guildId: string, leaderUid: string): Promise<
   if (!db) return;
   const guild = await getGuild(guildId);
   if (!guild || guild.leaderUid !== leaderUid) return;
-  for (const uid of Object.keys(guild.members)) {
-    await updateDoc(doc(db, 'players', uid), { guildId: deleteField(), guildTag: deleteField() });
-  }
-  // Remove pending invites
-  const invites = await getDocs(query(collection(db, 'guildInvites'), where('guildId', '==', guildId)));
-  for (const d of invites.docs) await deleteDoc(d.ref);
+  // Withdraw the invites we sent (best effort). Invites from officers are cleaned
+  // up by their recipients once they see the guild is gone (getMyInvites), and
+  // other members' profiles drop the reference themselves (getMyGuildId) — the
+  // rules only let each player edit their own profile.
+  const sent = await getDocs(query(
+    collection(db, 'guildInvites'),
+    where('guildId', '==', guildId),
+    where('fromUid', '==', leaderUid),
+  )).catch(() => null);
+  await Promise.all((sent?.docs ?? []).map(d => deleteDoc(d.ref).catch(() => {})));
   await deleteDoc(doc(db, 'guilds', guildId));
+  await clearMyGuildRef(leaderUid).catch(() => {});
 }
 
 // ── GUILD LIST ────────────────────────────────────────────────────────────────
@@ -774,11 +802,17 @@ export async function sendMail(
 
 export async function getMyMail(uid: string): Promise<MailMessage[]> {
   if (!db) return [];
-  const snap = await getDocs(query(
-    collection(db, 'mail'),
-    where('toUid', '==', uid),
-    limit(50),
-  ));
+  const inbox = collection(db, 'mail');
+  let snap;
+  try {
+    // Newest 50. Without the ordering, a limit picks an arbitrary 50, so once an
+    // inbox passed 50 messages new mail could silently stay hidden.
+    snap = await getDocs(query(inbox, where('toUid', '==', uid), orderBy('createdAt', 'desc'), limit(50)));
+  } catch (e: any) {
+    // The composite index (firestore.indexes.json) is still building after a deploy.
+    if (e?.code !== 'failed-precondition') throw e;
+    snap = await getDocs(query(inbox, where('toUid', '==', uid), limit(50)));
+  }
   const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() } as MailMessage));
   return msgs.sort((a, b) => b.createdAt - a.createdAt);
 }

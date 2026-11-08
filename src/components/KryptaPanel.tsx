@@ -226,7 +226,7 @@ export default function KryptaPanel() {
   function doAttack(isBoss: boolean) {
     if (!enemy || enemyDying) return;
     const msgs: string[] = [];
-    let e = { ...enemy };
+    const e = { ...enemy };
     let hp = raidHp;
 
     const heroGoesFirst = Math.random() < 0.5;
@@ -257,8 +257,8 @@ export default function KryptaPanel() {
 
     if (e.hp <= 0) {
       msgs.push(`✅ ${e.emoji} ${e.name} ${t.krypta.defeatedWord}`);
-      let newXp   = totalXp   + e.xp;
-      let newGold = totalGold + e.gold;
+      const newXp   = totalXp   + e.xp;
+      const newGold = totalGold + e.gold;
 
       if (hasCompanion && !isBoss) {
         const heal = Math.round(raidMaxHp * COMPANION_HEAL_PCT);

@@ -13,7 +13,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "android": "npm run build && npx cap sync android && npx cap open android",
-    "cap:sync": "npm run build && npx cap sync"
+    "cap:sync": "npm run build && npx cap sync",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-glitchsoul-rules \"vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@tailwindcss/vite": "^4.2.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

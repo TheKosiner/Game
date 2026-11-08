@@ -1,5 +1,6 @@
 rules_version = '2';
-// Last deployed: 2026-06-02 v8
+// Last deployed: 2026-06-02 v8 — v9: guild join/leave/kick fixes, UTC daily reset,
+// chat/mail sender checks, server-only casino feed. Tests: npm run test:rules
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -15,144 +16,160 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.token.email == 'thekosiner@gmail.com';
     }
 
-    // ── Time-based validation using SERVER time (request.time) ────────────────
+    // ── Save validation ───────────────────────────────────────────────────────
+    //
+    // Optional fields: very old saves, and every save of a hero who has not had a
+    // server daily claim yet (no `streakDays`), lack some keys. Reading a missing
+    // key is an *error* in rules, and an error denies the whole write. That used to
+    // reject every cloud save of a brand-new player on their first day — the client
+    // then reloaded the cloud copy and their progress kept vanishing. So every
+    // optional field is read through get() with a default.
+
+    function numOr0(m, key) {
+      let v = m.get(key, null);
+      return v == null ? 0 : v;
+    }
+
+    function resetChanged(old, nw) {
+      return numOr0(nw.hero, 'lastDailyReset') != numOr0(old.hero, 'lastDailyReset');
+    }
+
+    // Day number in UTC — the same calendar the claimDailyReward Cloud Function uses.
+    function utcDay(ms) {
+      return math.floor(ms / 86400000);
+    }
 
     function validQuestClear(old, nw) {
-      return old.activeQuest == null
-        || nw.activeQuest != null
-        || request.time.toMillis() >= old.activeQuest.endsAt
-        || old.activeQuest.endsAt > request.time.toMillis() + 3600000;
+      let oldQ = old.get('activeQuest', null);
+      return oldQ == null
+        || nw.get('activeQuest', null) != null
+        || request.time.toMillis() >= numOr0(oldQ, 'endsAt')
+        || numOr0(oldQ, 'endsAt') > request.time.toMillis() + 3600000;
     }
 
     function validBeggingClear(old, nw) {
-      return old.hero.beggingUntil == null
-        || nw.hero.beggingUntil != null
-        || nw.hero.beggingReward == null
-        || request.time.toMillis() >= old.hero.beggingUntil
-        || old.hero.beggingUntil > request.time.toMillis() + 172800000;
+      let oldUntil = old.hero.get('beggingUntil', null);
+      return oldUntil == null
+        || nw.hero.get('beggingUntil', null) != null
+        || nw.hero.get('beggingReward', null) == null
+        || request.time.toMillis() >= oldUntil
+        || oldUntil > request.time.toMillis() + 172800000;
     }
 
-    // Null-safe: treat missing lastDailyReset as 0 (very old saves lack this field).
+    // A client-side reset (fallback when the Cloud Function is unreachable) is
+    // accepted once the UTC day has rolled over, matching the server. The older
+    // 23h gate stays as an alternative so clients still on the previous build,
+    // which reset on their own calendar, keep working.
     function validDailyReset(old, nw) {
-      let oldReset = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
-      return nw.hero.lastDailyReset == oldReset
-        || oldReset > request.time.toMillis()
-        || (nw.hero.lastDailyReset >= request.time.toMillis() - 300000
-            && nw.hero.lastDailyReset <= request.time.toMillis() + 10000
-            && request.time.toMillis() - oldReset >= 82800000);
+      let oldReset = numOr0(old.hero, 'lastDailyReset');
+      let newReset = numOr0(nw.hero, 'lastDailyReset');
+      let now = request.time.toMillis();
+      return newReset == oldReset
+        || oldReset > now
+        || (newReset >= now - 300000
+            && newReset <= now + 10000
+            && (now - oldReset >= 82800000 || utcDay(now) > utcDay(oldReset)));
     }
 
     function validRestClear(old, nw) {
-      return old.hero.voluntaryRestUntil == null
-        || nw.hero.voluntaryRestUntil != null
-        || (nw.hero.voluntaryRestHp == null && nw.hero.voluntaryRestStartAt == null
-            && request.time.toMillis() < old.hero.voluntaryRestUntil)
-        || request.time.toMillis() >= old.hero.voluntaryRestUntil
-        || old.hero.voluntaryRestUntil > request.time.toMillis() + 172800000;
+      let oldUntil = old.hero.get('voluntaryRestUntil', null);
+      return oldUntil == null
+        || nw.hero.get('voluntaryRestUntil', null) != null
+        || (nw.hero.get('voluntaryRestHp', null) == null
+            && nw.hero.get('voluntaryRestStartAt', null) == null
+            && request.time.toMillis() < oldUntil)
+        || request.time.toMillis() >= oldUntil
+        || oldUntil > request.time.toMillis() + 172800000;
     }
 
-    // Null-safe: treat missing lastChallengeAt as 0.
     function validChallengeCooldown(old, nw) {
-      let COOLDOWN_MS = 3600000;
-      let oldAt = old.lastChallengeAt == null ? 0 : old.lastChallengeAt;
-      return nw.lastChallengeAt <= oldAt
+      let oldAt = numOr0(old, 'lastChallengeAt');
+      return numOr0(nw, 'lastChallengeAt') <= oldAt
         || oldAt == 0
         || oldAt > request.time.toMillis()
-        || request.time.toMillis() - oldAt >= COOLDOWN_MS;
+        || request.time.toMillis() - oldAt >= 3600000;
     }
 
     // updatedAt is written as serverTimestamp() — Firestore sets it to request.time.
     // This check is exact and independent of the client's device clock.
     function validTimestamp(nw) {
-      return nw.updatedAt == request.time;
+      return nw.get('updatedAt', null) == request.time;
     }
 
-    // Gold earned today. Null-safe: missing goldEarnedToday treated as 0.
+    // Gold earned today, against the daily cap.
     function validGoldEarned(old, nw) {
-      let oldEarned = old.hero.goldEarnedToday == null ? 0 : old.hero.goldEarnedToday;
-      let dailyReset = nw.hero.lastDailyReset != old.hero.lastDailyReset;
+      let oldEarned = numOr0(old.hero, 'goldEarnedToday');
+      let newEarned = numOr0(nw.hero, 'goldEarnedToday');
+      let dailyReset = resetChanged(old, nw);
+      let newResetAt = numOr0(nw.hero, 'lastDailyReset');
       // After a daily reset the baseline is 0, not yesterday's total.
-      let earnedDelta = nw.hero.goldEarnedToday - (dailyReset ? 0 : oldEarned);
+      let earnedDelta = newEarned - (dailyReset ? 0 : oldEarned);
       // Completed tasks started before today's reset are collected outside goldEarnedToday
       // (client adds gold directly without touching the cap).
       // beggingUntil elapsed check distinguishes full collect from early cancel.
+      let begReward = old.hero.get('beggingReward', null);
+      let begStart = old.hero.get('beggingStartAt', null);
+      let begUntil = old.hero.get('beggingUntil', null);
       let beggingPending = (dailyReset
-        && old.hero.beggingReward != null && nw.hero.beggingReward == null
-        && old.hero.beggingStartAt != null && old.hero.beggingStartAt < nw.hero.lastDailyReset
-        && old.hero.beggingUntil != null && old.hero.beggingUntil <= request.time.toMillis())
-        ? old.hero.beggingReward : 0;
+        && begReward != null && nw.hero.get('beggingReward', null) == null
+        && begStart != null && begStart < newResetAt
+        && begUntil != null && begUntil <= request.time.toMillis())
+        ? begReward : 0;
+      let oldQ = old.get('activeQuest', null);
       let questPending = (dailyReset
-        && old.activeQuest != null && nw.activeQuest == null
-        && old.activeQuest.startedAt != null && old.activeQuest.startedAt < nw.hero.lastDailyReset
-        && old.activeQuest.endsAt != null && old.activeQuest.endsAt <= request.time.toMillis()
-        && old.activeQuest.quest != null)
-        ? (old.activeQuest.quest.goldReward == null ? 0 : old.activeQuest.quest.goldReward) : 0;
+        && oldQ != null && nw.get('activeQuest', null) == null
+        && oldQ.get('startedAt', null) != null && oldQ.startedAt < newResetAt
+        && oldQ.get('endsAt', null) != null && oldQ.endsAt <= request.time.toMillis()
+        && oldQ.get('quest', null) != null)
+        ? numOr0(oldQ.quest, 'goldReward') : 0;
       return
-        (dailyReset
-          ? nw.hero.goldEarnedToday >= 0
-          : nw.hero.goldEarnedToday >= oldEarned)
-        && nw.hero.goldEarnedToday <= 250000000
+        (dailyReset ? newEarned >= 0 : newEarned >= oldEarned)
+        && newEarned <= 250000000
         && nw.hero.gold >= 0
         && nw.hero.gold <= 1000000000
-        && nw.hero.gold <= old.hero.gold + earnedDelta + beggingPending + questPending;
+        && nw.hero.gold <= numOr0(old.hero, 'gold') + earnedDelta + beggingPending + questPending;
     }
 
-    // Null-safe: beggingReward must not exceed the daily gold cap when set.
+    // beggingReward must not exceed the daily gold cap when set.
     function validBeggingReward(nw) {
-      return nw.hero.beggingReward == null
-        || nw.hero.beggingReward <= 250000000;
+      let reward = nw.hero.get('beggingReward', null);
+      return reward == null || reward <= 250000000;
     }
 
     // Gems are premium currency. Client writes may only ADD small amounts that come
-    // from level-ups (+3/level, capped to +5 levels = +15 per save) and the daily
-    // reward. All larger sources (Stripe purchases, daily reward) are credited
-    // server-side by Cloud Functions before the client save lands, so by then the
-    // baseline already includes them and the client delta stays ~0. Spending freely
-    // decreases. This blocks "set gems to a million" localStorage tampering.
+    // from level-ups (+3/level, up to the +10 levels a single save may carry = +30)
+    // and the local daily-reward fallback (+5). All larger sources (Stripe purchases,
+    // the server daily reward) are credited server-side by Cloud Functions before the
+    // client save lands, so by then the baseline already includes them and the
+    // client delta stays ~0. Spending freely decreases. This blocks "set gems to a
+    // million" localStorage tampering.
     function validGems(old, nw) {
-      let oldGems = old.hero.gems == null ? 0 : old.hero.gems;
-      return nw.hero.gems is number
-        && nw.hero.gems >= 0
-        && nw.hero.gems <= oldGems + 20;
+      let gems = nw.hero.get('gems', null);
+      return gems is number
+        && gems >= 0
+        && gems <= numOr0(old.hero, 'gems') + 40;
     }
 
-    // streakDays is written exclusively by the claimDailyReward Cloud Function
-    // (admin SDK, bypasses rules). Clients must never increase it — doing so
-    // would let a player fake a 19-day streak and claim a legendary chest.
-    // Exception: when lastDailyReset changes (daily reset, gated by validDailyReset
-    // to max once per 23h), streak may increase by at most 1 — this matches
-    // the checkDailyReset() local fallback when CF is unavailable.
+    // streakDays is written by the claimDailyReward Cloud Function (admin SDK,
+    // bypasses rules). Clients must never increase it — doing so would let a player
+    // fake a 19-day streak and claim a legendary chest. Exception: on a daily reset
+    // (gated by validDailyReset) it may rise by at most 1 — the checkDailyReset()
+    // local fallback when the Cloud Function is unavailable.
     function validStreakDays(old, nw) {
-      let oldStreak = old.hero.streakDays == null ? 0 : old.hero.streakDays;
-      let oldReset  = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
-      let newReset  = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
-      // null streakDays is always valid (field not yet present)
-      // Daily reset just happened — allow +1 (gated by validDailyReset 23h window)
-      // No reset — streak must not increase at all
-      return nw.hero.streakDays == null
-        ? true
-        : (newReset != oldReset
-            ? nw.hero.streakDays <= oldStreak + 1
-            : nw.hero.streakDays <= oldStreak);
+      let oldStreak = numOr0(old.hero, 'streakDays');
+      let newStreak = nw.hero.get('streakDays', null);
+      return newStreak == null
+        || (resetChanged(old, nw) ? newStreak <= oldStreak + 1 : newStreak <= oldStreak);
     }
 
-    // Daily run counters must only go up during a session.
-    // The CF resets them to 0 via admin SDK at the start of each day;
-    // until then a client must not decrease them (bypass daily limit exploit).
-    // Exception: when lastDailyReset changes (daily reset just happened),
-    // counters may be zeroed — validated by validDailyReset separately.
+    // Daily run counters must only go up during a day. The Cloud Function resets
+    // them via the admin SDK; a client may only zero them together with a daily
+    // reset (validated by validDailyReset).
     function validDailyCounters(old, nw) {
-      let oldReset = old.hero.lastDailyReset == null ? 0 : old.hero.lastDailyReset;
-      let newReset = nw.hero.lastDailyReset  == null ? 0 : nw.hero.lastDailyReset;
-      let oldDng   = old.hero.dungeonRunsToday     == null ? 0 : old.hero.dungeonRunsToday;
-      let oldKry   = old.hero.kryptaRunsToday      == null ? 0 : old.hero.kryptaRunsToday;
-      let oldQst   = old.hero.questsCompletedToday == null ? 0 : old.hero.questsCompletedToday;
-      // Daily reset happened — counters may go to zero (validDailyReset enforces 23h gate)
-      return newReset != oldReset
-        ? true
-        : (nw.hero.dungeonRunsToday     >= oldDng
-        && nw.hero.kryptaRunsToday      >= oldKry
-        && nw.hero.questsCompletedToday >= oldQst);
+      return resetChanged(old, nw)
+        || (numOr0(nw.hero, 'dungeonRunsToday')     >= numOr0(old.hero, 'dungeonRunsToday')
+            && numOr0(nw.hero, 'kryptaRunsToday')      >= numOr0(old.hero, 'kryptaRunsToday')
+            && numOr0(nw.hero, 'questsCompletedToday') >= numOr0(old.hero, 'questsCompletedToday'));
     }
 
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
@@ -164,14 +181,14 @@ service cloud.firestore {
         // client revert the whole run. +10 still blocks jumping to an arbitrary
         // level while leaving real play room to breathe.
         nw.hero.level <= old.hero.level + 10
-        && nw.pvpWins   >= old.pvpWins
-        && nw.pvpWins   <= old.pvpWins + 1
-        && nw.pvpLosses >= old.pvpLosses
-        && nw.pvpLosses <= old.pvpLosses + 1
-        && nw.pvpRating <= old.pvpRating + 30
-        && nw.pvpRating >= old.pvpRating - 20
-        && nw.challengeUnlocked >= old.challengeUnlocked
-        && nw.challengeUnlocked <= old.challengeUnlocked + 1
+        && numOr0(nw, 'pvpWins')   >= numOr0(old, 'pvpWins')
+        && numOr0(nw, 'pvpWins')   <= numOr0(old, 'pvpWins') + 1
+        && numOr0(nw, 'pvpLosses') >= numOr0(old, 'pvpLosses')
+        && numOr0(nw, 'pvpLosses') <= numOr0(old, 'pvpLosses') + 1
+        && nw.get('pvpRating', 1000) <= old.get('pvpRating', 1000) + 30
+        && nw.get('pvpRating', 1000) >= old.get('pvpRating', 1000) - 20
+        && numOr0(nw, 'challengeUnlocked') >= numOr0(old, 'challengeUnlocked')
+        && numOr0(nw, 'challengeUnlocked') <= numOr0(old, 'challengeUnlocked') + 1
         && validGoldEarned(old, nw)
         && validQuestClear(old, nw)
         && validBeggingClear(old, nw)
@@ -225,55 +242,159 @@ service cloud.firestore {
         && resource.data.uid == request.auth.uid;
     }
 
-    // Guilds
+    // ── Guilds ────────────────────────────────────────────────────────────────
+
+    function onlyChanged(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
+    function guildRoleOf(guild) {
+      return request.auth.uid in guild.members ? guild.members[request.auth.uid].role : null;
+    }
+
+    // Keys of the members map that this write adds, removes or edits.
+    function changedMembers() {
+      return request.resource.data.members.diff(resource.data.members).affectedKeys();
+    }
+
+    // Upgrade levels are bounded (0–50), rise at most one level per write, and a
+    // level-up must be paid from the treasury (2000 × 2^level, as in the client).
+    function validGuildUpgrades() {
+      let oldExp  = resource.data.get('expUpgrade', 0);
+      let oldGold = resource.data.get('goldUpgrade', 0);
+      let newExp  = request.resource.data.get('expUpgrade', 0);
+      let newGold = request.resource.data.get('goldUpgrade', 0);
+      let spent   = resource.data.get('treasury', 0) - request.resource.data.get('treasury', 0);
+      return newExp >= 0 && newExp <= 50 && newExp <= oldExp + 1
+        && newGold >= 0 && newGold <= 50 && newGold <= oldGold + 1
+        && (newExp <= oldExp || spent >= 2000 * math.pow(2, oldExp))
+        && (newGold <= oldGold || spent >= 2000 * math.pow(2, oldGold))
+        && !(newExp > oldExp && newGold > oldGold);
+    }
+
+    // The treasury only grows through a deposit: the depositor's own contribution
+    // rises by exactly the same amount. Nobody can edit someone else's tally.
+    function validTreasury() {
+      let oldT = resource.data.get('treasury', 0);
+      let newT = request.resource.data.get('treasury', 0);
+      let oldC = resource.data.get('contributions', {});
+      let newC = request.resource.data.get('contributions', {});
+      let contribChanged = newC.diff(oldC).affectedKeys();
+      return newT >= 0
+        && ((newT <= oldT && contribChanged.size() == 0)
+            || (newT > oldT
+                && contribChanged.hasOnly([request.auth.uid])
+                && newC.get(request.auth.uid, 0) - oldC.get(request.auth.uid, 0) == newT - oldT));
+    }
+
+    function validGuildEconomy() {
+      return validGuildUpgrades() && validTreasury();
+    }
+
+    // A pending operation reward can't be inflated, and its claimedBy list only grows
+    // (otherwise a member could clear it and claim the same reward again).
+    function validGuildOperation() {
+      let oldOp = resource.data.get('guildOperation', null);
+      let newOp = request.resource.data.get('guildOperation', null);
+      let oldReward = oldOp == null ? null : oldOp.get('pendingReward', null);
+      let newReward = newOp == null ? null : newOp.get('pendingReward', null);
+      return oldReward == null || newReward == null
+        || (newReward.gold <= oldReward.gold
+            && newReward.xp <= oldReward.xp
+            && newReward.get('claimedBy', {}).keys().hasAll(oldReward.get('claimedBy', {}).keys()));
+    }
+
     match /guilds/{guildId} {
       allow read: if isAuthenticated();
-      // Creator must set themselves as leader
+
+      // Creator becomes the only member, as leader, of a guild that starts empty.
       allow create: if isAuthenticated()
-        && request.resource.data.leaderUid == request.auth.uid;
-      // Guild leader can update anything
+        && request.resource.data.leaderUid == request.auth.uid
+        && request.resource.data.members.keys().hasOnly([request.auth.uid])
+        && request.resource.data.members[request.auth.uid].role == 'leader'
+        && request.resource.data.get('treasury', 0) == 0
+        && request.resource.data.get('expUpgrade', 0) == 0
+        && request.resource.data.get('goldUpgrade', 0) == 0
+        && request.resource.data.name is string && request.resource.data.name.size() <= 40
+        && request.resource.data.tag is string && request.resource.data.tag.size() <= 4;
+
+      allow update, delete: if isAdmin();
+
+      // Leader: manages members, roles and leadership (the new leader must already
+      // be a member), within the economy limits.
       allow update: if isAuthenticated()
-        && resource.data.leaderUid == request.auth.uid;
-      // Officers can update anything except leaderUid (prevents self-promotion to leader)
+        && resource.data.leaderUid == request.auth.uid
+        && request.resource.data.leaderUid in request.resource.data.members
+        && validGuildEconomy()
+        && validGuildOperation();
+
+      // Officers: everything except leadership. They can't touch the leader's own
+      // member entry (no kicking or demoting the leader).
       allow update: if isAuthenticated()
-        && request.auth.uid in resource.data.members
-        && resource.data.members[request.auth.uid].role == 'officer'
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid']);
-      // Regular members may only deposit to treasury
+        && guildRoleOf(resource.data) == 'officer'
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['leaderUid'])
+        && !changedMembers().hasAny([resource.data.leaderUid])
+        && validGuildEconomy()
+        && validGuildOperation();
+
+      // Any member: deposit gold into the treasury.
       allow update: if isAuthenticated()
-        && request.auth.uid in resource.data.members
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['treasury', 'contributions'])
-        && request.resource.data.treasury >= resource.data.treasury;
-      // Regular members may update operation progress but cannot increase pendingReward amounts
+        && guildRoleOf(resource.data) != null
+        && onlyChanged(['treasury', 'contributions'])
+        && request.resource.data.get('treasury', 0) > resource.data.get('treasury', 0)
+        && validTreasury();
+
+      // Any member: fight in / claim from the guild operation.
       allow update: if isAuthenticated()
-        && request.auth.uid in resource.data.members
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['guildOperation'])
-        && (resource.data.guildOperation == null
-            || request.resource.data.guildOperation == null
-            || resource.data.guildOperation.pendingReward == null
-            || request.resource.data.guildOperation.pendingReward == null
-            || (request.resource.data.guildOperation.pendingReward.gold <= resource.data.guildOperation.pendingReward.gold
-                && request.resource.data.guildOperation.pendingReward.xp <= resource.data.guildOperation.pendingReward.xp));
-      // Joining via invite: non-member adds only themselves as role='member'
+        && guildRoleOf(resource.data) != null
+        && onlyChanged(['guildOperation'])
+        && validGuildOperation();
+
+      // Any member except the leader: leave the guild, or refresh the display fields
+      // (level, hero name, portrait) of their own entry without changing its role.
       allow update: if isAuthenticated()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])
+        && guildRoleOf(resource.data) != null
+        && request.auth.uid != resource.data.leaderUid
+        && onlyChanged(['members'])
+        && changedMembers().hasOnly([request.auth.uid])
+        && (!(request.auth.uid in request.resource.data.members)
+            || (request.resource.data.members[request.auth.uid].role == resource.data.members[request.auth.uid].role
+                && request.resource.data.members[request.auth.uid].get('joinedAt', 0) == resource.data.members[request.auth.uid].get('joinedAt', 0)));
+
+      // Joining: only with an invite addressed to the caller, and only by adding
+      // their own entry as a plain member.
+      allow update: if isAuthenticated()
         && !(request.auth.uid in resource.data.members)
-        && request.auth.uid in request.resource.data.members
-        && request.resource.data.members[request.auth.uid].role == 'member';
+        && onlyChanged(['members'])
+        && changedMembers().hasOnly([request.auth.uid])
+        && request.resource.data.members[request.auth.uid].role == 'member'
+        && exists(/databases/$(database)/documents/guildInvites/$(guildId + '_' + request.auth.uid));
+
       allow delete: if isAuthenticated()
         && resource.data.leaderUid == request.auth.uid;
     }
 
-    // Guild invites
+    function isGuildManager(guildId) {
+      let guild = get(/databases/$(database)/documents/guilds/$(guildId)).data;
+      return request.auth.uid in guild.members
+        && guild.members[request.auth.uid].role in ['leader', 'officer'];
+    }
+
+    // Guild invites. The document id is `<guildId>_<toUid>`, which lets the join
+    // rule above check that the invite exists.
     match /guildInvites/{inviteId} {
+      // `resource == null` lets a client check whether an invite id is free.
       allow read: if isAuthenticated() && (
+        resource == null ||
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
       );
-      // Sender must be the authenticated user
+      // Only a leader or officer of the guild can invite, under the fixed id.
       allow create: if isAuthenticated()
-        && request.resource.data.fromUid == request.auth.uid;
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && inviteId == request.resource.data.guildId + '_' + request.resource.data.toUid
+        && isGuildManager(request.resource.data.guildId);
       allow delete: if isAuthenticated() && (
         request.auth.uid == resource.data.toUid ||
         request.auth.uid == resource.data.fromUid
@@ -292,6 +413,26 @@ service cloud.firestore {
       allow read: if isAuthenticated();
     }
 
+    // The sender's display name must be their own registered username, so nobody
+    // can post or mail under someone else's name. Accounts older than the
+    // username registry have no users doc and are let through.
+    function isOwnUsername(name) {
+      let profile = /databases/$(database)/documents/users/$(request.auth.uid);
+      return !exists(profile) || get(profile).data.username == name;
+    }
+
+    // Chat messages: own uid, own name, 1–200 chars, and no timestamp from the
+    // future (newest-first feeds would otherwise pin such a message on top).
+    function validChatMessage() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 200
+        && request.resource.data.createdAt is number
+        && request.resource.data.createdAt <= request.time.toMillis() + 300000
+        && isOwnUsername(request.resource.data.username);
+    }
+
     // In-game mail
     match /mail/{mailId} {
       allow read, delete: if isAuthenticated()
@@ -301,7 +442,11 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow create: if isAuthenticated()
         && request.resource.data.fromUid == request.auth.uid
-        && request.resource.data.body.size() <= 2000;
+        && request.resource.data.toUid is string
+        && request.resource.data.body is string
+        && request.resource.data.body.size() <= 2000
+        && isOwnUsername(request.resource.data.fromUsername);
+      allow delete: if isAdmin();
     }
 
     // Stripe gem credits — written only by Cloud Functions (admin SDK bypasses rules)
@@ -318,26 +463,22 @@ service cloud.firestore {
     // Lobby chat
     match /lobbyChat/{msgId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.text.size() <= 200;
+      allow create: if isAuthenticated() && validChatMessage();
+      allow delete: if isAdmin();
     }
 
     // Global chat
     match /globalChat/{msgId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.text.size() <= 200;
+      allow create: if isAuthenticated() && validChatMessage();
+      allow delete: if isAdmin();
     }
 
-    // Casino spin history (global feed)
+    // Casino spin history (global feed). Written only by the spinRoulette Cloud
+    // Function, so the feed shows real spins rather than whatever a client posts.
     match /casinoSpins/{spinId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.stake >= 1
-        && request.resource.data.stake <= 10000000;
+      allow delete: if isAdmin();
     }
 
     // Guild chat
@@ -345,9 +486,9 @@ service cloud.firestore {
       allow read: if isAuthenticated()
         && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members;
       allow create: if isAuthenticated()
-        && request.resource.data.uid == request.auth.uid
         && request.auth.uid in get(/databases/$(database)/documents/guilds/$(guildId)).data.members
-        && request.resource.data.text.size() <= 200;
+        && validChatMessage();
+      allow delete: if isAdmin();
     }
 
     // Client-side error logs — any authenticated user can write, only admin can read/delete

@@ -39,6 +39,9 @@ const NUM_BET_RE = /^num_([0-9]|[12][0-9]|3[0-6])$/;
 // ── spinRoulette ──────────────────────────────────────────────────────────────
 // Fully server-side: RNG, stake validation, and Firestore update all happen here.
 // Client receives only the result — cannot influence spin outcome or gold amount.
+const DAILY_GOLD_CAP = 250_000_000;
+const MAX_GOLD = 1_000_000_000;
+
 export const spinRoulette = functions.https.onCall(async (data, context) => {
   if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Not logged in');
 
@@ -47,33 +50,47 @@ export const spinRoulette = functions.https.onCall(async (data, context) => {
 
   if (!VALID_BETS.includes(betType) && !NUM_BET_RE.test(betType ?? ''))
     throw new functions.https.HttpsError('invalid-argument', 'Invalid bet type');
-  if (!Number.isInteger(stake) || stake < 1 || stake > 1_000_000_000)
+  if (!Number.isInteger(stake) || stake < 1 || stake > MAX_GOLD)
     throw new functions.https.HttpsError('invalid-argument', 'Invalid stake');
 
   const saveRef = db.doc(`saves/${uid}`);
-  const snap = await saveRef.get();
-  if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
+  const userRef = db.doc(`users/${uid}`);
+  const feedRef = db.collection('casinoSpins').doc();
 
-  const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
-  const gold: number = hero.gold ?? 0;
-  if (stake > gold) throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
+  // A transaction, so two spins fired at once can't both stake the same gold.
+  return db.runTransaction(async tx => {
+    const [snap, userSnap] = await Promise.all([tx.get(saveRef), tx.get(userRef)]);
+    if (!snap.exists) throw new functions.https.HttpsError('not-found', 'No save found');
 
-  const result = Math.floor(Math.random() * 37);
-  const won = rouletteWin(betType, result);
-  const back = won ? rouletteReturn(betType, stake) : 0;
-  const newGold = Math.min(gold - stake + back, 1_000_000_000);
-  const netProfit = back - stake;
-  const newGoldEarnedToday = (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit);
-  const now = Date.now();
+    const hero = (snap.data()!.hero ?? {}) as Record<string, number>;
+    const gold: number = hero.gold ?? 0;
+    if (stake > gold) throw new functions.https.HttpsError('failed-precondition', 'Not enough gold');
 
-  await saveRef.update({
-    'hero.gold': newGold,
-    'hero.goldEarnedToday': newGoldEarnedToday,
-    'hero.lastCasinoSpinAt': now,
-    updatedAt: now,
+    const result = Math.floor(Math.random() * 37);
+    const won = rouletteWin(betType, result);
+    const back = won ? rouletteReturn(betType, stake) : 0;
+    const newGold = Math.min(gold - stake + back, MAX_GOLD);
+    const netProfit = back - stake;
+    // Keep the daily tally within the cap the save rules enforce; past it, every
+    // later save from the client would be rejected for the rest of the day.
+    const newGoldEarnedToday = Math.min(DAILY_GOLD_CAP, (hero.goldEarnedToday ?? 0) + Math.max(0, netProfit));
+    const now = Date.now();
+
+    tx.update(saveRef, {
+      'hero.gold': newGold,
+      'hero.goldEarnedToday': newGoldEarnedToday,
+      'hero.lastCasinoSpinAt': now,
+      updatedAt: now,
+    });
+    // Public spin feed — written here so it can only show real spins.
+    tx.create(feedRef, {
+      uid,
+      username: (userSnap.exists ? userSnap.data()!.username : null) ?? 'Gracz',
+      result, won, net: netProfit, stake, ts: now,
+    });
+
+    return { result, won, net: netProfit, newGold, newGoldEarnedToday };
   });
-
-  return { result, won, net: netProfit, newGold, newGoldEarnedToday };
 });
 
 // ── Gem packages ─────────────────────────────────────────────────────────────
@@ -83,10 +100,37 @@ const GEM_PACKAGES: Record<string, { gems: number; priceUsd: number }> = {
   '1200': { gems: 1200, priceUsd: 999 },   // $9.99
 };
 
+// Stripe credentials: environment variables (functions/.env or Secret Manager) take
+// precedence; functions.config() — deprecated by Firebase — remains as a fallback
+// so the current deployment keeps working until it is migrated.
+function stripeSecretKey(): string | undefined {
+  return process.env.STRIPE_SECRET_KEY ?? functions.config().stripe?.secret_key;
+}
+function stripeWebhookSecret(): string | undefined {
+  return process.env.STRIPE_WEBHOOK_SECRET ?? functions.config().stripe?.webhook_secret;
+}
+
 function getStripe() {
-  const key = functions.config().stripe?.secret_key;
-  if (!key) throw new functions.https.HttpsError('internal', 'Stripe not configured. Run: firebase functions:config:set stripe.secret_key=sk_...');
+  const key = stripeSecretKey();
+  if (!key) throw new functions.https.HttpsError('internal', 'Stripe not configured. Set STRIPE_SECRET_KEY (or the legacy stripe.secret_key config).');
   return new Stripe(key, { apiVersion: '2026-04-22.dahlia' });
+}
+
+// Where Stripe sends the player back after checkout. Only our own web origins are
+// accepted; anything else (including the Android app's https://localhost WebView
+// origin, which an external browser can't open) falls back to the public site.
+const CHECKOUT_RETURN_ORIGINS = new Set([
+  'https://glitchsoul.com',
+  'https://www.glitchsoul.com',
+  'http://localhost:5173',
+  'http://localhost:4173',
+]);
+function checkoutReturnUrl(originUrl: unknown): string {
+  try {
+    const u = new URL(String(originUrl));
+    if (CHECKOUT_RETURN_ORIGINS.has(u.origin)) return `${u.origin}${u.pathname}`;
+  } catch { /* not a URL */ }
+  return 'https://glitchsoul.com/';
 }
 
 // ── createCheckoutSession ─────────────────────────────────────────────────────
@@ -96,6 +140,7 @@ export const createCheckoutSession = functions.https.onCall(async (data, context
   const { packageId, originUrl } = data as { packageId: string; originUrl: string };
   const pkg = GEM_PACKAGES[packageId];
   if (!pkg) throw new functions.https.HttpsError('invalid-argument', 'Invalid gem package');
+  const returnUrl = checkoutReturnUrl(originUrl);
 
   const stripe = getStripe();
   const session = await stripe.checkout.sessions.create({
@@ -113,8 +158,8 @@ export const createCheckoutSession = functions.https.onCall(async (data, context
       quantity: 1,
     }],
     metadata: { uid: context.auth.uid, gems: pkg.gems.toString() },
-    success_url: `${originUrl}?gems_success=1&gems=${pkg.gems}`,
-    cancel_url:  `${originUrl}?gems_cancelled=1`,
+    success_url: `${returnUrl}?gems_success=1&gems=${pkg.gems}`,
+    cancel_url:  `${returnUrl}?gems_cancelled=1`,
   });
 
   return { url: session.url };
@@ -123,14 +168,14 @@ export const createCheckoutSession = functions.https.onCall(async (data, context
 // ── stripeWebhook ─────────────────────────────────────────────────────────────
 export const stripeWebhook = functions.https.onRequest(async (req, res) => {
   const sig = req.headers['stripe-signature'] as string;
-  const webhookSecret = functions.config().stripe?.webhook_secret;
+  const webhookSecret = stripeWebhookSecret();
 
   if (!webhookSecret) { res.status(500).send('Webhook secret not configured'); return; }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let event: any;
   try {
-    const stripe = new Stripe(functions.config().stripe?.secret_key ?? '', { apiVersion: '2026-04-22.dahlia' });
+    const stripe = new Stripe(stripeSecretKey() ?? '', { apiVersion: '2026-04-22.dahlia' });
     event = stripe.webhooks.constructEvent((req as any).rawBody, sig, webhookSecret);
   } catch (err: any) {
     console.error('Stripe webhook signature error:', err.message);
@@ -144,13 +189,20 @@ export const stripeWebhook = functions.https.onRequest(async (req, res) => {
     const gems = parseInt(session.metadata?.gems ?? '0', 10);
 
     if (uid && gems > 0 && session.payment_status === 'paid') {
-      await db.collection('gemCredits').add({
-        uid, gems,
-        sessionId: session.id,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        claimed: false,
-      });
-      console.log(`Queued +${gems} gems for uid=${uid}`);
+      // Keyed by the checkout session: Stripe retries webhooks (and may deliver an
+      // event more than once), and each delivery used to queue the gems again.
+      try {
+        await db.collection('gemCredits').doc(session.id).create({
+          uid, gems,
+          sessionId: session.id,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          claimed: false,
+        });
+        console.log(`Queued +${gems} gems for uid=${uid}`);
+      } catch (e: any) {
+        if (e?.code !== 6 /* ALREADY_EXISTS */) throw e;
+        console.log(`Duplicate webhook for session ${session.id} ignored`);
+      }
     }
   }
 
@@ -460,7 +512,15 @@ export const joinGuildWar = functions.https.onCall(async (data, context) => {
 
     if ((war[side] ?? {})[uid]) return { side };
 
-    const saveSnap = await tx.get(db.doc(`saves/${uid}`));
+    // The profile's guildId is written by the client, so confirm membership on the
+    // guild itself — otherwise anyone could sign up for either side of any war.
+    const [guildSnap, saveSnap] = await Promise.all([
+      tx.get(db.doc(`guilds/${myGuildId}`)),
+      tx.get(db.doc(`saves/${uid}`)),
+    ]);
+    if (!guildSnap.exists || !(guildSnap.data()!.members ?? {})[uid]) {
+      throw new functions.https.HttpsError('permission-denied', 'Not a member of this guild');
+    }
     const level: number = saveSnap.exists ? (saveSnap.data()!.hero?.level ?? 1) : 1;
 
     tx.update(warRef, {
@@ -547,11 +607,18 @@ async function finalizeWar(
 ): Promise<FirebaseFirestore.DocumentData> {
   try {
     await db.runTransaction(async tx => {
-      const snap = await tx.get(warRef);
+      const attackerRef = db.doc(`guilds/${war.attackerGuildId}`);
+      const defenderRef = db.doc(`guilds/${war.defenderGuildId}`);
+      const [snap, attackerSnap, defenderSnap] = await Promise.all([
+        tx.get(warRef), tx.get(attackerRef), tx.get(defenderRef),
+      ]);
       if (snap.data()!.status !== 'signup') throw new Error('ALREADY_RESOLVED');
       tx.update(warRef, { status: 'finished', result, resolvedAt: now });
-      tx.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
-      tx.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
+      // A guild may have been disbanded during signup. Updating a missing doc fails
+      // the whole transaction, which left such a war unresolvable forever (and the
+      // scheduled backstop retrying it every 10 minutes).
+      if (attackerSnap.exists) tx.update(attackerRef, { activeWarId: admin.firestore.FieldValue.delete() });
+      if (defenderSnap.exists) tx.update(defenderRef, { activeWarId: admin.firestore.FieldValue.delete() });
     });
   } catch (e: any) {
     if (e.message === 'ALREADY_RESOLVED') {
@@ -574,11 +641,10 @@ export const resolveGuildWar = functions.https.onCall(async (data, context) => {
   const war = warSnap.data()!;
 
   if (war.status === 'finished') {
-    // Best-effort cleanup in case activeWarId was left behind
-    const b = db.batch();
-    b.update(db.doc(`guilds/${war.attackerGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
-    b.update(db.doc(`guilds/${war.defenderGuildId}`), { activeWarId: admin.firestore.FieldValue.delete() });
-    await b.commit().catch(() => {});
+    // Best-effort cleanup in case activeWarId was left behind (each guild on its
+    // own, so one disbanded guild doesn't block clearing the other).
+    await Promise.all([war.attackerGuildId, war.defenderGuildId].map(gid =>
+      db.doc(`guilds/${gid}`).update({ activeWarId: admin.firestore.FieldValue.delete() }).catch(() => {})));
     return { id: warId, ...war };
   }
   if (war.status === 'battle') return { id: warId, ...war };
@@ -616,4 +682,106 @@ export const resolveExpiredGuildWars = functions.pubsub
       functions.logger.info(`resolveExpiredGuildWars: resolved ${expired.length} war(s)`);
     }
     return null;
+  });
+
+// ── deleteAccount ─────────────────────────────────────────────────────────────
+// Permanently deletes the caller's account and everything tied to it. Google Play
+// requires in-app account deletion for apps with sign-in, and it is the GDPR
+// right to erasure. Runs with the admin SDK because most of these documents are
+// not writable by their owner under the security rules.
+
+async function deleteWhere(q: FirebaseFirestore.Query): Promise<void> {
+  for (;;) {
+    const snap = await q.limit(400).get();
+    if (snap.empty) return;
+    const batch = db.batch();
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    if (snap.size < 400) return;
+  }
+}
+
+type GuildMemberDoc = { role?: string; joinedAt?: number };
+
+/** Leave the guild; a leader hands over to an officer (else the longest-serving member), or disbands when alone. */
+async function removeFromGuild(uid: string, guildId: string): Promise<void> {
+  const guildRef = db.doc(`guilds/${guildId}`);
+  await deleteWhere(guildRef.collection('messages').where('uid', '==', uid));
+  await db.runTransaction(async tx => {
+    const snap = await tx.get(guildRef);
+    if (!snap.exists) return;
+    const guild = snap.data()!;
+    const members = (guild.members ?? {}) as Record<string, GuildMemberDoc>;
+    if (!members[uid]) return;
+    const others = Object.entries(members).filter(([id]) => id !== uid);
+    if (guild.leaderUid !== uid) {
+      tx.update(guildRef, { [`members.${uid}`]: admin.firestore.FieldValue.delete() });
+      return;
+    }
+    if (others.length === 0) {
+      tx.delete(guildRef); // subcollections are removed by onGuildDeleted
+      return;
+    }
+    const rank = (m: GuildMemberDoc) => (m.role === 'officer' ? 1 : 0);
+    const [heirUid] = others.sort(([, a], [, b]) => rank(b) - rank(a) || (a.joinedAt ?? 0) - (b.joinedAt ?? 0))[0];
+    tx.update(guildRef, {
+      leaderUid: heirUid,
+      [`members.${heirUid}.role`]: 'leader',
+      [`members.${uid}`]: admin.firestore.FieldValue.delete(),
+    });
+  });
+}
+
+export const deleteAccount = functions
+  .runWith({ timeoutSeconds: 300 })
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+    const uid = context.auth.uid;
+
+    const [playerSnap, userSnap] = await Promise.all([
+      db.doc(`players/${uid}`).get(),
+      db.doc(`users/${uid}`).get(),
+    ]);
+
+    const guildId = playerSnap.exists ? (playerSnap.data()!.guildId as string | undefined) : undefined;
+    if (guildId) await removeFromGuild(uid, guildId);
+
+    // Everything the player wrote or that is addressed to them.
+    await Promise.all([
+      deleteWhere(db.collection('globalChat').where('uid', '==', uid)),
+      deleteWhere(db.collection('lobbyChat').where('uid', '==', uid)),
+      deleteWhere(db.collection('casinoSpins').where('uid', '==', uid)),
+      deleteWhere(db.collection('mail').where('toUid', '==', uid)),
+      deleteWhere(db.collection('mail').where('fromUid', '==', uid)),
+      deleteWhere(db.collection('guildInvites').where('toUid', '==', uid)),
+      deleteWhere(db.collection('guildInvites').where('fromUid', '==', uid)),
+      deleteWhere(db.collection('pvpHistory').where('attackerUid', '==', uid)),
+      deleteWhere(db.collection('pvpHistory').where('defenderUid', '==', uid)),
+      deleteWhere(db.collection('gemCredits').where('uid', '==', uid)),
+      deleteWhere(db.collection('clientErrors').where('uid', '==', uid)),
+      deleteWhere(db.collection('usernames').where('uid', '==', uid)),
+    ]);
+
+    const batch = db.batch();
+    const username = userSnap.exists ? (userSnap.data()!.username as string | undefined) : undefined;
+    if (username) batch.delete(db.doc(`usernames/${username.trim().toLowerCase()}`));
+    for (const path of [`saves/${uid}`, `players/${uid}`, `users/${uid}`, `lobbyPlayers/${uid}`]) {
+      batch.delete(db.doc(path));
+    }
+    await batch.commit();
+
+    await admin.auth().deleteUser(uid).catch((e: any) => {
+      if (e?.code !== 'auth/user-not-found') throw e;
+    });
+    functions.logger.info(`deleteAccount: removed ${uid}`);
+    return { ok: true };
+  });
+
+// ── onGuildDeleted ────────────────────────────────────────────────────────────
+// Deleting a document leaves its subcollections behind. Clear a disbanded guild's
+// chat and boss state so they don't linger unreachable in the database.
+export const onGuildDeleted = functions.firestore
+  .document('guilds/{guildId}')
+  .onDelete(async (snap) => {
+    await db.recursiveDelete(snap.ref);
   });

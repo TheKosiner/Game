@@ -131,8 +131,14 @@ async function findPlayer(nameOrUid: string): Promise<PlayerInfo | null> {
   return null;
 }
 
+// The admin check lives in a wrapper so the inner component's hooks always run in
+// the same order (an early return before hooks breaks React's rules of hooks).
 export default function AdminPanel({ userEmail }: { userEmail: string }) {
   if (userEmail !== ADMIN_EMAIL) return null;
+  return <AdminPanelInner />;
+}
+
+function AdminPanelInner() {
 
   const [search, setSearch] = useState('');
   const [player, setPlayer] = useState<PlayerInfo | null>(null);

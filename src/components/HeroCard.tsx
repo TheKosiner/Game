@@ -4,6 +4,7 @@ import { MAX_DAILY_DUNGEONS, MAX_DAILY_QUESTS } from '../store/gameStore';
 import { getHeroAttack, getHeroDefense, getEquipmentStats, getHeroMagicResistance, calcCritChance, calcDmgRange, getEnhanceAttackBonus, getEnhanceDefenseBonus, getEnhanceStatBonus } from '../utils/combat';
 import { portraitSrc } from '../data/portraits';
 import AppearanceEditor from './AppearanceEditor';
+import AccountSettings from './AccountSettings';
 import { useT } from '../hooks/useT';
 import { useAuthStore } from '../store/authStore';
 import { collectBeggingServer } from '../lib/serverActions';
@@ -772,6 +773,8 @@ export default function HeroCard() {
         </svg>
         DISCORD
       </a>
+
+      <AccountSettings />
 
     </div>
   );

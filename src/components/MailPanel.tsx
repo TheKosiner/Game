@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import {
   getMyMail, sendMail, markMailRead, deleteMail,
-  getMyInvites, acceptInvite, declineInvite,
+  getMyInvites, acceptInvite, declineInvite, InviteInvalidError,
   getLeaderboard,
   type MailMessage, type GuildInvite, type LeaderboardEntry,
 } from '../lib/cloudSync';
@@ -322,7 +322,7 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [invites, setInvites] = useState<GuildInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteResult, setInviteResult] = useState<string | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ text: string; ok: boolean } | null>(null);
   const [replyTo, setReplyTo] = useState<{ uid: string; username: string } | null>(null);
 
   async function reload() {
@@ -346,10 +346,16 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
     if (!user) return;
     try {
       await acceptInvite(invite.id, invite.guildId, user.uid, user.username, hero.name, hero.level, hero.portrait);
-      setInviteResult(t.mail.joinedGuild(invite.guildTag, invite.guildName));
+      setInviteResult({ text: t.mail.joinedGuild(invite.guildTag, invite.guildName), ok: true });
       setTimeout(() => setInviteResult(null), 3000);
       await reload();
     } catch (e) {
+      setInviteResult({
+        text: e instanceof InviteInvalidError ? t.guild.inviteExpired : t.guild.actionFailed(t.guild.unknownError),
+        ok: false,
+      });
+      setTimeout(() => setInviteResult(null), 4000);
+      await reload().catch(() => {});
     }
   }
 
@@ -416,8 +422,12 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
 
       {/* Invite result banner */}
       {inviteResult && (
-        <div style={{ background: 'rgba(20,50,10,0.9)', border: '1px solid rgba(40,120,40,0.5)', padding: '8px 12px', textAlign: 'center' }}>
-          <p style={{ ...PX(5), color: '#60c060' }}>{inviteResult}</p>
+        <div role="status" style={{
+          background: inviteResult.ok ? 'rgba(20,50,10,0.9)' : 'rgba(50,10,10,0.9)',
+          border: `1px solid ${inviteResult.ok ? 'rgba(40,120,40,0.5)' : 'rgba(160,40,40,0.5)'}`,
+          padding: '8px 12px', textAlign: 'center',
+        }}>
+          <p style={{ ...PX(5), color: inviteResult.ok ? '#60c060' : '#ff6060' }}>{inviteResult.text}</p>
         </div>
       )}
 

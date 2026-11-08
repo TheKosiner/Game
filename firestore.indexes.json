@@ -4,16 +4,42 @@
       "collectionGroup": "casinoSpins",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "won", "order": "ASCENDING" },
-        { "fieldPath": "net", "order": "DESCENDING" }
+        {
+          "fieldPath": "won",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "net",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "casinoSpins",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "won", "order": "ASCENDING" },
-        { "fieldPath": "net", "order": "ASCENDING" }
+        {
+          "fieldPath": "won",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "net",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "mail",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "toUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],

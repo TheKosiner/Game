@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
-import { useGameStore, MAX_INVENTORY } from './store/gameStore';
+import { useGameStore, MAX_INVENTORY, isSameUtcDay } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
 import { useLangStore, getLang } from './store/langStore';
@@ -90,11 +90,18 @@ export default function App() {
   const [streakData, setStreakData] = useState<DailyRewardResult | null>(null);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  // Bumped by the "retry" button when the first cloud load failed.
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const heroReady = useGameStore(s => s.heroReady);
+  const needsCharacterCreation = useGameStore(s => s.needsCharacterCreation);
   // Public marketing routes shown to logged-out visitors: '/' (landing),
   // '/logowanie' (auth) and '/pobierz' (APK download).
   const [publicRoute, setPublicRoute] = useState<string>(() => normalizePath(window.location.pathname));
   const lastChatViewedAt = useRef(Date.now());
   const loadedUidRef = useRef<string | null>(null);
+  // One daily claim at a time, and no faster than once a minute if it keeps failing.
+  const claimInFlightRef = useRef(false);
+  const lastClaimAttemptRef = useRef(0);
   const tRef = useRef(t);
   useEffect(() => { tRef.current = t; });
 
@@ -129,6 +136,79 @@ export default function App() {
     addCombatLog(tRef.current.gems.streakBoxLog(getLang() !== 'pl' ? box.nameEn ?? box.name : box.name), 'loot');
   };
 
+  // Daily reward: claimed from the claimDailyReward Cloud Function at session start
+  // and again whenever the UTC day rolls over mid-session. The local
+  // checkDailyReset() only steps in when the function can't be reached.
+  async function runDailyClaim(mode: 'startup' | 'rollover'): Promise<void> {
+    const u = useAuthStore.getState().user;
+    if (!u || claimInFlightRef.current) return;
+    claimInFlightRef.current = true;
+    lastClaimAttemptRef.current = Date.now();
+    // One streak modal per device per (UTC) day, whichever device claimed.
+    const todayKey = 'streak_modal_' + new Date().toISOString().slice(0, 10);
+    const modalShown = () => { try { return !!localStorage.getItem(todayKey); } catch { return false; } };
+    const markModalShown = () => { try { localStorage.setItem(todayKey, '1'); } catch { /* storage unavailable */ } };
+    try {
+      // Mid-session, push local progress first: the server's reset then lands on
+      // top of it, rather than the next sync overwriting the reset with
+      // yesterday's counters (which the save rules reject).
+      if (mode === 'rollover') await syncToCloud(u.uid, u.username).catch(() => {});
+
+      let result: DailyRewardResult;
+      try {
+        result = await claimDailyRewardServer();
+      } catch {
+        // CF not deployed or network error — fall back to local daily reset.
+        const before = useGameStore.getState().hero.lastDailyReset;
+        checkDailyReset();
+        const after = useGameStore.getState().hero;
+        if (after.lastDailyReset !== before) {
+          markModalShown();
+          setStreakData({ claimed: true, streakDays: after.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 5 });
+        }
+        return;
+      }
+
+      if (!result.claimed) {
+        // Already claimed today (e.g. from another device): adopt that reset.
+        useGameStore.getState().settleVoluntaryRest();
+        if (!isSameUtcDay(useGameStore.getState().hero.lastDailyReset)) {
+          await loadFromCloud(u.uid, true).catch(() => {});
+        }
+        // Show streak modal once per device per day regardless of which device claimed first.
+        if (mode === 'startup' && !modalShown()) {
+          markModalShown();
+          const h = useGameStore.getState().hero;
+          setStreakData({ claimed: false, streakDays: h.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 0 });
+        }
+        return;
+      }
+
+      if (mode === 'startup') {
+        // Force-reload from cloud so local state matches exactly what the CF wrote.
+        await loadFromCloud(u.uid, true).catch(() => {});
+      }
+      // Apply the server's daily reset locally too — if the cloud reload above
+      // failed (or mid-session, where we don't reload), stale local counters would
+      // otherwise be synced back over the server's reset.
+      useGameStore.getState().applyServerDailyReset(result, mode === 'startup' ? 'absolute' : 'delta');
+      addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+      // Milestone streak chest: grant an actual mystery box to the inventory
+      // (epic on day 5, legendary on day 10). The CF only credits gems.
+      if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
+        grantStreakMilestoneBox(result.streakMilestone);
+      }
+      markModalShown();
+      saveGame();
+      // Persist the freshly granted box (and reset state) back to the cloud so it
+      // survives the next loadFromCloud on app start or another device.
+      syncToCloud(u.uid, u.username).catch(() => {});
+      setStreakData(result);
+    } finally {
+      claimInFlightRef.current = false;
+    }
+  }
+
   const desktopMainRef = useRef<HTMLElement>(null);
   const animKey = `${tab}-${playSub}-${socialSub}-${shopSub}-${guildTab}`;
 
@@ -146,10 +226,10 @@ export default function App() {
   // once the game is loaded and the character exists (not mid-creation).
   useEffect(() => {
     if (!gameLoaded || !minTimeReady) return;
-    if (hero.name === 'Hero') return; // still on character creation
+    if (!heroReady) return; // still on character creation (or loading)
     const cfg = getTutorialCfg();
     if (!cfg.done && cfg.auto) setTutorialOpen(true);
-  }, [gameLoaded, minTimeReady, hero.name]);
+  }, [gameLoaded, minTimeReady, heroReady]);
 
   // Once signed in, the game renders at whatever public path was open — put the
   // address bar back to '/' so players don't sit on /logowanie/ while playing.
@@ -223,7 +303,12 @@ export default function App() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  useEffect(() => { requestNotificationPermission(); }, []);
+  // Ask for notification permission once the player is actually in the game —
+  // not on the public landing page, where an instant permission prompt is both
+  // unwelcome and penalised by browsers.
+  useEffect(() => {
+    if (gameLoaded && user) requestNotificationPermission().catch(() => {});
+  }, [gameLoaded, user?.uid]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -233,8 +318,12 @@ export default function App() {
         // account switches. localStorage may hold another account's save, or a save this
         // device never managed to push; without force the unsynced-progress guard in
         // loadFromCloud would keep that stale local data instead of the cloud's.
-        const force = loadedUidRef.current !== user.uid;
+        // Also force while no hero is loaded yet (a retry after a failed first load).
+        const force = loadedUidRef.current !== user.uid || !useGameStore.getState().heroReady;
         loadedUidRef.current = user.uid;
+        // Until this account's hero is loaded, whatever is in memory (a placeholder,
+        // or the previous account's hero) must not be saved or synced.
+        if (force) useGameStore.setState({ heroReady: false, needsCharacterCreation: false });
         try {
           let loaded = await loadFromCloud(user.uid, force);
           // Retry once — on mobile, first read can fail due to cold-start network
@@ -243,8 +332,10 @@ export default function App() {
             loaded = await loadFromCloud(user.uid, true);
           }
           if (loaded === null) {
+            // A brand-new account: show character creation.
             try { localStorage.removeItem('glitchsoul_save'); } catch {}
             initHero('Hero', 1, 2, true);
+            useGameStore.setState({ needsCharacterCreation: true });
           } else if (!loaded) {
             loadGame();
           }
@@ -253,10 +344,19 @@ export default function App() {
           // server-side. Calling checkDailyReset() first updates lastDailyReset=now
           // locally, which syncToCloud then writes to Firestore before CF reads it —
           // CF sees "already claimed today" and returns claimed:false, suppressing modal.
-        } catch { loadGame(); }
+        } catch {
+          // Cloud unreachable: fall back to this account's local save, if any. With
+          // none, heroReady stays false and a retry screen is shown — starting a new
+          // character here could overwrite the real one once the connection returns.
+          loadGame();
+        }
       } else {
         loadedUidRef.current = null;
         loadGame();
+        // Offline play (no Firebase): no local save means a new character.
+        if (!isFirebaseConfigured && !useGameStore.getState().heroReady) {
+          useGameStore.setState({ needsCharacterCreation: true });
+        }
       }
       setGameLoaded(true);
       const s = useGameStore.getState();
@@ -271,7 +371,7 @@ export default function App() {
       );
     }
     load();
-  }, [authLoading, user?.uid]);
+  }, [authLoading, user?.uid, loadAttempt]);
 
   useEffect(() => {
     if (!gameLoaded || !user) return;
@@ -293,10 +393,21 @@ export default function App() {
       // overwrite a foreground device's cloud save with stale background data.
       if (document.hidden) return;
       const currentUser = useAuthStore.getState().user;
-      checkDailyReset();
+      if (currentUser) {
+        useGameStore.getState().settleVoluntaryRest();
+        // The UTC day rolled over while playing: claim the new day from the server
+        // (a local reset would skip the streak bonus and milestone chests).
+        if (!isSameUtcDay(useGameStore.getState().hero.lastDailyReset)
+            && Date.now() - lastClaimAttemptRef.current > 60_000) {
+          runDailyClaim('rollover');
+        }
+      } else {
+        checkDailyReset();
+      }
       tickPassiveRegen();
       saveGame();
-      if (currentUser) {
+      // A claim in flight pushes its own sync; one from here would race it.
+      if (currentUser && !claimInFlightRef.current) {
         syncToCloud(currentUser.uid, currentUser.username).catch(() => {});
       }
     }, 10_000);
@@ -335,7 +446,8 @@ export default function App() {
       } else {
         if (currentUser && Date.now() - hiddenAt > 5_000) {
           loadFromCloud(currentUser.uid).then(loaded => {
-            if (loaded) useGameStore.getState().checkDailyReset();
+            // A day rollover is picked up by the 10 s tick, which claims it from the server.
+            if (loaded) useGameStore.getState().settleVoluntaryRest();
           }).catch(() => {});
         }
       }
@@ -360,25 +472,9 @@ export default function App() {
         await loadFromCloud(user.uid, true).catch(() => {});
         // If admin wiped lastDailyReset (streak reset), re-run the daily claim
         // so counters reset and streak is recalculated without needing a refresh.
-        const heroNow = useGameStore.getState().hero;
-        if ((heroNow.lastDailyReset ?? 0) === 0) {
-          claimDailyRewardServer().then(async result => {
-            if (!result.claimed) { checkDailyReset(); return; }
-            try { await loadFromCloud(user.uid, true); } catch {}
-            if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
-              grantStreakMilestoneBox(result.streakMilestone);
-            }
-            saveGame();
-            syncToCloud(user.uid, user.username).catch(() => {});
-            setStreakData(result);
-          }).catch(() => {
-            const before = useGameStore.getState().hero;
-            checkDailyReset();
-            const after = useGameStore.getState().hero;
-            if (after.lastDailyReset !== before.lastDailyReset) {
-              setStreakData({ claimed: true, streakDays: after.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 5 });
-            }
-          });
+        if ((useGameStore.getState().hero.lastDailyReset ?? 0) === 0) {
+          lastClaimAttemptRef.current = 0;
+          runDailyClaim('startup');
         }
       }
     }, () => {});
@@ -388,79 +484,13 @@ export default function App() {
   // Server-validated daily reward — falls back to local if CF unavailable (Spark plan)
   useEffect(() => {
     if (!gameLoaded || !user) return;
-    claimDailyRewardServer().then(async result => {
-      const todayKey = 'streak_modal_' + new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
-      if (!result.claimed) {
-        // Already claimed today (e.g. from another device). Run local reset to
-        // catch any counter resets that haven't been applied yet.
-        checkDailyReset();
-        // Show streak modal once per device per day regardless of which device claimed first.
-        if (!localStorage.getItem(todayKey)) {
-          localStorage.setItem(todayKey, '1');
-          const hero = useGameStore.getState().hero;
-          setStreakData({
-            claimed: false,
-            streakDays: hero.streakDays ?? 1,
-            streakMilestone: null,
-            chestGems: 0,
-            gemsAdded: 0,
-          });
-        }
-        return;
-      }
-      // Force-reload from cloud so local lastDailyReset matches exactly what CF wrote.
-      try { await loadFromCloud(user.uid, true); } catch {}
-      // Apply the server's daily reset locally too — if the cloud reload above failed,
-      // the stale local counters (e.g. kryptaRunsToday) would otherwise be synced back
-      // over the server's reset, making the daily limits look like they never reset.
-      useGameStore.setState(s => ({
-        hero: {
-          ...s.hero,
-          dungeonRunsToday: 0,
-          questsCompletedToday: 0,
-          goldEarnedToday: 0,
-          kryptaRunsToday: 0,
-          lastDailyReset: result.lastDailyReset ?? s.hero.lastDailyReset,
-          streakDays: result.streakDays ?? s.hero.streakDays,
-          gems: result.gems ?? s.hero.gems,
-        },
-      }));
-      addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
-      // Milestone streak chest: grant an actual mystery box to the inventory
-      // (epic on day 5, legendary on day 10). The CF only credits gems.
-      if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
-        grantStreakMilestoneBox(result.streakMilestone);
-      }
-      localStorage.setItem(todayKey, '1');
-      saveGame();
-      // Persist the freshly granted box (and reset state) back to the cloud so it
-      // survives the next loadFromCloud on app start or another device.
-      syncToCloud(user.uid, user.username).catch(() => {});
-      setStreakData(result);
-    }).catch(() => {
-      // CF not deployed or network error — fall back to local daily reset.
-      const heroBefore = useGameStore.getState().hero;
-      checkDailyReset();
-      const heroAfter = useGameStore.getState().hero;
-      // Show modal if a reset actually happened
-      if (heroAfter.lastDailyReset !== heroBefore.lastDailyReset) {
-        const todayKey = 'streak_modal_' + new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
-        localStorage.setItem(todayKey, '1');
-        setStreakData({
-          claimed: true,
-          streakDays: heroAfter.streakDays ?? 1,
-          streakMilestone: null,
-          chestGems: 0,
-          gemsAdded: 5,
-        });
-      }
-    });
+    runDailyClaim('startup');
   }, [gameLoaded, user?.uid]);
 
   useEffect(() => {
-    if (user && gameLoaded && hero.name !== 'Hero')
+    if (user && gameLoaded && heroReady)
       syncToCloud(user.uid, user.username).catch(() => {});
-  }, [hero.level, hero.name]);
+  }, [hero.level, hero.name, heroReady]);
 
   // Sync challenge progress immediately after every boss fight
   useEffect(() => {
@@ -543,14 +573,35 @@ export default function App() {
     );
   }
 
+  // The installed app skips the marketing landing, but a signed-out player still
+  // has to sign in: this gate went missing when the landing was added, which left
+  // fresh installs (and anyone who logged out) in an offline guest game with no
+  // way to reach the sign-in screen.
+  if (!authLoading && isFirebaseConfigured && !user) {
+    return <AuthScreen />;
+  }
+
   if (authLoading || !gameLoaded || !minTimeReady) {
     return <LoadingScreen text={t.app.loading} />;
   }
 
 
-  const hasSave = (() => { try { return !!localStorage.getItem('glitchsoul_save'); } catch { return false; } })();
-  const isNewGame = hero.name === 'Hero' && !hasSave;
-  if (isNewGame) return <CharacterCreation />;
+  // Decided by an explicit flag. It used to be "placeholder name and no local save",
+  // but the start-up save wrote the placeholder to localStorage within moments, so
+  // new accounts skipped character creation (and the tutorial) and played as "Hero".
+  if (needsCharacterCreation) return <CharacterCreation />;
+  if (!heroReady) {
+    return (
+      <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24, textAlign: 'center', background: 'var(--bg-deep, #05050d)' }}>
+        <p style={{ fontFamily: "'Share Tech Mono', monospace", fontSize: 13, color: 'rgba(255,255,255,0.75)', maxWidth: 320, lineHeight: 1.6 }}>{t.app.loadFailed}</p>
+        <button
+          className="btn btn-primary"
+          onClick={() => { setGameLoaded(false); setLoadAttempt(n => n + 1); }}
+          style={{ fontSize: 11, padding: '8px 18px' }}
+        >{t.app.retry}</button>
+      </div>
+    );
+  }
 
   // ── DESKTOP LAYOUT ────────────────────────────────────────────────────────────────────────────
   if (isDesktop && !isNative) {

@@ -45,12 +45,13 @@ export default function GuildChat({ guildId, currentUid, username, portrait }: P
     if (!db || !guildId) return;
     const q = query(
       collection(db, 'guilds', guildId, 'messages'),
-      orderBy('createdAt', 'asc'),
+      // Newest 60, shown oldest-first (ascending + limit returned the oldest 60).
+      orderBy('createdAt', 'desc'),
       limit(60)
     );
     const unsub = onSnapshot(q, snap => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)));
-    });
+      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChatMessage)).reverse());
+    }, () => {});
     return () => unsub();
   }, [guildId]);
 
@@ -77,6 +78,9 @@ export default function GuildChat({ guildId, currentUid, username, portrait }: P
       });
       lastSentAt.current = Date.now();
       setText('');
+    } catch {
+      setRateLimitMsg(t.chat.sendError);
+      setTimeout(() => setRateLimitMsg(''), 3000);
     } finally {
       setSending(false);
     }
