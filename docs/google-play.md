@@ -84,16 +84,41 @@ Funkcje sprawdzają zakupy jako konto usługi projektu Firebase.
   Ich zakupy są testowe (bez obciążenia karty); w `playPurchases` mają `test: true`.
 - Testerzy instalują aplikację z linku testów wewnętrznych.
 
-### 7. Wymagania Sklepu przed publikacją
-- **Polityka prywatności** — publiczny URL (wymagany). Gra zbiera: e-mail (konto),
-  nazwę gracza, postęp gry, wiadomości czatu i poczty, historię zakupów, logi
-  błędów (komunikat, ślad stosu, user agent).
-- **Usuwanie konta** — w aplikacji jest (*Bohater → Konto → Usuń konto*). Play
-  wymaga też adresu WWW z instrukcją usunięcia konta.
-- **Bezpieczeństwo danych** (Data safety) — jak wyżej; dane szyfrowane w
-  transmisji (HTTPS); użytkownik może usunąć konto i dane.
+### 7. Wizytówka w Sklepie
+Gotowe grafiki są w `docs/play-store/` (generuje je `scripts/gen-store-graphics.py`):
+
+| Plik | Gdzie w Play Console |
+|---|---|
+| `icon-512.png` | Ikona aplikacji (512×512) |
+| `feature-graphic-pl.png` / `-en.png` | Grafika promocyjna (1024×500) |
+| `screenshots/*.png` | Zrzuty ekranu telefonu (840×1664, min. 2, maks. 8) |
+
+Zrzuty pochodzą z wersji WWW — wycięty jest z nich baner „Pobierz aplikację
+Android ↓ APK” (odsyłanie do instalacji spoza Sklepu w wizytówce to proszenie się
+o odrzucenie). UI jest po polsku; do wizytówki angielskiej warto kiedyś zrobić
+zrzuty po angielsku.
+
+### 8. Formularze i wymagania przed publikacją
+- **Polityka prywatności:** `https://glitchsoul.com/polityka-prywatnosci/`
+  (EN: `https://glitchsoul.com/en/privacy/`).
+- **Usuwanie konta** (sekcja *Bezpieczeństwo danych → Usuwanie danych*):
+  w aplikacji *Bohater → Konto → Usuń konto*; adres WWW:
+  `https://glitchsoul.com/usun-konto/` (EN: `/en/delete-account/`).
+- **Treści generowane przez użytkowników** (czat, poczta): gra ma zasady
+  akceptowane przy rejestracji (`/zasady/`), zgłaszanie wiadomości i graczy,
+  blokowanie graczy oraz panel zgłoszeń dla admina (usuwanie wiadomości,
+  wyciszanie kont). Zgłoszenia przeglądasz w grze: *Bohater → ⚑ ZGŁOSZENIA*
+  (widoczne tylko na koncie admina).
+- **Dostęp do aplikacji:** gra wymaga logowania — w *Treść aplikacji → Dostęp do
+  aplikacji* podaj recenzentom gotowe konto testowe (e-mail + hasło, z
+  potwierdzonym adresem e-mail).
+- **Bezpieczeństwo danych** (Data safety) — zbierane dane: adres e-mail, nazwa
+  użytkownika (identyfikatory konta), wiadomości w aplikacji (czat, poczta), historia
+  zakupów, dane o awariach/diagnostyka. Wszystko szyfrowane w transmisji, nic nie
+  jest udostępniane w celach reklamowych, użytkownik może usunąć dane.
 - **Ocena treści (IARC)** — zaznacz *symulowany hazard* (ruletka za złoto z gry,
-  bez wygranych o realnej wartości). Gemy kupuje się za prawdziwe pieniądze, ale
-  nie da się za nie kupić losowych nagród, więc obowiązek ujawniania szans
-  „loot boxów” tu nie dotyczy.
-- **Grupa docelowa** — nie kieruj gry do dzieci (czat z innymi graczami, kasyno).
+  bez wygranych o realnej wartości) i *interakcję użytkowników* (czat). Gemy
+  kupuje się za prawdziwe pieniądze, ale nie da się za nie kupić losowych nagród,
+  więc obowiązek ujawniania szans „loot boxów” nie dotyczy.
+- **Grupa docelowa** — 16+ (zgodnie z polityką prywatności); nie kieruj gry do dzieci.
+- **Reklamy** — aplikacja nie zawiera reklam.
