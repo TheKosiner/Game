@@ -331,12 +331,20 @@ export const revokeVoidedPlayPurchases = functions.pubsub
     let pageToken: string | undefined;
     let revoked = 0;
     do {
-      const page = await playApi<{
+      let page: {
         voidedPurchases?: { purchaseToken: string; orderId?: string; voidedTimeMillis?: string }[];
         tokenPagination?: { nextPageToken?: string };
-      }>('/purchases/voidedpurchases', {
-        startTime: String(since), maxResults: '1000', ...(pageToken ? { token: pageToken } : {}),
-      });
+      };
+      try {
+        page = await playApi('/purchases/voidedpurchases', {
+          startTime: String(since), maxResults: '1000', ...(pageToken ? { token: pageToken } : {}),
+        });
+      } catch (e: any) {
+        // Until the app is on Google Play and the service account has access
+        // (docs/google-play.md) this fails every day — note it and stop.
+        functions.logger.warn('revokeVoidedPlayPurchases: Play API unavailable', { status: e?.response?.status, message: e?.message });
+        return null;
+      }
       for (const voided of page.voidedPurchases ?? []) {
         const recordRef = db.doc(`playPurchases/${purchaseDocId(voided.purchaseToken)}`);
         const done = await db.runTransaction(async tx => {
