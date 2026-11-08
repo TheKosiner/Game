@@ -22,8 +22,14 @@ jobs:
       - name: Install firebase-admin
         run: npm install firebase-admin --no-save
 
+      # Passed through the environment rather than pasted into the script, so a
+      # quote inside the JSON can't break (or inject into) the shell command.
       - name: Write service account
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          umask 077
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > /tmp/sa.json
 
       - name: Run reset script
         run: node reset-daily-limits.mjs /tmp/sa.json

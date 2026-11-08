@@ -205,12 +205,37 @@ service cloud.firestore {
     function validPlayerUpdate(old, nw) {
       // PvP stat constraints live in validSaveUpdate (saves collection).
       // Only guard against large level jumps on the public profile.
-      return nw.level <= old.level + 20;
+      return nw.get('level', 0) <= old.get('level', 0) + 20;
     }
 
-    // User profiles (private)
+    // The public profile drives the leaderboards, so its level and PvP numbers
+    // may not run ahead of the player's own (validated) save, and the name on it
+    // must be the player's registered username. Accounts without a save yet
+    // (legacy) are let through.
+    function playerMatchesSave(uid, nw) {
+      let savePath = /databases/$(database)/documents/saves/$(uid);
+      return !exists(savePath) || (
+        nw.get('level', 0) <= get(savePath).data.hero.level
+        && nw.get('pvpRating', 0) <= get(savePath).data.get('pvpRating', 1000)
+        && nw.get('pvpWins', 0) <= get(savePath).data.get('pvpWins', 0)
+      );
+    }
+
+    function nameUnchangedOrOwn(old, nw) {
+      return nw.get('username', null) == old.get('username', null)
+        || isOwnUsername(nw.get('username', null));
+    }
+
+    // User profiles (private). The username is fixed at registration — it must be
+    // the one claimed in the usernames registry in the same transaction — because
+    // chat, mail and the public profile are checked against it.
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.username is string
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username.lower())).data.uid == request.auth.uid;
+      allow update: if isOwner(userId)
+        && request.resource.data.get('username', null) == resource.data.get('username', null);
     }
 
     // Game saves — delta + time validation on every write
@@ -224,9 +249,15 @@ service cloud.firestore {
     // Public leaderboard profiles
     match /players/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && playerMatchesSave(userId, request.resource.data)
+        && (request.resource.data.get('username', null) == null
+            || isOwnUsername(request.resource.data.get('username', null)));
       allow update: if isAdmin();
-      allow update: if isOwner(userId) && validPlayerUpdate(resource.data, request.resource.data);
+      allow update: if isOwner(userId)
+        && validPlayerUpdate(resource.data, request.resource.data)
+        && playerMatchesSave(userId, request.resource.data)
+        && nameUnchangedOrOwn(resource.data, request.resource.data);
       // Only the document owner may update their own guild membership fields
       allow update: if isOwner(userId)
         && request.resource.data.diff(resource.data).affectedKeys()
@@ -454,10 +485,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
-    // Lobby presence (one doc per player, owner-only write)
+    // Lobby presence (one doc per player, owner-only write). The name is checked
+    // when it is set; position updates with the same name cost no extra read.
     match /lobbyPlayers/{userId} {
       allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow delete: if isOwner(userId);
+      allow create: if isOwner(userId) && isOwnUsername(request.resource.data.get('username', null));
+      allow update: if isOwner(userId) && nameUnchangedOrOwn(resource.data, request.resource.data);
     }
 
     // Lobby chat

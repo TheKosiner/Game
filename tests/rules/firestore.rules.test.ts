@@ -12,7 +12,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   doc, setDoc, updateDoc, deleteDoc, getDoc, addDoc, collection, deleteField, increment,
-  serverTimestamp, type Firestore,
+  serverTimestamp, writeBatch, type Firestore,
 } from 'firebase/firestore';
 import { afterAll, beforeAll, beforeEach, describe, it } from 'vitest';
 
@@ -312,5 +312,60 @@ describe('chat and mail', () => {
   it('clients cannot post to the casino feed', async () => {
     await assertFails(addDoc(collection(as('member'), 'casinoSpins'),
       { uid: 'member', username: 'Member', result: 7, won: true, net: 10_000_000, stake: 1, ts: Date.now() }));
+  });
+});
+
+// ── Identity: registered username, public profile ─────────────────────────
+
+describe('users and public profiles', () => {
+  it('registration must claim the username in the same transaction', async () => {
+    const db = as('newbie');
+    await assertFails(setDoc(doc(db, 'users', 'newbie'), { username: 'Newbie', email: 'n@x.y', createdAt: 1 }));
+    const batch = writeBatch(db);
+    batch.set(doc(db, 'usernames', 'newbie'), { uid: 'newbie', createdAt: 1 });
+    batch.set(doc(db, 'users', 'newbie'), { username: 'Newbie', email: 'n@x.y', createdAt: 1 });
+    await assertSucceeds(batch.commit());
+  });
+
+  it('the registered username cannot be changed afterwards', async () => {
+    await seed(db => setDoc(doc(db, 'users', 'u'), { username: 'Real', email: 'r@x.y', createdAt: 1 }));
+    const db = as('u');
+    await assertFails(updateDoc(doc(db, 'users', 'u'), { username: 'Admin' }));
+    await assertSucceeds(updateDoc(doc(db, 'users', 'u'), { email: 'new@x.y' }));
+  });
+
+  it('the public profile cannot claim a higher level or rating than the save', async () => {
+    await seed(async db => {
+      await setDoc(doc(db, 'users', 'u'), { username: 'Real' });
+      await setDoc(doc(db, 'saves', 'u'), save({ level: 30 }, { pvpRating: 1100, pvpWins: 5 }));
+      await setDoc(doc(db, 'players', 'u'), { username: 'Real', level: 30, pvpRating: 1100, pvpWins: 5 });
+    });
+    const db = as('u');
+    await assertFails(setDoc(doc(db, 'players', 'u'), { level: 45 }, { merge: true }));
+    await assertFails(setDoc(doc(db, 'players', 'u'), { pvpRating: 3000 }, { merge: true }));
+    await assertSucceeds(setDoc(doc(db, 'players', 'u'), { level: 30, heroName: 'Neo', gold: 5 }, { merge: true }));
+  });
+
+  it('the public profile name must be the registered username', async () => {
+    await seed(async db => {
+      await setDoc(doc(db, 'users', 'u'), { username: 'Real' });
+      await setDoc(doc(db, 'saves', 'u'), save({ level: 30 }));
+      await setDoc(doc(db, 'players', 'u'), { username: 'Real', level: 30 });
+    });
+    await assertFails(setDoc(doc(as('u'), 'players', 'u'), { username: 'Admin' }, { merge: true }));
+  });
+
+  it('a profile with only guild fields can be created before the first sync', async () => {
+    await seed(db => setDoc(doc(db, 'users', 'u'), { username: 'Real' }));
+    await assertSucceeds(setDoc(doc(as('u'), 'players', 'u'), { guildId: 'g1', guildTag: 'GL' }, { merge: true }));
+  });
+
+  it('lobby presence must use the registered name; moving keeps it cheap', async () => {
+    await seed(db => setDoc(doc(db, 'users', 'u'), { username: 'Real' }));
+    const db = as('u');
+    await assertFails(setDoc(doc(db, 'lobbyPlayers', 'u'), { x: 1, y: 1, portrait: 0, username: 'Admin', updatedAt: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'lobbyPlayers', 'u'), { x: 1, y: 1, portrait: 0, username: 'Real', updatedAt: 1 }));
+    await assertSucceeds(setDoc(doc(db, 'lobbyPlayers', 'u'), { x: 5, y: 2, updatedAt: 2 }, { merge: true }));
+    await assertSucceeds(deleteDoc(doc(db, 'lobbyPlayers', 'u')));
   });
 });
