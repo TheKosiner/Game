@@ -82,7 +82,7 @@ async function nativeSchedule(id: number, title: string, body: string, at: numbe
       id, title, body,
       schedule: { at: new Date(at) },
       sound: undefined,
-      smallIcon: 'ic_stat_icon_config_sample',
+      smallIcon: 'ic_stat_glitchsoul',
     }],
   });
 }

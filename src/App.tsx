@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import './App.css';
 import { useGameStore, MAX_INVENTORY, isSameUtcDay } from './store/gameStore';
@@ -41,7 +41,8 @@ import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
 import EnchanterPanel from './components/EnchanterPanel';
-import StreakModal from './components/StreakModal';
+// Loaded on demand: it pulls in three.js, which is only needed when the modal shows.
+const StreakModal = lazy(() => import('./components/StreakModal'));
 import type { DailyRewardResult } from './lib/serverActions';
 import LobbyPanel from './components/LobbyPanel';
 import CyberpunkBg from './components/CyberpunkBg';
@@ -702,13 +703,15 @@ export default function App() {
       <MysteryBoxModal />
       <LevelUpModal />
       {streakData && (
-        <StreakModal
-          streakDays={streakData.streakDays ?? 1}
-          streakMilestone={streakData.streakMilestone ?? null}
-          chestGems={streakData.chestGems ?? 0}
-          gemsAdded={streakData.gemsAdded ?? 0}
-          onClose={() => setStreakData(null)}
-        />
+        <Suspense fallback={null}>
+          <StreakModal
+            streakDays={streakData.streakDays ?? 1}
+            streakMilestone={streakData.streakMilestone ?? null}
+            chestGems={streakData.chestGems ?? 0}
+            gemsAdded={streakData.gemsAdded ?? 0}
+            onClose={() => setStreakData(null)}
+          />
+        </Suspense>
       )}
       <TutorialOverlay open={tutorialOpen} onClose={() => setTutorialOpen(false)} onNavigate={tutorialNavigate} />
       </>
@@ -867,13 +870,15 @@ export default function App() {
       <MysteryBoxModal />
       <LevelUpModal />
       {streakData && (
-        <StreakModal
-          streakDays={streakData.streakDays ?? 1}
-          streakMilestone={streakData.streakMilestone ?? null}
-          chestGems={streakData.chestGems ?? 0}
-          gemsAdded={streakData.gemsAdded ?? 0}
-          onClose={() => setStreakData(null)}
-        />
+        <Suspense fallback={null}>
+          <StreakModal
+            streakDays={streakData.streakDays ?? 1}
+            streakMilestone={streakData.streakMilestone ?? null}
+            chestGems={streakData.chestGems ?? 0}
+            gemsAdded={streakData.gemsAdded ?? 0}
+            onClose={() => setStreakData(null)}
+          />
+        </Suspense>
       )}
       <TutorialOverlay open={tutorialOpen} onClose={() => setTutorialOpen(false)} onNavigate={tutorialNavigate} />
     </div>

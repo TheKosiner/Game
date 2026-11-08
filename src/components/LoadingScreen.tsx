@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
 import { gsap } from 'gsap';
+import type { BufferAttribute } from 'three';
 import logoImg from '../assets/logo.webp';
 
 export const LOADING_MIN_MS = 4000; // minimum screen display time
@@ -38,65 +38,8 @@ export default function LoadingScreen({ text }: { text: string }) {
     if (barRef.current) barRef.current.style.width = `${barW}%`;
   }, [barW]);
 
+  // Logo + subtitle entrance, right away (independent of the 3D scene).
   useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
-
-    // ── Three.js burst scene ─────────────────────────────────────
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.setSize(w, h);
-    renderer.setClearColor(0x000000, 0);
-    mount.appendChild(renderer.domElement);
-
-    const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(70, w / h, 0.1, 100);
-    camera.position.z = 5;
-
-    // Central burst particles
-    const COUNT = 450;
-    const positions  = new Float32Array(COUNT * 3);
-    const colors     = new Float32Array(COUNT * 3);
-    const velocities = Array.from({ length: COUNT }, () => ({
-      x: (Math.random() - 0.5) * 0.022,
-      y: (Math.random() - 0.5) * 0.022,
-      z: (Math.random() - 0.5) * 0.012,
-    }));
-
-    const palette = [
-      [1.0, 0.18, 0.47],  // pink
-      [0.0, 0.96, 1.0],   // cyan
-      [0.62, 0.31, 0.93], // purple
-      [1.0, 0.84, 0.0],   // gold
-    ];
-    for (let i = 0; i < COUNT; i++) {
-      const r     = Math.random() * 2.2;
-      const theta = Math.random() * Math.PI * 2;
-      const phi   = Math.random() * Math.PI;
-      positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = r * Math.cos(phi);
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      const b = 0.55 + Math.random() * 0.45;
-      colors[i * 3] = c[0] * b; colors[i * 3 + 1] = c[1] * b; colors[i * 3 + 2] = c[2] * b;
-    }
-
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    geo.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
-    const mat = new THREE.PointsMaterial({
-      size: 0.05, vertexColors: true,
-      transparent: true, opacity: 0,
-      blending: THREE.AdditiveBlending, depthWrite: false,
-    });
-    const pts = new THREE.Points(geo, mat);
-    scene.add(pts);
-
-    // GSAP animations
-    gsap.to(mat, { opacity: 0.85, duration: 0.9, ease: 'power2.out' });
-
     if (titleRef.current) {
       gsap.fromTo(titleRef.current,
         { opacity: 0, scale: 0.55, filter: 'blur(20px)' },
@@ -109,45 +52,113 @@ export default function LoadingScreen({ text }: { text: string }) {
         { opacity: 1, y: 0, letterSpacing: '0.3em', duration: 0.8, ease: 'power2.out', delay: 0.6 },
       );
     }
+  }, []);
 
-    // ── Animation loop ───────────────────────────────────────────
-    let rafId = 0;
-    let frame = 0;
-    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+    // three.js is loaded on demand: it is a large library, and as a static import
+    // it sat in the main bundle that every visitor — the landing page included —
+    // had to download before anything rendered.
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    import('three').then(THREE => {
+      if (cancelled) return;
+      // ── Three.js burst scene ─────────────────────────────────────
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setSize(w, h);
+      renderer.setClearColor(0x000000, 0);
+      mount.appendChild(renderer.domElement);
 
-    const animate = () => {
-      rafId = requestAnimationFrame(animate);
-      frame++;
+      const scene  = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(70, w / h, 0.1, 100);
+      camera.position.z = 5;
 
+      // Central burst particles
+      const COUNT = 450;
+      const positions  = new Float32Array(COUNT * 3);
+      const colors     = new Float32Array(COUNT * 3);
+      const velocities = Array.from({ length: COUNT }, () => ({
+        x: (Math.random() - 0.5) * 0.022,
+        y: (Math.random() - 0.5) * 0.022,
+        z: (Math.random() - 0.5) * 0.012,
+      }));
+
+      const palette = [
+        [1.0, 0.18, 0.47],  // pink
+        [0.0, 0.96, 1.0],   // cyan
+        [0.62, 0.31, 0.93], // purple
+        [1.0, 0.84, 0.0],   // gold
+      ];
       for (let i = 0; i < COUNT; i++) {
-        posAttr.array[i * 3]     += velocities[i].x;
-        posAttr.array[i * 3 + 1] += velocities[i].y;
-        posAttr.array[i * 3 + 2] += velocities[i].z;
+        const r     = Math.random() * 2.2;
+        const theta = Math.random() * Math.PI * 2;
+        const phi   = Math.random() * Math.PI;
+        positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = r * Math.cos(phi);
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        const b = 0.55 + Math.random() * 0.45;
+        colors[i * 3] = c[0] * b; colors[i * 3 + 1] = c[1] * b; colors[i * 3 + 2] = c[2] * b;
       }
-      posAttr.needsUpdate = true;
 
-      pts.rotation.y += 0.0025;
-      pts.rotation.x += 0.0012;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('color',    new THREE.Float32BufferAttribute(colors, 3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.05, vertexColors: true,
+        transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const pts = new THREE.Points(geo, mat);
+      scene.add(pts);
 
-      if (frame > 80) mat.opacity = Math.max(0.25, mat.opacity - 0.0006);
+      // GSAP animations
+      gsap.to(mat, { opacity: 0.85, duration: 0.9, ease: 'power2.out' });
 
-      renderer.render(scene, camera);
-    };
-    animate();
+      // ── Animation loop ───────────────────────────────────────────
+      let rafId = 0;
+      let frame = 0;
+      const posAttr = geo.getAttribute('position') as BufferAttribute;
 
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
+      const animate = () => {
+        rafId = requestAnimationFrame(animate);
+        frame++;
 
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', handleResize);
-      renderer.dispose();
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
-    };
+        for (let i = 0; i < COUNT; i++) {
+          posAttr.array[i * 3]     += velocities[i].x;
+          posAttr.array[i * 3 + 1] += velocities[i].y;
+          posAttr.array[i * 3 + 2] += velocities[i].z;
+        }
+        posAttr.needsUpdate = true;
+
+        pts.rotation.y += 0.0025;
+        pts.rotation.x += 0.0012;
+
+        if (frame > 80) mat.opacity = Math.max(0.25, mat.opacity - 0.0006);
+
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      const handleResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener('resize', handleResize);
+
+      cleanup = () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        renderer.dispose();
+        if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      };
+    }).catch(() => { /* decorative only */ });
+    return () => { cancelled = true; cleanup?.(); };
   }, []);
 
   return (
