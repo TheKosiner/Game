@@ -5,9 +5,10 @@ import { useGameStore, MAX_INVENTORY, isSameUtcDay } from './store/gameStore';
 import { useAuthStore } from './store/authStore';
 import { useT } from './hooks/useT';
 import { useLangStore, getLang } from './store/langStore';
-import { syncToCloud, loadFromCloud } from './lib/cloudSync';
+import { syncToCloud, loadFromCloud, withServerWrite } from './lib/cloudSync';
 import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
+import { IS_PLAY_BUILD, recoverPlayPurchases } from './lib/playBilling';
 import { claimDailyRewardServer } from './lib/serverActions';
 import { requestNotificationPermission, rescheduleActiveNotifications } from './lib/notifications';
 import { onSnapshot, collection, query, orderBy, limit, doc } from 'firebase/firestore';
@@ -155,56 +156,64 @@ export default function App() {
       // yesterday's counters (which the save rules reject).
       if (mode === 'rollover') await syncToCloud(u.uid, u.username).catch(() => {});
 
-      let result: DailyRewardResult;
-      try {
-        result = await claimDailyRewardServer();
-      } catch {
-        // CF not deployed or network error — fall back to local daily reset.
-        const before = useGameStore.getState().hero.lastDailyReset;
-        checkDailyReset();
-        const after = useGameStore.getState().hero;
-        if (after.lastDailyReset !== before) {
-          markModalShown();
-          setStreakData({ claimed: true, streakDays: after.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 5 });
+      // Syncs are held while the function writes the save, and resume only once
+      // its result is applied locally (see withServerWrite).
+      const claimed = await withServerWrite(async (): Promise<DailyRewardResult | null> => {
+        let result: DailyRewardResult;
+        try {
+          result = await claimDailyRewardServer();
+        } catch {
+          // CF not deployed or network error — fall back to local daily reset.
+          const before = useGameStore.getState().hero.lastDailyReset;
+          checkDailyReset();
+          const after = useGameStore.getState().hero;
+          if (after.lastDailyReset !== before) {
+            markModalShown();
+            setStreakData({ claimed: true, streakDays: after.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 5 });
+          }
+          return null;
         }
-        return;
-      }
 
-      if (!result.claimed) {
-        // Already claimed today (e.g. from another device): adopt that reset.
-        useGameStore.getState().settleVoluntaryRest();
-        if (!isSameUtcDay(useGameStore.getState().hero.lastDailyReset)) {
+        if (!result.claimed) {
+          // Already claimed today (e.g. from another device): adopt that reset.
+          useGameStore.getState().settleVoluntaryRest();
+          if (!isSameUtcDay(useGameStore.getState().hero.lastDailyReset)) {
+            await loadFromCloud(u.uid, true).catch(() => {});
+          }
+          // Show streak modal once per device per day regardless of which device claimed first.
+          if (mode === 'startup' && !modalShown()) {
+            markModalShown();
+            const h = useGameStore.getState().hero;
+            setStreakData({ claimed: false, streakDays: h.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 0 });
+          }
+          return null;
+        }
+
+        if (mode === 'startup') {
+          // Force-reload from cloud so local state matches exactly what the CF wrote.
           await loadFromCloud(u.uid, true).catch(() => {});
         }
-        // Show streak modal once per device per day regardless of which device claimed first.
-        if (mode === 'startup' && !modalShown()) {
-          markModalShown();
-          const h = useGameStore.getState().hero;
-          setStreakData({ claimed: false, streakDays: h.streakDays ?? 1, streakMilestone: null, chestGems: 0, gemsAdded: 0 });
+        // Apply the server's daily reset locally too — if the cloud reload above
+        // failed (or mid-session, where we don't reload), stale local counters would
+        // otherwise be synced back over the server's reset.
+        useGameStore.getState().applyServerDailyReset(result, mode === 'startup' ? 'absolute' : 'delta');
+        addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
+        // Milestone streak chest: grant an actual mystery box to the inventory
+        // (epic on day 5, legendary on day 10). The CF only credits gems.
+        if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
+          grantStreakMilestoneBox(result.streakMilestone);
         }
-        return;
-      }
+        markModalShown();
+        saveGame();
+        return result;
+      });
 
-      if (mode === 'startup') {
-        // Force-reload from cloud so local state matches exactly what the CF wrote.
-        await loadFromCloud(u.uid, true).catch(() => {});
+      if (claimed) {
+        // Persist the freshly granted box (and reset state) back to the cloud so it
+        // survives the next loadFromCloud on app start or another device.
+        syncToCloud(u.uid, u.username).catch(() => {});
+        setStreakData(claimed);
       }
-      // Apply the server's daily reset locally too — if the cloud reload above
-      // failed (or mid-session, where we don't reload), stale local counters would
-      // otherwise be synced back over the server's reset.
-      useGameStore.getState().applyServerDailyReset(result, mode === 'startup' ? 'absolute' : 'delta');
-      addCombatLog(tRef.current.gems.dailyLog(result.gemsAdded ?? 0), 'system');
-      // Milestone streak chest: grant an actual mystery box to the inventory
-      // (epic on day 5, legendary on day 10). The CF only credits gems.
-      if (result.streakMilestone === 'epic' || result.streakMilestone === 'legendary') {
-        grantStreakMilestoneBox(result.streakMilestone);
-      }
-      markModalShown();
-      saveGame();
-      // Persist the freshly granted box (and reset state) back to the cloud so it
-      // survives the next loadFromCloud on app start or another device.
-      syncToCloud(u.uid, u.username).catch(() => {});
-      setStreakData(result);
     } finally {
       claimInFlightRef.current = false;
     }
@@ -531,7 +540,8 @@ export default function App() {
   // Claim any pending gem credits from Stripe purchases
   useEffect(() => {
     if (!user || !gameLoaded) return;
-    claimGemCredits().then(({ gems, newGems }) => {
+    withServerWrite(async () => {
+      const { gems, newGems } = await claimGemCredits();
       if (gems > 0) {
         // Server already credited the purchase into the save; adopt its authoritative
         // balance (don't add locally) so the next save's gem delta stays within rules.
@@ -541,6 +551,15 @@ export default function App() {
       }
     }).catch(() => {});
   }, [user?.uid, gameLoaded]);
+
+  // Play Store build: finish any gem purchase that was paid but never completed
+  // (app closed mid-purchase, verification failed, a pending payment cleared).
+  useEffect(() => {
+    if (!IS_PLAY_BUILD || !user || !gameLoaded || !heroReady) return;
+    recoverPlayPurchases(user.uid).then(gems => {
+      if (gems > 0) addCombatLog(tRef.current.gems.claimedLog(gems), 'system');
+    }).catch(() => {});
+  }, [user?.uid, gameLoaded, heroReady]);
 
   // Forced update gate — blocks everything (even loading/auth) when a newer build exists.
   if (updateInfo) return <ForceUpdateModal info={updateInfo} />;

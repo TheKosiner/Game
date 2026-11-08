@@ -568,6 +568,8 @@ export const es: Translations = {
     notEnoughForSkip: (cost: number) => `No tienes suficientes gemas (necesitas ${cost} 💎)`,
     purchaseSuccess: '¡gemas añadidas a tu cuenta!',
     purchaseCancelled: 'Compra cancelada.',
+    purchasePending: "Pago pendiente: tus gemas llegarán cuando Google Play lo confirme.",
+    purchaseError: "La compra no se completó. Inténtalo de nuevo; si se realizó el cargo, las gemas se añadirán en el próximo inicio.",
     watchAdTitle: '📺 VER ANUNCIO POR GEMAS',
     watchAdDesc: (n: number) => `¡Mira un anuncio corto y consigue +${n} 💎 gratis!`,
     claimedLog: (n: number) => `💎 ¡+${n} gemas de la compra añadidas!`,

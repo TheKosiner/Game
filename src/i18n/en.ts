@@ -566,6 +566,8 @@ export const en = {
     notEnoughForSkip: (cost: number) => `Not enough gems (need ${cost} 💎)`,
     purchaseSuccess: 'gems added to your account!',
     purchaseCancelled: 'Purchase cancelled.',
+    purchasePending: "Payment pending — your gems will arrive once Google Play confirms it.",
+    purchaseError: "The purchase didn't go through. Try again — if you were charged, the gems are added on the next launch.",
     watchAdTitle: '📺 WATCH AD FOR GEMS',
     watchAdDesc: (n: number) => `Watch a short ad and get +${n} 💎 free!`,
     claimedLog: (n: number) => `💎 +${n} gems from purchase added!`,

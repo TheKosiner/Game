@@ -568,6 +568,8 @@ export const de: Translations = {
     notEnoughForSkip: (cost: number) => `Nicht genug Gems (${cost} 💎 nötig)`,
     purchaseSuccess: 'Gems deinem Konto gutgeschrieben!',
     purchaseCancelled: 'Kauf abgebrochen.',
+    purchasePending: "Zahlung ausstehend – deine Edelsteine kommen, sobald Google Play sie bestätigt.",
+    purchaseError: "Der Kauf ist fehlgeschlagen. Versuche es erneut – falls bereits abgebucht wurde, werden die Edelsteine beim nächsten Start gutgeschrieben.",
     watchAdTitle: '📺 WERBUNG FÜR GEMS ANSEHEN',
     watchAdDesc: (n: number) => `Sieh dir eine kurze Werbung an und erhalte +${n} 💎 gratis!`,
     claimedLog: (n: number) => `💎 +${n} Gems aus dem Kauf gutgeschrieben!`,

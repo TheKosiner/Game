@@ -34,7 +34,37 @@ export interface LeaderboardEntry {
 // Throttle guild member stat updates to at most once per 60 s per uid
 const _lastGuildSync = new Map<string, number>();
 
+// ── Server-side writes vs. client saves ─────────────────────────────────────
+// Some Cloud Functions change the save directly (purchases, daily reward). A
+// client save is a full overwrite, so one that lands after such a write — still
+// carrying the old gems or counters — silently undoes it. While a server write
+// is in progress, syncs are held back; it also waits for syncs already in
+// flight, and the caller applies the server's result locally before releasing.
+let serverWritesInProgress = 0;
+const syncsInFlight = new Set<Promise<void>>();
+
+export async function withServerWrite<T>(fn: () => Promise<T>): Promise<T> {
+  serverWritesInProgress++;
+  try {
+    await Promise.allSettled([...syncsInFlight]);
+    return await fn();
+  } finally {
+    serverWritesInProgress--;
+  }
+}
+
 export async function syncToCloud(uid: string, username: string): Promise<void> {
+  if (serverWritesInProgress > 0) return;
+  const run = doSyncToCloud(uid, username);
+  syncsInFlight.add(run);
+  try {
+    await run;
+  } finally {
+    syncsInFlight.delete(run);
+  }
+}
+
+async function doSyncToCloud(uid: string, username: string): Promise<void> {
   if (!db) return;
   // Only a real, loaded hero may be uploaded — never the start-up placeholder or a
   // previous account's hero still in memory while this one loads.

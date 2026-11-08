@@ -1,7 +1,12 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import Stripe from 'stripe';
+import { GoogleAuth } from 'google-auth-library';
 import { calcStreakResult, dailyClaimBlockReason } from './dailyRewardLogic';
+import {
+  PLAY_PACKAGE_NAME, PLAY_GEM_PRODUCTS, decidePlayCredit, gemsAfterRevocation, purchaseDocId,
+  type PlayProductPurchase,
+} from './playBillingLogic';
 
 admin.initializeApp();
 
@@ -242,6 +247,117 @@ export const claimGemCredits = functions.https.onCall(async (_data, context) => 
     return { gems: total, newGems };
   });
 });
+
+// ── Google Play Billing ───────────────────────────────────────────────────────
+// Gem packs bought in the Play Store build. The client never grants gems itself:
+// it sends the purchase token here, we confirm it with Google Play (Android
+// Publisher API), credit the gems once per token, and only then does the client
+// consume the purchase. Calls run as the functions' service account, which needs
+// access to the app in Play Console (see docs/google-play.md).
+
+const playAuth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/androidpublisher'] });
+const PLAY_API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${PLAY_PACKAGE_NAME}`;
+
+async function playApi<T>(path: string, params?: Record<string, string>): Promise<T> {
+  const client = await playAuth.getClient();
+  const res = await client.request<T>({ url: `${PLAY_API}${path}`, params });
+  return res.data;
+}
+
+export const verifyPlayPurchase = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  const uid = context.auth.uid;
+  const { productId, purchaseToken } = (data ?? {}) as { productId?: unknown; purchaseToken?: unknown };
+  if (typeof productId !== 'string' || !(productId in PLAY_GEM_PRODUCTS)) {
+    throw new functions.https.HttpsError('invalid-argument', 'Unknown product');
+  }
+  if (typeof purchaseToken !== 'string' || purchaseToken.length < 10 || purchaseToken.length > 4096) {
+    throw new functions.https.HttpsError('invalid-argument', 'Invalid purchase token');
+  }
+
+  let purchase: PlayProductPurchase;
+  try {
+    purchase = await playApi<PlayProductPurchase>(
+      `/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`,
+    );
+  } catch (e: any) {
+    const status = e?.response?.status;
+    if (status === 400 || status === 404 || status === 410) {
+      throw new functions.https.HttpsError('invalid-argument', 'Purchase not found');
+    }
+    functions.logger.error('verifyPlayPurchase: Play API error', { status, message: e?.message });
+    throw new functions.https.HttpsError('unavailable', 'Could not verify the purchase right now');
+  }
+
+  const recordRef = db.doc(`playPurchases/${purchaseDocId(purchaseToken)}`);
+  const saveRef = db.doc(`saves/${uid}`);
+  return db.runTransaction(async tx => {
+    const [record, save] = await Promise.all([tx.get(recordRef), tx.get(saveRef)]);
+    const decision = decidePlayCredit(productId, purchase, uid, record.exists ? (record.data() as { uid: string }) : null);
+    const currentGems: number = save.exists ? (save.data()!.hero?.gems ?? 0) : 0;
+    switch (decision.action) {
+      case 'already_credited':
+        return { status: 'already_credited', gems: 0, newGems: currentGems };
+      case 'pending':
+        return { status: 'pending', gems: 0, newGems: currentGems };
+      case 'reject':
+        functions.logger.warn(`verifyPlayPurchase: rejected (${decision.reason}) for uid=${uid}`);
+        throw new functions.https.HttpsError('failed-precondition', decision.reason);
+      case 'credit': {
+        if (!save.exists) throw new functions.https.HttpsError('failed-precondition', 'no_save');
+        const newGems = currentGems + decision.gems;
+        tx.create(recordRef, {
+          uid, productId,
+          gems: decision.gems,
+          orderId: purchase.orderId ?? null,
+          purchaseTimeMillis: Number(purchase.purchaseTimeMillis ?? 0),
+          test: purchase.purchaseType === 0,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        tx.update(saveRef, { 'hero.gems': newGems, updatedAt: Date.now() });
+        functions.logger.info(`verifyPlayPurchase: +${decision.gems} gems for uid=${uid} (${purchase.orderId ?? 'no order id'})`);
+        return { status: 'credited', gems: decision.gems, newGems };
+      }
+    }
+  });
+});
+
+// Refunds and chargebacks: Google lists them as voided purchases for 30 days.
+// Once a day, take back the gems of any we credited (never below zero).
+export const revokeVoidedPlayPurchases = functions.pubsub
+  .schedule('every 24 hours')
+  .onRun(async () => {
+    const since = Date.now() - 3 * 24 * 60 * 60 * 1000; // overlap; revocation is idempotent
+    let pageToken: string | undefined;
+    let revoked = 0;
+    do {
+      const page = await playApi<{
+        voidedPurchases?: { purchaseToken: string; orderId?: string; voidedTimeMillis?: string }[];
+        tokenPagination?: { nextPageToken?: string };
+      }>('/purchases/voidedpurchases', {
+        startTime: String(since), maxResults: '1000', ...(pageToken ? { token: pageToken } : {}),
+      });
+      for (const voided of page.voidedPurchases ?? []) {
+        const recordRef = db.doc(`playPurchases/${purchaseDocId(voided.purchaseToken)}`);
+        const done = await db.runTransaction(async tx => {
+          const record = await tx.get(recordRef);
+          if (!record.exists || record.data()!.revokedAt) return false;
+          const { uid, gems } = record.data() as { uid: string; gems: number };
+          const saveRef = db.doc(`saves/${uid}`);
+          const save = await tx.get(saveRef);
+          if (save.exists) {
+            tx.update(saveRef, { 'hero.gems': gemsAfterRevocation(save.data()!.hero?.gems ?? 0, gems), updatedAt: Date.now() });
+          }
+          tx.update(recordRef, { revokedAt: admin.firestore.FieldValue.serverTimestamp(), voidedTimeMillis: Number(voided.voidedTimeMillis ?? 0) });
+          return true;
+        });
+        if (done) revoked++;
+      }
+      pageToken = page.tokenPagination?.nextPageToken;
+    } while (pageToken);
+    if (revoked > 0) functions.logger.info(`revokeVoidedPlayPurchases: revoked ${revoked} purchase(s)`);
+    return null;
+  });
 
 // ── claimDailyReward ──────────────────────────────────────────────────────────
 export const claimDailyReward = functions.https.onCall(async (_data, context) => {

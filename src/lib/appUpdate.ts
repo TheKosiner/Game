@@ -18,6 +18,9 @@ export interface UpdateInfo {
  */
 export async function checkForForcedUpdate(): Promise<UpdateInfo | null> {
   if (!Capacitor.isNativePlatform()) return null;
+  // The Play Store build is updated by Google Play; an app that downloads and
+  // installs its own updates from elsewhere violates Play policy.
+  if (import.meta.env.VITE_DISTRIBUTION === 'play') return null;
 
   const currentBuild = Number(__APP_BUILD__) || 0;
   // currentBuild 0 means this APK wasn't built by CI (e.g. local) — don't nag.

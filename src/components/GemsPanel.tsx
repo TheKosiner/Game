@@ -5,15 +5,22 @@ import { useT } from '../hooks/useT';
 import { PORTRAIT_LIST } from '../data/portraits';
 import { startGemCheckout } from '../lib/gemShop';
 import { isFirebaseConfigured } from '../lib/firebase';
+import { IS_PLAY_BUILD, PLAY_GEM_PACKS, buyGemPack, loadPlayPrices } from '../lib/playBilling';
+import { useAuthStore } from '../store/authStore';
 import { MONO, ORB } from '../utils/styles';
 import { useIsDesktop } from '../hooks/useIsDesktop';
 import gemShopSrc from '../assets/gem-shop.webp';
 
-const GEM_PACKAGES = [
-  { id: '100',  gems: 100,  price: '$0.99' },
-  { id: '550',  gems: 550,  price: '$4.99' },
-  { id: '1200', gems: 1200, price: '$9.99' },
-];
+// Web (and the GitHub APK): Stripe Checkout. The Play Store build sells the same
+// packs through Google Play Billing instead (store policy), with Play's
+// localized prices.
+const GEM_PACKAGES = IS_PLAY_BUILD
+  ? PLAY_GEM_PACKS.map(p => ({ id: p.productId, gems: p.gems, price: '' }))
+  : [
+      { id: '100',  gems: 100,  price: '$0.99' },
+      { id: '550',  gems: 550,  price: '$4.99' },
+      { id: '1200', gems: 1200, price: '$9.99' },
+    ];
 
 export default function GemsPanel() {
   const t    = useT();
@@ -21,8 +28,15 @@ export default function GemsPanel() {
   const gemBuyPortrait = useGameStore(s => s.gemBuyPortrait);
   const isDesktop = useIsDesktop();
 
+  const user = useAuthStore(s => s.user);
   const [buyingId, setBuyingId]     = useState<string | null>(null);
   const [flashMsg, setFlashMsg]     = useState<{ text: React.ReactNode; ok: boolean } | null>(null);
+  const [playPrices, setPlayPrices] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!IS_PLAY_BUILD) return;
+    loadPlayPrices().then(setPlayPrices).catch(() => setPlayPrices({}));
+  }, []);
   // Handle return from Stripe Checkout
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -40,6 +54,22 @@ export default function GemsPanel() {
   async function handleBuy(packageId: string) {
     if (buyingId) return;
     setBuyingId(packageId);
+    if (IS_PLAY_BUILD) {
+      try {
+        if (!user) throw new Error('Not signed in');
+        const outcome = await buyGemPack(packageId, user.uid);
+        if (outcome.status === 'credited') {
+          setFlashMsg({ text: <span>+{outcome.gems} <GameIcon name="gem" size={11} color="#00e5ff" /> {t.gems.purchaseSuccess}</span>, ok: true });
+        } else if (outcome.status === 'pending') {
+          setFlashMsg({ text: t.gems.purchasePending, ok: true });
+        }
+      } catch {
+        setFlashMsg({ text: t.gems.purchaseError, ok: false });
+      } finally {
+        setBuyingId(null);
+      }
+      return;
+    }
     try {
       await startGemCheckout(packageId);
     } catch (e: any) {
@@ -128,7 +158,9 @@ export default function GemsPanel() {
             <div style={{ display: 'flex', gap: 6 }}>
               {GEM_PACKAGES.map(pkg => {
                 const isLoading = buyingId === pkg.id;
-                const disabled  = !isFirebaseConfigured || !!buyingId;
+                // In the Play build a pack is only offered once Play has returned its price.
+                const price     = IS_PLAY_BUILD ? playPrices[pkg.id] : pkg.price;
+                const disabled  = !isFirebaseConfigured || !!buyingId || !price;
                 return (
                   <button
                     key={pkg.id}
@@ -149,7 +181,7 @@ export default function GemsPanel() {
                     <p style={{ ...ORB, fontSize: 10, color: '#00e5ff', margin: 0 }}>
                       {isLoading ? <GameIcon name="hourglass" size={10} color="#00e5ff" /> : <>{pkg.gems} <GameIcon name="gem" size={10} color="#00e5ff" /></>}
                     </p>
-                    <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{pkg.price}</p>
+                    <p style={{ ...MONO, fontSize: 10, color: '#9d4edd', margin: 0 }}>{price || '—'}</p>
                   </button>
                 );
               })}

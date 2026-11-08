@@ -1,0 +1,54 @@
+name: Android build check
+
+# Compiles the Android app (debug APK + release App Bundle, unsigned) on every
+# branch and pull request, so native changes — plugins, Gradle, R8 — are caught
+# before they reach main. Nothing is signed, released or deployed here.
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: android-build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: npm ci
+
+      - name: Build web app (Play edition)
+        run: npm run build
+        env:
+          VITE_DISTRIBUTION: play
+
+      - run: npx cap sync android
+
+      - name: Install Android SDK
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" "build-tools;36.0.0" > /dev/null
+
+      - name: Build debug APK and release bundle
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug bundleRelease --no-daemon --stacktrace

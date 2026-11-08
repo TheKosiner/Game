@@ -568,6 +568,8 @@ export const fr: Translations = {
     notEnoughForSkip: (cost: number) => `Pas assez de gemmes (${cost} 💎 requises)`,
     purchaseSuccess: 'gemmes ajoutées à ton compte !',
     purchaseCancelled: 'Achat annulé.',
+    purchasePending: "Paiement en attente — vos gemmes arriveront dès que Google Play l’aura confirmé.",
+    purchaseError: "L’achat n’a pas abouti. Réessayez — si vous avez été débité, les gemmes seront ajoutées au prochain lancement.",
     watchAdTitle: '📺 REGARDER UNE PUB POUR DES GEMMES',
     watchAdDesc: (n: number) => `Regarde une courte publicité et reçois +${n} 💎 gratuitement !`,
     claimedLog: (n: number) => `💎 +${n} gemmes de ton achat ajoutées !`,
