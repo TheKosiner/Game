@@ -884,12 +884,13 @@ export const deleteAccount = functions
       deleteWhere(db.collection('gemCredits').where('uid', '==', uid)),
       deleteWhere(db.collection('clientErrors').where('uid', '==', uid)),
       deleteWhere(db.collection('usernames').where('uid', '==', uid)),
+      deleteWhere(db.collection('reports').where('reporterUid', '==', uid)),
     ]);
 
     const batch = db.batch();
     const username = userSnap.exists ? (userSnap.data()!.username as string | undefined) : undefined;
     if (username) batch.delete(db.doc(`usernames/${username.trim().toLowerCase()}`));
-    for (const path of [`saves/${uid}`, `players/${uid}`, `users/${uid}`, `lobbyPlayers/${uid}`]) {
+    for (const path of [`saves/${uid}`, `players/${uid}`, `users/${uid}`, `lobbyPlayers/${uid}`, `chatBans/${uid}`]) {
       batch.delete(db.doc(path));
     }
     await batch.commit();

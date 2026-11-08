@@ -7,6 +7,8 @@ import { PX, MONO, ORB } from '../utils/styles';
 import GameIcon from './GameIcon';
 import CyberpunkBg from './CyberpunkBg';
 import LangPicker from './LangPicker';
+import { legalUrl } from '../lib/legalLinks';
+import { useLangStore } from '../store/langStore';
 
 type Mode = 'login' | 'register' | 'reset';
 
@@ -260,6 +262,10 @@ export default function AuthScreen({ onBack }: { onBack?: () => void } = {}) {
   const [username, setUsername] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  // Registration requires accepting the community rules and privacy policy.
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsError, setTermsError] = useState(false);
+  const lang = useLangStore(s => s.lang);
 
   const USERNAME_RE = /^[a-zA-Z0-9_-]*$/;
   const usernameError = mode === 'register' && username.length > 0
@@ -286,6 +292,8 @@ export default function AuthScreen({ onBack }: { onBack?: () => void } = {}) {
     setPassword('');
     setUsername('');
     setResetSent(false);
+    setAcceptedTerms(false);
+    setTermsError(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -296,6 +304,7 @@ export default function AuthScreen({ onBack }: { onBack?: () => void } = {}) {
       await login(email, password);
     } else if (mode === 'register') {
       if (!username.trim() || usernameError) { setSubmitting(false); return; }
+      if (!acceptedTerms) { setTermsError(true); setSubmitting(false); return; }
       await register(email, password, username.trim());
     } else {
       const ok = await resetPassword(email);
@@ -439,6 +448,25 @@ export default function AuthScreen({ onBack }: { onBack?: () => void } = {}) {
                 <p style={{ ...MONO, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
                   {t.auth.registerNote}
                 </p>
+              )}
+
+              {mode === 'register' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={e => { setAcceptedTerms(e.target.checked); setTermsError(false); }}
+                      style={{ marginTop: 2, accentColor: '#ff2d78', width: 16, height: 16, flexShrink: 0 }}
+                    />
+                    <span style={{ ...MONO, fontSize: 11, color: 'var(--text-main)', lineHeight: 1.5 }}>{t.legal.acceptTerms}</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: 12, paddingLeft: 24 }}>
+                    <a href={legalUrl('rules', lang)} target="_blank" rel="noopener noreferrer" style={{ ...MONO, fontSize: 11, color: '#7fdcff' }}>{t.legal.rules}</a>
+                    <a href={legalUrl('privacy', lang)} target="_blank" rel="noopener noreferrer" style={{ ...MONO, fontSize: 11, color: '#7fdcff' }}>{t.legal.privacy}</a>
+                  </div>
+                  {termsError && <ErrorBox text={t.legal.mustAcceptTerms} />}
+                </div>
               )}
 
               {error && <ErrorBox text={error} />}

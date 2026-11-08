@@ -7,6 +7,8 @@ import {
 } from '../lib/cloudSync';
 import { useAuthStore } from '../store/authStore';
 import { useGameStore } from '../store/gameStore';
+import MessageActions from './MessageActions';
+import { useModerationStore, withoutBlocked } from '../lib/moderation';
 import { useT } from '../hooks/useT';
 
 import { PX, MONO } from '../utils/styles';
@@ -139,7 +141,7 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
               {msg.body}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             {onReply && (
               <button
                 onClick={e => { e.stopPropagation(); onReply(); }}
@@ -149,6 +151,7 @@ function MessageCard({ msg, onDelete, onMarkRead, onReply }: {
                 {t.mail.replyBtn}
               </button>
             )}
+            <MessageActions target={{ uid: msg.fromUid, username: msg.fromUsername }} kind="mail" text={msg.body} messageId={msg.id} />
             <button
               onClick={e => { e.stopPropagation(); onDelete(); }}
               className="btn btn-secondary"
@@ -327,17 +330,23 @@ export default function MailPanel({ onUnreadChange }: { onUnreadChange?: (n: num
 
   async function reload() {
     if (!user) return;
-    const [msgs, invs] = await Promise.all([
+    const [allMsgs, allInvs] = await Promise.all([
       getMyMail(user.uid),
       getMyInvites(user.uid),
     ]);
+    // Mail and invites from blocked players are hidden.
+    const blocked = useModerationStore.getState().blocked;
+    const msgs = withoutBlocked(allMsgs, m => m.fromUid, blocked);
+    const invs = withoutBlocked(allInvs, i => i.fromUid, blocked);
     setMessages(msgs);
     setInvites(invs);
     setLoading(false);
     onUnreadChange?.(msgs.filter(m => !m.read).length + invs.length);
   }
 
-  useEffect(() => { reload(); }, [user?.uid]);
+  // Reload when the block list changes, so a sender blocked from here disappears.
+  const blockedCount = useModerationStore(s => Object.keys(s.blocked).length);
+  useEffect(() => { reload(); }, [user?.uid, blockedCount]);
 
   const unreadCount = messages.filter(m => !m.read).length;
   const totalCount = invites.length + messages.length;

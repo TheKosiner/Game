@@ -6,6 +6,8 @@ import { useGameStore } from '../store/gameStore';
 import { useT } from '../hooks/useT';
 import { portraitSrc } from '../data/portraits';
 import { PX, MONO } from '../utils/styles';
+import MessageActions from './MessageActions';
+import { useModerationStore, withoutBlocked } from '../lib/moderation';
 
 interface ChatMessage {
   id: string;
@@ -37,6 +39,8 @@ export default function ChatPanel() {
   const [rateLimitMsg, setRateLimitMsg] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSentAt = useRef<number>(0);
+  const blocked = useModerationStore(s => s.blocked);
+  const visible = withoutBlocked(messages, m => m.uid, blocked);
 
   useEffect(() => {
     if (!db) return;
@@ -97,12 +101,12 @@ export default function ChatPanel() {
         gap: 2,
         padding: '8px 6px',
       }}>
-        {messages.length === 0 && (
+        {visible.length === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', margin: 'auto' }}>
             {t.chat.empty}
           </p>
         )}
-        {messages.map(msg => {
+        {visible.map(msg => {
           const isOwn = user?.uid === msg.uid;
           return (
             <div key={msg.id} style={{
@@ -147,6 +151,7 @@ export default function ChatPanel() {
               <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
                 {timeAgo(msg.createdAt)}
               </span>
+              <MessageActions target={{ uid: msg.uid, username: msg.username }} kind="globalChat" text={msg.text} messageId={msg.id} />
             </div>
           );
         })}

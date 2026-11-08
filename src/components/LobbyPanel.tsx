@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useAuthStore } from '../store/authStore';
+import MessageActions from './MessageActions';
+import { useModerationStore, withoutBlocked } from '../lib/moderation';
 import { useT } from '../hooks/useT';
 import { db } from '../lib/firebase';
 import { portraitSrc } from '../data/portraits';
@@ -115,7 +117,7 @@ function mkPt(): Pt {
 
 // ── Firebase types ────────────────────────────────────────────────────────────
 interface RemotePlayer { x:number;y:number;portrait:number;username:string;updatedAt:number; }
-interface ChatMsg      { uid:string;username:string;text:string;createdAt:number; }
+interface ChatMsg      { uid:string;username:string;text:string;createdAt:number;id?:string; }
 interface Bubble       { text:string;expiresAt:number; }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -146,6 +148,7 @@ export default function LobbyPanel() {
   const joystick     = useRef({active:false,sx:0,sy:0,dx:0,dy:0});
 
   const [msgs,    setMsgs]    = useState<ChatMsg[]>([]);
+  const blocked = useModerationStore(s => s.blocked);
   const [input,   setInput]   = useState('');
   const [chatErr, setChatErr] = useState('');
 
@@ -200,10 +203,14 @@ export default function LobbyPanel() {
     let first = true;
     const unsub = onSnapshot(q, snap => {
       if (!first) snap.docChanges().forEach(ch => {
-        if (ch.type==='added') { const m=ch.doc.data() as ChatMsg; bubblesRef.current.set(m.uid,{text:m.text,expiresAt:Date.now()+BUBBLE_MS}); }
+        if (ch.type==='added') {
+          const m=ch.doc.data() as ChatMsg;
+          // No speech bubbles over blocked players either.
+          if (!useModerationStore.getState().blocked[m.uid]) bubblesRef.current.set(m.uid,{text:m.text,expiresAt:Date.now()+BUBBLE_MS});
+        }
       });
       first = false;
-      setMsgs(snap.docs.map(d=>d.data() as ChatMsg).reverse());
+      setMsgs(snap.docs.map(d=>({ ...(d.data() as ChatMsg), id: d.id })).reverse());
       setChatErr('');
     }, err => setChatErr(`Chat error: ${(err as {code?:string}).code??'unknown'} — add Firestore rules for lobbyChat`));
     return unsub;
@@ -657,10 +664,13 @@ export default function LobbyPanel() {
               {t.chat.empty}
             </span>
           )}
-          {msgs.map((m,i)=>(
-            <div key={i} style={{fontFamily:"'Share Tech Mono',monospace",fontSize:11,lineHeight:1.4}}>
-              <span style={{color:'#ff2d78',marginRight:5}}>{m.username}:</span>
-              <span style={{color:'rgba(255,255,255,.85)'}}>{m.text}</span>
+          {withoutBlocked(msgs, m => m.uid, blocked).map((m,i)=>(
+            <div key={m.id ?? i} style={{fontFamily:"'Share Tech Mono',monospace",fontSize:11,lineHeight:1.4,display:'flex',alignItems:'flex-start',gap:4}}>
+              <span style={{flex:1,minWidth:0,wordBreak:'break-word'}}>
+                <span style={{color:'#ff2d78',marginRight:5}}>{m.username}:</span>
+                <span style={{color:'rgba(255,255,255,.85)'}}>{m.text}</span>
+              </span>
+              <MessageActions target={{ uid: m.uid, username: m.username }} kind="lobbyChat" text={m.text} messageId={m.id} />
             </div>
           ))}
           <div ref={chatEndRef}/>

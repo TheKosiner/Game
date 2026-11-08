@@ -4,6 +4,8 @@ import { db } from '../lib/firebase';
 import { useT } from '../hooks/useT';
 import { portraitSrc } from '../data/portraits';
 import { PX, MONO } from '../utils/styles';
+import MessageActions from './MessageActions';
+import { useModerationStore, withoutBlocked } from '../lib/moderation';
 
 interface ChatMessage {
   id: string;
@@ -35,6 +37,8 @@ function timeAgo(ts: number): string {
 export default function GuildChat({ guildId, currentUid, username, portrait }: Props) {
   const t = useT();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const blocked = useModerationStore(s => s.blocked);
+  const visible = withoutBlocked(messages, m => m.uid, blocked);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
@@ -103,12 +107,12 @@ export default function GuildChat({ guildId, currentUid, username, portrait }: P
         gap: 2,
         padding: '8px 6px',
       }}>
-        {messages.length === 0 && (
+        {visible.length === 0 && (
           <p style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', margin: 'auto' }}>
             —
           </p>
         )}
-        {messages.map(msg => {
+        {visible.map(msg => {
           const isOwn = currentUid === msg.uid;
           return (
             <div key={msg.id} style={{
@@ -153,6 +157,7 @@ export default function GuildChat({ guildId, currentUid, username, portrait }: P
               <span style={{ ...MONO, fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, marginTop: 1 }}>
                 {timeAgo(msg.createdAt)}
               </span>
+              <MessageActions target={{ uid: msg.uid, username: msg.username }} kind="guildChat" text={msg.text} messageId={msg.id} guildId={guildId} />
             </div>
           );
         })}

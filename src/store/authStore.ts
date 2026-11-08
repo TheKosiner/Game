@@ -174,6 +174,8 @@ export const useAuthStore = create<AuthState>((set) => {
               username: username.trim(),
               email,
               createdAt: Date.now(),
+              // Registration requires accepting the community rules and privacy policy.
+              acceptedTermsAt: Date.now(),
             });
           });
         } catch (txErr: unknown) {

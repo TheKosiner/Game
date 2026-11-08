@@ -9,6 +9,7 @@ import { syncToCloud, loadFromCloud, withServerWrite } from './lib/cloudSync';
 import { isFirebaseConfigured, db } from './lib/firebase';
 import { claimGemCredits } from './lib/gemShop';
 import { IS_PLAY_BUILD, recoverPlayPurchases } from './lib/playBilling';
+import { loadBlockedPlayers } from './lib/moderation';
 import { claimDailyRewardServer } from './lib/serverActions';
 import { requestNotificationPermission, rescheduleActiveNotifications } from './lib/notifications';
 import { onSnapshot, collection, query, orderBy, limit, doc } from 'firebase/firestore';
@@ -38,6 +39,7 @@ import AnimatedNumber from './components/AnimatedNumber';
 import { checkForForcedUpdate, type UpdateInfo } from './lib/appUpdate';
 import AdminPanel from './components/AdminPanel';
 import ErrorLogPanel from './components/ErrorLogPanel';
+import ReportsPanel from './components/ReportsPanel';
 import LevelUpModal from './components/LevelUpModal';
 import CasinoPanel from './components/CasinoPanel';
 import KryptaPanel from './components/KryptaPanel';
@@ -552,6 +554,9 @@ export default function App() {
     }).catch(() => {});
   }, [user?.uid, gameLoaded]);
 
+  // The player's block list (hides blocked players' chat messages and mail).
+  useEffect(() => { loadBlockedPlayers(user?.uid ?? null); }, [user?.uid]);
+
   // Play Store build: finish any gem purchase that was paid but never completed
   // (app closed mid-purchase, verification failed, a pending payment cleared).
   useEffect(() => {
@@ -699,7 +704,7 @@ export default function App() {
               maxWidth: tab === 'lobby' ? undefined : (tab === 'hero' ? 1400 : 960),
               height: tab === 'lobby' ? '100%' : undefined,
             }}>
-              {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
+              {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /><ReportsPanel userEmail={user.email} /></>}</>}
               {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
               {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
               {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}
@@ -865,7 +870,7 @@ export default function App() {
             animKey={animKey}
             style={tab === 'lobby' ? { flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 } : undefined}
           >
-            {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /></>}</>}
+            {tab === 'hero'   && <><HeroCard /><InventoryPanel />{user?.email && <><AdminPanel userEmail={user.email} /><ErrorLogPanel userEmail={user.email} /><ReportsPanel userEmail={user.email} /></>}</>}
             {tab === 'play'   && playSub === 'dungeon'   && <DungeonPanel />}
             {tab === 'play'   && playSub === 'challenge' && <ChallengePanel />}
             {tab === 'play'   && playSub === 'quests'    && <QuestPanel />}

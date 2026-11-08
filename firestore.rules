@@ -222,7 +222,8 @@ service cloud.firestore {
         && request.resource.data.username is string
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username.lower())).data.uid == request.auth.uid;
       allow update: if isOwner(userId)
-        && request.resource.data.get('username', null) == resource.data.get('username', null);
+        && request.resource.data.get('username', null) == resource.data.get('username', null)
+        && request.resource.data.get('blocked', {}).size() <= 200;
     }
 
     // Game saves — delta + time validation on every write
@@ -441,8 +442,14 @@ service cloud.firestore {
 
     // Chat messages: own uid, own name, 1–200 chars, and no timestamp from the
     // future (newest-first feeds would otherwise pin such a message on top).
+    // Players muted by a moderator (chatBans/{uid}) can't post or send mail.
+    function notMuted() {
+      return !exists(/databases/$(database)/documents/chatBans/$(request.auth.uid));
+    }
+
     function validChatMessage() {
-      return request.resource.data.uid == request.auth.uid
+      return notMuted()
+        && request.resource.data.uid == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 200
@@ -459,6 +466,7 @@ service cloud.firestore {
         && resource.data.toUid == request.auth.uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
       allow create: if isAuthenticated()
+        && notMuted()
         && request.resource.data.fromUid == request.auth.uid
         && request.resource.data.toUid is string
         && request.resource.data.body is string
@@ -479,6 +487,27 @@ service cloud.firestore {
       allow delete: if isOwner(userId);
       allow create: if isOwner(userId) && isOwnUsername(request.resource.data.get('username', null));
       allow update: if isOwner(userId) && nameUnchangedOrOwn(resource.data, request.resource.data);
+    }
+
+    // Reports of messages and players for the moderators (AdminPanel → Reports).
+    // Anyone may report someone else; only the admin can read or act on them.
+    match /reports/{reportId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.targetUid is string
+        && request.resource.data.targetUid != request.auth.uid
+        && request.resource.data.reason in ['spam', 'abuse', 'cheating', 'other']
+        && request.resource.data.kind in ['globalChat', 'guildChat', 'lobbyChat', 'mail', 'player']
+        && request.resource.data.status == 'open'
+        && request.resource.data.get('text', '') is string
+        && request.resource.data.get('text', '').size() <= 500;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Moderator mutes. Readable so the client can tell a muted player why.
+    match /chatBans/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // Lobby chat

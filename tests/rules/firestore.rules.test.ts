@@ -392,3 +392,56 @@ describe('users and public profiles', () => {
     await assertSucceeds(deleteDoc(doc(db, 'lobbyPlayers', 'u')));
   });
 });
+
+// ── Moderation: reports, mutes, block list ────────────────────────────────
+
+describe('moderation', () => {
+  const report = (o: Record<string, unknown> = {}) => ({
+    reporterUid: 'u', reporterName: 'Neo', targetUid: 'troll', targetName: 'Troll',
+    kind: 'globalChat', reason: 'abuse', text: 'bad words', messageId: 'm1', guildId: null,
+    status: 'open', createdAt: Date.now(), ...o,
+  });
+
+  it('a player can report someone else, but not read reports', async () => {
+    const db = as('u');
+    await assertSucceeds(addDoc(collection(db, 'reports'), report()));
+    await assertFails(addDoc(collection(db, 'reports'), report({ targetUid: 'u' })));
+    await assertFails(addDoc(collection(db, 'reports'), report({ reporterUid: 'someone' })));
+    await assertFails(addDoc(collection(db, 'reports'), report({ reason: 'whatever' })));
+    await assertFails(addDoc(collection(db, 'reports'), report({ text: 'x'.repeat(501) })));
+    await seed(db2 => setDoc(doc(db2, 'reports', 'r1'), report()));
+    await assertFails(getDoc(doc(db, 'reports', 'r1')));
+  });
+
+  it('the admin can read reports, mute players and remove chat messages', async () => {
+    const admin = env.authenticatedContext('admin', { email: 'thekosiner@gmail.com' }).firestore() as unknown as Firestore;
+    await seed(async db => {
+      await setDoc(doc(db, 'reports', 'r1'), report());
+      await setDoc(doc(db, 'globalChat', 'm1'), { uid: 'troll', username: 'Troll', text: 'bad', createdAt: 1 });
+    });
+    await assertSucceeds(getDoc(doc(admin, 'reports', 'r1')));
+    await assertSucceeds(deleteDoc(doc(admin, 'globalChat', 'm1')));
+    await assertSucceeds(setDoc(doc(admin, 'chatBans', 'troll'), { bannedAt: 1 }));
+    await assertFails(setDoc(doc(as('troll'), 'chatBans', 'troll'), { bannedAt: 1 }));
+    await assertFails(deleteDoc(doc(as('troll'), 'chatBans', 'troll')));
+  });
+
+  it('a muted player cannot post to chat or send mail', async () => {
+    await seed(async db => {
+      await setDoc(doc(db, 'users', 'troll'), { username: 'Troll' });
+      await setDoc(doc(db, 'chatBans', 'troll'), { bannedAt: 1 });
+    });
+    const db = as('troll');
+    await assertFails(addDoc(collection(db, 'globalChat'), { uid: 'troll', username: 'Troll', text: 'hi', createdAt: Date.now() }));
+    await assertFails(addDoc(collection(db, 'mail'), { fromUid: 'troll', fromUsername: 'Troll', toUid: 'u', toUsername: 'U', body: 'hi', createdAt: 1, read: false }));
+  });
+
+  it('the block list lives in the private profile, up to 200 players', async () => {
+    await seed(db => setDoc(doc(db, 'users', 'u'), { username: 'Neo' }));
+    const db = as('u');
+    await assertSucceeds(updateDoc(doc(db, 'users', 'u'), { 'blocked.troll': 'Troll' }));
+    const tooMany = Object.fromEntries(Array.from({ length: 201 }, (_, i) => [`p${i}`, 'x']));
+    await assertFails(updateDoc(doc(db, 'users', 'u'), { blocked: tooMany }));
+    await assertFails(getDoc(doc(as('troll'), 'users', 'u')));
+  });
+});
