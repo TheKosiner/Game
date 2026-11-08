@@ -22,48 +22,46 @@ service cloud.firestore {
     // server daily claim yet (no `streakDays`), lack some keys. Reading a missing
     // key is an *error* in rules, and an error denies the whole write. That used to
     // reject every cloud save of a brand-new player on their first day — the client
-    // then reloaded the cloud copy and their progress kept vanishing. So every
-    // optional field is read through get() with a default.
-
-    function numOr0(m, key) {
-      let v = m.get(key, null);
-      return v == null ? 0 : v;
-    }
-
-    function resetChanged(old, nw) {
-      return numOr0(nw.hero, 'lastDailyReset') != numOr0(old.hero, 'lastDailyReset');
-    }
+    // then reloaded the cloud copy and their progress kept vanishing. So optional
+    // fields are read through get() with a default.
+    //
+    // Cost: a request may evaluate at most 1000 expressions, and a write over the
+    // limit is denied. Shared values are therefore computed once in
+    // validSaveUpdate and passed down; tests/rules measure the heaviest paths.
 
     // Day number in UTC — the same calendar the claimDailyReward Cloud Function uses.
     function utcDay(ms) {
       return math.floor(ms / 86400000);
     }
 
-    function validQuestClear(old, nw) {
-      let oldQ = old.get('activeQuest', null);
+    // A quest may be cleared once its (server-time) timer has run out, or early
+    // only when it is abandoned — no reward in the same write. The client's
+    // "cancel quest" button used to be rejected, and the quest came back.
+    function validQuestClear(oldQ, newQ, oh, nh, now) {
       return oldQ == null
-        || nw.get('activeQuest', null) != null
-        || request.time.toMillis() >= numOr0(oldQ, 'endsAt')
-        || numOr0(oldQ, 'endsAt') > request.time.toMillis() + 3600000;
+        || newQ != null
+        || now >= oldQ.get('endsAt', 0)
+        || oldQ.get('endsAt', 0) > now + 3600000
+        || (nh.level == oh.level
+            && nh.get('xp', 0) <= oh.get('xp', 0)
+            && nh.get('goldEarnedToday', 0) <= oh.get('goldEarnedToday', 0)
+            && nh.get('questsCompletedToday', 0) == oh.get('questsCompletedToday', 0));
     }
 
-    function validBeggingClear(old, nw) {
-      let oldUntil = old.hero.get('beggingUntil', null);
+    function validBeggingClear(oh, nh, now) {
+      let oldUntil = oh.get('beggingUntil', null);
       return oldUntil == null
-        || nw.hero.get('beggingUntil', null) != null
-        || nw.hero.get('beggingReward', null) == null
-        || request.time.toMillis() >= oldUntil
-        || oldUntil > request.time.toMillis() + 172800000;
+        || nh.get('beggingUntil', null) != null
+        || nh.get('beggingReward', null) == null
+        || now >= oldUntil
+        || oldUntil > now + 172800000;
     }
 
     // A client-side reset (fallback when the Cloud Function is unreachable) is
     // accepted once the UTC day has rolled over, matching the server. The older
     // 23h gate stays as an alternative so clients still on the previous build,
     // which reset on their own calendar, keep working.
-    function validDailyReset(old, nw) {
-      let oldReset = numOr0(old.hero, 'lastDailyReset');
-      let newReset = numOr0(nw.hero, 'lastDailyReset');
-      let now = request.time.toMillis();
+    function validDailyReset(oldReset, newReset, now) {
       return newReset == oldReset
         || oldReset > now
         || (newReset >= now - 300000
@@ -71,83 +69,61 @@ service cloud.firestore {
             && (now - oldReset >= 82800000 || utcDay(now) > utcDay(oldReset)));
     }
 
-    function validRestClear(old, nw) {
-      let oldUntil = old.hero.get('voluntaryRestUntil', null);
+    function validRestClear(oh, nh, now) {
+      let oldUntil = oh.get('voluntaryRestUntil', null);
       return oldUntil == null
-        || nw.hero.get('voluntaryRestUntil', null) != null
-        || (nw.hero.get('voluntaryRestHp', null) == null
-            && nw.hero.get('voluntaryRestStartAt', null) == null
-            && request.time.toMillis() < oldUntil)
-        || request.time.toMillis() >= oldUntil
-        || oldUntil > request.time.toMillis() + 172800000;
+        || nh.get('voluntaryRestUntil', null) != null
+        || (nh.get('voluntaryRestHp', null) == null
+            && nh.get('voluntaryRestStartAt', null) == null
+            && now < oldUntil)
+        || now >= oldUntil
+        || oldUntil > now + 172800000;
     }
 
-    function validChallengeCooldown(old, nw) {
-      let oldAt = numOr0(old, 'lastChallengeAt');
-      return numOr0(nw, 'lastChallengeAt') <= oldAt
+    function validChallengeCooldown(old, nw, now) {
+      let oldAt = old.get('lastChallengeAt', 0);
+      return nw.get('lastChallengeAt', 0) <= oldAt
         || oldAt == 0
-        || oldAt > request.time.toMillis()
-        || request.time.toMillis() - oldAt >= 3600000;
+        || oldAt > now
+        || now - oldAt >= 3600000;
     }
 
-    // updatedAt is written as serverTimestamp() — Firestore sets it to request.time.
-    // This check is exact and independent of the client's device clock.
-    function validTimestamp(nw) {
-      return nw.get('updatedAt', null) == request.time;
-    }
-
-    // Gold earned today, against the daily cap.
-    function validGoldEarned(old, nw) {
-      let oldEarned = numOr0(old.hero, 'goldEarnedToday');
-      let newEarned = numOr0(nw.hero, 'goldEarnedToday');
-      let dailyReset = resetChanged(old, nw);
-      let newResetAt = numOr0(nw.hero, 'lastDailyReset');
-      // After a daily reset the baseline is 0, not yesterday's total.
-      let earnedDelta = newEarned - (dailyReset ? 0 : oldEarned);
-      // Completed tasks started before today's reset are collected outside goldEarnedToday
-      // (client adds gold directly without touching the cap).
-      // beggingUntil elapsed check distinguishes full collect from early cancel.
-      let begReward = old.hero.get('beggingReward', null);
-      let begStart = old.hero.get('beggingStartAt', null);
-      let begUntil = old.hero.get('beggingUntil', null);
-      let beggingPending = (dailyReset
-        && begReward != null && nw.hero.get('beggingReward', null) == null
-        && begStart != null && begStart < newResetAt
-        && begUntil != null && begUntil <= request.time.toMillis())
+    // Gold earned today, against the daily cap. After a daily reset the baseline
+    // is 0, not yesterday's total. Completed tasks started before the reset may be
+    // collected in the reset write itself without counting toward the cap.
+    function validGoldEarned(oh, nh, oldQ, newQ, now, reset, newReset) {
+      let oldEarned = oh.get('goldEarnedToday', 0);
+      let newEarned = nh.get('goldEarnedToday', 0);
+      let begReward = oh.get('beggingReward', null);
+      let begStart = oh.get('beggingStartAt', null);
+      let begUntil = oh.get('beggingUntil', null);
+      let beggingPending = (reset && begReward != null
+        && nh.get('beggingReward', null) == null
+        && begStart != null && begStart < newReset
+        && begUntil != null && begUntil <= now)
         ? begReward : 0;
-      let oldQ = old.get('activeQuest', null);
-      let questPending = (dailyReset
-        && oldQ != null && nw.get('activeQuest', null) == null
-        && oldQ.get('startedAt', null) != null && oldQ.startedAt < newResetAt
-        && oldQ.get('endsAt', null) != null && oldQ.endsAt <= request.time.toMillis()
+      let questPending = (reset && oldQ != null && newQ == null
+        && oldQ.get('startedAt', null) != null && oldQ.startedAt < newReset
+        && oldQ.get('endsAt', null) != null && oldQ.endsAt <= now
         && oldQ.get('quest', null) != null)
-        ? numOr0(oldQ.quest, 'goldReward') : 0;
+        ? oldQ.quest.get('goldReward', 0) : 0;
       return
-        (dailyReset ? newEarned >= 0 : newEarned >= oldEarned)
+        (reset ? newEarned >= 0 : newEarned >= oldEarned)
         && newEarned <= 250000000
-        && nw.hero.gold >= 0
-        && nw.hero.gold <= 1000000000
-        && nw.hero.gold <= numOr0(old.hero, 'gold') + earnedDelta + beggingPending + questPending;
-    }
-
-    // beggingReward must not exceed the daily gold cap when set.
-    function validBeggingReward(nw) {
-      let reward = nw.hero.get('beggingReward', null);
-      return reward == null || reward <= 250000000;
+        && nh.gold >= 0
+        && nh.gold <= 1000000000
+        && nh.gold <= oh.get('gold', 0) + newEarned - (reset ? 0 : oldEarned) + beggingPending + questPending;
     }
 
     // Gems are premium currency. Client writes may only ADD small amounts that come
     // from level-ups (+3/level, up to the +10 levels a single save may carry = +30)
     // and the local daily-reward fallback (+5). All larger sources (Stripe purchases,
     // the server daily reward) are credited server-side by Cloud Functions before the
-    // client save lands, so by then the baseline already includes them and the
-    // client delta stays ~0. Spending freely decreases. This blocks "set gems to a
+    // client save lands. Spending freely decreases. This blocks "set gems to a
     // million" localStorage tampering.
-    function validGems(old, nw) {
-      let gems = nw.hero.get('gems', null);
-      return gems is number
-        && gems >= 0
-        && gems <= numOr0(old.hero, 'gems') + 40;
+    function validGems(oh, nh) {
+      let gems = nh.get('gems', null);
+      return gems is number && gems >= 0 && gems <= oh.get('gems', 0) + 40;
     }
 
     // streakDays is written by the claimDailyReward Cloud Function (admin SDK,
@@ -155,51 +131,62 @@ service cloud.firestore {
     // fake a 19-day streak and claim a legendary chest. Exception: on a daily reset
     // (gated by validDailyReset) it may rise by at most 1 — the checkDailyReset()
     // local fallback when the Cloud Function is unavailable.
-    function validStreakDays(old, nw) {
-      let oldStreak = numOr0(old.hero, 'streakDays');
-      let newStreak = nw.hero.get('streakDays', null);
-      return newStreak == null
-        || (resetChanged(old, nw) ? newStreak <= oldStreak + 1 : newStreak <= oldStreak);
+    // Daily run counters only go up during a day; the Cloud Function resets them,
+    // and a client may only zero them together with a daily reset.
+    function validStreakAndCounters(oh, nh, reset) {
+      let newStreak = nh.get('streakDays', null);
+      return (newStreak == null || newStreak <= oh.get('streakDays', 0) + (reset ? 1 : 0))
+        && (reset
+            || (nh.get('dungeonRunsToday', 0)     >= oh.get('dungeonRunsToday', 0)
+                && nh.get('kryptaRunsToday', 0)      >= oh.get('kryptaRunsToday', 0)
+                && nh.get('questsCompletedToday', 0) >= oh.get('questsCompletedToday', 0)));
     }
 
-    // Daily run counters must only go up during a day. The Cloud Function resets
-    // them via the admin SDK; a client may only zero them together with a daily
-    // reset (validated by validDailyReset).
-    function validDailyCounters(old, nw) {
-      return resetChanged(old, nw)
-        || (numOr0(nw.hero, 'dungeonRunsToday')     >= numOr0(old.hero, 'dungeonRunsToday')
-            && numOr0(nw.hero, 'kryptaRunsToday')      >= numOr0(old.hero, 'kryptaRunsToday')
-            && numOr0(nw.hero, 'questsCompletedToday') >= numOr0(old.hero, 'questsCompletedToday'));
+    function validCounters(old, nw) {
+      let oldWins = old.get('pvpWins', 0);
+      let oldLosses = old.get('pvpLosses', 0);
+      let oldRating = old.get('pvpRating', 1000);
+      let oldUnlocked = old.get('challengeUnlocked', 0);
+      let wins = nw.get('pvpWins', 0);
+      let losses = nw.get('pvpLosses', 0);
+      let rating = nw.get('pvpRating', 1000);
+      let unlocked = nw.get('challengeUnlocked', 0);
+      return wins >= oldWins && wins <= oldWins + 1
+        && losses >= oldLosses && losses <= oldLosses + 1
+        && rating <= oldRating + 30 && rating >= oldRating - 20
+        && unlocked >= oldUnlocked && unlocked <= oldUnlocked + 1;
     }
 
     // ── Stat delta validation — blocks localStorage inflation ─────────────────
     function validSaveUpdate(old, nw) {
+      let oh = old.hero;
+      let nh = nw.hero;
+      let now = request.time.toMillis();
+      let oldReset = oh.get('lastDailyReset', 0);
+      let newReset = nh.get('lastDailyReset', 0);
+      let reset = newReset != oldReset;
+      let oldQ = old.get('activeQuest', null);
+      let newQ = nw.get('activeQuest', null);
+      let begReward = nh.get('beggingReward', null);
       return
         // Headroom for a legitimate endgame run. A maxed-out operation on the
         // hardest difficulty in XP mode is worth just over 4 levels, so the
         // previous +5 left no margin and rejected honest saves — which made the
         // client revert the whole run. +10 still blocks jumping to an arbitrary
-        // level while leaving real play room to breathe.
-        nw.hero.level <= old.hero.level + 10
-        && numOr0(nw, 'pvpWins')   >= numOr0(old, 'pvpWins')
-        && numOr0(nw, 'pvpWins')   <= numOr0(old, 'pvpWins') + 1
-        && numOr0(nw, 'pvpLosses') >= numOr0(old, 'pvpLosses')
-        && numOr0(nw, 'pvpLosses') <= numOr0(old, 'pvpLosses') + 1
-        && nw.get('pvpRating', 1000) <= old.get('pvpRating', 1000) + 30
-        && nw.get('pvpRating', 1000) >= old.get('pvpRating', 1000) - 20
-        && numOr0(nw, 'challengeUnlocked') >= numOr0(old, 'challengeUnlocked')
-        && numOr0(nw, 'challengeUnlocked') <= numOr0(old, 'challengeUnlocked') + 1
-        && validGoldEarned(old, nw)
-        && validQuestClear(old, nw)
-        && validBeggingClear(old, nw)
-        && validDailyReset(old, nw)
-        && validRestClear(old, nw)
-        && validChallengeCooldown(old, nw)
-        && validBeggingReward(nw)
-        && validGems(old, nw)
-        && validStreakDays(old, nw)
-        && validDailyCounters(old, nw)
-        && validTimestamp(nw);
+        // level while leaving real play room to breathe. (Bigger rewards are
+        // banked by the client and applied over several saves.)
+        nh.level <= oh.level + 10
+        && nw.get('updatedAt', null) == request.time
+        && (begReward == null || begReward <= 250000000)
+        && validCounters(old, nw)
+        && validGems(oh, nh)
+        && validStreakAndCounters(oh, nh, reset)
+        && validDailyReset(oldReset, newReset, now)
+        && validGoldEarned(oh, nh, oldQ, newQ, now, reset, newReset)
+        && validQuestClear(oldQ, newQ, oh, nh, now)
+        && validBeggingClear(oh, nh, now)
+        && validRestClear(oh, nh, now)
+        && validChallengeCooldown(old, nw, now);
     }
 
     function validPlayerUpdate(old, nw) {

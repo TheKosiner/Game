@@ -324,7 +324,7 @@ export default function App() {
         loadedUidRef.current = user.uid;
         // Until this account's hero is loaded, whatever is in memory (a placeholder,
         // or the previous account's hero) must not be saved or synced.
-        if (force) useGameStore.setState({ heroReady: false, needsCharacterCreation: false });
+        if (force) useGameStore.setState({ heroReady: false, needsCharacterCreation: false, cloudLevel: null });
         try {
           let loaded = await loadFromCloud(user.uid, force);
           // Retry once — on mobile, first read can fail due to cold-start network

@@ -89,7 +89,11 @@ export async function syncToCloud(uid: string, username: string): Promise<void> 
   // marker, so a later cloud snapshot may safely replace local state.
   useGameStore.setState(s => ({
     lastCloudSyncedAt: Math.max(s.lastCloudSyncedAt, pushedMarker),
+    cloudLevel: hero.level,
   }));
+  // XP banked because it would have raised the level past what one save may
+  // carry can now be applied (the level change triggers the next sync).
+  if ((useGameStore.getState().hero.bankedXp ?? 0) > 0) useGameStore.getState().addXp(0);
 
   const existingGuildId = playerSnap.exists() ? (playerSnap.data().guildId as string | undefined) : undefined;
 
@@ -257,6 +261,7 @@ export async function loadFromCloud(uid: string, force = false): Promise<boolean
   useGameStore.setState({
     heroReady: true,
     needsCharacterCreation: false,
+    cloudLevel: hero.level ?? null,
     hero,
     activeQuest: raw.activeQuest ?? null,
     // Only reached with no run in progress, or on a forced revert. Clear the

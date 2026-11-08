@@ -248,7 +248,12 @@ export default function QuestPanel() {
           {!canCollect && confirmAbandon && (
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
               <button onClick={() => setConfirmAbandon(false)} className="btn btn-secondary" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancelConfirm}</button>
-              <button onClick={() => { abandonQuest(); setConfirmAbandon(false); }} className="btn btn-danger" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancel}</button>
+              <button onClick={() => {
+                abandonQuest();
+                setConfirmAbandon(false);
+                // Push the abandon on its own, before any later reward lands in the same write.
+                if (user) syncToCloud(user.uid, user.username).catch(() => {});
+              }} className="btn btn-danger" style={{ flex: 1, fontSize: 10 }}>{t.quests.cancel}</button>
             </div>
           )}
         </div>

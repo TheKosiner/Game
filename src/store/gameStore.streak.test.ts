@@ -283,6 +283,45 @@ describe('addGold', () => {
   });
 });
 
+// ── addXp: never more levels than one cloud save may carry ───────────────────
+describe('addXp level banking', () => {
+  beforeEach(() => { useGameStore.setState({ guildExpBonus: 0 }); });
+  afterEach(() => { useGameStore.setState({ cloudLevel: null }); });
+
+  it('banks XP past +10 levels over the synced level, and releases it after a sync', () => {
+    resetStore({ level: 1, xp: 0, xpToNext: 100, gems: 0 });
+    useGameStore.setState({ cloudLevel: 1 });
+    useGameStore.getState().addXp(1_000_000); // a high-level guild operation reward
+    let h = getHero();
+    expect(h.level).toBe(11);
+    expect(h.bankedXp).toBeGreaterThan(0);
+    expect(h.gems).toBe(30); // 10 level-ups × 3 — within the +40 per save the rules allow
+
+    // The next sync confirmed level 11 → the bank is released, another 10 levels at most.
+    useGameStore.setState({ cloudLevel: 11 });
+    useGameStore.getState().addXp(0);
+    h = getHero();
+    expect(h.level).toBe(21);
+
+    // Keep syncing until the whole reward has been applied.
+    for (let i = 0; i < 10 && (getHero().bankedXp ?? 0) > 0; i++) {
+      useGameStore.setState({ cloudLevel: getHero().level });
+      useGameStore.getState().addXp(0);
+    }
+    h = getHero();
+    expect(h.bankedXp).toBe(0);
+    expect(h.xp).toBeLessThan(h.xpToNext);
+  });
+
+  it('applies everything at once before the first sync (the first save is a create)', () => {
+    resetStore({ level: 1, xp: 0, xpToNext: 100 });
+    useGameStore.setState({ cloudLevel: null });
+    useGameStore.getState().addXp(1_000_000);
+    expect(getHero().level).toBeGreaterThan(11);
+    expect(getHero().bankedXp ?? 0).toBe(0);
+  });
+});
+
 // ── Collecting rewards that started before the daily reset ───────────────────
 describe('overnight rewards', () => {
   beforeEach(() => { useGameStore.setState({ guildGoldBonus: 0, guildExpBonus: 0 }); });

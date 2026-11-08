@@ -20,6 +20,8 @@ const OLD_SAVE_KEY = 'cybermagic_save';
 export const MAX_INVENTORY = 20;
 const MAX_LOG = 50;
 const MAX_LEVEL = 500;
+/** Levels one cloud save may add — mirrors `level <= old + 10` in firestore.rules. */
+export const MAX_LEVELS_PER_SAVE = 10;
 export const MAX_DAILY_DUNGEONS = 10;
 export const MAX_DAILY_KRYPTA = 5;
 export const MAX_DAILY_QUESTS = 5;
@@ -254,12 +256,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   mysteryBoxPending: null,
   heroReady: false,
   needsCharacterCreation: false,
+  cloudLevel: null,
 
   initHero: (name, skinTone = 1, hairColor = 2, skipSave = false, clothingColor = 0) => {
     const hero = createHero(name, skinTone, hairColor, clothingColor, 0);
     set({ hero, activeQuest: null, currentDungeon: null, currentFloor: 1, currentEnemy: null, combatLog: [], inCombat: false, shopSeed: Date.now(), lastShopRefresh: 0, shopPurchased: [], lastPvpFight: 0, pvpWins: 0, pvpLosses: 0, pvpRating: 1000, pvpLog: [], lastPassiveRegenAt: Date.now() });
     // skipSave = a placeholder while the player hasn't created their character yet:
     // it must never be persisted (see heroReady). A named hero is the real thing.
+    // A new hero has no cloud save yet (its first sync creates one), so no level cap.
+    set({ cloudLevel: null });
     if (skipSave) {
       set({ heroReady: false });
     } else {
@@ -294,23 +299,33 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   addXp: (amount) => {
     const bonus = get().guildExpBonus;
-    if (bonus > 0) amount = Math.round(amount * (1 + bonus / 100));
-    const { hero } = get();
+    if (bonus > 0 && amount > 0) amount = Math.round(amount * (1 + bonus / 100));
+    const { hero, cloudLevel } = get();
     let { xp, xpToNext, level } = hero;
     const { stats, maxHp, hp, attributePoints } = hero;
-    xp += amount;
+    // Previously banked XP goes in first, then the new amount.
+    xp += Math.max(0, amount) + (hero.bankedXp ?? 0);
+    // One cloud save may raise the level by at most MAX_LEVELS_PER_SAVE (the
+    // rules reject more, and a rejected save rolls the client back). A big reward
+    // — e.g. a high-level guild operation claimed by a new member — is applied up
+    // to that limit and the rest banked; it is released after the next sync.
+    const levelCap = cloudLevel === null ? MAX_LEVEL : Math.min(MAX_LEVEL, cloudLevel + MAX_LEVELS_PER_SAVE);
     let levelsGained = 0;
-    while (xp >= xpToNext && level < MAX_LEVEL) {
+    while (xp >= xpToNext && level < levelCap) {
       xp -= xpToNext;
       level++;
       xpToNext = calcXpToNext(level);
       levelsGained++;
     }
-    if (level >= MAX_LEVEL) xp = Math.min(xp, xpToNext - 1);
+    let bankedXp = 0;
+    if (xp >= xpToNext) {
+      if (level < MAX_LEVEL) bankedXp = xp - (xpToNext - 1);
+      xp = xpToNext - 1;
+    }
     const newMaxHp = getHeroMaxHp(stats, level, hero.equipment);
     const hpGain = levelsGained > 0 ? newMaxHp - maxHp : 0;
     const newAttributePoints = attributePoints + levelsGained;
-    set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints: newAttributePoints } });
+    set({ hero: { ...hero, xp, xpToNext, level, maxHp: newMaxHp, hp: Math.min(hp + hpGain, newMaxHp), attributePoints: newAttributePoints, bankedXp } });
     if (levelsGained > 0) {
       const t = getT();
       get().addCombatLog(t.combat.levelUp(level), 'system');
@@ -1407,6 +1422,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           goldEarnedToday: save.hero.goldEarnedToday ?? 0,
           // Dropping this reset the login streak to day 1 on every local load.
           streakDays: save.hero.streakDays ?? 0,
+          bankedXp: save.hero.bankedXp ?? 0,
         };
         if (isLegacySave) loadedHero.hp = loadedHero.maxHp;
         set({

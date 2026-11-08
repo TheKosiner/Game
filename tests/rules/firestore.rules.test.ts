@@ -132,6 +132,18 @@ describe('saves', () => {
     await assertSucceeds(setDoc(doc(as('u'), 'saves', 'u'), save({ ...collected, gold: 1500, goldEarnedToday: 500 })));
   });
 
+  it('a running quest can be abandoned, but not collected early', async () => {
+    const now = Date.now();
+    const reset = now - 1000;
+    const quest = { quest: { id: 'q1', xpReward: 100, goldReward: 50 }, startedAt: now - 60_000, endsAt: now + 600_000 };
+    await seed(db => setDoc(doc(db, 'saves', 'u'), save({ lastDailyReset: reset }, { activeQuest: quest })));
+    const db = as('u');
+    // Collecting early: reward and quest count in the same write — rejected.
+    await assertFails(setDoc(doc(db, 'saves', 'u'), save({ lastDailyReset: reset, xp: 100, gold: 1050, goldEarnedToday: 550, questsCompletedToday: 2 }, { activeQuest: null })));
+    // Abandoning: cleared with nothing gained — accepted.
+    await assertSucceeds(setDoc(doc(db, 'saves', 'u'), save({ lastDailyReset: reset }, { activeQuest: null })));
+  });
+
   it('only the owner can write their save', async () => {
     await assertFails(setDoc(doc(as('mallory'), 'saves', 'victim'), save()));
   });

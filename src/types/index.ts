@@ -73,6 +73,8 @@ export interface Hero {
   goldEarnedToday: number;
   kryptaRunsToday: number;
   streakDays?: number;
+  /** XP earned beyond the levels one cloud save may carry; applied after the next sync. */
+  bankedXp?: number;
 }
 
 export interface Enemy {
@@ -203,6 +205,8 @@ export interface GameState {
   heroReady: boolean;
   /** No save exists for this player: show character creation. */
   needsCharacterCreation: boolean;
+  /** Hero level last confirmed by the cloud save (null = not synced yet / offline). */
+  cloudLevel: number | null;
   hero: Hero;
   mysteryBoxPending: { box: Item; invIdx: number } | null;
   activeQuest: ActiveQuest | null;
